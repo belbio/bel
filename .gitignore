@@ -41,7 +41,8 @@ wheels/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit test / coverage reports / other tests
+belpy_test.py
 htmlcov/
 .tox/
 .coverage
