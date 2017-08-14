@@ -1,0 +1,316 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to belpy &#8212; belpy  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">belpy</a></h1>
+
+
+
+<p class="blurb">A Python library that allows biologists and developers to parse, generate, test, and validate BEL statements.</p>
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=belbio&repo=bel.py&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-belpy">
+<h1>Welcome to belpy<a class="headerlink" href="#welcome-to-belpy" title="Permalink to this headline">¶</a></h1>
+<p>Welcome to belpy’s documentation.</p>
+<div class="toctree-wrapper compound">
+</div>
+<span class="target" id="module-bel"></span><dl class="function">
+<dt id="bel.ast_components">
+<code class="descclassname">bel.</code><code class="descname">ast_components</code><span class="sig-paren">(</span><em>ast</em>, <em>version='2.0.0'</em><span class="sig-paren">)</span><a class="headerlink" href="#bel.ast_components" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the components of a BEL AST as values within a dictionary under the keys ‘subject’, ‘relationship’, and ‘object’.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ast</strong> (<em>AST</em>) – BEL AST</li>
+<li><strong>version</strong> (<em>str</em>) – language version; defaults to config specification</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The dictionary that contains the components as its values.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bel.create">
+<code class="descclassname">bel.</code><code class="descname">create</code><span class="sig-paren">(</span><em>count=1</em>, <em>max_params=3</em>, <em>version='2.0.0'</em><span class="sig-paren">)</span><a class="headerlink" href="#bel.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a specified number of invalid BEL statement objects for testing purposes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>count</strong> (<em>int</em>) – the number of statements to create; defaults to 1</li>
+<li><strong>version</strong> (<em>str</em>) – language version; defaults to config specification</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A list of BEL statement objects.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bel.flatten">
+<code class="descclassname">bel.</code><code class="descname">flatten</code><span class="sig-paren">(</span><em>ast</em>, <em>version='2.0.0'</em><span class="sig-paren">)</span><a class="headerlink" href="#bel.flatten" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes an AST and flattens it into a BEL statement string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ast</strong> (<em>AST</em>) – BEL AST</li>
+<li><strong>version</strong> (<em>str</em>) – language version; defaults to config specification</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The string generated from the AST.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bel.load">
+<code class="descclassname">bel.</code><code class="descname">load</code><span class="sig-paren">(</span><em>filename</em>, <em>loadn=-1</em>, <em>preprocess=False</em><span class="sig-paren">)</span><a class="headerlink" href="#bel.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a text file of BEL statements separated by newlines, and returns an array of the BEL statement strings.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> (<em>str</em>) – location/name of the text file</li>
+<li><strong>loadn</strong> (<em>int</em>) – how many statements to load from the file. If unspecified, all are loaded</li>
+<li><strong>preprocess</strong> (<em>bool</em>) – denote whether or not to run each statement through the preprocessor</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The list of statement strings.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bel.parse">
+<code class="descclassname">bel.</code><code class="descname">parse</code><span class="sig-paren">(</span><em>statement</em>, <em>version='2.0.0'</em>, <em>strict=False</em><span class="sig-paren">)</span><a class="headerlink" href="#bel.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in ParseObject.error and
+ParseObject.visual_err.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>statement</strong> (<em>str</em>) – BEL statement</li>
+<li><strong>version</strong> (<em>str</em>) – language version; defaults to config specification</li>
+<li><strong>strict</strong> (<em>bool</em>) – specify to use strict or loose parsing; defaults to loose</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The ParseObject which contain either an AST or error messages.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ParseObject</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bel.stmt_components">
+<code class="descclassname">bel.</code><code class="descname">stmt_components</code><span class="sig-paren">(</span><em>statement</em>, <em>version='2.0.0'</em><span class="sig-paren">)</span><a class="headerlink" href="#bel.stmt_components" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the components of a BEL statement as values within a dictionary under the keys ‘subject’, ‘relationship’, and ‘object’.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>statement</strong> (<em>str</em>) – BEL statement</li>
+<li><strong>version</strong> (<em>str</em>) – language version; defaults to config specification</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The dictionary that contains the components as its values.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bel.suggest">
+<code class="descclassname">bel.</code><code class="descname">suggest</code><span class="sig-paren">(</span><em>partial</em>, <em>value_type</em>, <em>version='2.0.0'</em><span class="sig-paren">)</span><a class="headerlink" href="#bel.suggest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a partially completed function, modifier function, or a relationship and suggest a fuzzy match out of
+all available options.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>partial</strong> (<em>str</em>) – the partial string</li>
+<li><strong>value_type</strong> (<em>str</em>) – value type (function, modifier function, or relationship; makes sure we match with right list)</li>
+<li><strong>version</strong> (<em>str</em>) – language version; defaults to config specification</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A list of suggested values.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="bel.validate">
+<code class="descclassname">bel.</code><code class="descname">validate</code><span class="sig-paren">(</span><em>statement</em>, <em>version='2.0.0'</em>, <em>strict=False</em><span class="sig-paren">)</span><a class="headerlink" href="#bel.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validates a BEL statement and returns a ValidationObject.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>statement</strong> (<em>str</em>) – BEL statement</li>
+<li><strong>version</strong> (<em>str</em>) – language version; defaults to config specification</li>
+<li><strong>strict</strong> (<em>bool</em>) – specify to use strict or loose parsing; defaults to loose</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The ValidationObject which contain either an AST or error messages, and valid boolean.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ValidationObject</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2017, DC, WH.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,63 @@
+@@grammar::BEL
+@@parseinfo :: True
+
+##############
+#  METADATA  #
+##############
+
+# BEL VERSION: 2.0.0
+# EBNF CREATION TIMESTAMP: August 10, 2017 - 11:08:18AM
+
+#########################
+#  GRAMMAR DEFINITIONS  #
+#########################
+
+start = bel_statement $ ;
+bel_statement = subject:function ~ [relationship:relationship ~ object:obj] ;
+
+obj = (function | enclosed_statement) ;
+enclosed_statement = function_open bel_statement:bel_statement function_close ;
+
+##### FUNCTIONS #####
+
+function = function:funcs function_open function_args:f_args function_close ;
+funcs =
+    'cellSurfaceExpression' | 'compositeAbundance' | 'microRNAAbundance' | 'biologicalProcess' | 'complexAbundance' | 'proteinAbundance' | 'geneAbundance' | 'cellSecretion' | 'translocation' | 'rnaAbundance' | 'degradation' | 'pathology' | 'composite' | 'abundance' | 'reaction' | 'activity' | 'complex' | 'tloc' | 'surf' | 'list' | 'path' | 'deg' | 'act' | 'rxn' | 'sec' | 'bp' | 'p' | 'g' | 'a' | 'r' | 'm' ;
+
+f_args = ','.{(function | modifier_function | namespace_arg | string_arg)}* ;
+
+##### MODIFIER FUNCTIONS #####
+
+modifier_function = m_function:m_funcs function_open m_function_args:m_args function_close ;
+m_funcs =
+    'proteinModification' | 'molecularActivity' | 'reactants' | 'fragment' | 'location' | 'products' | 'variant' | 'fromLoc' | 'fusion' | 'toLoc' | 'pmod' | 'frag' | 'var' | 'fus' | 'loc' | 'ma' ;
+
+m_args = ','.{(function | namespace_arg | string_arg)}* ;
+
+##### RELATIONSHIPS #####
+
+relationship = relations ;
+relations =
+    'prognosticBiomarkerFor' | 'negativeCorrelation' | 'positiveCorrelation' | 'rateLimitingStepOf' | 'directlyDecreases' | 'directlyIncreases' | 'causesNoChange' | 'transcribedTo' | 'hasComponents' | 'biomarkerFor' | 'translatedTo' | 'subProcessOf' | 'hasComponent' | 'association' | 'orthologous' | 'hasMembers' | 'analogous' | 'increases' | 'hasMember' | 'regulates' | 'decreases' | 'cnc' | 'neg' | 'isA' | 'pos' | 'reg' | '--' | '>>' | '-|' | ':>' | '=>' | '->' | '=|' ;
+
+##### MISCELLANEOUS #####
+
+namespace_arg = ns_arg:full_nsv ;
+full_nsv = nspace:ns_string ':' ns_value:(quoted_string | string) ;
+
+string_arg = str_arg:full_string ;
+full_string = (quoted_string | string) ;
+
+
+
+# quoted_string: Matches like any string but requires it to be in quotation marks.
+quoted_string = /\"(?:[^"\\]|\\.)*\"/ ;
+
+# string: Matches any letter, digit or underscore once or more.
+string = /\w+/ ;
+
+# ns_string: Matches any capital letter or digit.
+ns_string = /[A-Z0-9]+/ ;
+
+function_open = '(' ;
+function_close = ')' ;

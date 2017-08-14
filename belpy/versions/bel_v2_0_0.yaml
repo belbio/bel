@@ -1,0 +1,921 @@
+version: 2.0.0
+notes:
+  default_namespaces: Default namespaces are automatically included
+  value_specification_0: Function values are checked in list order. Modifiers are
+    not order specific. They are identied by the modifier function signature.
+  value_specification_1: Function values /<body>/ are regular expression strings for
+    value validation
+  function_signature_requirements:
+  - |
+    all required parameters in function signatures are ordered
+  - |
+    optional parameters in function signatures are unordered and determined by
+    matching the parameter signature
+  - |
+    all functions must have at least one parameter (this is required for the complexAbundance
+    and compositeAbundance signatures)
+
+parameter_types:
+  Function:
+    color: green
+  Entity:   # protein, RNA, chemical, biological process, complex, etc
+    color: blue
+  Modifier: # Modifier function that only exists inside another function, e.g. pmod()
+    color: red
+  String:   # string can be a regex - defined by a regex inside /.../
+    color: orange
+
+entity_types:
+- Abundance
+- Protein
+- RNA
+- Micro_RNA
+- Gene
+- Complex
+- BiologicalProcess
+- Pathology
+- Activity
+- Variant
+- ProteinModification
+- AminoAcid
+- Location   # Cellular, Tissues, ... location of Abundance entity
+
+functions:
+- name: abundance
+  abbreviation: a
+  categories:
+  - abundance
+  description: Denotes the abundance of an entity.
+- name: complexAbundance
+  abbreviation: complex
+  categories:
+  - abundance
+  description: Denotes the abundance of a molecular complex.
+- name: compositeAbundance
+  abbreviation: composite
+  categories:
+  - abundance
+  description: Denotes the frequency or abundance of events in which members are present.
+- name: geneAbundance
+  abbreviation: g
+  categories:
+  - abundance
+  description: Denotes the abundance of a gene.
+- name: microRNAAbundance
+  abbreviation: m
+  categories:
+  - abundance
+  description: Denotes the abundance of a processed, functional microRNA
+- name: proteinAbundance
+  abbreviation: p
+  categories:
+  - abundance
+  description: Denotes the abundance of a protein
+- name: rnaAbundance
+  abbreviation: r
+  categories:
+  - abundance
+  description: Denotes the abundance of an RNA
+- name: biologicalProcess
+  abbreviation: bp
+  categories:
+  - process
+  description: Denotes a process or population of events.
+- name: pathology
+  abbreviation: path
+  categories:
+  - process
+  description: Denotes a disease or pathology process
+- name: activity
+  abbreviation: act
+  categories:
+  - process
+  description: Denotes the frequency or abundance of events in which a member acts as a causal
+    agent at the molecular scale.
+- name: translocation
+  abbreviation: tloc
+  categories:
+  - transformation
+  description: Denotes the frequency or abundance of events in which members move between
+    locations
+- name: cellSecretion
+  abbreviation: sec
+  categories:
+  - transformation
+  description: Denotes the frequency or abundance of events in which members of an abundance
+    move from cells to regions outside of the cells.
+- name: cellSurfaceExpression
+  abbreviation: surf
+  categories:
+  - transformation
+  description: Denotes the frequency or abundance of events in which members of an abundance
+    move to the surface of cells.
+- name: degradation
+  abbreviation: deg
+  categories:
+  - transformation
+  description: Denotes the frequency or abundance of events in which a member is degraded
+    in some way such that it is no longer a member.
+- name: reaction
+  abbreviation: rxn
+  categories:
+  - transformation
+  description: Denotes the frequency or abundance of events in a reaction
+- name: list
+  abbreviation: list
+  categories:
+  - other
+  description: Indicates list of entities, generally used with hasMembers relationship
+
+
+modifier_functions:
+- name: proteinModification
+  abbreviation: pmod
+  primary_function:
+  - proteinAbundance
+  categories:
+  - abundance
+  description: Post-translational protein modifications
+- name: molecularActivity
+  abbreviation: ma
+  primary_function:
+  - molecularActivity
+  categories:
+  - activity
+  description: molecular activity type
+- name: fusion
+  abbreviation: fus
+  primary_function:
+  - proteinAbundance
+  - geneAbundance
+  - rnaAbundance
+  - microRNAAbundance
+  categories:
+  - abundance
+  description: Indicates this is a fusion of a gene, RNA, microRNA or protein
+- name: reactants
+  abbreviation: reactants
+  primary_function:
+  - reaction
+  categories:
+  - transformation
+  description: Denotes the reactants of a reaction
+- name: products
+  abbreviation: products
+  primary_function:
+  - reaction
+  categories:
+  - transformation
+  description: Denotes the products of a reaction
+- name: location
+  abbreviation: loc
+  primary_function:
+  - abundance
+  - proteinAbundance
+  - rnaAbundance
+  - microRNAAbundance
+  - complexAbundance
+  categories:
+  - abundance
+  description: Denotes the cellular location of the abundance.
+- name: fragment
+  abbreviation: frag
+  primary_function:
+  - proteinAbundance
+  categories:
+  - abundance
+  description: Denotes a protein fragment, e.g., a product of proteolytic cleavage.
+- name: fromLoc
+  abbreviation: fromLoc
+  primary_function:
+  - translocation
+  categories:
+  - transformation
+  description: Denotes starting position for translocation function
+- name: toLoc
+  abbreviation: toLoc
+  primary_function:
+  - translocation
+  categories:
+  - transformation
+  description: Denotes ending position for translocation function
+- name: variant
+  abbreviation: var
+  primary_function:
+  - geneAbundance
+  - proteinAbundance
+  - microRNAAbundance
+  - rnaAbundance
+  categories:
+  - abundance
+  description: Denotes a sequence variant
+
+
+relationships:
+- name: increases
+  abbreviation: "->"
+  categories:
+  - causal
+- name: directlyIncreases
+  abbreviation: "=>"
+  categories:
+  - causal
+  - direct
+- name: decreases
+  abbreviation: "-|"
+  categories:
+  - causal
+- name: directlyDecreases
+  abbreviation: "=|"
+  categories:
+  - causal
+  - direct
+- name: rateLimitingStepOf
+  abbreviation: rateLimitingStepOf
+  categories:
+  - causal
+- name: causesNoChange
+  abbreviation: cnc
+  categories:
+  - causal
+- name: regulates
+  abbreviation: reg
+  categories:
+  - causal
+- name: negativeCorrelation
+  abbreviation: neg
+  categories:
+  - correlative
+- name: positiveCorrelation
+  abbreviation: pos
+  categories:
+  - correlative
+- name: association
+  abbreviation: "--"
+  categories:
+  - correlative
+- name: orthologous
+  abbreviation: orthologous
+  categories:
+  - genomic
+- name: transcribedTo
+  abbreviation: ":>"
+  categories:
+  - genomic
+- name: translatedTo
+  abbreviation: ">>"
+  categories:
+  - genomic
+- name: hasMember
+  abbreviation: hasMember
+  categories:
+  - computed
+- name: hasMembers
+  abbreviation: hasMembers
+  categories:
+  - computed
+- name: hasComponent
+  abbreviation: hasComponent
+  categories:
+  - computed
+- name: hasComponents
+  abbreviation: hasComponents
+  categories:
+  - computed
+- name: isA
+  abbreviation: isA
+  categories:
+  - computed
+- name: subProcessOf
+  abbreviation: subProcessOf
+  categories:
+  - XXX
+- name: analogous
+  abbreviation: analogous
+  categories:
+  - deprecated
+- name: biomarkerFor
+  abbreviation: biomarkerFor
+  categories:
+  - deprecated
+- name: prognosticBiomarkerFor
+  abbreviation: prognosticBiomarkerFor
+  categories:
+  - deprecated
+
+function_signatures:
+
+- name: abundance
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Abundance
+    - type: Modifier
+      values:
+      - location
+      - molecularActivity
+      optional: true
+
+- name: complexAbundance
+  func_type: primary
+  description: |
+    Can have multiple, named complexes (Entities of entity_type: Complex) as
+    well as multiple abundance or proteinAbundance function parameters with
+    a location Modifier.
+  signatures:
+  - parameters:
+    - type: Function
+      values:
+      - abundance
+      - proteinAbundance
+      optional: true
+      multiple: true
+    - type: Entity
+      values:
+      - Complex
+      multiple: true
+      optional: true
+    - type: Modifier
+      values:
+      - location
+      optional: true
+  notes: |
+    Cannot embed a complex function inside a complexAbundance function,
+    you can use named complexes inside complex functions
+
+- name: compositeAbundance
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Function
+      values:
+      - abundance
+      - proteinAbundance
+      - complexAbundance
+      optional: true
+      multiple: true
+    - type: Entity
+      values:
+      - Complex
+      - Abundance
+      - Protein
+      optional: true
+      multiple: true
+    - type: Modifier
+      values:
+      - location
+      optional: true
+  notes: Cannot embed a complex or composite function inside a compositeAbundance function, you
+    can use named complexes inside composite functions
+
+- name: geneAbundance
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Gene
+    - type: Modifier
+      values:
+      - location
+      optional: true
+    - type: Modifier
+      values:
+      - variant
+      optional: true
+      multiple: true
+  - parameters:
+    - type: Modifier
+      values:
+      - fusion
+      entity_types:
+      - Gene
+    - type: Modifier
+      values:
+      - location
+      optional: true
+    - type: Modifier
+      values:
+      - variant
+      optional: true
+      multiple: true
+
+- name: microRNAAbundance
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Micro_RNA
+    - type: Modifier
+      values:
+      - location
+      optional: true
+    - type: Modifier
+      values:
+      - variant
+      optional: true
+      multiple: true
+  - parameters:
+    - type: Modifier
+      values:
+      - fusion
+      entity_types:
+      - Micro_RNA
+    - type: Modifier
+      values:
+      - location
+      optional: true
+    - type: Modifier
+      values:
+      - variant
+      optional: true
+      multiple: true
+
+- name: proteinAbundance
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Protein
+    - type: Modifier
+      values:
+      - location
+      - fragment
+      - pmod
+      optional: true
+    - type: Modifier
+      values:
+      - variant
+      optional: true
+      multiple: true
+  - parameters:
+    - type: Modifier
+      values:
+      - fusion
+      entity_types:
+      - Protein
+    - type: Modifier
+      values:
+      - location
+      optional: true
+    - type: Modifier
+      values:
+      - variant
+      optional: true
+      multiple: true
+
+- name: rnaAbundance
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - RNA
+    - type: Modifier
+      values:
+      - location
+      optional: true
+    - type: Modifier
+      values:
+      - variant
+      optional: true
+      multiple: true
+  - parameters:
+    - type: Modifier
+      values:
+      - fusion
+      entity_types:
+      - RNA
+    - type: Modifier
+      values:
+      - location
+      optional: true
+    - type: Modifier
+      values:
+      - variant
+      optional: true
+      multiple: true
+
+- name: proteinModification
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - ProteinModification
+    - type: Entity
+      values:
+      - AminoAcid
+      optional: true
+    - type: String
+      description: Location of amino acid modified
+      values:
+      - /\d+/
+      optional: true
+
+- name: variant
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: String
+      description: HGVS variant string
+      values:
+      - /\S+/
+
+- name: fragment
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: String
+      description: range of fragment
+      values:
+      - /[\d\_\?\*]+/
+    - type: String
+      description: description of fragment
+      values:
+      - /.*?/
+
+- name: location
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: String
+      description: Cellular or Tissue Location of Abundance
+      values:
+      - Location
+
+- name: biologicalProcess
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - BiologicalProcess
+
+- name: pathology
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Pathology
+
+- name: activity
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Function
+      values:
+      - geneAbundance
+      - rnaAbundance
+      - microRNAAbundance
+      - proteinAbundance
+      - complexAbundance
+    - type: Modifier
+      values:
+      - molecularActivity
+
+- name: molecularActivity
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Activity
+
+- name: translocation
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Function
+      values:
+      - proteinAbundance
+      - rnaAbundance
+      - microRNAAbundance
+      - complexAbundance
+    - type: Modifier
+      values:
+      - fromLoc
+    - type: Modifier
+      values:
+      - toLoc
+
+- name: fromLoc
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Location
+
+- name: fromLoc
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Location
+
+- name: cellSecretion
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Function
+      values:
+      - proteinAbundance
+      - complexAbundance
+      - abundance
+
+- name: cellSurfaceExpression
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Function
+      values:
+      - proteinAbundance
+      - complexAbundance
+      - abundance
+
+- name: degradation
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Function
+      values:
+      - proteinAbundance
+      - complexAbundance
+      - microRNAAbundance
+      - rnaAbundance
+
+- name: reaction
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Modifier
+      values:
+      - reactants
+    - type: Modifier
+      values:
+      - products
+
+- name: reactants
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Abundance
+      - Protein
+      - RNA
+      multiple: true
+
+- name: products
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Abundance
+      - Protein
+      - RNA
+      multiple: true
+
+- name: fusion
+  func_type: modifier
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Gene
+      - RNA
+      - Micro_RNA
+      - Protein
+      description: First half of gene, RNA or protein fusion
+    - type: String
+      values:
+      - /\S+/
+      description: Range value for 5' end of fusion
+    - type: Entity
+      values:
+      - Gene
+      - RNA
+      - Micro_RNA
+      - Protein
+      description: Second half of gene, RNA or protein fusion
+    - type: String
+      values:
+      - /\S+/
+      description: Range value for 3' end of fusion
+
+- name: list
+  func_type: primary
+  signatures:
+  - parameters:
+    - type: Entity
+      values:
+      - Abundance
+      - Protein
+      - Gene
+      - RNA
+      - Micro_RNA
+      multiple: True
+      optional: True
+  - parameters:
+    - type: Function
+      values:
+      - proteinAbundance
+      - geneAbundance
+      - microRNAAbundance
+      - rnaAbundance
+      - complexAbundance
+      - abundance
+      multiple: True
+      optional: True
+
+default_namespaces:
+  protein_modifications:
+    type: ProteinModification
+    values:
+    - name: acetylation
+      abbreviation: Ac
+    - name: ADP-ribosylation
+      abbreviation: ADPRib
+    - name: farnesylation
+      abbreviation: Farn
+    - name: geranylgeranylation
+      abbreviation: Gerger
+    - name: glycosylation
+      abbreviation: Glyco
+    - name: hydroxylation
+      abbreviation: Hy
+    - name: ISG15-protein conjugation
+      abbreviation: ISG
+    - name: methylation
+      abbreviation: Me
+    - name: mono-methylation
+      abbreviation: Me1
+    - name: di-methylation
+      abbreviation: Me2
+    - name: tri-methylation
+      abbreviation: Me3
+    - name: myristoylation
+      abbreviation: Myr
+    - name: neddylation
+      abbreviation: Nedd
+    - name: N-linked glycosylation
+      abbreviation: NGlyco
+    - name: Nitrosylation
+      abbreviation: 'NO'
+    - name: O-linked glycosylation
+      abbreviation: OGlyco
+    - name: palmitoylation
+      abbreviation: Palm
+    - name: phosphorylation
+      abbreviation: Ph
+    - name: sulfonation
+      abbreviation: Sulf
+    - name: SUMOylation
+      abbreviation: Sumo
+    - name: ubiquitination
+      abbreviation: Ub
+    - name: Lysine 48-linked polyubiquitination
+      abbreviation: UbK48
+    - name: Lysine 63-linked polyubiquitination
+      abbreviation: UbK63
+    - name: mono-ubiquitination
+      abbreviation: UbMono
+    - name: poly-ubiquitination
+      abbreviation: UbPoly
+
+  amino_acids:
+    type: AminoAcid
+    values:
+    - name: Alanine
+      abbreviation: A
+    - name: Alanine
+      abbreviation: Ala
+    - name: Arginine
+      abbreviation: R
+    - name: Arginine
+      abbreviation: Arg
+    - name: Asparagine
+      abbreviation: N
+    - name: Asparagine
+      abbreviation: Asn
+    - name: Aspartic Acid
+      abbreviation: D
+    - name: Aspartic Acid
+      abbreviation: Asp
+    - name: Cysteine
+      abbreviation: C
+    - name: Cysteine
+      abbreviation: Cys
+    - name: Glutamic Acid
+      abbreviation: E
+    - name: Glutamic Acid
+      abbreviation: Glu
+    - name: Glutamine
+      abbreviation: Q
+    - name: Glutamine
+      abbreviation: Gln
+    - name: Glycine
+      abbreviation: G
+    - name: Glycine
+      abbreviation: Gly
+    - name: Histidine
+      abbreviation: H
+    - name: Histidine
+      abbreviation: His
+    - name: Isoleucine
+      abbreviation: I
+    - name: Isoleucine
+      abbreviation: Ile
+    - name: Leucine
+      abbreviation: L
+    - name: Leucine
+      abbreviation: Leu
+    - name: Lysine
+      abbreviation: K
+    - name: Lysine
+      abbreviation: Lys
+    - name: Methionine
+      abbreviation: M
+    - name: Methionine
+      abbreviation: Met
+    - name: Phenylalanine
+      abbreviation: F
+    - name: Phenylalanine
+      abbreviation: Phe
+    - name: Proline
+      abbreviation: P
+    - name: Proline
+      abbreviation: Pro
+    - name: Serine
+      abbreviation: S
+    - name: Serine
+      abbreviation: Ser
+    - name: Threonine
+      abbreviation: T
+    - name: Threonine
+      abbreviation: Thr
+    - name: Tryptophan
+      abbreviation: W
+    - name: Tryptophan
+      abbreviation: Trp
+    - name: Tyrosine
+      abbreviation: Y
+    - name: Tyrosine
+      abbreviation: Tyr
+    - name: Valine
+      abbreviation: V
+    - name: Valine
+      abbreviation: Val
+
+  molecular_activity:
+    type: Activity
+    values:
+    - name: catalyticActivity
+      abbreviation: cat
+    - name: chaperoneActivity
+      abbreviation: chap
+    - name: gtpBoundActivity
+      abbreviation: gtp
+    - name: kinaseActivity
+      abbreviation: kin
+    - name: molecularActivity
+      abbreviation: act
+    - name: peptidaseActivity
+      abbreviation: pep
+    - name: phosphataseActivity
+      abbreviation: phos
+    - name: ribosylationActivity
+      abbreviation: ribo
+    - name: transcriptionalActivity
+      abbreviation: tscript
+    - name: transportActivity
+      abbreviation: tport
+
+bel1_migration:
+  amino_acids:
+  - bel1: P
+    bel2: Ph
+  - bel1: A
+    bel2: Ac
+  - bel1: F
+    bel2: Farn
+  - bel1: G
+    bel2: Glyco
+  - bel1: H
+    bel2: Hy
+  - bel1: M
+    bel2: Me
+  - bel1: R
+    bel2: ADPRib
+  - bel1: S
+    bel2: Sumo
+  - bel1: U
+    bel2: Ub
