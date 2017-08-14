@@ -20,6 +20,8 @@
 
 import os
 import sys
+import sphinx_rtd_theme
+
 
 path = os.path.abspath('../belpy')
 print(path)
@@ -83,21 +85,21 @@ todo_include_todos = False
 
 # -- Options for HTML output ----------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'alabaster'
+# html_theme = 'alabaster'
+# html_theme_options = {
+#     'description': 'A Python library that allows biologists and developers to parse, generate, test, and validate BEL statements.',
+#     'github_user': 'belbio',
+#     'github_repo': 'bel.py',
+#     'github_button': True,
+#     'fixed_sidebar': True,
+# }
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-
+html_theme = "sphinx_rtd_theme"
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_theme_options = {
-    'description': 'A Python library that allows biologists and developers to parse, generate, test, and validate BEL statements.',
-    'github_user': 'belbio',
-    'github_repo': 'bel.py',
-    'github_button': True,
-    'fixed_sidebar': True,
+    'collapse_navigation': False,
+    'display_version': False,
+    'navigation_depth': 3,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
