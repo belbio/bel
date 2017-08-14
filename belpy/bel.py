@@ -251,3 +251,30 @@ def suggest(partial: str, value_type: str, version: str = '2.0.0'):
         suggestions = []
 
     return suggestions
+
+
+def canonicalize(ast: AST, version: str = '2.0.0'):
+    # TODO: this definition
+    """
+    Takes an AST and returns a canonicalized BEL statement string
+
+    Args:
+        ast (AST): BEL AST
+        version (str): language version; defaults to config specification
+
+    Returns:
+        str: The canonicalized string generated from the AST.
+    """
+
+def computed(ast: AST, version: str = '2.0.0'):
+    # TODO: this definition
+    """
+    Takes an AST and computes all canonicalized edges
+
+    Args:
+        ast (AST): BEL AST
+        version (str): language version; defaults to config specification
+
+    Returns:
+        list:  List of canonicalized computed edges to load into the EdgeStore.
+    """
