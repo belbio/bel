@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Introduction
-============
+------------
 
 Welcome to belpy's documentation.
 
@@ -13,10 +13,11 @@ Welcome to belpy's documentation.
    :caption: Contents:
 
 Functions
-=========
+---------
 
 .. automodule:: bel
    :members:
 
-Miscellaneous
-=============
+Misc
+----
+
