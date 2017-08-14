@@ -50,8 +50,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'belpy'
-copyright = '2017, DC, WH'
-author = 'DC, WH'
+copyright = '2017, William Hayes, David Chen'
+author = 'William Hayes, David Chen'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -152,7 +152,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'belpy.tex', 'belpy Documentation',
-     'DC, WH', 'manual'),
+     'William Hayes, David Chen', 'manual'),
 ]
 
 
