@@ -4,6 +4,9 @@ import os
 from tatsu.exceptions import FailedParse
 from tatsu.ast import AST
 
+import sys
+sys.path.append('../')
+
 from belpy.semantics import BELSemantics
 from belpy.tools import TestBELStatementGenerator, ValidationObject, ParseObject
 from belpy.tools import preprocess_bel_line, handle_syntax_error, decode
