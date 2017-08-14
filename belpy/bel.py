@@ -114,6 +114,7 @@ def create(count: int = 1, max_params: int = 3, version: str = '2.0.0'):
 
     Args:
         count (int): the number of statements to create; defaults to 1
+        max_params (int): max number of params each function can take (a large number may exceed recursive depth)
         version (str): language version; defaults to config specification
 
     Returns:
