@@ -14,56 +14,107 @@ from belpy.tools import preprocess_bel_line, handle_syntax_error, decode
 
 
 class BEL(object):
+    """The summary line for a class docstring should fit on one line.
+
+    If the class has public attributes, they may be documented here
+    in an ``Attributes`` section and follow the same formatting as a
+    function's ``Args`` section. Alternatively, attributes may be documented
+    inline with the attribute's declaration (see __init__ method below).
+
+    Properties created with the ``@property`` decorator should be documented
+    in the property's getter method.
+
+    Attributes:
+        attr1 (str): Description of `attr1`.
+        attr2 (:obj:`int`, optional): Description of `attr2`.
+
+    """
+
     def __init__(self, version: str, strict: bool, endpoint: str):
+        """Example of docstring on the __init__ method.
+
+        The __init__ method may be documented in either the class level
+        docstring, or as a docstring on the __init__ method itself.
+
+        Either form is acceptable, but the two should not be mixed. Choose one
+        convention to document the __init__ method and be consistent with it.
+
+        Note:
+            Do not include the `self` parameter in the ``Args`` section.
+
+        Args:
+            param1 (str): Description of `param1`.
+            param2 (:obj:`int`, optional): Description of `param2`. Multiple
+                lines are supported.
+            param3 (list(str)): Description of `param3`.
+
+        """
         self.version = version
         self.strict = strict
         self.endpoint = endpoint
 
-    def parse(self, statement: str, version: str = '2.0.0', strict: bool = False):
-        """
-        Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in ParseObject.error and ParseObject.visual_err.
+    def example_method(self, param1, param2):
+        """Class methods are similar to regular functions.
+
+        Note:
+            Do not include the `self` parameter in the ``Args`` section.
 
         Args:
-            statement (str): BEL statement
-            version (str): language version; defaults to config specification
-            strict (bool): specify to use strict or loose parsing; defaults to loose
+            param1: The first parameter.
+            param2: The second parameter.
 
         Returns:
-            ParseObject: The ParseObject which contain either an AST or error messages.
+            True if successful, False otherwise.
+
         """
+        return True
 
-        ast = None
-        error = None
-        err_visual = None
 
-        if statement == '':
-            error = 'Please include a valid BEL statement.'
-            return ParseObject(ast, error, err_visual)
+def parse(self, statement: str, version: str = '2.0.0', strict: bool = False):
+    """
+    Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in ParseObject.error and ParseObject.visual_err.
 
-        statement = preprocess_bel_line(statement)
+    Args:
+        statement (str): BEL statement
+        version (str): language version; defaults to config specification
+        strict (bool): specify to use strict or loose parsing; defaults to loose
 
-        version_dots_as_underscores = version.replace('.', '_')
-        # import based on what version is wanted
-        try:
-            cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
-            imported = importlib.import_module(
-                '{}.versions.parser_v{}'.format(cur_dir_name, version_dots_as_underscores))
-            parser = imported.BELParser()
-        except Exception as e:
-            error = 'No parser found for BEL v{}!'.format(version)
-            return ParseObject(ast, error, err_visual)
+    Returns:
+        ParseObject: The ParseObject which contain either an AST or error messages.
+    """
 
-        semantics = BELSemantics()
+    ast = None
+    error = None
+    err_visual = None
 
-        try:
-            ast = parser.parse(statement, rule_name='start', semantics=semantics, trace=False, parseinfo=False)
-        except FailedParse as e:
-            error, err_visual = handle_syntax_error(e)
-        except Exception as e:
-            print(e)
-            print(type(e))
-
+    if statement == '':
+        error = 'Please include a valid BEL statement.'
         return ParseObject(ast, error, err_visual)
+
+    statement = preprocess_bel_line(statement)
+
+    version_dots_as_underscores = version.replace('.', '_')
+    # import based on what version is wanted
+    try:
+        cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
+        imported = importlib.import_module(
+            '{}.versions.parser_v{}'.format(cur_dir_name, version_dots_as_underscores))
+        parser = imported.BELParser()
+    except Exception as e:
+        error = 'No parser found for BEL v{}!'.format(version)
+        return ParseObject(ast, error, err_visual)
+
+    semantics = BELSemantics()
+
+    try:
+        ast = parser.parse(statement, rule_name='start', semantics=semantics, trace=False, parseinfo=False)
+    except FailedParse as e:
+        error, err_visual = handle_syntax_error(e)
+    except Exception as e:
+        print(e)
+        print(type(e))
+
+    return ParseObject(ast, error, err_visual)
 
 
 def stmt_components(statement: str, version: str = '2.0.0'):
