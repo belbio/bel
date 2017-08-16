@@ -19,6 +19,8 @@ Functions
    :members:
 
 .. autoclass:: BEL
+   :members:
+
 
 Misc
 ----
