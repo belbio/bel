@@ -16,7 +16,7 @@ Functions
 ---------
 
 .. automodule:: bel
-   :members:
+   :members: ast_components, canonicalize, computed, create, flatten, load, parse, stmt_components, suggest, validate
 
 Classes
 -------
