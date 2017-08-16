@@ -19,7 +19,7 @@ class BEL(object):
         self.strict = strict
         self.endpoint = endpoint
 
-    def parse(statement: str, version: str = '2.0.0', strict: bool = False):
+    def parse(self, statement: str, version: str = '2.0.0', strict: bool = False):
         """
         Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in ParseObject.error and ParseObject.visual_err.
 
