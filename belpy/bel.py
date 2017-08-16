@@ -11,9 +11,6 @@ from belpy.semantics import BELSemantics
 from belpy.tools import TestBELStatementGenerator, ValidationObject, ParseObject
 from belpy.tools import preprocess_bel_line, handle_syntax_error, decode
 
-def sphinx_doc_test():
-    return
-
 
 def parse(statement: str, version: str = '2.0.0', strict: bool = False):
     """
