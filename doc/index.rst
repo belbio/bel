@@ -18,6 +18,9 @@ Functions
 .. automodule:: bel
    :members:
 
+Classes
+-------
+
 .. autoclass:: BEL
    :members:
 

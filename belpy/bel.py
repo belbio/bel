@@ -5,6 +5,7 @@ from tatsu.exceptions import FailedParse
 from tatsu.ast import AST
 
 import sys
+
 sys.path.append('../')
 
 from belpy.semantics import BELSemantics
@@ -13,7 +14,6 @@ from belpy.tools import preprocess_bel_line, handle_syntax_error, decode
 
 
 class BEL(object):
-
     def __init__(self, version: str, strict: bool, endpoint: str):
         self.version = version
         self.strict = strict
@@ -46,7 +46,8 @@ class BEL(object):
         # import based on what version is wanted
         try:
             cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
-            imported = importlib.import_module('{}.versions.parser_v{}'.format(cur_dir_name, version_dots_as_underscores))
+            imported = importlib.import_module(
+                '{}.versions.parser_v{}'.format(cur_dir_name, version_dots_as_underscores))
             parser = imported.BELParser()
         except Exception as e:
             error = 'No parser found for BEL v{}!'.format(version)
@@ -274,6 +275,7 @@ def canonicalize(ast: AST, version: str = '2.0.0'):
     Returns:
         str: The canonicalized string generated from the AST.
     """
+
 
 def computed(ast: AST, version: str = '2.0.0'):
     # TODO: this definition
