@@ -12,51 +12,57 @@ from belpy.tools import TestBELStatementGenerator, ValidationObject, ParseObject
 from belpy.tools import preprocess_bel_line, handle_syntax_error, decode
 
 
-def parse(statement: str, version: str = '2.0.0', strict: bool = False):
-    """
-    Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in ParseObject.error and
-    ParseObject.visual_err.
+class BEL(object):
 
-    Args:
-        statement (str): BEL statement
-        version (str): language version; defaults to config specification
-        strict (bool): specify to use strict or loose parsing; defaults to loose
+    def __init__(self, version: str, strict: bool, endpoint: str):
+        self.version = version
+        self.strict = strict
+        self.endpoint = endpoint
 
-    Returns:
-        ParseObject: The ParseObject which contain either an AST or error messages.
-    """
+    def parse(statement: str, version: str = '2.0.0', strict: bool = False):
+        """
+        Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in ParseObject.error and ParseObject.visual_err.
 
-    ast = None
-    error = None
-    err_visual = None
+        Args:
+            statement (str): BEL statement
+            version (str): language version; defaults to config specification
+            strict (bool): specify to use strict or loose parsing; defaults to loose
 
-    if statement == '':
-        error = 'Please include a valid BEL statement.'
+        Returns:
+            ParseObject: The ParseObject which contain either an AST or error messages.
+        """
+
+        ast = None
+        error = None
+        err_visual = None
+
+        if statement == '':
+            error = 'Please include a valid BEL statement.'
+            return ParseObject(ast, error, err_visual)
+
+        statement = preprocess_bel_line(statement)
+
+        version_dots_as_underscores = version.replace('.', '_')
+        # import based on what version is wanted
+        try:
+            cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
+            imported = importlib.import_module('{}.versions.parser_v{}'.format(cur_dir_name, version_dots_as_underscores))
+            parser = imported.BELParser()
+        except Exception as e:
+            error = 'No parser found for BEL v{}!'.format(version)
+            return ParseObject(ast, error, err_visual)
+
+        semantics = BELSemantics()
+
+        try:
+            ast = parser.parse(statement, rule_name='start', semantics=semantics, trace=False, parseinfo=False)
+        except FailedParse as e:
+            error, err_visual = handle_syntax_error(e)
+        except Exception as e:
+            print(e)
+            print(type(e))
+
         return ParseObject(ast, error, err_visual)
-
-    statement = preprocess_bel_line(statement)
-
-    version_dots_as_underscores = version.replace('.', '_')
-    # import based on what version is wanted
-    try:
-        cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
-        imported = importlib.import_module('{}.versions.parser_v{}'.format(cur_dir_name, version_dots_as_underscores))
-        parser = imported.BELParser()
-    except Exception as e:
-        error = 'No parser found for BEL v{}!'.format(version)
-        return ParseObject(ast, error, err_visual)
-
-    semantics = BELSemantics()
-
-    try:
-        ast = parser.parse(statement, rule_name='start', semantics=semantics, trace=False, parseinfo=False)
-    except FailedParse as e:
-        error, err_visual = handle_syntax_error(e)
-    except Exception as e:
-        print(e)
-        print(type(e))
-
-    return ParseObject(ast, error, err_visual)
 
 
 def stmt_components(statement: str, version: str = '2.0.0'):
