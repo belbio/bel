@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='belpy',
-      version='1.0',
+      version='1.0.0',
       description='BEL parsing and manipulation library',
       url='https://github.com/belbio/belpy',
       author='William Hayes, David Chen',
