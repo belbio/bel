@@ -4,8 +4,8 @@ class InvalidParameter(Exception):
 
 
 class ParameterMissing(Exception):
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, function):
+        self.message = 'There are no parameters given to {}().'.format(function)
 
 
 class NoValidSignature(Exception):
@@ -14,8 +14,8 @@ class NoValidSignature(Exception):
 
 
 class InvalidRelationship(Exception):
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, given_r):
+        self.message = '\"{}\" is not a defined relationship.'.format(given_r)
 
 
 class MissingParenthesis(Exception):

@@ -190,7 +190,8 @@ class BELSemantics(object):
 
         # check if at least one parameter is given
         if not args_given:
-            raise ParameterMissing('There are no parameters given to {}().'.format(fn_given))
+
+            raise ParameterMissing(fn_given)
 
         valid_sigs = self.function_signatures.get(fn_given, [])
         given_param_list = self.args_to_given_sig_list(args_given)
@@ -273,7 +274,7 @@ class BELSemantics(object):
     def check_valid_relationship(self, given):
 
         if given not in self.relationships:
-            raise InvalidRelationship('\"{}\" is not a defined relationship.'.format(given))
+            raise InvalidRelationship(given)
 
         return
 
