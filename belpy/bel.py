@@ -26,7 +26,7 @@ class BEL(object):
     in the property's getter method.
 
     Attributes:
-        attr1 (str): Description of `attr1`.
+        attr1 (:obj:`str`): Description of `attr1`.
         attr2 (:obj:`int`, optional): Description of `attr2`.
 
     """
@@ -44,8 +44,11 @@ class BEL(object):
             Do not include the `self` parameter in the ``Args`` section.
 
         Args:
-            version (str): language version; defaults to config specification
+            version (str): BEL language version
             endpoint (str): URI of TermStore endpoint
+
+            version (:obj:`str`): BEL language version
+            endpoint (:obj:`str`): URI of TermStore endpoint
 
         """
         self.version = version
@@ -106,7 +109,7 @@ class BEL(object):
 
         Args:
             statement (str): BEL statement
-            version (str): language version; defaults to config specification
+            version (str): language version
 
         Returns:
             dict: The dictionary that contains the components as its values.
