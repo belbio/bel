@@ -11,6 +11,7 @@ sys.path.append('../')
 from belpy.semantics import BELSemantics
 from belpy.tools import TestBELStatementGenerator, ValidationObject, ParseObject
 from belpy.tools import preprocess_bel_line, handle_syntax_error, decode
+from belpy.exceptions import *
 
 
 class BEL(object):
@@ -30,7 +31,7 @@ class BEL(object):
 
     """
 
-    def __init__(self, version: str, strict: bool, endpoint: str):
+    def __init__(self, version: str, endpoint: str):
         """Example of docstring on the __init__ method.
 
         The __init__ method may be documented in either the class level
@@ -43,300 +44,270 @@ class BEL(object):
             Do not include the `self` parameter in the ``Args`` section.
 
         Args:
-            param1 (str): Description of `param1`.
-            param2 (:obj:`int`, optional): Description of `param2`. Multiple
-                lines are supported.
-            param3 (list(str)): Description of `param3`.
+            version (str): language version; defaults to config specification
+            endpoint (str): URI of TermStore endpoint
 
         """
         self.version = version
-        self.strict = strict
         self.endpoint = endpoint
 
-    def example_method(self, param1, param2):
-        """Class methods are similar to regular functions.
+        self.version_dots_as_underscores = version.replace('.', '_')
+        self.semantics = BELSemantics()
 
-        Note:
-            Do not include the `self` parameter in the ``Args`` section.
+        cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
+        parser_dir = '{}.versions.parser_v{}'.format(cur_dir_name, self.version_dots_as_underscores)
+
+        try:
+            imported = importlib.import_module(parser_dir)
+            self.parser = imported.BELParser()
+        except Exception as e:
+            raise NoParserFound(version)
+
+
+    def parse(self, statement: str, strict: bool = False):
+        """
+        Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (
+        AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in
+        ParseObject.error and ParseObject.visual_err.
 
         Args:
-            param1: The first parameter.
-            param2: The second parameter.
+            statement (str): BEL statement
+            strict (bool): specify to use strict or loose parsing; defaults to loose
 
         Returns:
-            True if successful, False otherwise.
-
+            ParseObject: The ParseObject which contain either an AST or error messages.
         """
-        return True
 
+        ast = None
+        error = None
+        err_visual = None
 
-def parse(self, statement: str, version: str = '2.0.0', strict: bool = False):
-    """
-    Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in ParseObject.error and ParseObject.visual_err.
+        if statement == '':
+            error = 'Please include a valid BEL statement.'
+            return ParseObject(ast, error, err_visual)
 
-    Args:
-        statement (str): BEL statement
-        version (str): language version; defaults to config specification
-        strict (bool): specify to use strict or loose parsing; defaults to loose
+        statement = preprocess_bel_line(statement)
 
-    Returns:
-        ParseObject: The ParseObject which contain either an AST or error messages.
-    """
+        try:
+            ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False,
+                                    parseinfo=False)
+        except FailedParse as e:
+            error, err_visual = handle_syntax_error(e)
+        except Exception as e:
+            print(e)
+            print(type(e))
 
-    ast = None
-    error = None
-    err_visual = None
-
-    if statement == '':
-        error = 'Please include a valid BEL statement.'
         return ParseObject(ast, error, err_visual)
 
-    statement = preprocess_bel_line(statement)
+    def stmt_components(self, statement: str):
+        """
+        Returns the components of a BEL statement as values within a dictionary under the keys 'subject',
+        'relationship', and 'object'.
 
-    version_dots_as_underscores = version.replace('.', '_')
-    # import based on what version is wanted
-    try:
-        cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
-        imported = importlib.import_module(
-            '{}.versions.parser_v{}'.format(cur_dir_name, version_dots_as_underscores))
-        parser = imported.BELParser()
-    except Exception as e:
-        error = 'No parser found for BEL v{}!'.format(version)
-        return ParseObject(ast, error, err_visual)
+        Args:
+            statement (str): BEL statement
+            version (str): language version; defaults to config specification
 
-    semantics = BELSemantics()
+        Returns:
+            dict: The dictionary that contains the components as its values.
+        """
 
-    try:
-        ast = parser.parse(statement, rule_name='start', semantics=semantics, trace=False, parseinfo=False)
-    except FailedParse as e:
-        error, err_visual = handle_syntax_error(e)
-    except Exception as e:
-        print(e)
-        print(type(e))
+        components_dict = dict.fromkeys(['object', 'relationship', 'subject'])
+        p = self.parse(statement)
+        ast = p.ast
 
-    return ParseObject(ast, error, err_visual)
+        if ast is None:
+            components_dict['object'] = None
+            components_dict['relationship'] = None
+            components_dict['subject'] = None
+            print(p.error)
+            print(p.err_visual)
+        else:
+            components_dict['object'] = ast.get('object', None)
+            components_dict['relationship'] = ast.get('relationship', None)
+            components_dict['subject'] = ast.get('subject', None)
 
+        return components_dict
 
-def stmt_components(statement: str, version: str = '2.0.0'):
-    """
-    Returns the components of a BEL statement as values within a dictionary under the keys 'subject', 'relationship', and 'object'.
+    def ast_components(self, ast: AST):
+        """
+        Returns the components of a BEL AST as values within a dictionary under the keys 'subject', 'relationship',
+        and 'object'.
 
-    Args:
-        statement (str): BEL statement
-        version (str): language version; defaults to config specification
+        Args:
+            ast (AST): BEL AST
 
-    Returns:
-        dict: The dictionary that contains the components as its values.
-    """
+        Returns:
+            dict: The dictionary that contains the components as its values.
+        """
 
-    components_dict = dict.fromkeys(['object', 'relationship', 'subject'])
-    p = parse(statement, version=version)
-    ast = p.ast
-
-    if ast is None:
-        components_dict['object'] = None
-        components_dict['relationship'] = None
-        components_dict['subject'] = None
-        print(p.error)
-        print(p.err_visual)
-    else:
-        components_dict['object'] = ast.get('object', None)
-        components_dict['relationship'] = ast.get('relationship', None)
+        components_dict = {}
         components_dict['subject'] = ast.get('subject', None)
 
-    return components_dict
+        if ast.get('relationship', None) is not None:
+            components_dict['object'] = ast.get('object', None)
+            components_dict['relationship'] = ast.get('relationship', None)
 
+        return components_dict
 
-def ast_components(ast: AST, version: str = '2.0.0'):
-    """
-    Returns the components of a BEL AST as values within a dictionary under the keys 'subject', 'relationship', and 'object'.
+    def _create(self, count: int = 1, max_params: int = 3):
+        """
+        Creates a specified number of invalid BEL statement objects for testing purposes.
 
-    Args:
-        ast (AST): BEL AST
-        version (str): language version; defaults to config specification
+        Args:
+            count (int): the number of statements to create; defaults to 1
+            max_params (int): max number of params each function can take (a large number may exceed recursive depth)
 
-    Returns:
-        dict: The dictionary that contains the components as its values.
-    """
+        Returns:
+            list: A list of BEL statement objects.
+        """
 
-    components_dict = {}
-    components_dict['subject'] = ast.get('subject', None)
+        list_of_bel_stmt_objs = []
 
-    if ast.get('relationship', None) is not None:
-        components_dict['object'] = ast.get('object', None)
-        components_dict['relationship'] = ast.get('relationship', None)
+        # if user specifies < 1 test statements, do as he/she wishes
+        if count < 1:
+            return list_of_bel_stmt_objs
 
-    return components_dict
+        generator = TestBELStatementGenerator(version=self.version)
 
+        for _ in range(count):  # each loop makes one invalid statement
+            s = generator.make_statement(max_params)
+            list_of_bel_stmt_objs.append(s)
 
-def create(count: int = 1, max_params: int = 3, version: str = '2.0.0'):
-    """
-    Creates a specified number of invalid BEL statement objects for testing purposes.
-
-    Args:
-        count (int): the number of statements to create; defaults to 1
-        max_params (int): max number of params each function can take (a large number may exceed recursive depth)
-        version (str): language version; defaults to config specification
-
-    Returns:
-        list: A list of BEL statement objects.
-    """
-
-    list_of_bel_stmt_objs = []
-
-    # if user specifies < 1 test statements, do as he/she wishes
-    if count < 1:
         return list_of_bel_stmt_objs
 
-    generator = TestBELStatementGenerator(version=version)
+    def flatten(self, ast: AST):
+        """
+        Takes an AST and flattens it into a BEL statement string.
 
-    for _ in range(count):  # each loop makes one invalid statement
-        s = generator.make_statement(max_params)
-        list_of_bel_stmt_objs.append(s)
+        Args:
+            ast (AST): BEL AST
 
-    return list_of_bel_stmt_objs
+        Returns:
+            str: The string generated from the AST.
+        """
+        s = ast.get('subject', None)
+        r = ast.get('relationship', None)
+        o = ast.get('object', None)
 
+        if r is None:  # if no relationship, this means only subject is present
+            sub = decode(s)
+            final = '{}'.format(sub)
+        else:  # else the full form BEL statement with subject, relationship, and object are present
+            sub = decode(s)
+            obj = decode(o)
+            final = '{} {} {}'.format(sub, r, obj)
 
-def flatten(ast: AST, version: str = '2.0.0'):
-    """
-    Takes an AST and flattens it into a BEL statement string.
+        return final
 
-    Args:
-        ast (AST): BEL AST
-        version (str): language version; defaults to config specification
+    def load(self, filename: str, loadn: int = -1, preprocess: bool = False):
+        """
+        Reads a text file of BEL statements separated by newlines, and returns an array of the BEL statement strings.
 
-    Returns:
-        str: The string generated from the AST.
-    """
-    s = ast.get('subject', None)
-    r = ast.get('relationship', None)
-    o = ast.get('object', None)
+        Args:
+            filename (str): location/name of the text file
+            loadn (int): how many statements to load from the file. If unspecified, all are loaded
+            preprocess (bool): denote whether or not to run each statement through the preprocessor
 
-    if r is None:  # if no relationship, this means only subject is present
-        sub = decode(s)
-        final = '{}'.format(sub)
-    else:  # else the full form BEL statement with subject, relationship, and object are present
-        sub = decode(s)
-        obj = decode(o)
-        final = '{} {} {}'.format(sub, r, obj)
+        Returns:
+            list: The list of statement strings.
+        """
+        stmts = []
 
-    return final
+        f = open(filename)
+        lcount = 0
 
+        for line in f:
 
-def load(filename: str, loadn: int = -1, preprocess: bool = False):
-    """
-    Reads a text file of BEL statements separated by newlines, and returns an array of the BEL statement strings.
+            if lcount == loadn:  # once number of lines processed equals user specified, then stop
+                break
 
-    Args:
-        filename (str): location/name of the text file
-        loadn (int): how many statements to load from the file. If unspecified, all are loaded
-        preprocess (bool): denote whether or not to run each statement through the preprocessor
+            if preprocess:
+                line = preprocess_bel_line(line)
+            else:
+                line = line.strip()
 
-    Returns:
-        list: The list of statement strings.
-    """
-    stmts = []
+            stmts.append(line)
+            lcount += 1
 
-    f = open(filename)
-    lcount = 0
+        f.close()
 
-    for line in f:
+        return stmts
 
-        if lcount == loadn:  # once number of lines processed equals user specified, then stop
-            break
+    def validate(self, statement: str, version: str = '2.0.0', strict: bool = False):
+        """
+        Validates a BEL statement and returns a ValidationObject.
 
-        if preprocess:
-            line = preprocess_bel_line(line)
+        Args:
+            statement (str): BEL statement
+            strict (bool): specify to use strict or loose parsing; defaults to loose
+
+        Returns:
+            ValidationObject: The ValidationObject which contain either an AST or error messages, and valid boolean.
+
+        """
+
+        # TODO: strict/loose validation
+        p = self.parse(statement)
+
+        if p.ast is None:
+            valid = False
         else:
-            line = line.strip()
+            valid = True
 
-        stmts.append(line)
-        lcount += 1
+        return ValidationObject(p.ast, p.error, p.err_visual, valid)
 
-    f.close()
+    def suggest(self, partial: str, value_type: str):
+        """
+        Takes a partially completed function, modifier function, or a relationship and suggest a fuzzy match out of
+        all available options.
 
-    return stmts
+        Args:
+            partial (str): the partial string
+            value_type (str): value type (function, modifier function, or relationship; makes sure we match with
+            right list)
 
+        Returns:
+            list: A list of suggested values.
+        """
 
-def validate(statement: str, version: str = '2.0.0', strict: bool = False):
-    """
-    Validates a BEL statement and returns a ValidationObject.
-
-    Args:
-        statement (str): BEL statement
-        version (str): language version; defaults to config specification
-        strict (bool): specify to use strict or loose parsing; defaults to loose
-
-    Returns:
-        ValidationObject: The ValidationObject which contain either an AST or error messages, and valid boolean.
-
-    """
-
-    # TODO: strict/loose validation
-    p = parse(statement, version=version)
-
-    if p.ast is None:
-        valid = False
-    else:
-        valid = True
-
-    return ValidationObject(p.ast, p.error, p.err_visual, valid)
-
-
-def suggest(partial: str, value_type: str, version: str = '2.0.0'):
-    """
-    Takes a partially completed function, modifier function, or a relationship and suggest a fuzzy match out of
-    all available options.
-
-    Args:
-        partial (str): the partial string
-        value_type (str): value type (function, modifier function, or relationship; makes sure we match with right list)
-        version (str): language version; defaults to config specification
-
-    Returns:
-        list: A list of suggested values.
-    """
-
-    suggestions = []
-    # TODO: get the following list of things - initialize YAML into this library so we can grab all funcs, mfuncs, and r.
-    if value_type == 'function':
         suggestions = []
+        # TODO: get the following list of things - initialize YAML into this library so we can grab all funcs,
+        # mfuncs, and r.
+        if value_type == 'function':
+            suggestions = []
 
-    elif value_type == 'mfunction':
-        suggestions = []
+        elif value_type == 'mfunction':
+            suggestions = []
 
-    elif value_type == 'relationship':
-        suggestions = []
+        elif value_type == 'relationship':
+            suggestions = []
 
-    else:
-        suggestions = []
+        else:
+            suggestions = []
 
-    return suggestions
+        return suggestions
 
+    def canonicalize(self, ast: AST):
+        # TODO: this definition
+        """
+        Takes an AST and returns a canonicalized BEL statement string
 
-def canonicalize(ast: AST, version: str = '2.0.0'):
-    # TODO: this definition
-    """
-    Takes an AST and returns a canonicalized BEL statement string
+        Args:
+            ast (AST): BEL AST
 
-    Args:
-        ast (AST): BEL AST
-        version (str): language version; defaults to config specification
+        Returns:
+            str: The canonicalized string generated from the AST.
+        """
 
-    Returns:
-        str: The canonicalized string generated from the AST.
-    """
+    def computed(self, ast: AST):
+        # TODO: this definition
+        """
+        Takes an AST and computes all canonicalized edges
 
+        Args:
+            ast (AST): BEL AST
 
-def computed(ast: AST, version: str = '2.0.0'):
-    # TODO: this definition
-    """
-    Takes an AST and computes all canonicalized edges
-
-    Args:
-        ast (AST): BEL AST
-        version (str): language version; defaults to config specification
-
-    Returns:
-        list:  List of canonicalized computed edges to load into the EdgeStore.
-    """
+        Returns:
+            list:  List of canonicalized computed edges to load into the EdgeStore.
+        """

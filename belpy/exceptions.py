@@ -21,3 +21,8 @@ class InvalidRelationship(Exception):
 class MissingParenthesis(Exception):
     def __init__(self, message):
         self.message = message
+
+
+class NoParserFound(Exception):
+    def __init__(self, version):
+        self.message = 'No parser found for BEL v{}!'.format(version)

@@ -277,7 +277,22 @@ def decode(dict):
                 tmp.append(decode(m_arg_dict))
 
             return '{}({})'.format(m_f_name, ', '.join(tmp))
+        elif key == 'bel_statement':
+            new_ast = value
 
+            s = new_ast.get('subject', None)
+            r = new_ast.get('relationship', None)
+            o = new_ast.get('object', None)
+
+            if r is None:  # if no relationship, this means only subject is present
+                sub = decode(s)
+                final = '({})'.format(sub)
+            else:  # else the full form BEL statement with subject, relationship, and object are present
+                sub = decode(s)
+                obj = decode(o)
+                final = '({} {} {})'.format(sub, r, obj)
+
+                return final
         else:
             print('**************************************')
 
