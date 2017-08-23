@@ -237,7 +237,7 @@ class BEL(object):
 
         return stmts
 
-    def validate(self, statement: str, version: str = '2.0.0', strict: bool = False):
+    def validate(self, statement: str, strict: bool = False):
         """
         Validates a BEL statement and returns a ValidationObject.
 
