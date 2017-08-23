@@ -294,7 +294,98 @@ def decode(dict):
 
                 return final
         else:
+            pass
             print('**************************************')
+
+
+def compute(dict):
+
+    for key, value in dict.items():
+
+        tmp_list = []
+
+        if key == 'function':
+            f_name = value
+            f_args = dict.get('function_args', [])
+
+            tmp = []
+            formatted = ''
+            flattened_func = ''
+            mod_found = False
+
+            for arg_dict in f_args:
+                tmp.append(decode(arg_dict))
+
+                if 'm_function' in arg_dict: # if there is a modifier function contained in the parent function
+
+                    if arg_dict['m_function'] == 'var':
+                        formatted = '{} hasVariant {}'
+                        flattened_func = '{}({})'.format(f_name, decode(f_args[0]))
+                        mod_found = True
+
+                    elif arg_dict['m_function'] == 'pmod':
+                        formatted = '{} hasModification {}'
+                        flattened_func = '{}({})'.format(f_name, decode(f_args[0]))
+                        mod_found = True
+
+
+                    full = formatted.format(flattened_func, decode(dict))
+                    tmp_list.append(full)
+
+            if mod_found:
+                return tmp_list
+
+            if f_name == 'list':
+                formatted = '{0} hasMember {1}'
+            elif f_name == 'composite':
+                formatted = '{0} hasMember {1}'
+            elif f_name == 'complex':
+                formatted = '{0} hasComponent {1}'
+            elif f_name == 'deg':
+                formatted = '{0} directlyDecreases {1}'
+            elif f_name == 'act':
+                formatted = '{1} hasActivity {0}'
+
+            for arg in f_args:
+                if 'm_function' in arg:
+                    continue
+                edge = formatted.format(decode(dict), decode(arg))
+                tmp_list.append(edge)
+        else:
+            continue
+
+
+        return tmp_list
+
+        # elif key == 'm_function':
+        #     m_f_name = value
+        #     m_f_args = dict.get('m_function_args', [])
+        #
+        #     if m_f_name == 'var':
+        #         formatted = '{1} hasVariant {0}'
+        #         for arg_dict in m_f_args:
+        #             tmp.append(decode(arg_dict))
+        #
+        #         print(m_f_args)
+        #
+        # elif key == 'bel_statement':
+        #     new_ast = value
+        #
+        #     s = new_ast.get('subject', None)
+        #     r = new_ast.get('relationship', None)
+        #     o = new_ast.get('object', None)
+        #
+        #     if r is None:  # if no relationship, this means only subject is present
+        #         sub = decode(s)
+        #         final = '({})'.format(sub)
+        #     else:  # else the full form BEL statement with subject, relationship, and object are present
+        #         sub = decode(s)
+        #         obj = decode(o)
+        #         final = '({} {} {})'.format(sub, r, obj)
+        #
+        #         return final
+        # else:
+        #     print('**************************************')
 
 
 #################

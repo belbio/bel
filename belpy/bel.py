@@ -10,7 +10,7 @@ sys.path.append('../')
 
 from belpy.semantics import BELSemantics
 from belpy.tools import TestBELStatementGenerator, ValidationObject, ParseObject
-from belpy.tools import preprocess_bel_line, handle_syntax_error, decode
+from belpy.tools import preprocess_bel_line, handle_syntax_error, decode, compute
 from belpy.exceptions import *
 
 
@@ -267,8 +267,7 @@ class BEL(object):
 
         Args:
             partial (str): the partial string
-            value_type (str): value type (function, modifier function, or relationship; makes sure we match with
-            right list)
+            value_type (str): value type (function, modifier function, or relationship; makes sure we match with right list)
 
         Returns:
             list: A list of suggested values.
@@ -294,7 +293,7 @@ class BEL(object):
     def canonicalize(self, ast: AST):
         # TODO: this definition
         """
-        Takes an AST and returns a canonicalized BEL statement string
+        Takes an AST and returns a canonicalized BEL statement string.
 
         Args:
             ast (AST): BEL AST
@@ -306,7 +305,7 @@ class BEL(object):
     def computed(self, ast: AST):
         # TODO: this definition
         """
-        Takes an AST and computes all canonicalized edges
+        Takes an AST and computes all canonicalized edges.
 
         Args:
             ast (AST): BEL AST
@@ -314,3 +313,25 @@ class BEL(object):
         Returns:
             list:  List of canonicalized computed edges to load into the EdgeStore.
         """
+
+
+        list_of_computed = []
+
+        s = ast.get('subject', None)
+        o = ast.get('object', None)
+
+        if o is None:  # if no object, this means only subject is present
+            compute_list = compute(s)
+            list_of_computed.extend(compute_list)
+        else:  # else the full form BEL statement with subject, relationship, and object are present
+            compute_list_subject = compute(s)
+            compute_list_object = compute(o)
+            list_of_computed.extend(compute_list_subject)
+            list_of_computed.extend(compute_list_object)
+
+        return list(set(list_of_computed))
+
+
+
+
+

@@ -29,31 +29,31 @@ def test_extra_left_paren():
 def test_missing_parens():
     s = 'act(p(MGI:Akt1), ma(kin)) decreases MGI:Cdkn1b'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 def test_bad_namespace():
     s = 'abundance(CHEBI:"prostaglandin J2":TEST)'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 def test_arg_outside():
     s = 'act(p(HGNC:FOXO1)) ma(tscript)'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 def test_no_comma_between_args():
     s = 'act(p(HGNC:FOXO3) ma(tscript)) =| r(HGNC:MIR21)'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 def test_no_func_given():
     s = 'act(p(MGI:Akt1), ma(kin)) decreases (MGI:Cdkn1b)'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 ##############################
