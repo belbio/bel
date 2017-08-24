@@ -329,7 +329,7 @@ class BEL(object):
             list_of_computed.extend(compute_list_subject)
             list_of_computed.extend(compute_list_object)
 
-        return list(set(list_of_computed))
+        return sorted(list(set(list_of_computed)))
 
 
 
