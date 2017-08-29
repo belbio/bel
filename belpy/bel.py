@@ -1,4 +1,4 @@
-import importlib
+ import importlib
 import os
 
 from tatsu.exceptions import FailedParse
@@ -11,59 +11,38 @@ sys.path.append('../')
 from belpy.semantics import BELSemantics
 from belpy.tools import TestBELStatementGenerator, ValidationObject, ParseObject
 from belpy.tools import preprocess_bel_line, handle_syntax_error, decode, compute
-from belpy.exceptions import *
+from belpy.exceptions import NoParserFound
 
 
 class BEL(object):
-    """The summary line for a class docstring should fit on one line.
-
-    If the class has public attributes, they may be documented here
-    in an ``Attributes`` section and follow the same formatting as a
-    function's ``Args`` section. Alternatively, attributes may be documented
-    inline with the attribute's declaration (see __init__ method below).
-
-    Properties created with the ``@property`` decorator should be documented
-    in the property's getter method.
-
-    Attributes:
-        attr1 (:obj:`str`): Description of `attr1`.
-        attr2 (:obj:`int`, optional): Description of `attr2`.
-
-    """
 
     def __init__(self, version: str, endpoint: str):
-        """Example of docstring on the __init__ method.
-
-        The __init__ method may be documented in either the class level
-        docstring, or as a docstring on the __init__ method itself.
-
-        Either form is acceptable, but the two should not be mixed. Choose one
-        convention to document the __init__ method and be consistent with it.
-
-        Note:
-            Do not include the `self` parameter in the ``Args`` section.
+        """The BEL class contains the version and endpoint, and all functions needed to work with statements.
 
         Args:
-            version (str): BEL language version
-            endpoint (str): URI of TermStore endpoint
-
-            version (:obj:`str`): BEL language version
-            endpoint (:obj:`str`): URI of TermStore endpoint
-
+            version (:obj:`str`): BEL language version specific to this instance.
+            endpoint (:obj:`str`): URI of TermStore endpoint specific to this instance.
         """
+
         self.version = version
         self.endpoint = endpoint
 
+        # use this variable to find our parser file since periods aren't recommended in file names
         self.version_dots_as_underscores = version.replace('.', '_')
+
+        # each instance also instantiates a BELSemantics object used in parsing statements
         self.semantics = BELSemantics()
 
+        # get the current directory name, and use that to find the version's parser file location
         cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
         parser_dir = '{}.versions.parser_v{}'.format(cur_dir_name, self.version_dots_as_underscores)
 
+        # use importlib to import our parser (a .py file) and set the BELParse object as an instance variable
         try:
-            imported = importlib.import_module(parser_dir)
-            self.parser = imported.BELParser()
+            imported_parser_file = importlib.import_module(parser_dir)
+            self.parser = imported_parser_file.BELParser()
         except Exception as e:
+            # if not found, we raise the NoParserFound exception which can be found in belpy.exceptions
             raise NoParserFound(version)
 
 
@@ -109,7 +88,6 @@ class BEL(object):
 
         Args:
             statement (str): BEL statement
-            version (str): language version
 
         Returns:
             dict: The dictionary that contains the components as its values.

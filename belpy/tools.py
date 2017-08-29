@@ -326,9 +326,10 @@ def compute(ast_dict):
                         full = '{} hasVariant {}'.format(flattened_func, decode(ast_dict))
                         tmp_list.append(full)
                     elif m_func in ['fusion', 'fus']:
+
                         for m in m_func_args:
                             if 'ns_arg' in m:
-                                full = 'p({}) hasFusion {}'.format(decode(m), decode(ast_dict))
+                                full = '{}({}) hasFusion {}'.format(f_name, decode(m), decode(ast_dict))
                                 tmp_list.append(full)
 
                     elif m_func in ['proteinModification', 'pmod']:
@@ -378,7 +379,6 @@ def compute(ast_dict):
             continue
 
         return tmp_list
-
 
 
 #################
