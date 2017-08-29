@@ -1,4 +1,4 @@
- import importlib
+import importlib
 import os
 
 from tatsu.exceptions import FailedParse
@@ -15,14 +15,9 @@ from belpy.exceptions import NoParserFound
 
 
 class BEL(object):
-    """The BEL class contains the version and endpoint, and all functions needed to work with statements.
-
-    Attributes:
-        version (str): BEL language version specific to this instance.
-        endpoint (str): URI of TermStore endpoint specific to this instance.
-    """
 
     def __init__(self, version: str, endpoint: str):
+
 
         self.version = version
         self.endpoint = endpoint
