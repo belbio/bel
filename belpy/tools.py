@@ -14,7 +14,6 @@ import string
 import os
 from belpy.exceptions import *
 
-
 ###################
 # STATEMENT TOOLS #
 ###################
@@ -313,7 +312,8 @@ def compute(ast_dict):
             for arg_dict in f_args:
                 tmp.append(decode(arg_dict))
 
-                if 'm_function' in arg_dict: # if there is a modifier function contained in the parent function
+                # if there is a modifier function contained in the parent function
+                if 'm_function' in arg_dict:
 
                     m_func = arg_dict.get('m_function', None)
                     m_func_args = arg_dict.get('m_function_args', None)
@@ -439,6 +439,7 @@ def handle_syntax_error(e):
     elif undefined_type == 'full_nsv':
         error_msg = 'Failed parse at position {}. Check that you have a valid namespace argument.'.format(col_failed)
     else:
-        error_msg = 'Failed parse at position {}. Check to make sure commas/spaces are not missing.'.format(col_failed, undefined_type)
+        error_msg = 'Failed parse at position {}. Check to make sure commas/spaces are not missing.'.format(col_failed,
+                                                                                                            undefined_type)
 
     return error_msg, err_visualizer

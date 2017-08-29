@@ -196,10 +196,6 @@ class BELSemantics(object):
         valid_sigs = self.function_signatures.get(fn_given, [])
         given_param_list = self.args_to_given_sig_list(args_given)
 
-        # print('\n\t\033[92mFunction given:\033[0m {}'.format(fn_given))
-        # print('\t\033[92mArguments given:\033[0m {}'.format(args_given))
-        # print('\t\033[93mGiven signature list:\033[0m {}'.format(given_param_list))
-
         for v_sig in valid_sigs:
 
             valid, msg_or_sig = self.check_valid_sig_given_args(v_sig, given_param_list)
@@ -265,6 +261,8 @@ class BELSemantics(object):
     def check_signature_params(self):
         # Stage 3 of 3: check each of the parameters in the function call to see if they are valid
 
+        #  can't check this until TermStore is ready
+
         return
 
     ##############################
@@ -272,6 +270,7 @@ class BELSemantics(object):
     ##############################
 
     def check_valid_relationship(self, given):
+        # checks against all relationships in YAML to make sure the given one is valid
 
         if given not in self.relationships:
             raise InvalidRelationship(given)
@@ -283,6 +282,7 @@ class BELSemantics(object):
     ###############################
 
     def abbreviations_to_names(self, yaml_dict):
+        # uses YAML to translate from abbreviated name to actual full-length name
 
         abbreviations = {}
 
@@ -299,6 +299,7 @@ class BELSemantics(object):
         return abbreviations
 
     def names_to_abbreviations(self, yaml_dict):
+        # uses YAML to translate from full-length name to abbreviated name.
 
         names = {}
 

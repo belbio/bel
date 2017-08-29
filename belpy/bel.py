@@ -1,23 +1,20 @@
 import importlib
 import os
-
-from tatsu.exceptions import FailedParse
-from tatsu.ast import AST
-
 import sys
 
-sys.path.append('../')
-
+from belpy.exceptions import NoParserFound
 from belpy.semantics import BELSemantics
 from belpy.tools import TestBELStatementGenerator, ValidationObject, ParseObject
 from belpy.tools import preprocess_bel_line, handle_syntax_error, decode, compute
-from belpy.exceptions import NoParserFound
+from tatsu.ast import AST
+from tatsu.exceptions import FailedParse
+
+sys.path.append('../')
 
 
 class BEL(object):
 
     def __init__(self, version: str, endpoint: str):
-
 
         self.version = version
         self.endpoint = endpoint
@@ -40,7 +37,6 @@ class BEL(object):
             # if not found, we raise the NoParserFound exception which can be found in belpy.exceptions
             raise NoParserFound(version)
 
-
     def parse(self, statement: str, strict: bool = False):
         """
         Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (
@@ -59,21 +55,25 @@ class BEL(object):
         error = None
         err_visual = None
 
+        # check if user entered an empty string
         if statement == '':
             error = 'Please include a valid BEL statement.'
             return ParseObject(ast, error, err_visual)
 
+        # pre-process to remove extra white space, add space after commas, etc.
         statement = preprocess_bel_line(statement)
 
         try:
-            ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False,
-                                    parseinfo=False)
+            # see if an AST is returned without any parsing errors
+            ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False, parseinfo=False)
         except FailedParse as e:
+            # if an error is returned, send to handle_syntax, error
             error, err_visual = handle_syntax_error(e)
         except Exception as e:
             print(e)
             print(type(e))
 
+        # return everything in a ParseObject
         return ParseObject(ast, error, err_visual)
 
     def stmt_components(self, statement: str):
@@ -88,17 +88,20 @@ class BEL(object):
             dict: The dictionary that contains the components as its values.
         """
 
+        # create a dictionary with the keys defined
         components_dict = dict.fromkeys(['object', 'relationship', 'subject'])
+
+        # send the statement to be parsed and grab the AST from the parse
         p = self.parse(statement)
         ast = p.ast
 
-        if ast is None:
+        if ast is None:  # if not AST is available, that must mean there was an error - print it
             components_dict['object'] = None
             components_dict['relationship'] = None
             components_dict['subject'] = None
             print(p.error)
             print(p.err_visual)
-        else:
+        else:  # else return the components in a dictionary
             components_dict['object'] = ast.get('object', None)
             components_dict['relationship'] = ast.get('relationship', None)
             components_dict['subject'] = ast.get('subject', None)
@@ -117,9 +120,10 @@ class BEL(object):
             dict: The dictionary that contains the components as its values.
         """
 
-        components_dict = {}
+        components_dict = dict()
         components_dict['subject'] = ast.get('subject', None)
 
+        # if a relationship exists, this means that an object must also exist
         if ast.get('relationship', None) is not None:
             components_dict['object'] = ast.get('object', None)
             components_dict['relationship'] = ast.get('relationship', None)
@@ -138,15 +142,18 @@ class BEL(object):
             list: A list of BEL statement objects.
         """
 
+        # statements will be inside objects, so we need a new list for those
         list_of_bel_stmt_objs = []
 
-        # if user specifies < 1 test statements, do as he/she wishes
+        # if user specifies < 1 test statements, do as he/she wishes and return an empty list
         if count < 1:
             return list_of_bel_stmt_objs
 
+        # instantiate the object used to generate the statements
         generator = TestBELStatementGenerator(version=self.version)
 
-        for _ in range(count):  # each loop makes one invalid statement
+        # create as many invalid statement objects as the user specified in count and add to our list
+        for _ in range(count):
             s = generator.make_statement(max_params)
             list_of_bel_stmt_objs.append(s)
 
@@ -162,14 +169,18 @@ class BEL(object):
         Returns:
             str: The string generated from the AST.
         """
+
+        # grab the three components of the AST
         s = ast.get('subject', None)
         r = ast.get('relationship', None)
         o = ast.get('object', None)
 
-        if r is None:  # if no relationship, this means only subject is present
+        # if no relationship, this means only subject is present
+        if r is None:
             sub = decode(s)
             final = '{}'.format(sub)
-        else:  # else the full form BEL statement with subject, relationship, and object are present
+        # else the full form BEL statement with subject, relationship, and object are present
+        else:
             sub = decode(s)
             obj = decode(o)
             final = '{} {} {}'.format(sub, r, obj)
@@ -188,31 +199,36 @@ class BEL(object):
         Returns:
             list: The list of statement strings.
         """
-        stmts = []
 
+        # create an empty list to put our loaded statements
+        statements = []
+
+        # open the file that we're loading statements off of
         f = open(filename)
-        lcount = 0
+        line_count = 0
 
+        # for each statement in our file (each statement should be on a newline)
         for line in f:
-
-            if lcount == loadn:  # once number of lines processed equals user specified, then stop
+            if line_count == loadn:  # once number of lines processed equals user specified, stop
                 break
 
-            if preprocess:
+            if preprocess:  # if preprocess if selected, clean up the statement string
                 line = preprocess_bel_line(line)
             else:
                 line = line.strip()
 
-            stmts.append(line)
-            lcount += 1
+            statements.append(line)
+            line_count += 1
 
+        # close the file and return the list
         f.close()
 
-        return stmts
+        return statements
 
     def validate(self, statement: str, strict: bool = False):
         """
-        Validates a BEL statement and returns a ValidationObject.
+        Validates a BEL statement and returns a ValidationObject. validate() simply calls parse() but will have a
+        boolean to describe the existence of an AST from the ParseObject returned.
 
         Args:
             statement (str): BEL statement
@@ -223,9 +239,10 @@ class BEL(object):
 
         """
 
-        # TODO: strict/loose validation
+        # begins with a call to parse
         p = self.parse(statement)
 
+        # checks for the existence of the AST tree from parse(), and sets the valid boolean accordingly.
         if p.ast is None:
             valid = False
         else:
@@ -240,31 +257,33 @@ class BEL(object):
 
         Args:
             partial (str): the partial string
-            value_type (str): value type (function, modifier function, or relationship; makes sure we match with right list)
+            value_type (str): value type (function, modifier function, or relationship; makes sure we match right list)
 
         Returns:
             list: A list of suggested values.
         """
 
+        # this function is in backlog!
+
         suggestions = []
-        # TODO: get the following list of things - initialize YAML into this library so we can grab all funcs,
-        # mfuncs, and r.
-        if value_type == 'function':
-            suggestions = []
-
-        elif value_type == 'mfunction':
-            suggestions = []
-
-        elif value_type == 'relationship':
-            suggestions = []
-
-        else:
-            suggestions = []
+        # # TODO: get the following list of things - initialize YAML into this library so we can grab all funcs,
+        # # mfuncs, and r.
+        # if value_type == 'function':
+        #     suggestions = []
+        #
+        # elif value_type == 'mfunction':
+        #     suggestions = []
+        #
+        # elif value_type == 'relationship':
+        #     suggestions = []
+        #
+        # else:
+        #     suggestions = []
 
         return suggestions
 
     def canonicalize(self, ast: AST):
-        # TODO: this definition
+        # TODO: this definition cannot be completed until TermStore API is complete.
         """
         Takes an AST and returns a canonicalized BEL statement string.
 
@@ -287,9 +306,10 @@ class BEL(object):
             list:  List of canonicalized computed edges to load into the EdgeStore.
         """
 
-
+        # make empty list to hold our computed edge strings
         list_of_computed = []
 
+        # get both subject and object (we don't need relationship because no computing happens for relationship)
         s = ast.get('subject', None)
         o = ast.get('object', None)
 
@@ -303,8 +323,3 @@ class BEL(object):
             list_of_computed.extend(compute_list_object)
 
         return sorted(list(set(list_of_computed)))
-
-
-
-
-
