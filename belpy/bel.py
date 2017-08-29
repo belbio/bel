@@ -17,13 +17,12 @@ from belpy.exceptions import NoParserFound
 class BEL(object):
     """The BEL class contains the version and endpoint, and all functions needed to work with statements.
 
-    Args:
-        version (:obj:`str`): BEL language version specific to this instance.
-        endpoint (:obj:`str`): URI of TermStore endpoint specific to this instance.
+    Attributes:
+        version (str): BEL language version specific to this instance.
+        endpoint (str): URI of TermStore endpoint specific to this instance.
     """
 
     def __init__(self, version: str, endpoint: str):
-
 
         self.version = version
         self.endpoint = endpoint
