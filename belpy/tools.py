@@ -12,180 +12,16 @@ import random
 import yaml
 import string
 import os
+import pprint
 from belpy.exceptions import *
 
 ###################
 # STATEMENT TOOLS #
 ###################
 
-CURRENT_STORED_DIRECTORY = os.path.dirname(__file__)
 
+class InvalidStatementObject(object):
 
-class TestBELStatementGenerator(object):
-    def __init__(self, version='2.0.0'):
-
-        version_dots_to_underscore = version.replace('.', '_')
-
-        try:
-            yaml_file_name = 'versions/bel_v{}.yaml'.format(version_dots_to_underscore)
-            yaml_file_path = '{}/{}'.format(CURRENT_STORED_DIRECTORY, yaml_file_name)
-            yaml_dict = yaml.load(open(yaml_file_path, 'r').read())
-        except Exception as e:
-            print(e)
-            print('The create() method for version {} is not defined yet.'.format(version))
-            return
-
-        self.abbre_to_name = self.abbreviations_to_names(yaml_dict)
-        self.name_to_abbre = self.names_to_abbreviations(yaml_dict)
-
-        self.function_signatures = self.get_function_signatures(yaml_dict)
-        self.relationships = self.get_all_relationships(yaml_dict)
-
-    def get_function_signatures(self, yaml_dict):
-        """
-
-        :param yaml_dict: the dictionary parsed from the given YAML file defined by the user.
-        :return: signature dictionary.
-        """
-
-        signature_dict = {}
-
-        for func in yaml_dict.get('function_signatures', []):  # for each function in the yaml function signatures...
-            f_name = func.get('name', 'unknown')  # get the name of the function in yaml
-            f_sigs = func.get('signatures', [])  # get the signatures of the function
-            signature_dict[f_name] = f_sigs  # set function name as key, and yaml's f_sigs as the value for this key
-
-            for valid_sig in f_sigs:  # for each signature from signatures...
-                params = valid_sig.get('parameters', None)  # get the parameter types of this signature
-                required_params = collections.OrderedDict()  # required param types list (must be ordered)
-                optional_params = collections.OrderedDict()  # optional param types list (does not need to be ordered)
-
-                for par in params:  # for each type in parameter types
-                    par_type = par.get('type', 'Unknown')  # get the type name
-                    optional = par.get('optional', False)  # get the optional boolean
-                    multiple = par.get('multiple', False)  # get the multiple boolean
-
-                    # param is REQUIRED AND SINGULAR
-                    # set the value as the number of times this type can appear
-                    if not optional and not multiple:
-                        required_params[par_type] = required_params.get(par_type, 0) + 1
-
-                    # param is REQUIRED AND MULTIPLE
-                    # set the value to infinity as we'll always have 1 or more of this type
-                    elif not optional and multiple:
-                        required_params[par_type] = math.inf
-
-                    # param is OPTIONAL AND SINGULAR
-                    # set the value as the number of times this type can appear
-                    elif optional and not multiple:
-                        optional_params[par_type] = optional_params.get(par_type, 0) + 1
-
-                    # param is OPTIONAL AND MULTIPLE
-                    # set the value to infinity as we'll always have 0 or more of this type
-                    else:
-                        optional_params[par_type] = math.inf
-
-                # add these two OrderedDicts as key/values within valid_sig so we can refer to them later on
-                valid_sig['required'] = required_params
-                valid_sig['optional'] = optional_params
-
-            # clone the value of f_name into its respective abbreviation key
-            # e.g. signature_dict[activity] == signature_dict[act]; signature_dict[pathology] == signature_dict[path]
-            signature_dict[self.name_to_abbre[f_name]] = f_sigs
-
-        return signature_dict
-
-    def get_all_relationships(self, yaml_dict):
-        """
-
-        :param yaml_dict: the dictionary parsed from the given YAML file defined by the user.
-        :return: list of relationships.
-        """
-
-        relationships = set()
-
-        for relationship in yaml_dict.get('relationships', []):
-            r_name = relationship.get('name', None)
-            r_abbr = relationship.get('abbreviation', None)
-
-            relationships.add(r_name)
-            relationships.add(r_abbr)
-
-        return list(relationships)
-
-    def abbreviations_to_names(self, yaml_dict):
-
-        abbreviations = {}
-
-        for fn in yaml_dict.get('functions', []):
-            f_name = fn.get('name', 'unknown')
-            f_abbr = fn.get('abbreviation', 'unknown')
-            abbreviations[f_abbr] = f_name
-
-        for m_fn in yaml_dict.get('modifier_functions', []):
-            mf_name = m_fn.get('name', 'unknown')
-            mf_abbr = m_fn.get('abbreviation', 'unknown')
-            abbreviations[mf_abbr] = mf_name
-
-        return abbreviations
-
-    def names_to_abbreviations(self, yaml_dict):
-
-        names = {}
-
-        for fn in yaml_dict.get('functions', []):
-            f_name = fn.get('name', 'unknown')
-            f_abbr = fn.get('abbreviation', 'unknown')
-            names[f_name] = f_abbr
-
-        for m_fn in yaml_dict.get('modifier_functions', []):
-            mf_name = m_fn.get('name', 'unknown')
-            mf_abbr = m_fn.get('abbreviation', 'unknown')
-            names[mf_name] = mf_abbr
-
-        return names
-
-    def make_statement(self, max_params):
-
-        s = self.choose_and_make_function(max_params)
-        r = self.choose_rand_relationship()
-        o = self.choose_and_make_function(max_params)
-
-        return TestBELStatement(s, r, o)
-
-    def choose_and_make_function(self, max_params):
-
-        full_func = {'name': self.choose_rand_function(), 'type': 'Function', 'value': []}
-
-        num_args = random.randint(1, max_params)  # how many args to have
-        for _ in range(num_args):
-
-            t = random.choice(['Entity', 'String', 'Function'])
-            arg = {'type': t}
-
-            if t == 'Entity':
-                arg['value'] = random_namespace_param()
-            elif t == 'String':
-                arg['value'] = random_quoted_string()
-            elif t == 'Function':
-                arg = self.choose_and_make_function(max_params)
-            else:
-                pass
-
-            full_func['value'].append(arg)
-
-        return full_func
-
-    def choose_rand_relationship(self):
-
-        return random.choice(self.relationships)
-
-    def choose_rand_function(self):
-
-        return random.choice(list(self.function_signatures.keys()))
-
-
-class TestBELStatement(object):
     def __init__(self, s, r, o):
         self.subject = s
         self.relationship = r
@@ -194,33 +30,174 @@ class TestBELStatement(object):
 
     def to_string_form(self, s, r, o):
 
-        sub = self.decode(s)
+        sub = self.stmt_creation_decode(s)
         rlt = r
-        obj = self.decode(o)
+        obj = self.stmt_creation_decode(o)
 
         return '{} {} {}'.format(sub, rlt, obj)
 
-    def decode(self, dict):
+    def stmt_creation_decode(self, ast_dict):
 
-        t = dict.get('type', False)
-        v = dict.get('value', False)
+        arg_type = ast_dict.get('type', False)
+        arg_value = ast_dict.get('value', False)
 
-        if t == 'Function':
-            f_name = dict.get('name', None)
+        if arg_type == 'Function':
+            f_name = ast_dict.get('name', None)
 
-            tmp = self.decode(v[0])
+            tmp = self.stmt_creation_decode(arg_value[0])
 
-            for param in v[1:]:
-                tmp += ', {}'.format(self.decode(param))
+            for param in arg_value[1:]:
+                tmp += ', {}'.format(self.stmt_creation_decode(param))
 
             return '{}({})'.format(f_name, tmp)
 
-        elif t == 'String':
-            return v
-        elif t == 'Entity':
-            return v
+        elif arg_type == 'String':
+            return arg_value
+        elif arg_type == 'Entity':
+            return arg_value
         else:
             return 'UNK'
+
+
+def create_invalid(bel_obj, count, max_params):
+
+    list_of_statement_objs = []
+
+    for _ in range(count):
+        stmt_obj = make_statement(bel_obj, max_params)
+        list_of_statement_objs.append(stmt_obj)
+
+    return list_of_statement_objs
+
+
+def make_statement(bel_obj, max_params):
+
+    s = choose_and_make_function(bel_obj, max_params)
+    r = choose_rand_relationship(bel_obj.relationships)
+    o = choose_and_make_function(bel_obj, max_params)
+
+    return InvalidStatementObject(s, r, o)
+
+
+def choose_and_make_function(bel_obj, max_params):
+
+    full_func = {'name': choose_rand_function(bel_obj.function_signatures), 'type': 'Function', 'value': []}
+
+    num_args = random.randint(1, max_params)  # how many args to have
+    for _ in range(num_args):
+
+        t = random.choice(['Entity', 'String', 'Function'])
+        arg = {'type': t}
+
+        if t == 'Entity':
+            arg['value'] = random_namespace_param()
+        elif t == 'String':
+            arg['value'] = random_quoted_string()
+        elif t == 'Function':
+            arg = choose_and_make_function(bel_obj, max_params)
+        else:
+            pass
+
+        full_func['value'].append(arg)
+
+    return full_func
+
+
+def func_name_translate(bel_obj):
+    translated = {}
+
+    yaml_dict = bel_obj.yaml_dict
+
+    for fn in yaml_dict.get('functions', []):
+        f_name = fn.get('name', 'unknown')
+        f_abbr = fn.get('abbreviation', 'unknown')
+        translated[f_abbr] = f_name
+        translated[f_name] = f_abbr
+
+    for m_fn in yaml_dict.get('modifier_functions', []):
+        mf_name = m_fn.get('name', 'unknown')
+        mf_abbr = m_fn.get('abbreviation', 'unknown')
+        translated[mf_abbr] = mf_name
+        translated[mf_name] = mf_abbr
+
+    return translated
+
+
+def get_all_relationships(bel_obj):
+
+    yaml_dict = bel_obj.yaml_dict
+
+    relationships = set()
+
+    for relationship in yaml_dict.get('relationships', []):
+        r_name = relationship.get('name', None)
+        r_abbr = relationship.get('abbreviation', None)
+
+        relationships.add(r_name)
+        relationships.add(r_abbr)
+
+    return list(relationships)
+
+
+def get_all_function_signatures(bel_obj):
+    yaml_dict = bel_obj.yaml_dict
+
+    signature_dict = {}
+
+    for func in yaml_dict.get('function_signatures', []):  # for each function in the yaml function signatures...
+        f_name = func.get('name', 'unknown')  # get the name of the function in yaml
+        f_sigs = func.get('signatures', [])  # get the signatures of the function
+        signature_dict[f_name] = f_sigs  # set function name as key, and yaml's f_sigs as the value for this key
+
+        for valid_sig in f_sigs:  # for each signature from signatures...
+            params = valid_sig.get('parameters', None)  # get the parameter types of this signature
+            required_params = collections.OrderedDict()  # required param types list (must be ordered)
+            optional_params = collections.OrderedDict()  # optional param types list (does not need to be ordered)
+
+            for par in params:  # for each type in parameter types
+                par_type = par.get('type', 'Unknown')  # get the type name
+                optional = par.get('optional', False)  # get the optional boolean
+                multiple = par.get('multiple', False)  # get the multiple boolean
+
+                # param is REQUIRED AND SINGULAR
+                # set the value as the number of times this type can appear
+                if not optional and not multiple:
+                    required_params[par_type] = required_params.get(par_type, 0) + 1
+
+                # param is REQUIRED AND MULTIPLE
+                # set the value to infinity as we'll always have 1 or more of this type
+                elif not optional and multiple:
+                    required_params[par_type] = math.inf
+
+                # param is OPTIONAL AND SINGULAR
+                # set the value as the number of times this type can appear
+                elif optional and not multiple:
+                    optional_params[par_type] = optional_params.get(par_type, 0) + 1
+
+                # param is OPTIONAL AND MULTIPLE
+                # set the value to infinity as we'll always have 0 or more of this type
+                else:
+                    optional_params[par_type] = math.inf
+
+            # add these two OrderedDicts as key/values within valid_sig so we can refer to them later on
+            valid_sig['required'] = required_params
+            valid_sig['optional'] = optional_params
+
+        # clone the value of f_name into its respective abbreviation key
+        # e.g. signature_dict[activity] == signature_dict[act]; signature_dict[pathology] == signature_dict[path]
+        signature_dict[bel_obj.translate_terms[f_name]] = f_sigs
+
+    return signature_dict
+
+
+def choose_rand_relationship(relationships):
+
+    return random.choice(relationships)
+
+
+def choose_rand_function(func_sigs):
+
+    return random.choice(list(func_sigs.keys()))
 
 
 def random_namespace_param():
@@ -252,8 +229,8 @@ def random_quoted_string():
     return '"{}"'.format(rand_nsvalue)
 
 
-def decode(dict):
-    for key, value in dict.items():
+def decode(ast_dict):
+    for key, value in ast_dict.items():
         if key == 'ns_arg':
             return '{}:{}'.format(value['nspace'], value['ns_value'])
         elif key == 'str_arg':
@@ -261,7 +238,7 @@ def decode(dict):
         elif key == 'function':
             tmp = []
             f_name = value
-            f_args = dict.get('function_args', [])
+            f_args = ast_dict.get('function_args', [])
 
             for arg_dict in f_args:
                 tmp.append(decode(arg_dict))
@@ -270,7 +247,7 @@ def decode(dict):
         elif key == 'm_function':
             tmp = []
             m_f_name = value
-            m_f_args = dict.get('m_function_args', [])
+            m_f_args = ast_dict.get('m_function_args', [])
 
             for m_arg_dict in m_f_args:
                 tmp.append(decode(m_arg_dict))
@@ -294,7 +271,6 @@ def decode(dict):
                 return final
         else:
             pass
-            print('**************************************')
 
 
 def compute(ast_dict):
@@ -384,6 +360,7 @@ def compute(ast_dict):
 #################
 # PARSING TOOLS #
 #################
+
 class ParseObject(object):
     def __init__(self, ast, error, err_visual):
         self.ast = ast
@@ -426,20 +403,22 @@ def handle_syntax_error(e):
 
     err_visualizer = '{}\n{}^'.format(text, leading)
     if undefined_type == 'relations':
-        error_msg = 'Failed parse at position {}. Check that you have a valid relationship.'.format(col_failed)
+        error_msg = 'Failed parse at position {}. ' \
+                    'Check that you have a valid relationship.'.format(col_failed)
     elif undefined_type == 'funcs':
-        error_msg = 'Failed parse at position {}. Check that you have a valid primary or modifier function.'.format(
-            col_failed)
+        error_msg = 'Failed parse at position {}. ' \
+                    'Check that you have a valid primary or modifier function.'.format(col_failed)
     elif undefined_type == 'function_open':
-        error_msg = 'Failed parse at position {}. Check that you have have opened your parenthesis correctly before this point.'.format(
-            col_failed)
+        error_msg = 'Failed parse at position {}. ' \
+                    'Check that you have have opened your parenthesis correctly before this point.'.format(col_failed)
     elif undefined_type == 'function_close':
-        error_msg = 'Failed parse at position {}. Check that you have have closed your parenthesis correctly before this point.'.format(
-            col_failed)
+        error_msg = 'Failed parse at position {}. ' \
+                    'Check that you have have closed your parenthesis correctly before this point.'.format(col_failed)
     elif undefined_type == 'full_nsv':
-        error_msg = 'Failed parse at position {}. Check that you have a valid namespace argument.'.format(col_failed)
+        error_msg = 'Failed parse at position {}. ' \
+                    'Check that you have a valid namespace argument.'.format(col_failed)
     else:
-        error_msg = 'Failed parse at position {}. Check to make sure commas/spaces are not missing.'.format(col_failed,
-                                                                                                            undefined_type)
+        error_msg = 'Failed parse at position {}. ' \
+                    'Check to make sure commas/spaces are not missing.'.format(col_failed, undefined_type)
 
     return error_msg, err_visualizer

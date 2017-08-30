@@ -7,13 +7,17 @@ This file defines the semantic class used in our parser for BEL statements.
 
 import collections
 import math
-import yaml
 import os
+
+import yaml
+
 from belpy.exceptions import *
+
 
 ###################
 # SEMANTICS CLASS #
 ###################
+
 
 class BELSemantics(object):
     def __init__(self, version='2_0_0'):
@@ -152,7 +156,9 @@ class BELSemantics(object):
         """
         This is stage 2 of semantic checking. It has three arguments:
 
-        1. fn_given: This is the given function from the BEL statement. For example, consider the following BEL statement:
+        1. fn_given: This is the given function from the BEL statement.
+
+        For example, consider the following BEL statement:
 
         tloc(p(HGNC:SGK1), fromLoc(MESHCS:Cytoplasm), toLoc(MESHCS:"Cell Nucleus")) association bp(GOBP:"cell cycle")
 
@@ -232,7 +238,7 @@ class BELSemantics(object):
                 while idx < given_param_count:
                     if required_param_type == given_param_list[idx]:
                         idx += 1
-                    else:  # this breaks the loop because we encountered a given parameter that is not our multiple param type
+                    else:  # break the loop because we encountered a parameter that is not our multiple param type
                         break
 
         if idx < given_param_count:  # there are still optional parameters given that have not been accounted for
@@ -244,8 +250,8 @@ class BELSemantics(object):
                     if remaining_params.count(remain) <= optional[remain]:
                         continue
                     else:
-                        exception_msg = 'Too many optional parameters of type \"{}\" in statement. Does not match any function signatures.'.format(
-                            remain)
+                        exception_msg = 'Too many optional parameters of type \"{}\" in statement. ' \
+                                        'Does not match any function signatures.'.format(remain)
                         return False, exception_msg
 
                 else:
@@ -335,7 +341,7 @@ class BELSemantics(object):
 
     def get_relationships(self, yaml_dict):
         """
-        This function retrieves all valid relationships specified in the YAML and returns a list of unique relationships.
+        Retrieves all valid relationships specified in the YAML and returns a list of unique relationships.
         """
 
         relationships = set()

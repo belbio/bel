@@ -51,21 +51,3 @@ def test_valid_statements():
         'example',
         'example',
     ]
-
-
-# stmts = B.load('dev/bel2_test_statements.txt', preprocess=True)
-#
-# for s in stmts:
-#     print('\n\n\n\n')
-#
-#     print(s)
-#     p = B.parse(s)
-#     st = B.flatten(p.ast)
-#
-#     print(st)
-#     print(s)
-#     assert st == s
-
-# statement = 'a(CHEBI:"nitric oxide") decreases (a(CHEBI:"nitric oxide") decreases (a(CHEBI:"nitric oxide") decreases r(HGNC:CFTR, ' \
-#             'var("c.1521_1523delCTT"))))'
-# print(statement)

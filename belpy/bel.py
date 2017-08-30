@@ -2,12 +2,15 @@ import importlib
 import os
 import sys
 
-from belpy.exceptions import NoParserFound
-from belpy.semantics import BELSemantics
-from belpy.tools import TestBELStatementGenerator, ValidationObject, ParseObject
-from belpy.tools import preprocess_bel_line, handle_syntax_error, decode, compute
+import yaml
 from tatsu.ast import AST
 from tatsu.exceptions import FailedParse
+
+from belpy.exceptions import NoParserFound
+from belpy.semantics import BELSemantics
+from belpy.tools import ValidationObject, ParseObject
+from belpy.tools import preprocess_bel_line, handle_syntax_error, decode, compute, create_invalid, func_name_translate, \
+    get_all_relationships, get_all_function_signatures
 
 sys.path.append('../')
 
@@ -34,8 +37,24 @@ class BEL(object):
             imported_parser_file = importlib.import_module(parser_dir)
             self.parser = imported_parser_file.BELParser()
         except Exception as e:
-            # if not found, we raise the NoParserFound exception which can be found in belpy.exceptions
+            # if not found, we raise the NoPar  serFound exception which can be found in belpy.exceptions
             raise NoParserFound(version)
+
+        # try to load the version's YAML dictionary as well for functions like _create()
+        # set this BEL instance's relationships, signatures, term translations, etc.
+        try:
+            current_stored_dir = os.path.dirname(__file__)
+            yaml_file_name = 'versions/bel_v{}.yaml'.format(self.version_dots_as_underscores)
+            yaml_file_path = '{}/{}'.format(current_stored_dir, yaml_file_name)
+            self.yaml_dict = yaml.load(open(yaml_file_path, 'r').read())
+
+            self.translate_terms = func_name_translate(self)
+            self.relationships = get_all_relationships(self)
+            self.function_signatures = get_all_function_signatures(self)
+        except Exception as e:
+            print(e)
+            print('Warning: The YAML file for version {} is not found.'.format(self.version))
+            pass
 
     def parse(self, statement: str, strict: bool = False):
         """
@@ -65,7 +84,7 @@ class BEL(object):
 
         try:
             # see if an AST is returned without any parsing errors
-            ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False, parseinfo=False)
+            ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False)
         except FailedParse as e:
             # if an error is returned, send to handle_syntax, error
             error, err_visual = handle_syntax_error(e)
@@ -139,7 +158,7 @@ class BEL(object):
             max_params (int): max number of params each function can take (a large number may exceed recursive depth)
 
         Returns:
-            list: A list of BEL statement objects.
+            list: A list of InvalidStatementObject objects.
         """
 
         # statements will be inside objects, so we need a new list for those
@@ -149,15 +168,7 @@ class BEL(object):
         if count < 1:
             return list_of_bel_stmt_objs
 
-        # instantiate the object used to generate the statements
-        generator = TestBELStatementGenerator(version=self.version)
-
-        # create as many invalid statement objects as the user specified in count and add to our list
-        for _ in range(count):
-            s = generator.make_statement(max_params)
-            list_of_bel_stmt_objs.append(s)
-
-        return list_of_bel_stmt_objs
+        return create_invalid(self, count, max_params)
 
     def flatten(self, ast: AST):
         """
