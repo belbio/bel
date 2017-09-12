@@ -1,5 +1,6 @@
 import importlib
 import os
+import pprint
 import sys
 
 import yaml
@@ -10,7 +11,7 @@ from belpy.exceptions import NoParserFound
 from belpy.semantics import BELSemantics
 from belpy.tools import ValidationObject, ParseObject
 from belpy.tools import preprocess_bel_line, handle_syntax_error, decode, compute, create_invalid, func_name_translate, \
-    get_all_relationships, get_all_function_signatures
+    get_all_relationships, get_all_function_signatures, get_all_computed_sig_functions
 
 sys.path.append('../')
 
@@ -51,6 +52,7 @@ class BEL(object):
             self.translate_terms = func_name_translate(self)
             self.relationships = get_all_relationships(self)
             self.function_signatures = get_all_function_signatures(self)
+            self.computed_sig_functions = get_all_computed_sig_functions(self)
         except Exception as e:
             print(e)
             print('Warning: The YAML file for version {} is not found.'.format(self.version))
@@ -324,13 +326,12 @@ class BEL(object):
         s = ast.get('subject', None)
         o = ast.get('object', None)
 
-        if o is None:  # if no object, this means only subject is present
-            compute_list = compute(s)
-            list_of_computed.extend(compute_list)
-        else:  # else the full form BEL statement with subject, relationship, and object are present
-            compute_list_subject = compute(s)
+        # compute subject and add to list
+        compute_list_subject = compute(s)
+        list_of_computed.extend(compute_list_subject)
+
+        if o is not None:  # if object exists, then compute object as well
             compute_list_object = compute(o)
-            list_of_computed.extend(compute_list_subject)
             list_of_computed.extend(compute_list_object)
 
         return sorted(list(set(list_of_computed)))

@@ -12,7 +12,6 @@ import random
 import yaml
 import string
 import os
-import pprint
 from belpy.exceptions import *
 
 ###################
@@ -190,6 +189,22 @@ def get_all_function_signatures(bel_obj):
     return signature_dict
 
 
+def get_all_computed_sig_functions(bel_obj):
+
+    list_of_functions = []
+
+    yaml_dict = bel_obj.yaml_dict
+    computed_sigs = yaml_dict.get('computed_signatures', [])
+
+    for sig in computed_sigs:
+        fn = sig.get('function', None)
+        list_of_functions.append(fn)
+        list_of_functions.append(bel_obj.translate_terms[fn])
+
+    print(list_of_functions)
+
+    return list_of_functions
+
 def choose_rand_relationship(relationships):
 
     return random.choice(relationships)
@@ -277,6 +292,8 @@ def compute(ast_dict):
     for key, value in ast_dict.items():
 
         tmp_list = []
+
+        print(key, value)
 
         if key == 'function':
             f_name = value
