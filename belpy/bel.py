@@ -6,12 +6,12 @@ import sys
 import yaml
 from tatsu.ast import AST
 from tatsu.exceptions import FailedParse
+import traceback
 
 from belpy.exceptions import NoParserFound
 from belpy.semantics import BELSemantics
 from belpy.tools import ValidationObject, ParseObject
-from belpy.tools import preprocess_bel_line, handle_syntax_error, decode, compute, create_invalid, func_name_translate, \
-    get_all_relationships, get_all_function_signatures, get_all_computed_sig_functions
+from belpy.tools import *
 
 sys.path.append('../')
 
@@ -38,7 +38,7 @@ class BEL(object):
             imported_parser_file = importlib.import_module(parser_dir)
             self.parser = imported_parser_file.BELParser()
         except Exception as e:
-            # if not found, we raise the NoPar  serFound exception which can be found in belpy.exceptions
+            # if not found, we raise the NoParserFound exception which can be found in belpy.exceptions
             raise NoParserFound(version)
 
         # try to load the version's YAML dictionary as well for functions like _create()
@@ -52,10 +52,24 @@ class BEL(object):
             self.translate_terms = func_name_translate(self)
             self.relationships = get_all_relationships(self)
             self.function_signatures = get_all_function_signatures(self)
-            self.computed_sig_functions = get_all_computed_sig_functions(self)
+
+            self.primary_functions = get_all_primary_funcs(self)
+            self.modifier_functions = get_all_modifier_funcs(self)
+
+            self.computed_sigs = get_all_computed_sigs(self)
+            self.computed_funcs = get_all_computed_funcs(self)
+            self.computed_mfuncs = get_all_computed_mfuncs(self)
+
+            # pprint.pprint(self.computed_sigs)
+            # print('COMPUTED SIGS FUNCTIONS')
+            # print(self.computed_funcs)
+            # print('COMPUTED SIGS M_FUNCTIONS')
+            # print(self.computed_mfuncs)
+
         except Exception as e:
             print(e)
-            print('Warning: The YAML file for version {} is not found.'.format(self.version))
+            traceback.print_exc()
+            print('Warning: The YAML file for version {} is not found. Some functions will not work.'.format(self.version))
             pass
 
     def parse(self, statement: str, strict: bool = False):
@@ -327,11 +341,11 @@ class BEL(object):
         o = ast.get('object', None)
 
         # compute subject and add to list
-        compute_list_subject = compute(s)
+        compute_list_subject = compute(s, self)
         list_of_computed.extend(compute_list_subject)
 
         if o is not None:  # if object exists, then compute object as well
-            compute_list_object = compute(o)
+            compute_list_object = compute(o, self)
             list_of_computed.extend(compute_list_object)
 
         return sorted(list(set(list_of_computed)))

@@ -921,53 +921,52 @@ bel1_migration:
     bel2: Ub
 
 computed_signatures:
+  list:
+    subject: "{{ full }}"
+    relationship: hasMember
+    object: "{{ parameters }}"
 
-- function: list
-  subject: "{{ full }}"
-  relationship: hasMember
-  object: "{{ parameters }}"
+  composite:
+    subject: "{{ full }}"
+    relationship: hasMember
+    object: "{{ parameters }}"
 
-- function: composite
-  subject: "{{ full }}"
-  relationship: hasMember
-  object: "{{ parameters }}"
+  complex:
+    subject: "{{ full }}"
+    relationship: hasComponent
+    object: "{{ parameters }}"
 
-- function: complex
-  subject: "{{ full }}"
-  relationship: hasComponent
-  object: "{{ parameters }}"
+  degradation:
+    subject: "{{ full }}"
+    relationship: directlyDecreases
+    object: "{{ parameters }}"
 
-- function: degradation
-  subject: "{{ full }}"
-  relationship: directlyDecreases
-  object: "{{ parameter }}"
+  activity:
+    subject: "{{ parameters[f] }}"
+    relationship: hasActivity
+    object: "{{ p_full }}"
 
-- function: activity
-  subject: "{{ parameters_func }}"
-  relationship: hasActivity
-  object: "{{ parent }}"
+  reactants:
+    subject: "{{ p_full }}"
+    relationship: hasReactant
+    object: "{{ parameters }}"
 
-- function: reactants
-  subject: "{{ parent }}"
-  relationship: hasReactant
-  object: "{{ parameters }}"
+  products:
+    subject: "{{ p_full }}"
+    relationship: hasProduct
+    object: "{{ parameters }}"
 
-- function: products
-  subject: "{{ parent }}"
-  relationship: hasProduct
-  object: "{{ parameters }}"
+  variant:
+    subject: "{{ p_name(p_parameters[n]) }}"
+    relationship: hasVariant
+    object: "{{ p_full }}"
 
-- function: var
-  subject: "{{ parent_function(parameters_ns) }}"
-  relationship: hasVariant
-  object: "{{ parent }}"
+  fusion:
+    subject: "{{ p_name(parameters[n]) }}"
+    relationship: hasFusion
+    object: "{{ p_full }}"
 
-- function: fusion
-  subject: "{{ parent_function(parameters_ns) }}"
-  relationship: hasFusion
-  object: "{{ parent }}"
-
-- function: proteinModification
-  subject: "{{ parent_function(parameters_ns) }}"
-  relationship: hasModification
-  object: "{{ parent }}"
+  proteinModification:
+    subject: "{{ p_name(p_parameters[n]) }}"
+    relationship: hasModification
+    object: "{{ p_full }}"

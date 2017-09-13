@@ -5,14 +5,17 @@
 This file contains tools used in our parser for BEL statements.
 """
 
-import re
 import collections
 import math
-import random
-import yaml
-import string
 import os
+import pprint
+import random
+import re
+import string
+
+import yaml
 from belpy.exceptions import *
+
 
 ###################
 # STATEMENT TOOLS #
@@ -189,21 +192,72 @@ def get_all_function_signatures(bel_obj):
     return signature_dict
 
 
-def get_all_computed_sig_functions(bel_obj):
+def get_all_primary_funcs(bel_obj):
 
-    list_of_functions = []
+    primary = []
+    fns = bel_obj.yaml_dict.get('functions', [])
+    for fn in fns:
+        primary.append(fn.get('name', None))
+        primary.append(fn.get('abbreviation', None))
 
-    yaml_dict = bel_obj.yaml_dict
-    computed_sigs = yaml_dict.get('computed_signatures', [])
+    return primary
 
-    for sig in computed_sigs:
-        fn = sig.get('function', None)
-        list_of_functions.append(fn)
-        list_of_functions.append(bel_obj.translate_terms[fn])
 
-    print(list_of_functions)
+def get_all_modifier_funcs(bel_obj):
 
-    return list_of_functions
+    modifier = []
+    mfns = bel_obj.yaml_dict.get('modifier_functions', [])
+    for mfn in mfns:
+        modifier.append(mfn.get('name', None))
+        modifier.append(mfn.get('abbreviation', None))
+
+    return modifier
+
+
+def get_all_computed_sigs(bel_obj):
+    d = bel_obj.yaml_dict
+    return d.get('computed_signatures', [])
+
+
+def get_all_computed_funcs(bel_obj):
+    comp_sigs = bel_obj.computed_sigs
+    comp_fns = []
+
+    for f in comp_sigs:
+        if f in bel_obj.primary_functions:
+            comp_fns.append(f)
+            comp_fns.append(bel_obj.translate_terms[f])
+
+    return list(set(comp_fns))
+
+
+def get_all_computed_mfuncs(bel_obj):
+    comp_sigs = bel_obj.computed_sigs
+    comp_mfns = []
+
+    for f in comp_sigs:
+        if f in bel_obj.modifier_functions:
+            comp_mfns.append(f)
+            comp_mfns.append(bel_obj.translate_terms[f])
+
+    return list(set(comp_mfns))
+
+# def get_all_computed_sig_functions(bel_obj):
+#
+#     list_of_functions = []
+#
+#     yaml_dict = bel_obj.yaml_dict
+#     computed_sigs = yaml_dict.get('computed_signatures', [])
+#
+#     for sig in computed_sigs:
+#         fn = sig.get('function', None)
+#         list_of_functions.append(fn)
+#         list_of_functions.append(bel_obj.translate_terms[fn])
+#
+#     print(list_of_functions)
+#
+#     return list_of_functions
+
 
 def choose_rand_relationship(relationships):
 
@@ -288,12 +342,13 @@ def decode(ast_dict):
             pass
 
 
-def compute(ast_dict):
+def compute(ast_dict, bel_obj):
+
     for key, value in ast_dict.items():
 
         tmp_list = []
 
-        print(key, value)
+        # print(key, value)
 
         if key == 'function':
             f_name = value
@@ -311,26 +366,37 @@ def compute(ast_dict):
                     m_func = arg_dict.get('m_function', None)
                     m_func_args = arg_dict.get('m_function_args', None)
 
-                    flattened_func = '{}({})'.format(f_name, decode(f_args[0]))
+
+                    pprint.pprint(f_args)
+                    full = decode(f_args[0])
+                    p_name = f_name
+                    p_full = '{}({})'.format(p_name, full)
 
                     mod_found = True
 
-                    if m_func in ['variant', 'var']:
-                        full = '{} hasVariant {}'.format(flattened_func, decode(ast_dict))
-                        tmp_list.append(full)
-                    elif m_func in ['fusion', 'fus']:
-
-                        for m in m_func_args:
-                            if 'ns_arg' in m:
-                                full = '{}({}) hasFusion {}'.format(f_name, decode(m), decode(ast_dict))
-                                tmp_list.append(full)
-
-                    elif m_func in ['proteinModification', 'pmod']:
-                        full = '{} hasModification {}'.format(flattened_func, decode(ast_dict))
-                        tmp_list.append(full)
-
+                    if m_func in bel_obj.computed_mfuncs:
+                        print('this statement needs a modifier function computed')
+                        print(m_func)
+                        print(p_full)
                     else:
                         mod_found = False
+
+                    # if m_func in ['variant', 'var']:
+                    #     full = '{} hasVariant {}'.format(flattened_func, decode(ast_dict))
+                    #     tmp_list.append(full)
+                    # elif m_func in ['fusion', 'fus']:
+                    #
+                    #     for m in m_func_args:
+                    #         if 'ns_arg' in m:
+                    #             full = '{}({}) hasFusion {}'.format(f_name, decode(m), decode(ast_dict))
+                    #             tmp_list.append(full)
+                    #
+                    # elif m_func in ['proteinModification', 'pmod']:
+                    #     full = '{} hasModification {}'.format(flattened_func, decode(ast_dict))
+                    #     tmp_list.append(full)
+                    #
+                    # else:
+                    #     mod_found = False
 
             if mod_found:
                 return tmp_list
