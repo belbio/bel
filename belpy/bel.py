@@ -60,7 +60,7 @@ class BEL(object):
             self.computed_funcs = get_all_computed_funcs(self)
             self.computed_mfuncs = get_all_computed_mfuncs(self)
 
-            # pprint.pprint(self.computed_sigs)
+            # print(self.computed_sigs.keys())
             # print('COMPUTED SIGS FUNCTIONS')
             # print(self.computed_funcs)
             # print('COMPUTED SIGS M_FUNCTIONS')
@@ -69,7 +69,7 @@ class BEL(object):
         except Exception as e:
             print(e)
             traceback.print_exc()
-            print('Warning: The YAML file for version {} is not found. Some functions will not work.'.format(self.version))
+            print('Warning: Version {} YAML not found. Some functions will not work correctly.'.format(self.version))
             pass
 
     def parse(self, statement: str, strict: bool = False):

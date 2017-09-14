@@ -216,7 +216,14 @@ def get_all_modifier_funcs(bel_obj):
 
 def get_all_computed_sigs(bel_obj):
     d = bel_obj.yaml_dict
-    return d.get('computed_signatures', [])
+    sigs = d.get('computed_signatures', [])
+
+    # give each term's alternative name the same computed rule
+    for initial_name in list(sigs):
+        alternate = bel_obj.translate_terms[initial_name]
+        sigs[alternate] = sigs[initial_name]
+
+    return sigs
 
 
 def get_all_computed_funcs(bel_obj):
@@ -241,22 +248,6 @@ def get_all_computed_mfuncs(bel_obj):
             comp_mfns.append(bel_obj.translate_terms[f])
 
     return list(set(comp_mfns))
-
-# def get_all_computed_sig_functions(bel_obj):
-#
-#     list_of_functions = []
-#
-#     yaml_dict = bel_obj.yaml_dict
-#     computed_sigs = yaml_dict.get('computed_signatures', [])
-#
-#     for sig in computed_sigs:
-#         fn = sig.get('function', None)
-#         list_of_functions.append(fn)
-#         list_of_functions.append(bel_obj.translate_terms[fn])
-#
-#     print(list_of_functions)
-#
-#     return list_of_functions
 
 
 def choose_rand_relationship(relationships):
@@ -360,26 +351,54 @@ def compute(ast_dict, bel_obj):
             for arg_dict in f_args:
                 tmp.append(decode(arg_dict))
 
-                # if there is a modifier function contained in the parent function
-                if 'm_function' in arg_dict:
+                # if there is a computable modifier contained in the parent function
+                if arg_dict.get('m_function', None) in bel_obj.computed_mfuncs:
 
                     m_func = arg_dict.get('m_function', None)
-                    m_func_args = arg_dict.get('m_function_args', None)
+                    m_func_args = arg_dict.get('m_function_args', [])
 
-
-                    pprint.pprint(f_args)
-                    full = decode(f_args[0])
+                    full = decode(arg_dict)
+                    fn_name = m_func
                     p_name = f_name
-                    p_full = '{}({})'.format(p_name, full)
+                    p_full = decode(ast_dict)
+
+                    sig_to_use = bel_obj.computed_sigs[m_func]
+
+                    sub_rule = sig_to_use.get('subject', None).replace('{{ ', '').replace(' }}', '')
+                    rel_rule = sig_to_use.get('relationship', None)
+                    obj_rule = sig_to_use.get('object', None).replace('{{ ', '').replace(' }}', '')
+                    computed = '{} {} {}'.format(sub_rule, rel_rule, obj_rule)
+
+                    print(computed)
+
+                    tmp_computed = []
+
+                    # print('{}() need to be computed'.format(m_func))
+                    # print('modifier function found: {}'.format(m_func))
+                    # print('modifier function args: {}'.format(m_func_args))
+                    # print('full: {}'.format(full))
+                    # print('p_name: {}'.format(p_name))
+                    # print('p_full: {}'.format(p_full))
+                    # print('\n\n\n\n')
+
+                    if 'p_parameters' in computed:  # loop through f_args
+                        for a in f_args:
+                            pass
+                            # print(a)
+                            # print(decode(a))
+                    if 'parameters' in computed:  # loop through m_func_args
+                        for m_a in m_func_args:
+                            pass
+                            # print(m_a)
+                            # print(decode(m_a))
+
 
                     mod_found = True
 
-                    if m_func in bel_obj.computed_mfuncs:
-                        print('this statement needs a modifier function computed')
-                        print(m_func)
-                        print(p_full)
-                    else:
-                        mod_found = False
+                else:
+                    mod_found = False
+                    continue
+
 
                     # if m_func in ['variant', 'var']:
                     #     full = '{} hasVariant {}'.format(flattened_func, decode(ast_dict))
