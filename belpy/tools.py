@@ -337,9 +337,7 @@ def compute(ast_dict, bel_obj):
 
     for key, value in ast_dict.items():
 
-        tmp_list = []
-
-        # print(key, value)
+        tmp_computed_list = []
 
         if key == 'function':
             f_name = value
@@ -348,50 +346,45 @@ def compute(ast_dict, bel_obj):
             tmp = []
             mod_found = False
 
-            for arg_dict in f_args:
-                tmp.append(decode(arg_dict))
+            for f_argument in f_args:
+                arg_string = decode(f_argument)
+
+                tmp.append(decode(f_argument))
 
                 # if there is a computable modifier contained in the parent function
-                if arg_dict.get('m_function', None) in bel_obj.computed_mfuncs:
+                if f_argument.get('m_function', None) in bel_obj.computed_mfuncs:
+                    m_func = f_argument.get('m_function', None)
+                    m_func_args = f_argument.get('m_function_args', [])
 
-                    m_func = arg_dict.get('m_function', None)
-                    m_func_args = arg_dict.get('m_function_args', [])
-
-                    full = decode(arg_dict)
-                    fn_name = m_func
-                    p_name = f_name
-                    p_full = decode(ast_dict)
+                    computed_sig_variables = {
+                        'full': decode(f_argument),
+                        'fn_name': m_func,
+                        'p_name': f_name,
+                        'p_full': decode(ast_dict),
+                        'p_parameters': f_args
+                    }
 
                     sig_to_use = bel_obj.computed_sigs[m_func]
 
-                    sub_rule = sig_to_use.get('subject', None).replace('{{ ', '').replace(' }}', '')
+                    sub_rule = sig_to_use.get('subject', None)
                     rel_rule = sig_to_use.get('relationship', None)
-                    obj_rule = sig_to_use.get('object', None).replace('{{ ', '').replace(' }}', '')
-                    computed = '{} {} {}'.format(sub_rule, rel_rule, obj_rule)
+                    obj_rule = sig_to_use.get('object', None)
 
-                    print(computed)
+                    subjects_from_rule = extract_params_from_rule(sub_rule, m_func_args, computed_sig_variables)
+                    objects_from_rule = extract_params_from_rule(obj_rule, m_func_args, computed_sig_variables)
 
-                    tmp_computed = []
+                    # print(sub_rule)
+                    # print(rel_rule)
+                    # print(obj_rule)
 
-                    # print('{}() need to be computed'.format(m_func))
-                    # print('modifier function found: {}'.format(m_func))
-                    # print('modifier function args: {}'.format(m_func_args))
-                    # print('full: {}'.format(full))
-                    # print('p_name: {}'.format(p_name))
-                    # print('p_full: {}'.format(p_full))
-                    # print('\n\n\n\n')
+                    print(subjects_from_rule)
+                    print(objects_from_rule)
 
-                    if 'p_parameters' in computed:  # loop through f_args
-                        for a in f_args:
-                            pass
-                            # print(a)
-                            # print(decode(a))
-                    if 'parameters' in computed:  # loop through m_func_args
-                        for m_a in m_func_args:
-                            pass
-                            # print(m_a)
-                            # print(decode(m_a))
-
+                    print('\nCOMPUTED:')
+                    for sub_comp in subjects_from_rule:
+                        for obj_comp in objects_from_rule:
+                            computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
+                            tmp_computed_list.append(computed)
 
                     mod_found = True
 
@@ -399,45 +392,41 @@ def compute(ast_dict, bel_obj):
                     mod_found = False
                     continue
 
-
-                    # if m_func in ['variant', 'var']:
-                    #     full = '{} hasVariant {}'.format(flattened_func, decode(ast_dict))
-                    #     tmp_list.append(full)
-                    # elif m_func in ['fusion', 'fus']:
-                    #
-                    #     for m in m_func_args:
-                    #         if 'ns_arg' in m:
-                    #             full = '{}({}) hasFusion {}'.format(f_name, decode(m), decode(ast_dict))
-                    #             tmp_list.append(full)
-                    #
-                    # elif m_func in ['proteinModification', 'pmod']:
-                    #     full = '{} hasModification {}'.format(flattened_func, decode(ast_dict))
-                    #     tmp_list.append(full)
-                    #
-                    # else:
-                    #     mod_found = False
-
             if mod_found:
-                return tmp_list
+                return tmp_computed_list
 
-            if f_name in ['list']:
-                formatted = '{0} hasMember {1}'
-            elif f_name in ['compositeAbundance', 'composite']:
-                formatted = '{0} hasMember {1}'
-            elif f_name in ['complexAbundance', 'complex']:
-                formatted = '{0} hasComponent {1}'
-            elif f_name in ['degradation', 'deg']:
-                formatted = '{0} directlyDecreases {1}'
-            elif f_name in ['activity', 'act']:
-                formatted = '{1} hasActivity {0}'
-            else:
-                formatted = ''
+            if f_name in bel_obj.computed_funcs:
 
-            for arg in f_args:
-                if 'm_function' in arg:
-                    continue
-                edge = formatted.format(decode(ast_dict), decode(arg))
-                tmp_list.append(edge)
+                computed_sig_variables = {
+                    'full': decode(ast_dict),
+                    'fn_name': f_name,
+                    'p_name': '',
+                    'p_full': '',
+                    'p_parameters': ''
+                }
+
+                sig_to_use = bel_obj.computed_sigs[f_name]
+
+                sub_rule = sig_to_use.get('subject', None)
+                rel_rule = sig_to_use.get('relationship', None)
+                obj_rule = sig_to_use.get('object', None)
+
+                subjects_from_rule = extract_params_from_rule(sub_rule, f_args, computed_sig_variables)
+                objects_from_rule = extract_params_from_rule(obj_rule, f_args, computed_sig_variables)
+
+                # print(sub_rule)
+                # print(rel_rule)
+                # print(obj_rule)
+
+                print(subjects_from_rule)
+                print(objects_from_rule)
+
+                print('\nCOMPUTED:')
+                for sub_comp in subjects_from_rule:
+                    for obj_comp in objects_from_rule:
+                        computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
+                        print(computed)
+                        tmp_computed_list.append(computed)
 
         elif key == 'bel_statement':
             new_ast = value
@@ -446,17 +435,79 @@ def compute(ast_dict, bel_obj):
 
             if o is None:  # if no object, this means only subject is present
                 compute_list = compute(s)
-                tmp_list.extend(compute_list)
+                tmp_computed_list.extend(compute_list)
             else:  # else the full form BEL statement with subject, relationship, and object are present
                 compute_list_subject = compute(s)
                 compute_list_object = compute(o)
-                tmp_list.extend(compute_list_subject)
-                tmp_list.extend(compute_list_object)
+                tmp_computed_list.extend(compute_list_subject)
+                tmp_computed_list.extend(compute_list_object)
 
         else:
             continue
 
-        return tmp_list
+        return tmp_computed_list
+
+
+def extract_params_from_rule(rule, args, variables):
+    print('\n\n')
+    print('EXTRACTING: ---------------------------------------------')
+    rule = rule.replace('{{ ', '').replace(' }}', '')
+
+    rule = rule.replace('p_full', variables['p_full'])
+    rule = rule.replace('p_name', variables['p_name'])
+
+    rule = rule.replace('full', variables['full'])
+    rule = rule.replace('fn_name', variables['fn_name'])
+
+    args_wanted = []
+
+    parameter_pattern = '(p_)?parameters(\[[fmns]\])?'
+    regex_ppattern = re.compile(parameter_pattern)
+    param_matched_rule = regex_ppattern.search(rule)
+
+    if param_matched_rule:  # if parameters are needed, loop through
+        final_to_replace = param_matched_rule.group()
+        use_parent_params = None
+
+        try:
+            use_parent_params = param_matched_rule.group(1)
+            filter_string = param_matched_rule.group(2)
+            if filter_string is None:
+                filter_string = ''
+
+            print('Use parent params: {}'.format(use_parent_params))
+            print('Filter string: {}'.format(filter_string))
+        except IndexError as e:
+            filter_string = ''  # stands for all
+
+        allowed_type = None
+
+        if 'f' in filter_string:
+            allowed_type = 'function'
+        elif 'm' in filter_string:
+            allowed_type = 'm_function'
+        elif 'n' in filter_string:
+            allowed_type = 'ns_arg'
+        elif 's' in filter_string:
+            allowed_type = 'str_arg'
+
+        if use_parent_params is not None:  # use the parent's args
+            args_to_loop = variables['p_parameters']
+        else:
+            args_to_loop = args
+
+        for a in args_to_loop:
+            if allowed_type in list(a):
+                decoded_arg = decode(a)
+                print(decoded_arg)
+                final_rule = rule.replace(final_to_replace, decoded_arg)
+                args_wanted.append(final_rule)
+
+    else:
+        return [rule]
+
+    return args_wanted
+
 
 
 #################
