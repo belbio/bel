@@ -322,7 +322,6 @@ class BEL(object):
         """
 
     def computed(self, ast: AST):
-        # TODO: this definition
         """
         Takes an AST and computes all canonicalized edges.
 

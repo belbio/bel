@@ -347,8 +347,7 @@ def compute(ast_dict, bel_obj):
             mod_found = False
 
             for f_argument in f_args:
-                arg_string = decode(f_argument)
-
+                pprint.pprint(f_argument)
                 tmp.append(decode(f_argument))
 
                 # if there is a computable modifier contained in the parent function
@@ -370,15 +369,12 @@ def compute(ast_dict, bel_obj):
                     rel_rule = sig_to_use.get('relationship', None)
                     obj_rule = sig_to_use.get('object', None)
 
-                    print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
+                    # print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
                     subjects_from_rule = extract_params_from_rule(sub_rule, m_func_args, computed_sig_variables)
 
-                    print()
-
-                    print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
+                    # print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
                     objects_from_rule = extract_params_from_rule(obj_rule, m_func_args, computed_sig_variables)
 
-                    print('\nCOMPUTED:')
                     for sub_comp in subjects_from_rule:
                         for obj_comp in objects_from_rule:
                             computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
@@ -409,15 +405,12 @@ def compute(ast_dict, bel_obj):
                 rel_rule = sig_to_use.get('relationship', None)
                 obj_rule = sig_to_use.get('object', None)
 
-                print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
+                # print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
                 subjects_from_rule = extract_params_from_rule(sub_rule, f_args, computed_sig_variables)
 
-                print()
-
-                print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
+                # print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
                 objects_from_rule = extract_params_from_rule(obj_rule, f_args, computed_sig_variables)
 
-                print('\nCOMPUTED:')
                 for sub_comp in subjects_from_rule:
                     for obj_comp in objects_from_rule:
                         computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
@@ -470,8 +463,8 @@ def extract_params_from_rule(rule, args, variables):
         except IndexError as e:
             filter_string = ''  # stands for all
 
-        print('Use parent params: {}'.format(bool(use_parent_params)))
-        print('Filter string: {}'.format(filter_string))
+        # print('Use parent params: {}'.format(bool(use_parent_params)))
+        # print('Filter string: {}'.format(filter_string))
 
         allowed_type = ''
 
@@ -496,10 +489,8 @@ def extract_params_from_rule(rule, args, variables):
                 args_wanted.append(final_rule)
 
     else:
-        print([rule])
         return [rule]
 
-    print(args_wanted)
     return args_wanted
 
 
