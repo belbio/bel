@@ -23,14 +23,13 @@ def test_bad_string_start():
     assert parse_obj.ast is None
     assert 'Failed parse at position 0.' in parse_obj.error
 
-def test_whitespace_string():
+# def test_whitespace_string():
+#
+#     statement = 'a('
+#     parse_obj = B.parse(statement)
+#
+#     print(parse_obj.error)
+#     assert isinstance(parse_obj, ParseObject)
+#     assert parse_obj.ast is None
+#     assert parse_obj.error == 'Please include a valid BEL statement.'
 
-    statement = 'a('
-    parse_obj = B.parse(statement)
-
-    print(parse_obj.error)
-    assert isinstance(parse_obj, ParseObject)
-    assert parse_obj.ast is None
-    assert parse_obj.error == 'Please include a valid BEL statement.'
-
-test_whitespace_string()

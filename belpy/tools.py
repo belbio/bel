@@ -370,15 +370,13 @@ def compute(ast_dict, bel_obj):
                     rel_rule = sig_to_use.get('relationship', None)
                     obj_rule = sig_to_use.get('object', None)
 
+                    print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
                     subjects_from_rule = extract_params_from_rule(sub_rule, m_func_args, computed_sig_variables)
+
+                    print()
+
+                    print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
                     objects_from_rule = extract_params_from_rule(obj_rule, m_func_args, computed_sig_variables)
-
-                    # print(sub_rule)
-                    # print(rel_rule)
-                    # print(obj_rule)
-
-                    print(subjects_from_rule)
-                    print(objects_from_rule)
 
                     print('\nCOMPUTED:')
                     for sub_comp in subjects_from_rule:
@@ -411,21 +409,18 @@ def compute(ast_dict, bel_obj):
                 rel_rule = sig_to_use.get('relationship', None)
                 obj_rule = sig_to_use.get('object', None)
 
+                print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
                 subjects_from_rule = extract_params_from_rule(sub_rule, f_args, computed_sig_variables)
+
+                print()
+
+                print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
                 objects_from_rule = extract_params_from_rule(obj_rule, f_args, computed_sig_variables)
-
-                # print(sub_rule)
-                # print(rel_rule)
-                # print(obj_rule)
-
-                print(subjects_from_rule)
-                print(objects_from_rule)
 
                 print('\nCOMPUTED:')
                 for sub_comp in subjects_from_rule:
                     for obj_comp in objects_from_rule:
                         computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
-                        print(computed)
                         tmp_computed_list.append(computed)
 
         elif key == 'bel_statement':
@@ -449,8 +444,6 @@ def compute(ast_dict, bel_obj):
 
 
 def extract_params_from_rule(rule, args, variables):
-    print('\n\n')
-    print('EXTRACTING: ---------------------------------------------')
     rule = rule.replace('{{ ', '').replace(' }}', '')
 
     rule = rule.replace('p_full', variables['p_full'])
@@ -474,13 +467,13 @@ def extract_params_from_rule(rule, args, variables):
             filter_string = param_matched_rule.group(2)
             if filter_string is None:
                 filter_string = ''
-
-            print('Use parent params: {}'.format(use_parent_params))
-            print('Filter string: {}'.format(filter_string))
         except IndexError as e:
             filter_string = ''  # stands for all
 
-        allowed_type = None
+        print('Use parent params: {}'.format(bool(use_parent_params)))
+        print('Filter string: {}'.format(filter_string))
+
+        allowed_type = ''
 
         if 'f' in filter_string:
             allowed_type = 'function'
@@ -497,15 +490,16 @@ def extract_params_from_rule(rule, args, variables):
             args_to_loop = args
 
         for a in args_to_loop:
-            if allowed_type in list(a):
+            if allowed_type == '' or allowed_type in list(a):
                 decoded_arg = decode(a)
-                print(decoded_arg)
                 final_rule = rule.replace(final_to_replace, decoded_arg)
                 args_wanted.append(final_rule)
 
     else:
+        print([rule])
         return [rule]
 
+    print(args_wanted)
     return args_wanted
 
 

@@ -944,7 +944,7 @@ computed_signatures:
   activity:
     subject: "{{ parameters[f] }}"
     relationship: hasActivity
-    object: "{{ p_full }}"
+    object: "{{ full }}"
 
   reactants:
     subject: "{{ p_full }}"
