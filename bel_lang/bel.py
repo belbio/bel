@@ -8,10 +8,10 @@ from tatsu.ast import AST
 from tatsu.exceptions import FailedParse
 import traceback
 
-from belpy.exceptions import NoParserFound
-from belpy.semantics import BELSemantics
-from belpy.tools import ValidationObject, ParseObject
-from belpy.tools import *
+from bel_lang.exceptions import NoParserFound
+from bel_lang.semantics import BELSemantics
+from bel_lang.tools import ValidationObject, ParseObject
+from bel_lang.tools import *
 
 sys.path.append('../')
 
@@ -38,7 +38,7 @@ class BEL(object):
             imported_parser_file = importlib.import_module(parser_dir)
             self.parser = imported_parser_file.BELParser()
         except Exception as e:
-            # if not found, we raise the NoParserFound exception which can be found in belpy.exceptions
+            # if not found, we raise the NoParserFound exception which can be found in bel_lang.exceptions
             raise NoParserFound(version)
 
         # try to load the version's YAML dictionary as well for functions like _create()

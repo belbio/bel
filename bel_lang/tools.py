@@ -14,7 +14,7 @@ import re
 import string
 
 import yaml
-from belpy.exceptions import *
+from bel_lang.exceptions import *
 
 
 ###################
