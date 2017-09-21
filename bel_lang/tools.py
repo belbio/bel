@@ -337,84 +337,72 @@ def compute(ast_dict, bel_obj):
 
     for key, value in ast_dict.items():
 
-        tmp_computed_list = []
+        computed_list = []
+        functions_to_compute = []
 
         if key == 'function':
             f_name = value
             f_args = ast_dict.get('function_args', [])
 
-            tmp = []
-            mod_found = False
-
             for f_argument in f_args:
-                pprint.pprint(f_argument)
-                tmp.append(decode(f_argument))
+                print(f_argument)
 
-                # if there is a computable modifier contained in the parent function
-                if f_argument.get('m_function', None) in bel_obj.computed_mfuncs:
+                if f_argument.get('m_function', None) in bel_obj.computed_mfuncs:  # add this m_func to compute later!
+
                     m_func = f_argument.get('m_function', None)
                     m_func_args = f_argument.get('m_function_args', [])
 
-                    computed_sig_variables = {
+                    computable_func = {
+                        'f_type': 'modifier',
                         'full': decode(f_argument),
                         'fn_name': m_func,
                         'p_name': f_name,
                         'p_full': decode(ast_dict),
-                        'p_parameters': f_args
+                        'p_parameters': f_args,
+                        'sig_to_use': bel_obj.computed_sigs[m_func]
                     }
 
-                    sig_to_use = bel_obj.computed_sigs[m_func]
+                    functions_to_compute.append(computable_func)
 
-                    sub_rule = sig_to_use.get('subject', None)
-                    rel_rule = sig_to_use.get('relationship', None)
-                    obj_rule = sig_to_use.get('object', None)
-
-                    # print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
-                    subjects_from_rule = extract_params_from_rule(sub_rule, m_func_args, computed_sig_variables)
-
-                    # print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
-                    objects_from_rule = extract_params_from_rule(obj_rule, m_func_args, computed_sig_variables)
-
-                    for sub_comp in subjects_from_rule:
-                        for obj_comp in objects_from_rule:
-                            computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
-                            tmp_computed_list.append(computed)
-
-                    mod_found = True
+                    # # print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
+                    # subjects_from_rule = extract_params_from_rule(sub_rule, m_func_args, computable_func)
+                    #
+                    # # print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
+                    # objects_from_rule = extract_params_from_rule(obj_rule, m_func_args, computable_func)
+                    #
+                    # for sub_comp in subjects_from_rule:
+                    #     for obj_comp in objects_from_rule:
+                    #         computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
+                    #         computed_list.append(computed)
 
                 else:
-                    mod_found = False
                     continue
-
-            if mod_found:
-                return tmp_computed_list
 
             if f_name in bel_obj.computed_funcs:
 
-                computed_sig_variables = {
+                computable_func = {
+                    'f_type': 'primary',
                     'full': decode(ast_dict),
                     'fn_name': f_name,
                     'p_name': '',
                     'p_full': '',
-                    'p_parameters': ''
+                    'p_parameters': '',
+                    'sig_to_use': bel_obj.computed_sigs[f_name]
                 }
 
-                sig_to_use = bel_obj.computed_sigs[f_name]
+                functions_to_compute.append(computable_func)
 
-                sub_rule = sig_to_use.get('subject', None)
-                rel_rule = sig_to_use.get('relationship', None)
-                obj_rule = sig_to_use.get('object', None)
 
-                # print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
-                subjects_from_rule = extract_params_from_rule(sub_rule, f_args, computed_sig_variables)
-
-                # print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
-                objects_from_rule = extract_params_from_rule(obj_rule, f_args, computed_sig_variables)
-
-                for sub_comp in subjects_from_rule:
-                    for obj_comp in objects_from_rule:
-                        computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
-                        tmp_computed_list.append(computed)
+                # # print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
+                # subjects_from_rule = extract_params_from_rule(sub_rule, f_args, computable_func)
+                #
+                # # print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
+                # objects_from_rule = extract_params_from_rule(obj_rule, f_args, computable_func)
+                #
+                # for sub_comp in subjects_from_rule:
+                #     for obj_comp in objects_from_rule:
+                #         computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
+                #         computed_list.append(computed)
 
         elif key == 'bel_statement':
             new_ast = value
@@ -423,17 +411,26 @@ def compute(ast_dict, bel_obj):
 
             if o is None:  # if no object, this means only subject is present
                 compute_list = compute(s)
-                tmp_computed_list.extend(compute_list)
+                computed_list.extend(compute_list)
             else:  # else the full form BEL statement with subject, relationship, and object are present
                 compute_list_subject = compute(s)
                 compute_list_object = compute(o)
-                tmp_computed_list.extend(compute_list_subject)
-                tmp_computed_list.extend(compute_list_object)
+                computed_list.extend(compute_list_subject)
+                computed_list.extend(compute_list_object)
 
         else:
             continue
 
-        return tmp_computed_list
+        return computed_list
+
+    for f in functions_to_compute:
+        print(f)
+
+        sig_to_use = f.get('sig_to_use', None)
+
+        sub_rule = sig_to_use.get('subject', None)
+        rel_rule = sig_to_use.get('relationship', None)
+        obj_rule = sig_to_use.get('object', None)
 
 
 def extract_params_from_rule(rule, args, variables):
