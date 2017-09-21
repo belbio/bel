@@ -17,6 +17,9 @@ parse_obj = bel_instance.parse(statement_to_parse)
 #     print()
 
 comp = bel_instance.computed(parse_obj.ast)
+print()
+print()
+print()
 print(comp)
 
 # stmts = B.load('dev/bel2_test_statements.txt', loadn=1, preprocess=True)
