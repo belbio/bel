@@ -527,6 +527,12 @@ def preprocess_bel_line(line):
     elif right_p_ct < left_p_ct:
         raise MissingParenthesis('Missing right parenthesis somewhere!')
 
+    # check for even number of quotation marks
+    quote_ct = l.count('"')
+
+    if quote_ct % 2 != 0:  # odd number of quotations
+        raise MissingQuotation('Missing quotation mark somewhere!')
+
     return l
 
 
