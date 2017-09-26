@@ -1,9 +1,10 @@
-import belpy
+import bel_lang
 import pytest
-from belpy.exceptions import *
-from belpy.tools import ParseObject
+from bel_lang.exceptions import *
+from bel_lang.tools import ParseObject
 
-B = belpy.BEL('2.0.0', 'example-endpoint')
+B = bel_lang.BEL('2.0.0', 'example-endpoint')
+
 
 def test_empty_string():
 
@@ -13,6 +14,7 @@ def test_empty_string():
     assert isinstance(parse_obj, ParseObject)
     assert parse_obj.ast is None
     assert parse_obj.error == 'Please include a valid BEL statement.'
+
 
 def test_bad_string_start():
 

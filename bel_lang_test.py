@@ -4,7 +4,8 @@ import pprint
 
 VERSION = '2.0.0'
 ENDPOINT = 'http://example.com/endpoint'
-statement_to_parse = 'act(complex(ABC:123), ma(ABC))'
+# statement_to_parse = 'act(complex(ABC:123), ma(ABC))'
+statement_to_parse = 'act(p(HGNC:AKT1), ma(kin)) increases complex(p(HGNC:SKP2), p(SFAM:"FOXO Family"))'
 
 bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
 parse_obj = bel_instance.parse(statement_to_parse)
@@ -16,10 +17,11 @@ parse_obj = bel_instance.parse(statement_to_parse)
 #     print()
 
 comp = bel_instance.computed(parse_obj.ast)
-print()
-print()
-print('list of computed edges:\n')
-print(comp)
+# print()
+# print()
+# print('list of computed edges:\n')
+# for c in comp:
+#     print('\t', c)
 
 # stmts = B.load('dev/bel2_test_statements.txt', loadn=1, preprocess=True)
 #

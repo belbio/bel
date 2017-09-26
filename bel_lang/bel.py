@@ -340,11 +340,16 @@ class BEL(object):
         o = ast.get('object', None)
 
         # compute subject and add to list
-        compute_list_subject = compute(s, self)
-        list_of_computed.extend(compute_list_subject)
+        subject_computed_strings = compute(s, self)  # expects list of strings
+        if subject_computed_strings:  # if not empty list
+            list_of_computed.extend(subject_computed_strings)
+
+        return sorted(list(set(list_of_computed)))
+        #temporary return point. delete above line once finished.
 
         if o is not None:  # if object exists, then compute object as well
-            compute_list_object = compute(o, self)
-            list_of_computed.extend(compute_list_object)
+            object_computed_strings = compute(o, self)  # expects list of strings
+            if object_computed_strings:  # if not empty list
+                list_of_computed.extend(object_computed_strings)
 
         return sorted(list(set(list_of_computed)))

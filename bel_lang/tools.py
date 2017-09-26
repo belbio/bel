@@ -333,52 +333,111 @@ def decode(ast_dict):
             pass
 
 
+def get_computable_function_dicts(ast_dict, bel_obj):
+
+    computables = []
+
+    for item_type, item_value in ast_dict.items():
+        if item_type in ['function', 'm_function']:  # this item is a function or m_function
+
+            computable = {
+                'f_type': function_type,
+                'full': full,
+                'fn_name': function_name
+            }
+
+            print(function_name)
+            pprint.pprint(arguments)
+            print(full)
+            print()
+            print()
+
+            for arg in arguments:
+                get_computable_function_dicts(arg, bel_obj)
+
+        elif item_type == 'bel_statment':
+            print('we reached a BEL statment.')
+            pass
+
+        else:
+            return []
+
+    return computables
+
+
 def compute(ast_dict, bel_obj):
+
+    computed = []
+
+    for item_type, item_value in ast_dict.items():
+        if item_type in ['function', 'm_function']:  # this item is a function or m_function
+            parent_type = item_type
+            parent_name = item_value
+            parent_full = decode(ast_dict)
+
+            if item_type == 'function':
+                parent_params = ast_dict.get('function_args', None)
+            else:  # else must be a modifier function
+                parent_params = ast_dict.get('m_function_args', None)
+
+            print(parent_type)
+            print(parent_name)
+            print(parent_full)
+
+            for parameter in parent_params:
+                print(parameter)
+
+            print()
+            print()
+
+
+
+
+    # computables = get_computable_function_dicts(ast_dict, bel_obj)
+
+    return
+
+
+def compute2(ast_dict, bel_obj):
+
+    computed_list = []
+    temp_functions_to_compute = []
 
     for key, value in ast_dict.items():
 
-        computed_list = []
-        functions_to_compute = []
-
-        if key == 'function':
+        if key == 'function' or key == 'm_function':
             f_name = value
-            f_args = ast_dict.get('function_args', [])
 
-            for f_argument in f_args:
-                print(f_argument)
+            if key == 'm_function' and value in bel_obj.computed_mfuncs:
+                f_args = ast_dict.get('m_function_args', [])
 
-                if f_argument.get('m_function', None) in bel_obj.computed_mfuncs:  # add this m_func to compute later!
+                m_func_args = f_argument.get('m_function_args', [])
 
-                    m_func = f_argument.get('m_function', None)
-                    m_func_args = f_argument.get('m_function_args', [])
+                computable_func = {
+                    'f_type': 'modifier',
+                    'full': decode(f_argument),
+                    'fn_name': value,
+                    'p_name': f_name,
+                    'p_full': decode(ast_dict),
+                    'p_parameters': f_args,
+                    'sig_to_use': bel_obj.computed_sigs[m_func]
 
-                    computable_func = {
-                        'f_type': 'modifier',
-                        'full': decode(f_argument),
-                        'fn_name': m_func,
-                        'p_name': f_name,
-                        'p_full': decode(ast_dict),
-                        'p_parameters': f_args,
-                        'sig_to_use': bel_obj.computed_sigs[m_func]
-                    }
+                }
+                sub_rule = computable_func['sig_to_use'].get('subject', None)
+                rel_rule = computable_func['sig_to_use'].get('relationship', None)
+                obj_rule = computable_func['sig_to_use'].get('object', None)
 
-                    functions_to_compute.append(computable_func)
+                # print('EXTRACTING SUBJECT/OBJECT COMPUTATIONS FROM RULE -----------------------------')
+                subjects_from_rule = extract_params_from_rule(sub_rule, m_func_args, computable_func)
+                objects_from_rule = extract_params_from_rule(obj_rule, m_func_args, computable_func)
 
-                    # # print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
-                    # subjects_from_rule = extract_params_from_rule(sub_rule, m_func_args, computable_func)
-                    #
-                    # # print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
-                    # objects_from_rule = extract_params_from_rule(obj_rule, m_func_args, computable_func)
-                    #
-                    # for sub_comp in subjects_from_rule:
-                    #     for obj_comp in objects_from_rule:
-                    #         computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
-                    #         computed_list.append(computed)
+                for sub_comp in subjects_from_rule:
+                    for obj_comp in objects_from_rule:
+                        computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
+                        computed_list.append(computed)
 
-                else:
-                    continue
-
-            if f_name in bel_obj.computed_funcs:
+            if key == 'function' and value in bel_obj.computed_funcs:
+                f_args = ast_dict.get('function_args', [])
 
                 computable_func = {
                     'f_type': 'primary',
@@ -389,20 +448,27 @@ def compute(ast_dict, bel_obj):
                     'p_parameters': '',
                     'sig_to_use': bel_obj.computed_sigs[f_name]
                 }
+                sub_rule = computable_func['sig_to_use'].get('subject', None)
+                rel_rule = computable_func['sig_to_use'].get('relationship', None)
+                obj_rule = computable_func['sig_to_use'].get('object', None)
 
-                functions_to_compute.append(computable_func)
+                # print('EXTRACTING SUBJECT/OBJECT COMPUTATIONS FROM RULE -----------------------------')
+                subjects_from_rule = extract_params_from_rule(sub_rule, f_args, computable_func)
+                objects_from_rule = extract_params_from_rule(obj_rule, f_args, computable_func)
 
+                for sub_comp in subjects_from_rule:
+                    for obj_comp in objects_from_rule:
+                        computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
+                        computed_list.append(computed)
 
-                # # print('EXTRACTING SUBJECT COMPUTATIONS FROM RULE -----------------------------')
-                # subjects_from_rule = extract_params_from_rule(sub_rule, f_args, computable_func)
-                #
-                # # print('EXTRACTING OBJECT COMPUTATIONS FROM RULE -----------------------------')
-                # objects_from_rule = extract_params_from_rule(obj_rule, f_args, computable_func)
-                #
-                # for sub_comp in subjects_from_rule:
-                #     for obj_comp in objects_from_rule:
-                #         computed = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
-                #         computed_list.append(computed)
+            tmp_recursive_computed = []
+            for argument in f_args:
+                recursive_result = compute(argument, bel_obj)
+                if recursive_result is not None:
+                    tmp_recursive_computed.extend(recursive_result)
+
+            computed_list.extend(tmp_recursive_computed)
+            return computed_list
 
         elif key == 'bel_statement':
             new_ast = value
@@ -418,19 +484,8 @@ def compute(ast_dict, bel_obj):
                 computed_list.extend(compute_list_subject)
                 computed_list.extend(compute_list_object)
 
-        else:
-            continue
-
-        return computed_list
-
-    for f in functions_to_compute:
-        print(f)
-
-        sig_to_use = f.get('sig_to_use', None)
-
-        sub_rule = sig_to_use.get('subject', None)
-        rel_rule = sig_to_use.get('relationship', None)
-        obj_rule = sig_to_use.get('object', None)
+        else:  # if not a function, m_func, or complete bel_statement, return nothing
+            return None
 
 
 def extract_params_from_rule(rule, args, variables):

@@ -1,11 +1,11 @@
-import belpy
+import bel_lang
 import pytest
-from belpy.exceptions import *
+from bel_lang.exceptions import *
 
 SPECIFIED_VERSION = '2.0.0'
 SPECIFIED_ENDPOINT = 'example-endpoint'
 
-B = belpy.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
+B = bel_lang.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
 
 
 def test_computed_list_function():
