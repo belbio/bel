@@ -1,13 +1,13 @@
-import belpy
+import bel_lang
 import pytest
-from belpy.exceptions import *
+from bel_lang.exceptions import *
 
 SPECIFIED_VERSION = '2.0.0'
 SPECIFIED_VERSION_UNDERLINED = '2_0_0'
 
 SPECIFIED_ENDPOINT = 'example-endpoint'
 
-B = belpy.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
+B = bel_lang.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
 
 #####################
 # SYNTAX TEST CASES #
@@ -29,31 +29,31 @@ def test_extra_left_paren():
 def test_missing_parens():
     s = 'act(p(MGI:Akt1), ma(kin)) decreases MGI:Cdkn1b'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 def test_bad_namespace():
     s = 'abundance(CHEBI:"prostaglandin J2":TEST)'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 def test_arg_outside():
     s = 'act(p(HGNC:FOXO1)) ma(tscript)'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 def test_no_comma_between_args():
     s = 'act(p(HGNC:FOXO3) ma(tscript)) =| r(HGNC:MIR21)'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 def test_no_func_given():
     s = 'act(p(MGI:Akt1), ma(kin)) decreases (MGI:Cdkn1b)'
     v_obj = B.validate(s)
-    assert v_obj.valid is False
+    assert not v_obj.valid
 
 
 ##############################

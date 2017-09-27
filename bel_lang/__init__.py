@@ -2,4 +2,4 @@
 # BEL FUNCTION IMPORTS #
 ########################
 
-from belpy.bel import BEL
+from bel_lang.bel import BEL

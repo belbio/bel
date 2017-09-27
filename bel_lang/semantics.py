@@ -7,13 +7,17 @@ This file defines the semantic class used in our parser for BEL statements.
 
 import collections
 import math
-import yaml
 import os
-from belpy.exceptions import *
+
+import yaml
+
+from bel_lang.exceptions import *
+
 
 ###################
 # SEMANTICS CLASS #
 ###################
+
 
 class BELSemantics(object):
     def __init__(self, version='2_0_0'):
@@ -152,7 +156,9 @@ class BELSemantics(object):
         """
         This is stage 2 of semantic checking. It has three arguments:
 
-        1. fn_given: This is the given function from the BEL statement. For example, consider the following BEL statement:
+        1. fn_given: This is the given function from the BEL statement.
+
+        For example, consider the following BEL statement:
 
         tloc(p(HGNC:SGK1), fromLoc(MESHCS:Cytoplasm), toLoc(MESHCS:"Cell Nucleus")) association bp(GOBP:"cell cycle")
 
@@ -196,10 +202,6 @@ class BELSemantics(object):
         valid_sigs = self.function_signatures.get(fn_given, [])
         given_param_list = self.args_to_given_sig_list(args_given)
 
-        # print('\n\t\033[92mFunction given:\033[0m {}'.format(fn_given))
-        # print('\t\033[92mArguments given:\033[0m {}'.format(args_given))
-        # print('\t\033[93mGiven signature list:\033[0m {}'.format(given_param_list))
-
         for v_sig in valid_sigs:
 
             valid, msg_or_sig = self.check_valid_sig_given_args(v_sig, given_param_list)
@@ -236,7 +238,7 @@ class BELSemantics(object):
                 while idx < given_param_count:
                     if required_param_type == given_param_list[idx]:
                         idx += 1
-                    else:  # this breaks the loop because we encountered a given parameter that is not our multiple param type
+                    else:  # break the loop because we encountered a parameter that is not our multiple param type
                         break
 
         if idx < given_param_count:  # there are still optional parameters given that have not been accounted for
@@ -248,8 +250,8 @@ class BELSemantics(object):
                     if remaining_params.count(remain) <= optional[remain]:
                         continue
                     else:
-                        exception_msg = 'Too many optional parameters of type \"{}\" in statement. Does not match any function signatures.'.format(
-                            remain)
+                        exception_msg = 'Too many optional parameters of type \"{}\" in statement. ' \
+                                        'Does not match any function signatures.'.format(remain)
                         return False, exception_msg
 
                 else:
@@ -265,6 +267,8 @@ class BELSemantics(object):
     def check_signature_params(self):
         # Stage 3 of 3: check each of the parameters in the function call to see if they are valid
 
+        #  can't check this until TermStore is ready
+
         return
 
     ##############################
@@ -272,6 +276,7 @@ class BELSemantics(object):
     ##############################
 
     def check_valid_relationship(self, given):
+        # checks against all relationships in YAML to make sure the given one is valid
 
         if given not in self.relationships:
             raise InvalidRelationship(given)
@@ -283,6 +288,7 @@ class BELSemantics(object):
     ###############################
 
     def abbreviations_to_names(self, yaml_dict):
+        # uses YAML to translate from abbreviated name to actual full-length name
 
         abbreviations = {}
 
@@ -299,6 +305,7 @@ class BELSemantics(object):
         return abbreviations
 
     def names_to_abbreviations(self, yaml_dict):
+        # uses YAML to translate from full-length name to abbreviated name.
 
         names = {}
 
@@ -334,7 +341,7 @@ class BELSemantics(object):
 
     def get_relationships(self, yaml_dict):
         """
-        This function retrieves all valid relationships specified in the YAML and returns a list of unique relationships.
+        Retrieves all valid relationships specified in the YAML and returns a list of unique relationships.
         """
 
         relationships = set()

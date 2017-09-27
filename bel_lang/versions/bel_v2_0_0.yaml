@@ -919,3 +919,54 @@ bel1_migration:
     bel2: Sumo
   - bel1: U
     bel2: Ub
+
+computed_signatures:
+  list:
+    subject: "{{ full }}"
+    relationship: hasMember
+    object: "{{ parameters }}"
+
+  composite:
+    subject: "{{ full }}"
+    relationship: hasMember
+    object: "{{ parameters }}"
+
+  complex:
+    subject: "{{ full }}"
+    relationship: hasComponent
+    object: "{{ parameters }}"
+
+  degradation:
+    subject: "{{ full }}"
+    relationship: directlyDecreases
+    object: "{{ parameters }}"
+
+  activity:
+    subject: "{{ parameters[f] }}"
+    relationship: hasActivity
+    object: "{{ full }}"
+
+  reactants:
+    subject: "{{ p_full }}"
+    relationship: hasReactant
+    object: "{{ parameters }}"
+
+  products:
+    subject: "{{ p_full }}"
+    relationship: hasProduct
+    object: "{{ parameters }}"
+
+  variant:
+    subject: "{{ p_name(p_parameters[n]) }}"
+    relationship: hasVariant
+    object: "{{ p_full }}"
+
+  fusion:
+    subject: "{{ p_name(parameters[n]) }}"
+    relationship: hasFusion
+    object: "{{ p_full }}"
+
+  proteinModification:
+    subject: "{{ p_name(p_parameters[n]) }}"
+    relationship: hasModification
+    object: "{{ p_full }}"

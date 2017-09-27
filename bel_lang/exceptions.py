@@ -23,6 +23,11 @@ class MissingParenthesis(Exception):
         self.message = message
 
 
+class MissingQuotation(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
 class NoParserFound(Exception):
     def __init__(self, version):
         self.message = 'No parser found for BEL v{}!'.format(version)

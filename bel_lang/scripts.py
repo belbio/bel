@@ -1,6 +1,8 @@
-from .bel import *
-import click
 import pprint
+
+import click
+
+from .bel import *
 
 
 @click.group()
