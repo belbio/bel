@@ -920,21 +920,22 @@ bel1_migration:
   - bel1: U
     bel2: Ub
 
+# Computed signatures define the computed edges created from the given BEL
+# Statement found in the BEL Nanopub.
 computed_signatures:
-  list:
-    subject: "{{ full }}"
-    relationship: hasMember
-    object: "{{ parameters }}"
 
-  composite:
-    subject: "{{ full }}"
-    relationship: hasMember
-    object: "{{ parameters }}"
-
-  complex:
-    subject: "{{ full }}"
-    relationship: hasComponent
-    object: "{{ parameters }}"
+  # Every function or entity will be exposed as a componentOf the BEL subject or
+  #  object.  This will allow one to query for any components of a subject
+  #  or object in the graph database that is the EdgeStore. Modifier functions
+  #  will NOT be exposed as a componentOf.
+  componentOf:
+    subject: CHANGEME
+    relationship: componentOf
+    object: CHANGEME
+    examples:
+      - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+      - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
+      - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
 
   degradation:
     subject: "{{ full }}"
@@ -945,16 +946,6 @@ computed_signatures:
     subject: "{{ parameters[f] }}"
     relationship: hasActivity
     object: "{{ full }}"
-
-  reactants:
-    subject: "{{ p_full }}"
-    relationship: hasReactant
-    object: "{{ parameters }}"
-
-  products:
-    subject: "{{ p_full }}"
-    relationship: hasProduct
-    object: "{{ parameters }}"
 
   variant:
     subject: "{{ p_name(p_parameters[n]) }}"
@@ -970,3 +961,28 @@ computed_signatures:
     subject: "{{ p_name(p_parameters[n]) }}"
     relationship: hasModification
     object: "{{ p_full }}"
+
+  reactants:
+    subject: "{{ p_full }}"
+    relationship: hasReactant
+    object: "{{ parameters }}"
+
+  products:
+    subject: "{{ p_full }}"
+    relationship: hasProduct
+    object: "{{ parameters }}"
+
+  list:
+    subject: "{{ full }}"
+    relationship: hasMember
+    object: "{{ parameters }}"
+
+  composite:
+    subject: "{{ full }}"
+    relationship: hasMember
+    object: "{{ parameters }}"
+
+  complex:
+    subject: "{{ full }}"
+    relationship: hasComponent
+    object: "{{ parameters }}"
