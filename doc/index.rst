@@ -6,7 +6,7 @@
 Introduction
 ------------
 
-Welcome to belpy's documentation.
+Welcome to bel_lang's documentation.
 
 .. toctree::
    :maxdepth: 2

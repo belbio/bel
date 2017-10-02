@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# belpy documentation build configuration file, created by
+# bel_lang documentation build configuration file, created by
 # sphinx-quickstart on Mon Aug  7 15:03:45 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -23,7 +23,7 @@ import sys
 import sphinx_rtd_theme
 
 
-path = os.path.abspath('../belpy')
+path = os.path.abspath('../bel_lang')
 print(path)
 sys.path.insert(0, path)
 
@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'belpy'
+project = 'bel_lang'
 copyright = '2017, William Hayes, David Chen'
 author = 'William Hayes, David Chen'
 
@@ -89,7 +89,7 @@ todo_include_todos = False
 # html_theme_options = {
 #     'description': 'A Python library that allows biologists and developers to parse, generate, test, and validate BEL statements.',
 #     'github_user': 'belbio',
-#     'github_repo': 'bel.py',
+#     'github_repo': 'bel_lang',
 #     'github_button': True,
 #     'fixed_sidebar': True,
 # }
@@ -126,7 +126,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'belpydoc'
+htmlhelp_basename = 'bel_langdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -153,7 +153,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'belpy.tex', 'belpy Documentation',
+    (master_doc, 'bel_lang.tex', 'bel_lang Documentation',
      'William Hayes, David Chen', 'manual'),
 ]
 
@@ -163,7 +163,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'belpy', 'belpy Documentation',
+    (master_doc, 'bel_lang', 'bel_lang Documentation',
      [author], 1)
 ]
 
@@ -174,8 +174,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'belpy', 'belpy Documentation',
-     author, 'belpy', 'One line description of project.',
+    (master_doc, 'bel_lang', 'bel_lang Documentation',
+     author, 'bel_lang', 'One line description of project.',
      'Miscellaneous'),
 ]
 

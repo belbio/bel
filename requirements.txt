@@ -1,11 +1,12 @@
 alabaster==0.7.10
-Babel==2.4.0
+Babel==2.5.1
+-e git+git@github.com:belbio/bel_lang.git@1d8acfacb432157f1b0cd4ae54bdc1e715f7e8f2#egg=bel_lang
 certifi==2017.7.27.1
 chardet==3.0.4
 click==6.7
 colorama==0.3.9
 docutils==0.14
-idna==2.5
+idna==2.6
 imagesize==0.7.1
 Jinja2==2.9.6
 MarkupSafe==1.0
@@ -14,12 +15,10 @@ Pygments==2.2.0
 pytest==3.2.1
 pytz==2017.2
 PyYAML==3.12
-requests==2.18.3
-six==1.10.0
+requests==2.18.4
+six==1.11.0
 snowballstemmer==1.2.1
-Sphinx==1.6.3
-sphinx-autodoc-typehints==1.2.1
-sphinx-rtd-theme==0.2.4
+Sphinx==1.6.4
 sphinxcontrib-websupport==1.0.1
 TatSu==4.2.2
 urllib3==1.22
