@@ -941,6 +941,10 @@ computed_signatures:
     subject: "{{ full }}"
     relationship: directlyDecreases
     object: "{{ parameters }}"
+    examples:
+      - given_statement: "deg(r(HGNC:MYC))"
+        computed:
+          - "deg(r(HGNC:MYC)) directlyDecreases r(HGNC:MYC)"
 
   activity:
     subject: "{{ parameters[f] }}"

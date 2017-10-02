@@ -4,7 +4,7 @@ import pprint
 
 VERSION = '2.0.0'
 ENDPOINT = 'http://example.com/endpoint'
-statement_to_parse = 'composite(p(SFAM:"Histone H3 Family", pmod(Ac)), p(SFAM:"Histone H4 Family", pmod(Ac)))'
+statement_to_parse = 'deg(r(HGNC:MYC))'
 # statement_to_parse = 'act(p(HGNC:AKT1), ma(kin)) increases complex(p(HGNC:SKP2), p(SFAM:"FOXO Family"))'
 
 bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
@@ -17,8 +17,9 @@ parse_obj = bel_instance.parse(statement_to_parse)
 #     print()
 
 comp = bel_instance.computed(parse_obj.ast)
+print(statement_to_parse)
 for num, computed, in enumerate(comp, start=1):
-    print('{}. {}'.format(num, computed))
+    print('{}'.format(computed))
 # print()
 # print()
 # print('list of computed edges:\n')

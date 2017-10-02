@@ -344,12 +344,9 @@ class BEL(object):
         if subject_computed_strings:  # if not empty list
             list_of_computed.extend(subject_computed_strings)
 
-        return sorted(list(set(list_of_computed)))
-        #temporary return point. delete above line once finished.
-
         if o is not None:  # if object exists, then compute object as well
             object_computed_strings = compute(o, self)  # expects list of strings
             if object_computed_strings:  # if not empty list
                 list_of_computed.extend(object_computed_strings)
 
-        return sorted(list(set(list_of_computed)))
+        return list_of_computed
