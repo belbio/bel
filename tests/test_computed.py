@@ -18,7 +18,8 @@ def test_computed_list_function():
 
     s = 'list(p(HGNC:CAV1, pmod(Ph, Y, 14)), p(HGNC:SLC2A4))'
     expected = ['{} hasMember p(HGNC:CAV1, pmod(Ph, Y, 14))'.format(s),
-                '{} hasMember p(HGNC:SLC2A4)'.format(s)]
+                '{} hasMember p(HGNC:SLC2A4)'.format(s),
+                'p(HGNC:CAV1) hasModification p(HGNC:CAV1, pmod(Ph, Y, 14))']
     result = B.computed(B.parse(s).ast)
     assert sorted(expected) == result
 
@@ -40,7 +41,8 @@ def test_computed_composite_function():
 
     s = 'composite(p(HGNC:IL6), complex(GOCC:"interleukin-23 complex"))'
     expected = ['{} hasMember p(HGNC:IL6)'.format(s),
-                '{} hasMember complex(GOCC:"interleukin-23 complex")'.format(s)]
+                '{} hasMember complex(GOCC:"interleukin-23 complex")'.format(s),
+                'complex(GOCC:"interleukin-23 complex") hasComponent GOCC:"interleukin-23 complex"']
     result = B.computed(B.parse(s).ast)
     assert sorted(expected) == result
 
@@ -52,7 +54,9 @@ def test_computed_composite_function():
 
     s = 'composite(p(SFAM:"Histone H3 Family", pmod(Ac)), p(SFAM:"Histone H4 Family", pmod(Ac)))'
     expected = ['{} hasMember p(SFAM:"Histone H3 Family", pmod(Ac))'.format(s),
-                '{} hasMember p(SFAM:"Histone H4 Family", pmod(Ac))'.format(s)]
+                '{} hasMember p(SFAM:"Histone H4 Family", pmod(Ac))'.format(s),
+                'p(SFAM:"Histone H3 Family") hasModification p(SFAM:"Histone H3 Family", pmod(Ac))',
+                'p(SFAM:"Histone H4 Family") hasModification p(SFAM:"Histone H4 Family", pmod(Ac))']
     result = B.computed(B.parse(s).ast)
     assert sorted(expected) == result
 

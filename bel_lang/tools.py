@@ -415,10 +415,18 @@ def compute(ast_dict, bel_obj, parent_info=None):
                 subjects_from_rule = extract_params_from_rule(sub_rule, func_params, computable_info)
                 objects_from_rule = extract_params_from_rule(obj_rule, func_params, computable_info)
 
+                # print(subjects_from_rule)
+                # print(objects_from_rule)
+
                 for sub_comp in subjects_from_rule:
                     for obj_comp in objects_from_rule:
                         comp_string = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
                         computed_object = comp_string
+
+                        if computable:
+                            computed.append(computed_object)
+                        else:
+                            pass
 
                 # computed_object = {
                 #     'sub_rule': sub_rule,
@@ -426,10 +434,10 @@ def compute(ast_dict, bel_obj, parent_info=None):
                 #     'obj_rule': obj_rule
                 # }
 
-            if computable:
-                computed.append(computed_object)
-            else:
-                pass
+            # if computable:
+            #     computed.append(computed_object)
+            # else:
+            #     pass
 
             # then send each parameter back to compute() for computation
             for parameter in func_params:
