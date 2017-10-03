@@ -370,6 +370,7 @@ def decode(ast_dict):
 
 def compute(ast_dict, bel_obj, parent_info=None):
 
+    computed_object = {}
     computed = []
 
     for item_type, item_value in ast_dict.items():
@@ -378,16 +379,26 @@ def compute(ast_dict, bel_obj, parent_info=None):
             if parent_info is None:
                 parent_info = {}
             computable = False  # default to False until we know it needs to be computed
-            computed_object = {}  # default computed object if this function is computed
 
-            func_type = item_type
             func_name = item_value
+            func_type = item_type
+            func_alternate_name = bel_obj.translate_terms[func_name]
             func_full = decode(ast_dict)
+
+            func_obj = {
+                'name': func_name,
+                'type': func_type,
+                'alternate': func_alternate_name,
+                'full_string': func_full
+            }
 
             if item_type == 'function':
                 func_params = ast_dict.get('function_args', None)
             else:  # else must be a modifier function
                 func_params = ast_dict.get('m_function_args', None)
+
+            new_func_params = simple_params(func_params, bel_obj)
+            pprint.pprint(new_func_params)
 
             new_parent_info = {
                 'parent_type': func_type,
@@ -418,17 +429,14 @@ def compute(ast_dict, bel_obj, parent_info=None):
                 subjects_from_rule = extract_params_from_rule(sub_rule, func_params, computable_info)
                 objects_from_rule = extract_params_from_rule(obj_rule, func_params, computable_info)
 
-                print('subjects from rules:')
-                for s in subjects_from_rule:
-                    print(s)
+                print('SUBJECTS FROM RULE -------------------------------------------------')
+                print(subjects_from_rule)
+                print('-------------------------------------------------')
 
-                print()
+                print('OBJECTS FROM RULE -------------------------------------------------')
+                print(objects_from_rule)
+                print('-------------------------------------------------')
 
-                print('objects from rules:')
-                for o in objects_from_rule:
-                    print(o)
-
-                print()
 
                 for sub_comp in subjects_from_rule:
                     for obj_comp in objects_from_rule:
@@ -464,8 +472,53 @@ def compute(ast_dict, bel_obj, parent_info=None):
 
     return computed
 
+def simple_params(params, bel_obj):
+
+    new_params = []
+
+    for p in params:
+
+        if 'function' in p:
+            obj_type = 'function'
+            f_type = 'primary'
+            obj = {
+                'name': p['function'],
+                'type': f_type,
+                'alternate': bel_obj.translate_terms[p['function']],
+                'full_string': decode(p),
+                'params': simple_params(p['function_args'], bel_obj)
+            }
+        elif 'm_function' in p:
+            obj_type = 'function'
+            f_type = 'modifier'
+            obj = {
+                'name': p['m_function'],
+                'type': f_type,
+                'alternate': bel_obj.translate_terms[p['m_function']],
+                'full_string': decode(p),
+                'params': simple_params(p['m_function_args'], bel_obj)
+            }
+        elif 'ns_arg' in p:
+            obj_type = 'ns_variable'
+            obj = {
+                'namespace': p['ns_arg']['nspace'],
+                'value': p['ns_arg']['ns_value'],
+                'full_string': decode(p)
+            }
+        else:
+            obj_type = 'str_variable'
+            obj = {
+                'value': p['str_arg'],
+            }
+
+        new_params.append({obj_type: obj})
+
+    return new_params
+
 
 def extract_params_from_rule(rule, args, variables):
+
+    params = []
 
     print('OLD RULE: {}'.format(rule))
     rule = rule.replace('{{ ', '').replace(' }}', '')
@@ -473,10 +526,11 @@ def extract_params_from_rule(rule, args, variables):
     rule = rule.replace('p_full', variables['p_full'])
     rule = rule.replace('p_name', variables['p_name'])
 
-    rule = rule.replace('full', variables['full'])
-    rule = rule.replace('fn_name', variables['fn_name'])
+    rule = rule.replace('full', variables['full'])  # this should be the func object string
+    rule = rule.replace('fn_name', variables['fn_name'])  # this should be the function object
     print('NEW RULE: {}'.format(rule))
-
+    print()
+    print()
 
     args_wanted = []
 
