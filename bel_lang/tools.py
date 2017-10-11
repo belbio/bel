@@ -15,6 +15,7 @@ import string
 
 import yaml
 from bel_lang.exceptions import *
+from bel_lang.objects import *
 
 
 ###################
@@ -373,37 +374,37 @@ def compute(ast_dict, bel_obj, parent_info=None):
     computed_object = {}
     computed = []
 
-    for item_type, item_value in ast_dict.items():
-        if item_type in ['function', 'm_function']:  # this item is a function or m_function
+    for func_type, func_name in ast_dict.items():
+        if func_type in ['function', 'm_function']:  # this item is a function or m_function
 
             if parent_info is None:
                 parent_info = {}
             computable = False  # default to False until we know it needs to be computed
 
-            func_name = item_value
-            func_type = item_type
             func_alternate_name = bel_obj.translate_terms[func_name]
-            func_full = decode(ast_dict)
+            func_object_full = ast_dict.asjson()
 
-            func_obj = {
-                'name': func_name,
-                'type': func_type,
-                'alternate': func_alternate_name,
-                'full_string': func_full
-            }
+            print('{}FUNC FULL: {}{}'.format(Colors.RED, func_object_full, Colors.END))
 
-            if item_type == 'function':
-                func_params = ast_dict.get('function_args', None)
+            tmp_fn_obj = Function('primary', func_name, func_alternate_name)
+
+            if func_type == 'function':  # this is a primary function
+                tmp_fn_obj.add_ast_args(ast_dict.get('function_args', None))
             else:  # else must be a modifier function
-                func_params = ast_dict.get('m_function_args', None)
+                tmp_fn_obj.change_type('modifier')
+                tmp_fn_obj.add_ast_args(ast_dict.get('m_function_args', None))
 
+            exit()
             new_func_params = simple_params(func_params, bel_obj)
+
+            print('FUNCTION: {}'.format(func_name))
+            print('FUNCTION PARAMS:')
             pprint.pprint(new_func_params)
 
             new_parent_info = {
                 'parent_type': func_type,
                 'parent_name': func_name,
-                'parent_full': func_full,
+                'parent_full': func_object_full,
                 'parent_params': func_params
             }
 
@@ -412,12 +413,12 @@ def compute(ast_dict, bel_obj, parent_info=None):
                 computable = True
                 sig_to_use = bel_obj.computed_sigs[func_name]
                 sub_rule = sig_to_use.get('subject', None)
-                rel_rule = sig_to_use.get('relationship', None)
+                effect_rule = sig_to_use.get('relationship', None)
                 obj_rule = sig_to_use.get('object', None)
 
                 computable_info = {
                     'f_type': func_type,
-                    'full': func_full,
+                    'full': func_object_full,
                     'fn_name': func_name,
                     'p_name': parent_info.get('parent_name', ''),
                     'p_full': parent_info.get('parent_full', ''),
@@ -425,27 +426,26 @@ def compute(ast_dict, bel_obj, parent_info=None):
                     'sig_to_use': sig_to_use
                 }
 
-                # print('EXTRACTING SUBJECT/OBJECT COMPUTATIONS FROM RULE -----------------------------')
+                # extract subject and object params given rules
                 subjects_from_rule = extract_params_from_rule(sub_rule, func_params, computable_info)
                 objects_from_rule = extract_params_from_rule(obj_rule, func_params, computable_info)
 
-                print('SUBJECTS FROM RULE -------------------------------------------------')
-                print(subjects_from_rule)
-                print('-------------------------------------------------')
-
-                print('OBJECTS FROM RULE -------------------------------------------------')
-                print(objects_from_rule)
-                print('-------------------------------------------------')
-
+                # print('SUBJECTS FROM RULE -------------------------------------------------')
+                # print(subjects_from_rule)
+                # print('-------------------------------------------------')
+                #
+                # print('OBJECTS FROM RULE -------------------------------------------------')
+                # print(objects_from_rule)
+                # print('-------------------------------------------------')
 
                 for sub_comp in subjects_from_rule:
                     for obj_comp in objects_from_rule:
-                        comp_string = '{} {} {}'.format(sub_comp, rel_rule, obj_comp)
+                        comp_string = '{} {} {}'.format(sub_comp, effect_rule, obj_comp)
                         computed_object = comp_string
 
                         computed_object = {
                             'subject': 'test-sub',
-                            'relationship': 'test-rel',
+                            'effect': effect_rule,
                             'object': 'test-obj'
                         }
 
@@ -456,7 +456,7 @@ def compute(ast_dict, bel_obj, parent_info=None):
 
                 # computed_object = {
                 #     'sub_rule': sub_rule,
-                #     'rel_rule': rel_rule,
+                #     'effect_rule': effect_rule,
                 #     'obj_rule': obj_rule
                 # }
 
@@ -471,6 +471,7 @@ def compute(ast_dict, bel_obj, parent_info=None):
                 computed.extend(tmp_list)
 
     return computed
+
 
 def simple_params(params, bel_obj):
 
@@ -523,13 +524,14 @@ def extract_params_from_rule(rule, args, variables):
     print('OLD RULE: {}'.format(rule))
     rule = rule.replace('{{ ', '').replace(' }}', '')
 
+    # instead of replacing the keyword with the given variable, we need to actually create an object....
+
     rule = rule.replace('p_full', variables['p_full'])
     rule = rule.replace('p_name', variables['p_name'])
 
     rule = rule.replace('full', variables['full'])  # this should be the func object string
     rule = rule.replace('fn_name', variables['fn_name'])  # this should be the function object
     print('NEW RULE: {}'.format(rule))
-    print()
     print()
 
     args_wanted = []
@@ -591,6 +593,17 @@ def make_simple_ast(a):
 #################
 # PARSING TOOLS #
 #################
+
+
+class Colors:
+    PINK = '\033[95m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    END = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 class ParseObject(object):

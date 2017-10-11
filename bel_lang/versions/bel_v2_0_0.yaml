@@ -924,7 +924,7 @@ bel1_migration:
 # Statement found in the BEL Nanopub.
 computed_signatures:
 
-  # Every function or entity will be exposed as a componentOf the BEL subject or
+  #  Every function or entity will be exposed as a componentOf the BEL subject or
   #  object.  This will allow one to query for any components of a subject
   #  or object in the graph database that is the EdgeStore. Modifier functions
   #  will NOT be exposed as a componentOf.

@@ -1,27 +1,34 @@
 import bel_lang
 import pytest
 import pprint
+import json
+
+class Colors:
+    PINK = '\033[95m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    END = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 VERSION = '2.0.0'
 ENDPOINT = 'http://example.com/endpoint'
-# statement_to_parse = 'deg(r(HGNC:MYC))'
-statement_to_parse = 'act(p(HGNC:AKT1), ma(kin)) increases complex(p(HGNC:SKP2), p(SFAM:"FOXO Family"))'
+statement_to_parse = 'deg(r(HGNC:MYC))'
+# statement_to_parse = 'act(p(HGNC:AKT1), ma(kin)) increases complex(p(HGNC:SKP2), p(SFAM:"FOXO Family"))'
+
 
 bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
 parse_obj = bel_instance.parse(statement_to_parse)
-
-# bad_stmts = bel_instance._create(100, 3)
-#
-# for s in bad_stmts:
-#     print(s.string_form)
-#     print()
+print('{}STATEMENT TO PARSE: {}{}'.format(Colors.RED, statement_to_parse, Colors.END))
 
 comp = bel_instance.computed(parse_obj.ast)
-print(statement_to_parse)
+
+print('{}ALL COMPUTED STATEMENTS AS DICTS: {}'.format(Colors.RED, Colors.END))
 for num, computed, in enumerate(comp, start=1):
-    print('{}'.format(computed))
-# print()
-# print()
+    print('{}. {}'.format(num, computed))
+
 # print('list of computed edges:\n')
 # for c in comp:
 #     print('\t', c)

@@ -72,7 +72,7 @@ class BEL(object):
             print('Warning: Version {} YAML not found. Some functions will not work correctly.'.format(self.version))
             pass
 
-    def parse(self, statement: str, strict: bool = False):
+    def parse(self, statement: str, strict: bool = False, parseinfo: bool = False):
         """
         Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (
         AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in
@@ -81,6 +81,7 @@ class BEL(object):
         Args:
             statement (str): BEL statement
             strict (bool): specify to use strict or loose parsing; defaults to loose
+            parseinfo (bool): specify whether or not to include Tatsu parse information in AST
 
         Returns:
             ParseObject: The ParseObject which contain either an AST or error messages.
@@ -100,7 +101,7 @@ class BEL(object):
 
         try:
             # see if an AST is returned without any parsing errors
-            ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False)
+            ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False, parseinfo=parseinfo)
         except FailedParse as e:
             # if an error is returned, send to handle_syntax, error
             error, err_visual = handle_syntax_error(e)
@@ -333,20 +334,20 @@ class BEL(object):
         """
 
         # make empty list to hold our computed edge strings
-        list_of_computed = []
+        list_of_computed_objects = []
 
         # get both subject and object (we don't need relationship because no computing happens for relationship)
         s = ast.get('subject', None)
         o = ast.get('object', None)
 
         # compute subject and add to list
-        subject_computed_strings = compute(s, self)  # expects list of strings
-        if subject_computed_strings:  # if not empty list
-            list_of_computed.extend(subject_computed_strings)
+        subject_computed_objects = compute(s, self)  # expects list of strings
+        if subject_computed_objects:  # if not empty list
+            list_of_computed_objects.extend(subject_computed_objects)
 
         if o is not None:  # if object exists, then compute object as well
-            object_computed_strings = compute(o, self)  # expects list of strings
-            if object_computed_strings:  # if not empty list
-                list_of_computed.extend(object_computed_strings)
+            object_computed_objects = compute(o, self)  # expects list of strings
+            if object_computed_objects:  # if not empty list
+                list_of_computed_objects.extend(object_computed_objects)
 
-        return list_of_computed
+        return list_of_computed_objects
