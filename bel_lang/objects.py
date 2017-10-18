@@ -5,9 +5,9 @@
 This file contains helper objects.
 """
 
-#######################
-# BEL statment object #
-#######################
+########################
+# BEL statement object #
+########################
 
 
 class BELStatement(object):
@@ -57,9 +57,6 @@ class Function(object):
         self.args = []
         self.siblings = []
 
-    def __str__(self):
-        return self.name
-
     def is_primary(self):
         if self.ftype == 'primary':
             return True
@@ -73,18 +70,14 @@ class Function(object):
     def add_argument(self, arg):
         self.args.append(arg)
 
-    def add_ast_args(self, arg_from_ast):
-        if arg_from_ast is None:
-            return
-        else:
-            print(arg_from_ast)
-
     def add_sibling(self, sibling):
         self.siblings.append(sibling)
 
     def change_type(self, new_type):
         self.ftype = new_type
 
+    def set_full_string(self, string):
+        self.full_string = string
 
 #####################
 # Parameter objects #
@@ -95,7 +88,14 @@ class Param(object):
 
     def __init__(self, parent_function):
         self.parent_function = parent_function
+        self.siblings = []
+        self.full_string = ''
 
+    def add_sibling(self, sibling):
+        self.siblings.append(sibling)
+
+    def set_full_string(self, string):
+        self.full_string = string
 
 class NSParam(Param):
 
@@ -104,17 +104,9 @@ class NSParam(Param):
         self.namespace = namespace
         self.value = value
 
-    def __str__(self):
-
-        return '{}:{}'.format(self.namespace, self.value)
-
 
 class StrParam(Param):
 
     def __init__(self, value, parent_function):
         Param.__init__(self, parent_function)
         self.value = value
-
-    def __str__(self):
-
-        return '{}'.format(self.value)

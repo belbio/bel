@@ -387,12 +387,30 @@ def compute(ast_dict, bel_obj, parent_info=None):
             print('{}FUNC FULL: {}{}'.format(Colors.RED, func_object_full, Colors.END))
 
             tmp_fn_obj = Function('primary', func_name, func_alternate_name)
+            tmp_fn_obj.set_full_string(decode(ast_dict))
 
             if func_type == 'function':  # this is a primary function
-                tmp_fn_obj.add_ast_args(ast_dict.get('function_args', None))
+                tmp_fn_obj_args = ast_dict.get('function_args', None)
             else:  # else must be a modifier function
                 tmp_fn_obj.change_type('modifier')
-                tmp_fn_obj.add_ast_args(ast_dict.get('m_function_args', None))
+                tmp_fn_obj_args = ast_dict.get('m_function_args', None)
+
+            # for each argument in tmp_fn_obj_args, add it to our function object using add_args_to_compute_obj()
+            add_args_to_compute_obj(bel_obj, tmp_fn_obj, tmp_fn_obj_args)
+
+            print('\n{}'.format(tmp_fn_obj))
+            pprint.pprint(vars(tmp_fn_obj))
+
+
+
+
+
+            # print('\n{}'.format(tmp_fn_obj))
+            # pprint.pprint(vars(tmp_fn_obj))
+            #
+            # for a in tmp_fn_obj.args:
+            #     print('\n{}'.format(a))
+            #     pprint.pprint(vars(a))
 
             exit()
             new_func_params = simple_params(func_params, bel_obj)
@@ -471,6 +489,70 @@ def compute(ast_dict, bel_obj, parent_info=None):
                 computed.extend(tmp_list)
 
     return computed
+
+
+def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
+
+    tmp_all_args_objs = []
+
+    for argument in our_obj_args:
+
+        f_args = []
+        tmp_arg_obj = None
+
+        if 'function' in argument:
+            f_name = argument.get('function', None)
+            f_alt_name = our_bel_obj.translate_terms[f_name]
+            f_parent = our_obj
+            f_args = argument.get('function_args', [])
+
+            tmp_arg_obj = Function('primary', f_name, f_alt_name, parent_function=f_parent)
+
+        elif 'm_function' in argument:
+            f_name = argument.get('m_function', None)
+            f_alt_name = our_bel_obj.translate_terms[f_name]
+            f_parent = our_obj
+            f_args = argument.get('m_function_args', [])
+
+            tmp_arg_obj = Function('modifier', f_name, f_alt_name, parent_function=f_parent)
+
+        elif 'ns_arg' in argument:
+            ns = argument['ns_arg']['nspace']
+            nsv = argument['ns_arg']['ns_value']
+            ns_parent = our_obj
+
+            tmp_arg_obj = NSParam(ns, nsv, ns_parent)
+
+        elif 'str_arg' in argument:
+            sv = argument.get('str_arg', None)
+            sv_parent = our_obj
+
+            tmp_arg_obj = StrParam(sv, sv_parent)
+
+        else:
+            continue
+
+        if f_args:
+            add_args_to_compute_obj(our_bel_obj, tmp_arg_obj, f_args)
+
+        if tmp_arg_obj is not None:
+            tmp_arg_obj.set_full_string(decode(argument))
+            our_obj.add_argument(tmp_arg_obj)
+            tmp_all_args_objs.append(tmp_arg_obj)
+
+    # nested loop to add siblings to each arg. exclude the arg itself as its own sibling by ignoring if index match.
+    for idx, arg_obj in enumerate(tmp_all_args_objs):
+        for sibling_idx, sibling_arg_obj in enumerate(tmp_all_args_objs):
+
+            if idx == sibling_idx:
+                continue
+            else:
+                arg_obj.add_sibling(sibling_arg_obj)
+
+        print('\n{}'.format(arg_obj))
+        pprint.pprint(vars(arg_obj))
+
+    return
 
 
 def simple_params(params, bel_obj):

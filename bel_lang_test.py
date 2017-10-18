@@ -3,6 +3,7 @@ import pytest
 import pprint
 import json
 
+
 class Colors:
     PINK = '\033[95m'
     BLUE = '\033[94m'
@@ -15,8 +16,10 @@ class Colors:
 
 VERSION = '2.0.0'
 ENDPOINT = 'http://example.com/endpoint'
-statement_to_parse = 'deg(r(HGNC:MYC))'
-# statement_to_parse = 'act(p(HGNC:AKT1), ma(kin)) increases complex(p(HGNC:SKP2), p(SFAM:"FOXO Family"))'
+# statement_to_parse = 'a(CHEBI:"nitrogen atom")'
+# statement_to_parse = 'deg(r(HGNC:MYC))'
+# statement_to_parse = 'g(HGNC:CFTR, var("c.1521_1523delCTT"))'
+statement_to_parse = 'act(p(HGNC:AKT1), ma(kin)) increases complex(p(HGNC:SKP2), p(SFAM:"FOXO Family"))'
 
 
 bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
