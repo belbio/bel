@@ -401,17 +401,6 @@ def compute(ast_dict, bel_obj, parent_info=None):
             print('\n{}'.format(tmp_fn_obj))
             pprint.pprint(vars(tmp_fn_obj))
 
-
-
-
-
-            # print('\n{}'.format(tmp_fn_obj))
-            # pprint.pprint(vars(tmp_fn_obj))
-            #
-            # for a in tmp_fn_obj.args:
-            #     print('\n{}'.format(a))
-            #     pprint.pprint(vars(a))
-
             exit()
             new_func_params = simple_params(func_params, bel_obj)
 
