@@ -340,17 +340,16 @@ class BEL(object):
         s = ast.get('subject', None)
         o = ast.get('object', None)
 
-        # compute subject edge objects and add to list
-        subject_computed_objects = compute(s, self)  # returns list of objects
-        if subject_computed_objects:  # if not empty list
+        # make the objects for both subject and object if they exist, and extend computed list
+        if s is not None:
+            subject_obj = function_ast_to_objects(s, self)
+            subject_computed_objects = compute(subject_obj, self)  # returns list of objects
             list_of_computed_objects.extend(subject_computed_objects)
 
-        print('computed subject edge objects only. returned list.')
-        return list_of_computed_objects
+        if o is not None:
+            object_obj = function_ast_to_objects(o, self)
+            object_computed_objects = compute(object_obj, self)  # returns list of objects
+            list_of_computed_objects.extend(object_computed_objects)
 
-        if o is not None:  # if object exists, then compute object as well
-            object_computed_objects = compute(o, self)  # returns list of objects
-            if object_computed_objects:  # if not empty list
-                list_of_computed_objects.extend(object_computed_objects)
 
         return list_of_computed_objects

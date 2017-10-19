@@ -97,6 +97,7 @@ class Param(object):
     def set_full_string(self, string):
         self.full_string = string
 
+
 class NSParam(Param):
 
     def __init__(self, namespace, value, parent_function):

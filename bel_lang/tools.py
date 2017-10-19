@@ -337,147 +337,110 @@ def decode(ast_dict):
             pass
 
 
-# def get_computable_function_dicts(ast_dict, bel_obj):
-#
-#     computables = []
-#
-#     for item_type, item_value in ast_dict.items():
-#         if item_type in ['function', 'm_function']:  # this item is a function or m_function
-#
-#             computable = {
-#                 'f_type': function_type,
-#                 'full': full,
-#                 'fn_name': function_name
-#             }
-#
-#             print(function_name)
-#             pprint.pprint(arguments)
-#             print(full)
-#             print()
-#             print()
-#
-#             for arg in arguments:
-#                 get_computable_function_dicts(arg, bel_obj)
-#
-#         elif item_type == 'bel_statment':
-#             print('we reached a BEL statment.')
-#             pass
-#
-#         else:
-#             return []
-#
-#     return computables
+def compute(object_to_compute, bel_obj):
+
+    print('{}OBJECT TO COMPUTE:{} {}'.format(Colors.BLUE, Colors.END, object_to_compute))
+    computed_objs = []
+
+    # first see if the object itself is a function
+    if isinstance(object_to_compute, Function):
+        if object_to_compute.name in bel_obj.computed_funcs+bel_obj.computed_mfuncs:
+            print('function named {}() is computable!!!!!'.format(object_to_compute.name))
+
+            # do computation here of object_to_compute.name
+
+        else:
+            print('function {}() is not computable but we can check their args for hope'.format(object_to_compute.name))
+
+        for child in object_to_compute.args:
+            computed_objs.extend(compute(child, bel_obj))
+
+    return computed_objs
 
 
-def compute(ast_dict, bel_obj, parent_info=None):
 
-    computed_object = {}
-    computed = []
 
-    for func_type, func_name in ast_dict.items():
-        if func_type in ['function', 'm_function']:  # this item is a function or m_function
 
-            if parent_info is None:
-                parent_info = {}
-            computable = False  # default to False until we know it needs to be computed
 
-            func_alternate_name = bel_obj.translate_terms[func_name]
-            func_object_full = ast_dict.asjson()
+    # for func_type, func_name in ast_dict.items():
+    #     if func_type in ['function', 'm_function']:  # this item is a function or m_function
+    #
+    #         func_alternate_name = bel_obj.translate_terms[func_name]
+    #         func_object_full = ast_dict.asjson()
+    #
+    #         print('{}FUNC FULL: {}{}'.format(Colors.RED, func_object_full, Colors.END))
+    #
+    #         tmp_fn_obj = Function('primary', func_name, func_alternate_name)
+    #         tmp_fn_obj.set_full_string(decode(ast_dict))
+    #
+    #         if func_type == 'function':  # this is a primary function
+    #             tmp_fn_obj_args = ast_dict.get('function_args', None)
+    #         else:  # else must be a modifier function
+    #             tmp_fn_obj.change_type('modifier')
+    #             tmp_fn_obj_args = ast_dict.get('m_function_args', None)
+    #
+    #         # for each argument in tmp_fn_obj_args, add it to our function object using add_args_to_compute_obj()
+    #         add_args_to_compute_obj(bel_obj, tmp_fn_obj, tmp_fn_obj_args)
+    #
+    #         if func_name in bel_obj.computed_funcs or func_name in bel_obj.computed_mfuncs:
+    #             # start computing in here
+    #
+    #             print('this function is computable')
+    #             computable = True
+    #             sig_to_use = bel_obj.computed_sigs[func_name]
+    #             computed = compute_objs_from_rules(sig_to_use, tmp_fn_obj)
+    #         else:
+    #             continue
+    #
+    #             # for sub_comp in subjects_from_rule:
+    #             #     for obj_comp in objects_from_rule:
+    #             #         comp_string = '{} {} {}'.format(sub_comp, effect_rule, obj_comp)
+    #             #         computed_object = comp_string
+    #             #
+    #             #         computed_object = {
+    #             #             'subject': 'test-sub',
+    #             #             'effect': effect_rule,
+    #             #             'object': 'test-obj'
+    #             #         }
+    #             #
+    #             #         if computable:
+    #             #             computed.append(computed_object)
+    #             #         else:
+    #             #             pass
+    #
+    # return computed_objs
 
-            print('{}FUNC FULL: {}{}'.format(Colors.RED, func_object_full, Colors.END))
 
-            tmp_fn_obj = Function('primary', func_name, func_alternate_name)
-            tmp_fn_obj.set_full_string(decode(ast_dict))
+def function_ast_to_objects(fn_ast_dict, bel_obj):
 
-            if func_type == 'function':  # this is a primary function
-                tmp_fn_obj_args = ast_dict.get('function_args', None)
-            else:  # else must be a modifier function
-                tmp_fn_obj.change_type('modifier')
-                tmp_fn_obj_args = ast_dict.get('m_function_args', None)
+    func_name = fn_ast_dict.get('function', None)
+    func_alternate_name = bel_obj.translate_terms[func_name]
 
-            # for each argument in tmp_fn_obj_args, add it to our function object using add_args_to_compute_obj()
-            add_args_to_compute_obj(bel_obj, tmp_fn_obj, tmp_fn_obj_args)
+    tmp_fn_obj = Function('primary', func_name, func_alternate_name)
+    tmp_fn_obj.set_full_string(decode(fn_ast_dict))
+    tmp_fn_obj_args = fn_ast_dict.get('function_args', None)
 
-            print('\n{}'.format(tmp_fn_obj))
-            pprint.pprint(vars(tmp_fn_obj))
+    # for each argument in tmp_fn_obj_args, add it to our function object using add_args_to_compute_obj()
+    add_args_to_compute_obj(bel_obj, tmp_fn_obj, tmp_fn_obj_args)
 
-            exit()
-            new_func_params = simple_params(func_params, bel_obj)
+    return tmp_fn_obj
 
-            print('FUNCTION: {}'.format(func_name))
-            print('FUNCTION PARAMS:')
-            pprint.pprint(new_func_params)
 
-            new_parent_info = {
-                'parent_type': func_type,
-                'parent_name': func_name,
-                'parent_full': func_object_full,
-                'parent_params': func_params
-            }
+def compute_objs_from_rules(sig, our_obj):
 
-            if func_name in bel_obj.computed_funcs or func_name in bel_obj.computed_mfuncs:
-                # start computing in here
-                computable = True
-                sig_to_use = bel_obj.computed_sigs[func_name]
-                sub_rule = sig_to_use.get('subject', None)
-                effect_rule = sig_to_use.get('relationship', None)
-                obj_rule = sig_to_use.get('object', None)
+    cmp_objs = []
 
-                computable_info = {
-                    'f_type': func_type,
-                    'full': func_object_full,
-                    'fn_name': func_name,
-                    'p_name': parent_info.get('parent_name', ''),
-                    'p_full': parent_info.get('parent_full', ''),
-                    'p_parameters': parent_info.get('parent_params', ''),
-                    'sig_to_use': sig_to_use
-                }
+    sub_rule = sig.get('subject', None)
+    effect_rule = sig.get('relationship', None)
+    obj_rule = sig.get('object', None)
 
-                # extract subject and object params given rules
-                subjects_from_rule = extract_params_from_rule(sub_rule, func_params, computable_info)
-                objects_from_rule = extract_params_from_rule(obj_rule, func_params, computable_info)
+    print(our_obj)
+    # pprint.pprint(vars(our_obj))
+    # print(sub_rule)
+    # print(effect_rule)
+    # print(obj_rule)
 
-                # print('SUBJECTS FROM RULE -------------------------------------------------')
-                # print(subjects_from_rule)
-                # print('-------------------------------------------------')
-                #
-                # print('OBJECTS FROM RULE -------------------------------------------------')
-                # print(objects_from_rule)
-                # print('-------------------------------------------------')
-
-                for sub_comp in subjects_from_rule:
-                    for obj_comp in objects_from_rule:
-                        comp_string = '{} {} {}'.format(sub_comp, effect_rule, obj_comp)
-                        computed_object = comp_string
-
-                        computed_object = {
-                            'subject': 'test-sub',
-                            'effect': effect_rule,
-                            'object': 'test-obj'
-                        }
-
-                        if computable:
-                            computed.append(computed_object)
-                        else:
-                            pass
-
-                # computed_object = {
-                #     'sub_rule': sub_rule,
-                #     'effect_rule': effect_rule,
-                #     'obj_rule': obj_rule
-                # }
-
-            # if computable:
-            #     computed.append(computed_object)
-            # else:
-            #     pass
-
-            # then send each parameter back to compute() for computation
-            for parameter in func_params:
-                tmp_list = compute(parameter, bel_obj, parent_info=new_parent_info)
-                computed.extend(tmp_list)
-
-    return computed
+    return cmp_objs
 
 
 def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
@@ -538,8 +501,8 @@ def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
             else:
                 arg_obj.add_sibling(sibling_arg_obj)
 
-        print('\n{}'.format(arg_obj))
-        pprint.pprint(vars(arg_obj))
+        # print('\n{}'.format(arg_obj))
+        # pprint.pprint(vars(arg_obj))
 
     return
 
@@ -588,7 +551,7 @@ def simple_params(params, bel_obj):
     return new_params
 
 
-def extract_params_from_rule(rule, args, variables):
+def extract_params_from_rule(rule, function_obj):
 
     params = []
 
@@ -654,12 +617,6 @@ def extract_params_from_rule(rule, args, variables):
 
     return args_wanted
 
-
-def make_simple_ast(a):
-    print('FUNCTION:')
-    print(a.get('function', None))
-    print('FUNCTION ARGS:')
-    print(a.get('function_args', None))
 
 #################
 # PARSING TOOLS #
