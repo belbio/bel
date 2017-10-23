@@ -2,6 +2,8 @@ import importlib
 import os
 import pprint
 import sys
+import glob
+from typing import Mapping, Any
 
 import yaml
 from tatsu.ast import AST
@@ -71,6 +73,24 @@ class BEL(object):
             traceback.print_exc()
             print('Warning: Version {} YAML not found. Some functions will not work correctly.'.format(self.version))
             pass
+
+    def bel_versions(self) -> Mapping[str, Any]:
+        """Get BEL Language versions supported
+
+        Get the default BEL Language version supported and the list
+        of all BEL Language versions supported.
+
+        Returns:
+            Mapping[str, Any]: {"default": "2.0.0", "versions": ["2.0.0", ]}
+        """
+
+        files = glob.glob('{}/versions/bel_v*.yaml'.format(os.path.dirname(__file__)))
+        versions = []
+        for fn in files:
+            yaml_dict = yaml.load(open(fn, 'r').read())
+            versions.append(yaml_dict['version'])
+
+        return {'default': self.version, 'versions': versions}
 
     def parse(self, statement: str, strict: bool = False, parseinfo: bool = False):
         """
@@ -350,6 +370,5 @@ class BEL(object):
             object_obj = function_ast_to_objects(o, self)
             object_computed_objects = compute(object_obj, self)  # returns list of objects
             list_of_computed_objects.extend(object_computed_objects)
-
 
         return list_of_computed_objects
