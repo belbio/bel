@@ -345,9 +345,28 @@ def compute(object_to_compute, bel_obj):
     # first see if the object itself is a function
     if isinstance(object_to_compute, Function):
         if object_to_compute.name in bel_obj.computed_funcs+bel_obj.computed_mfuncs:
-            print('function named {}() is computable!!!!!'.format(object_to_compute.name))
+            print('{}function named {}() is computable!{}'.format(Colors.RED, object_to_compute.name, Colors.END))
+            pprint.pprint(vars(object_to_compute))
 
-            # do computation here of object_to_compute.name
+            # since this occur if function is computable, obtain the rules needed to compute
+            sig_to_use = bel_obj.computed_sigs[object_to_compute.name]
+            sub_rule = sig_to_use.get('subject', None)
+            effect_rule = sig_to_use.get('relationship', None)
+            obj_rule = sig_to_use.get('object', None)
+
+            # use these three rules to return the computed objs
+
+            print(sub_rule)
+            print(effect_rule)
+            print(obj_rule)
+
+            # get object partials using these rules
+            print('getting partial for sub_rule_partials...')
+            sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
+            print('finished partial sub_rule_partials.')
+            print('getting partial for obj_rule_partials...')
+            obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
+            print('finished partial obj_rule_partials.')
 
         else:
             print('function {}() is not computable but we can check their args for hope'.format(object_to_compute.name))
@@ -356,11 +375,6 @@ def compute(object_to_compute, bel_obj):
             computed_objs.extend(compute(child, bel_obj))
 
     return computed_objs
-
-
-
-
-
 
     # for func_type, func_name in ast_dict.items():
     #     if func_type in ['function', 'm_function']:  # this item is a function or m_function
@@ -411,8 +425,88 @@ def compute(object_to_compute, bel_obj):
     # return computed_objs
 
 
-def function_ast_to_objects(fn_ast_dict, bel_obj):
+def extract_obj_partials_from_rule(rule, function_obj):
 
+    print('{}******* RULE: {} ********{}'.format(Colors.RED, rule, Colors.END))
+
+    # if rule is simply the full function or the full parent function, return respective objects IN LIST
+    if rule == '{{ full }}':
+        return [function_obj.full_string]
+
+    if rule == '{{ p_full }}':
+        return [function_obj.parent_function.full_string]
+
+    args_wanted = []
+
+    parameter_pattern = '{{ (p_name|name)?\(?(p_)?parameters(\[[fmns]\])?\)? }}'
+    regex_pattern = re.compile(parameter_pattern)
+    param_matched_rule = regex_pattern.search(rule)
+
+    # first matching group determines if func name or func parent name is needed
+    # second matching group determines if parameters from func or func's parent is needed
+    # third matching group specifies what type of parameter (f, m, n, or s) are needed - if no match, assume all
+
+
+    function_prefix_to_use = ''
+    filter_string_to_use = ''
+
+    if param_matched_rule:  # if parameters are needed, loop through
+        final_to_replace = param_matched_rule.group()
+
+        if param_matched_rule.group(1) is not None:  # use func name or func parent name
+
+            function_prefix_to_use = param_matched_rule.group(1)
+
+        if param_matched_rule.group(2) is not None:  # use parent's params
+
+            
+
+        if param_matched_rule.group(3) is not None:  # filter type exists
+            filter_string_to_use = param_matched_rule.group(3)
+
+        try:
+
+            use_parent_params = param_matched_rule.group(2)
+            filter_string = param_matched_rule.group(3)
+            if filter_string is None:
+                filter_string = ''
+        except IndexError as e:
+            filter_string = ''  # stands for all
+
+        # print('Use parent params: {}'.format(bool(use_parent_params)))
+        # print('Filter string: {}'.format(filter_string))
+
+        allowed_type = ''
+
+        if 'f' in filter_string:
+            allowed_type = 'function'
+        elif 'm' in filter_string:
+            allowed_type = 'm_function'
+        elif 'n' in filter_string:
+            allowed_type = 'ns_arg'
+        elif 's' in filter_string:
+            allowed_type = 'str_arg'
+
+        if use_parent_params is not None:  # use the parent's args
+            args_to_loop = variables['p_parameters']
+        else:
+            args_to_loop = args
+
+        for a in args_to_loop:
+            if allowed_type == '' or allowed_type in list(a):
+                decoded_arg = decode(a)
+                final_rule = rule.replace(final_to_replace, decoded_arg)
+                args_wanted.append(final_rule)
+                make_simple_ast(a)
+
+    else:
+        return [rule]
+
+    return args_wanted
+
+
+def function_ast_to_objects(fn_ast_dict, bel_obj):
+    # needed and used
     func_name = fn_ast_dict.get('function', None)
     func_alternate_name = bel_obj.translate_terms[func_name]
 
@@ -426,25 +520,8 @@ def function_ast_to_objects(fn_ast_dict, bel_obj):
     return tmp_fn_obj
 
 
-def compute_objs_from_rules(sig, our_obj):
-
-    cmp_objs = []
-
-    sub_rule = sig.get('subject', None)
-    effect_rule = sig.get('relationship', None)
-    obj_rule = sig.get('object', None)
-
-    print(our_obj)
-    # pprint.pprint(vars(our_obj))
-    # print(sub_rule)
-    # print(effect_rule)
-    # print(obj_rule)
-
-    return cmp_objs
-
-
 def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
-
+    # needed and used
     tmp_all_args_objs = []
 
     for argument in our_obj_args:
@@ -507,115 +584,115 @@ def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
     return
 
 
-def simple_params(params, bel_obj):
+# def simple_params(params, bel_obj):
+#
+#     new_params = []
+#
+#     for p in params:
+#
+#         if 'function' in p:
+#             obj_type = 'function'
+#             f_type = 'primary'
+#             obj = {
+#                 'name': p['function'],
+#                 'type': f_type,
+#                 'alternate': bel_obj.translate_terms[p['function']],
+#                 'full_string': decode(p),
+#                 'params': simple_params(p['function_args'], bel_obj)
+#             }
+#         elif 'm_function' in p:
+#             obj_type = 'function'
+#             f_type = 'modifier'
+#             obj = {
+#                 'name': p['m_function'],
+#                 'type': f_type,
+#                 'alternate': bel_obj.translate_terms[p['m_function']],
+#                 'full_string': decode(p),
+#                 'params': simple_params(p['m_function_args'], bel_obj)
+#             }
+#         elif 'ns_arg' in p:
+#             obj_type = 'ns_variable'
+#             obj = {
+#                 'namespace': p['ns_arg']['nspace'],
+#                 'value': p['ns_arg']['ns_value'],
+#                 'full_string': decode(p)
+#             }
+#         else:
+#             obj_type = 'str_variable'
+#             obj = {
+#                 'value': p['str_arg'],
+#             }
+#
+#         new_params.append({obj_type: obj})
+#
+#     return new_params
 
-    new_params = []
 
-    for p in params:
-
-        if 'function' in p:
-            obj_type = 'function'
-            f_type = 'primary'
-            obj = {
-                'name': p['function'],
-                'type': f_type,
-                'alternate': bel_obj.translate_terms[p['function']],
-                'full_string': decode(p),
-                'params': simple_params(p['function_args'], bel_obj)
-            }
-        elif 'm_function' in p:
-            obj_type = 'function'
-            f_type = 'modifier'
-            obj = {
-                'name': p['m_function'],
-                'type': f_type,
-                'alternate': bel_obj.translate_terms[p['m_function']],
-                'full_string': decode(p),
-                'params': simple_params(p['m_function_args'], bel_obj)
-            }
-        elif 'ns_arg' in p:
-            obj_type = 'ns_variable'
-            obj = {
-                'namespace': p['ns_arg']['nspace'],
-                'value': p['ns_arg']['ns_value'],
-                'full_string': decode(p)
-            }
-        else:
-            obj_type = 'str_variable'
-            obj = {
-                'value': p['str_arg'],
-            }
-
-        new_params.append({obj_type: obj})
-
-    return new_params
-
-
-def extract_params_from_rule(rule, function_obj):
-
-    params = []
-
-    print('OLD RULE: {}'.format(rule))
-    rule = rule.replace('{{ ', '').replace(' }}', '')
-
-    # instead of replacing the keyword with the given variable, we need to actually create an object....
-
-    rule = rule.replace('p_full', variables['p_full'])
-    rule = rule.replace('p_name', variables['p_name'])
-
-    rule = rule.replace('full', variables['full'])  # this should be the func object string
-    rule = rule.replace('fn_name', variables['fn_name'])  # this should be the function object
-    print('NEW RULE: {}'.format(rule))
-    print()
-
-    args_wanted = []
-
-    parameter_pattern = '(p_)?parameters(\[[fmns]\])?'
-    regex_ppattern = re.compile(parameter_pattern)
-    param_matched_rule = regex_ppattern.search(rule)
-
-    if param_matched_rule:  # if parameters are needed, loop through
-        final_to_replace = param_matched_rule.group()
-        use_parent_params = None
-
-        try:
-            use_parent_params = param_matched_rule.group(1)
-            filter_string = param_matched_rule.group(2)
-            if filter_string is None:
-                filter_string = ''
-        except IndexError as e:
-            filter_string = ''  # stands for all
-
-        # print('Use parent params: {}'.format(bool(use_parent_params)))
-        # print('Filter string: {}'.format(filter_string))
-
-        allowed_type = ''
-
-        if 'f' in filter_string:
-            allowed_type = 'function'
-        elif 'm' in filter_string:
-            allowed_type = 'm_function'
-        elif 'n' in filter_string:
-            allowed_type = 'ns_arg'
-        elif 's' in filter_string:
-            allowed_type = 'str_arg'
-
-        if use_parent_params is not None:  # use the parent's args
-            args_to_loop = variables['p_parameters']
-        else:
-            args_to_loop = args
-
-        for a in args_to_loop:
-            if allowed_type == '' or allowed_type in list(a):
-                decoded_arg = decode(a)
-                final_rule = rule.replace(final_to_replace, decoded_arg)
-                args_wanted.append(final_rule)
-                make_simple_ast(a)
-
-    else:
-        return [rule]
-
-    return args_wanted
+# def extract_params_from_rule(rule, function_obj):
+#
+#     params = []
+#
+#     print('OLD RULE: {}'.format(rule))
+#     rule = rule.replace('{{ ', '').replace(' }}', '')
+#
+#     # instead of replacing the keyword with the given variable, we need to actually create an object....
+#
+#     rule = rule.replace('p_full', variables['p_full'])
+#     rule = rule.replace('p_name', variables['p_name'])
+#
+#     rule = rule.replace('full', variables['full'])  # this should be the func object string
+#     rule = rule.replace('fn_name', variables['fn_name'])  # this should be the function object
+#     print('NEW RULE: {}'.format(rule))
+#     print()
+#
+#     args_wanted = []
+#
+#     parameter_pattern = '(p_)?parameters(\[[fmns]\])?'
+#     regex_pattern = re.compile(parameter_pattern)
+#     param_matched_rule = regex_pattern.search(rule)
+#
+#     if param_matched_rule:  # if parameters are needed, loop through
+#         final_to_replace = param_matched_rule.group()
+#         use_parent_params = None
+#
+#         try:
+#             use_parent_params = param_matched_rule.group(1)
+#             filter_string = param_matched_rule.group(2)
+#             if filter_string is None:
+#                 filter_string = ''
+#         except IndexError as e:
+#             filter_string = ''  # stands for all
+#
+#         # print('Use parent params: {}'.format(bool(use_parent_params)))
+#         # print('Filter string: {}'.format(filter_string))
+#
+#         allowed_type = ''
+#
+#         if 'f' in filter_string:
+#             allowed_type = 'function'
+#         elif 'm' in filter_string:
+#             allowed_type = 'm_function'
+#         elif 'n' in filter_string:
+#             allowed_type = 'ns_arg'
+#         elif 's' in filter_string:
+#             allowed_type = 'str_arg'
+#
+#         if use_parent_params is not None:  # use the parent's args
+#             args_to_loop = variables['p_parameters']
+#         else:
+#             args_to_loop = args
+#
+#         for a in args_to_loop:
+#             if allowed_type == '' or allowed_type in list(a):
+#                 decoded_arg = decode(a)
+#                 final_rule = rule.replace(final_to_replace, decoded_arg)
+#                 args_wanted.append(final_rule)
+#                 make_simple_ast(a)
+#
+#     else:
+#         return [rule]
+#
+#     return args_wanted
 
 
 #################
