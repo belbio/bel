@@ -928,16 +928,26 @@ computed_signatures:
   #  object.  This will allow one to query for any components of a subject
   #  or object in the graph database that is the EdgeStore. Modifier functions
   #  will NOT be exposed as a componentOf.
-  componentOf:
-    subject: CHANGEME
+
+  functionComponentOf:
+    trigger_type: function
+    subject: "{{ full }}"
     relationship: componentOf
-    object: CHANGEME
+    object: "{{ p_full }}"
+
+  entityComponentOf:
+    trigger_type: entity
+    subject: "{{ parameters[n] }}"
+    relationship: componentOf
+    object: "{{ full }}"
     examples:
       - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
       - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
       - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
 
   degradation:
+    trigger_type: function
+    trigger_name: degradation
     subject: "{{ full }}"
     relationship: directlyDecreases
     object: "{{ parameters }}"

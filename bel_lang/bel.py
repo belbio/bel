@@ -350,7 +350,7 @@ class BEL(object):
             ast (AST): BEL AST
 
         Returns:
-            list:  List of canonicalized computed edges to load into the EdgeStore.
+            dict:
         """
 
         # make empty list to hold our computed edge objects
@@ -370,5 +370,7 @@ class BEL(object):
             object_obj = function_ast_to_objects(o, self)
             object_computed_objects = compute(object_obj, self)  # returns list of objects
             list_of_computed_objects.extend(object_computed_objects)
+
+
 
         return list_of_computed_objects

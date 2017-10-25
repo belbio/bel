@@ -339,15 +339,12 @@ def decode(ast_dict):
 
 def compute(object_to_compute, bel_obj):
 
-    print('{}OBJECT TO COMPUTE:{} {}'.format(Colors.BLUE, Colors.END, object_to_compute))
+    # print('{}OBJECT TO COMPUTE:{} {}'.format(Colors.BLUE, Colors.END, object_to_compute))
     computed_objs = []
 
     # first see if the object itself is a function
     if isinstance(object_to_compute, Function):
         if object_to_compute.name in bel_obj.computed_funcs+bel_obj.computed_mfuncs:
-            print('{}function named {}() is computable!{}'.format(Colors.RED, object_to_compute.name, Colors.END))
-            pprint.pprint(vars(object_to_compute))
-
             # since this occur if function is computable, obtain the rules needed to compute
             sig_to_use = bel_obj.computed_sigs[object_to_compute.name]
             sub_rule = sig_to_use.get('subject', None)
@@ -356,87 +353,59 @@ def compute(object_to_compute, bel_obj):
 
             # use these three rules to return the computed objs
 
-            print(sub_rule)
-            print(effect_rule)
-            print(obj_rule)
-
             # get object partials using these rules
-            print('getting partial for sub_rule_partials...')
             sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
-            print('finished partial sub_rule_partials.')
-            print('getting partial for obj_rule_partials...')
             obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
-            print('finished partial obj_rule_partials.')
 
-        else:
-            print('function {}() is not computable but we can check their args for hope'.format(object_to_compute.name))
+            for s in sub_rule_partials:
+                for o in obj_rule_partials:
+                    computed_string = '{} {} {}'.format(s, effect_rule, o)
+                    computed_objs.append(computed_string)
+
+            # functionComponentOf
+            sig_to_use = bel_obj.computed_sigs['functionComponentOf']
+            sub_rule = sig_to_use.get('subject', None)
+            effect_rule = sig_to_use.get('relationship', None)
+            obj_rule = sig_to_use.get('object', None)
+
+            sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
+            obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
+
+            for s in sub_rule_partials:
+                for o in obj_rule_partials:
+                    computed_string = '{} {} {}'.format(s, effect_rule, o)
+                    computed_objs.append(computed_string)
+
+            # entityComponentOf
+            sig_to_use = bel_obj.computed_sigs['entityComponentOf']
+            sub_rule = sig_to_use.get('subject', None)
+            effect_rule = sig_to_use.get('relationship', None)
+            obj_rule = sig_to_use.get('object', None)
+
+            sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
+            obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
+
+            for s in sub_rule_partials:
+                for o in obj_rule_partials:
+                    computed_string = '{} {} {}'.format(s, effect_rule, o)
+                    computed_objs.append(computed_string)
+
+        # print('function {}() is not computable but we can check their args for hope'.format(object_to_compute.name))
 
         for child in object_to_compute.args:
             computed_objs.extend(compute(child, bel_obj))
 
-    return computed_objs
-
-    # for func_type, func_name in ast_dict.items():
-    #     if func_type in ['function', 'm_function']:  # this item is a function or m_function
-    #
-    #         func_alternate_name = bel_obj.translate_terms[func_name]
-    #         func_object_full = ast_dict.asjson()
-    #
-    #         print('{}FUNC FULL: {}{}'.format(Colors.RED, func_object_full, Colors.END))
-    #
-    #         tmp_fn_obj = Function('primary', func_name, func_alternate_name)
-    #         tmp_fn_obj.set_full_string(decode(ast_dict))
-    #
-    #         if func_type == 'function':  # this is a primary function
-    #             tmp_fn_obj_args = ast_dict.get('function_args', None)
-    #         else:  # else must be a modifier function
-    #             tmp_fn_obj.change_type('modifier')
-    #             tmp_fn_obj_args = ast_dict.get('m_function_args', None)
-    #
-    #         # for each argument in tmp_fn_obj_args, add it to our function object using add_args_to_compute_obj()
-    #         add_args_to_compute_obj(bel_obj, tmp_fn_obj, tmp_fn_obj_args)
-    #
-    #         if func_name in bel_obj.computed_funcs or func_name in bel_obj.computed_mfuncs:
-    #             # start computing in here
-    #
-    #             print('this function is computable')
-    #             computable = True
-    #             sig_to_use = bel_obj.computed_sigs[func_name]
-    #             computed = compute_objs_from_rules(sig_to_use, tmp_fn_obj)
-    #         else:
-    #             continue
-    #
-    #             # for sub_comp in subjects_from_rule:
-    #             #     for obj_comp in objects_from_rule:
-    #             #         comp_string = '{} {} {}'.format(sub_comp, effect_rule, obj_comp)
-    #             #         computed_object = comp_string
-    #             #
-    #             #         computed_object = {
-    #             #             'subject': 'test-sub',
-    #             #             'effect': effect_rule,
-    #             #             'object': 'test-obj'
-    #             #         }
-    #             #
-    #             #         if computable:
-    #             #             computed.append(computed_object)
-    #             #         else:
-    #             #             pass
-    #
-    # return computed_objs
+    return sorted(computed_objs)
 
 
 def extract_obj_partials_from_rule(rule, function_obj):
-
-    print('{}******* RULE: {} ********{}'.format(Colors.RED, rule, Colors.END))
-
     # if rule is simply the full function or the full parent function, return respective objects IN LIST
+
     if rule == '{{ full }}':
         return [function_obj.full_string]
 
     if rule == '{{ p_full }}':
         return [function_obj.parent_function.full_string]
-
-    args_wanted = []
 
     parameter_pattern = '{{ (p_name|name)?\(?(p_)?parameters(\[[fmns]\])?\)? }}'
     regex_pattern = re.compile(parameter_pattern)
@@ -446,58 +415,68 @@ def extract_obj_partials_from_rule(rule, function_obj):
     # second matching group determines if parameters from func or func's parent is needed
     # third matching group specifies what type of parameter (f, m, n, or s) are needed - if no match, assume all
 
-
-    function_prefix_to_use = ''
-    filter_string_to_use = ''
+    function_prefix_to_use = None
+    filter_string_to_use = 'any'
+    use_parent_params = False
 
     if param_matched_rule:  # if parameters are needed, loop through
         final_to_replace = param_matched_rule.group()
 
-        if param_matched_rule.group(1) is not None:  # use func name or func parent name
+        if param_matched_rule.group(1) is not None:  # uses func prefix
 
             function_prefix_to_use = param_matched_rule.group(1)
 
-        if param_matched_rule.group(2) is not None:  # use parent's params
+            if function_prefix_to_use == 'p_name':
+                function_prefix_to_use = function_obj.parent_function.name
+            else:
+                function_prefix_to_use = function_obj.name
 
-            
+        if param_matched_rule.group(2) is not None:  # use parent's params
+            use_parent_params = True
 
         if param_matched_rule.group(3) is not None:  # filter type exists
             filter_string_to_use = param_matched_rule.group(3)
 
-        try:
-
-            use_parent_params = param_matched_rule.group(2)
-            filter_string = param_matched_rule.group(3)
-            if filter_string is None:
-                filter_string = ''
-        except IndexError as e:
-            filter_string = ''  # stands for all
-
-        # print('Use parent params: {}'.format(bool(use_parent_params)))
-        # print('Filter string: {}'.format(filter_string))
-
-        allowed_type = ''
-
-        if 'f' in filter_string:
-            allowed_type = 'function'
-        elif 'm' in filter_string:
-            allowed_type = 'm_function'
-        elif 'n' in filter_string:
-            allowed_type = 'ns_arg'
-        elif 's' in filter_string:
-            allowed_type = 'str_arg'
-
-        if use_parent_params is not None:  # use the parent's args
-            args_to_loop = variables['p_parameters']
+        if '[f]' in filter_string_to_use:
+            allowed_type = Function
+            fn_allowed_type = 'primary'
+        elif '[m]' in filter_string_to_use:
+            allowed_type = Function
+            fn_allowed_type = 'modifier'
+        elif '[n]' in filter_string_to_use:
+            allowed_type = NSParam
+            fn_allowed_type = ''
+        elif '[s]' in filter_string_to_use:
+            allowed_type = StrParam
+            fn_allowed_type = ''
         else:
-            args_to_loop = args
+            allowed_type = object
+            fn_allowed_type = ''
 
-        for a in args_to_loop:
-            if allowed_type == '' or allowed_type in list(a):
-                decoded_arg = decode(a)
-                final_rule = rule.replace(final_to_replace, decoded_arg)
-                args_wanted.append(final_rule)
-                make_simple_ast(a)
+        if use_parent_params:  # use the parent's args
+            args_to_loop = function_obj.parent_function.args
+        else:
+            args_to_loop = function_obj.args
+
+        # once allowed_type is figured out and who's params must be used, loop through to see which ones are valid
+        args_wanted = []
+
+        for argument in args_to_loop:
+
+            if isinstance(argument, allowed_type):  # this argument needs to be in our returned list
+
+                if isinstance(argument, Function) and fn_allowed_type in ['primary', 'modifier']:
+                    if fn_allowed_type != argument.ftype:
+                        # if argument is function but isn't a wanted function allowed type, then skip
+                        continue
+
+                # print('{} is of allowed type {}'.format(argument.full_string, allowed_type))
+                if function_prefix_to_use is not None:
+                    new_arg = '{}({})'.format(function_prefix_to_use, argument.full_string)
+                else:
+                    new_arg = argument.full_string
+
+                args_wanted.append(new_arg)
 
     else:
         return [rule]

@@ -21,6 +21,7 @@ ENDPOINT = 'http://example.com/endpoint'
 # statement_to_parse = 'g(HGNC:CFTR, var("c.1521_1523delCTT"))'
 # statement_to_parse = 'act(p(HGNC:AKT1), ma(kin)) increases complex(p(HGNC:SKP2), p(SFAM:"FOXO Family"))'
 statement_to_parse = 'p(fusion(HGNC:BCR, "p.1_426", HGNC:JAK2, "p.812_1132"))'
+# statement_to_parse = 'act(p(MGI:Met), ma(kin))'
 
 
 bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
@@ -29,7 +30,8 @@ print('{}STATEMENT TO PARSE: {}{}'.format(Colors.RED, statement_to_parse, Colors
 
 comp = bel_instance.computed(parse_obj.ast)
 
-print('{}ALL COMPUTED STATEMENTS AS DICTS: {}'.format(Colors.RED, Colors.END))
+print()
+print('{}ALL COMPUTED STATEMENTS: {}'.format(Colors.RED, Colors.END))
 for num, computed, in enumerate(comp, start=1):
     print('{}. {}'.format(num, computed))
 
