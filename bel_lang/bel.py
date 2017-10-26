@@ -1,6 +1,7 @@
 import importlib
 import os
 import pprint
+import requests
 import sys
 import glob
 from typing import Mapping, Any
@@ -9,11 +10,12 @@ import yaml
 from tatsu.ast import AST
 from tatsu.exceptions import FailedParse
 import traceback
+import time
 
 from bel_lang.exceptions import NoParserFound
 from bel_lang.semantics import BELSemantics
 from bel_lang.tools import ValidationObject, ParseObject
-from bel_lang.tools import *
+import bel_lang.tools as tools
 
 sys.path.append('../')
 
@@ -51,16 +53,16 @@ class BEL(object):
             yaml_file_path = '{}/{}'.format(current_stored_dir, yaml_file_name)
             self.yaml_dict = yaml.load(open(yaml_file_path, 'r').read())
 
-            self.translate_terms = func_name_translate(self)
-            self.relationships = get_all_relationships(self)
-            self.function_signatures = get_all_function_signatures(self)
+            self.translate_terms = tools.func_name_translate(self)
+            self.relationships = tools.get_all_relationships(self)
+            self.function_signatures = tools.get_all_function_signatures(self)
 
-            self.primary_functions = get_all_primary_funcs(self)
-            self.modifier_functions = get_all_modifier_funcs(self)
+            self.primary_functions = tools.get_all_primary_funcs(self)
+            self.modifier_functions = tools.get_all_modifier_funcs(self)
 
-            self.computed_sigs = get_all_computed_sigs(self)
-            self.computed_funcs = get_all_computed_funcs(self)
-            self.computed_mfuncs = get_all_computed_mfuncs(self)
+            self.computed_sigs = tools.get_all_computed_sigs(self)
+            self.computed_funcs = tools.get_all_computed_funcs(self)
+            self.computed_mfuncs = tools.get_all_computed_mfuncs(self)
 
             # print(self.computed_sigs.keys())
             # print('COMPUTED SIGS FUNCTIONS')
@@ -117,14 +119,14 @@ class BEL(object):
             return ParseObject(ast, error, err_visual)
 
         # pre-process to remove extra white space, add space after commas, etc.
-        statement = preprocess_bel_line(statement)
+        statement = tools.preprocess_bel_line(statement)
 
         try:
             # see if an AST is returned without any parsing errors
             ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False, parseinfo=parseinfo)
         except FailedParse as e:
             # if an error is returned, send to handle_syntax, error
-            error, err_visual = handle_syntax_error(e)
+            error, err_visual = tools.handle_syntax_error(e)
         except Exception as e:
             print(e)
             print(type(e))
@@ -205,7 +207,7 @@ class BEL(object):
         if count < 1:
             return list_of_bel_stmt_objs
 
-        return create_invalid(self, count, max_params)
+        return tools.create_invalid(self, count, max_params)
 
     def flatten(self, ast: AST):
         """
@@ -225,12 +227,12 @@ class BEL(object):
 
         # if no relationship, this means only subject is present
         if r is None:
-            sub = decode(s)
+            sub = tools.decode(s)
             final = '{}'.format(sub)
         # else the full form BEL statement with subject, relationship, and object are present
         else:
-            sub = decode(s)
-            obj = decode(o)
+            sub = tools.decode(s)
+            obj = tools.decode(o)
             final = '{} {} {}'.format(sub, r, obj)
 
         return final
@@ -261,7 +263,7 @@ class BEL(object):
                 break
 
             if preprocess:  # if preprocess if selected, clean up the statement string
-                line = preprocess_bel_line(line)
+                line = tools.preprocess_bel_line(line)
             else:
                 line = line.strip()
 
@@ -331,7 +333,6 @@ class BEL(object):
         return suggestions
 
     def canonicalize(self, ast: AST):
-        # TODO: this definition cannot be completed until TermStore API is complete.
         """
         Takes an AST and returns a canonicalized BEL statement string.
 
@@ -341,6 +342,41 @@ class BEL(object):
         Returns:
             str: The canonicalized string generated from the AST.
         """
+
+        canonicalize_endpoint = 'https://api.bel.bio/v1/term/{}/canonicalize'
+
+        s = ast.get('subject', None)
+        r = ast.get('relationship', None)
+        o = ast.get('object', None)
+
+        canonical_subject = None
+        canonical_object = None
+
+        if s is not None:
+            subject_obj = tools.function_ast_to_objects(s, self)
+            canonical_subject = tools.make_canonical(subject_obj, canonicalize_endpoint)
+
+        if o is not None:
+            object_obj = tools.function_ast_to_objects(o, self)
+            canonical_object = tools.make_canonical(object_obj, canonicalize_endpoint)
+
+        return {'subject': canonical_subject.to_string(), 'relation': r, 'object': canonical_object.to_string()}
+
+    def orthologize(self, gene_id, species_id):
+
+        if gene_id == '' or species_id == '':
+            return ''
+
+        ortho_endpoint = 'https://api.bel.bio/v1/ortholog/{}/{}'
+        ortho_request_url = ortho_endpoint.format(gene_id, species_id)
+
+        r = requests.get(ortho_request_url)
+
+        if r.status_code == 200:
+            ortho = r.json().get('ortholog', '')
+            return ortho
+
+        return ''
 
     def computed(self, ast: AST):
         """
@@ -362,15 +398,13 @@ class BEL(object):
 
         # make the objects for both subject and object if they exist, and extend computed list
         if s is not None:
-            subject_obj = function_ast_to_objects(s, self)
-            subject_computed_objects = compute(subject_obj, self)  # returns list of objects
+            subject_obj = tools.function_ast_to_objects(s, self)
+            subject_computed_objects = tools.compute(subject_obj, self)  # returns list of objects
             list_of_computed_objects.extend(subject_computed_objects)
 
         if o is not None:
-            object_obj = function_ast_to_objects(o, self)
-            object_computed_objects = compute(object_obj, self)  # returns list of objects
+            object_obj = tools.function_ast_to_objects(o, self)
+            object_computed_objects = tools.compute(object_obj, self)  # returns list of objects
             list_of_computed_objects.extend(object_computed_objects)
-
-
 
         return list_of_computed_objects

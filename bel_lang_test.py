@@ -26,7 +26,10 @@ statement_to_parse = 'p(fusion(HGNC:BCR, "p.1_426", HGNC:JAK2, "p.812_1132"))'
 
 bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
 parse_obj = bel_instance.parse(statement_to_parse)
+
 print('{}STATEMENT TO PARSE: {}{}'.format(Colors.RED, statement_to_parse, Colors.END))
+
+# print(bel_instance.orthologize('HGNC:A1BG', 'TAX:10090'))
 
 comp = bel_instance.computed(parse_obj.ast)
 

@@ -12,6 +12,7 @@ import pprint
 import random
 import re
 import string
+import requests
 
 import yaml
 from bel_lang.exceptions import *
@@ -362,19 +363,20 @@ def compute(object_to_compute, bel_obj):
                     computed_string = '{} {} {}'.format(s, effect_rule, o)
                     computed_objs.append(computed_string)
 
-            # functionComponentOf
-            sig_to_use = bel_obj.computed_sigs['functionComponentOf']
-            sub_rule = sig_to_use.get('subject', None)
-            effect_rule = sig_to_use.get('relationship', None)
-            obj_rule = sig_to_use.get('object', None)
+            # functionComponentOf ONLY IF FUNCTION HAS A PARENT
+            if object_to_compute.parent_function is not None:
+                sig_to_use = bel_obj.computed_sigs['functionComponentOf']
+                sub_rule = sig_to_use.get('subject', None)
+                effect_rule = sig_to_use.get('relationship', None)
+                obj_rule = sig_to_use.get('object', None)
 
-            sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
-            obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
+                sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
+                obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
 
-            for s in sub_rule_partials:
-                for o in obj_rule_partials:
-                    computed_string = '{} {} {}'.format(s, effect_rule, o)
-                    computed_objs.append(computed_string)
+                for s in sub_rule_partials:
+                    for o in obj_rule_partials:
+                        computed_string = '{} {} {}'.format(s, effect_rule, o)
+                        computed_objs.append(computed_string)
 
             # entityComponentOf
             sig_to_use = bel_obj.computed_sigs['entityComponentOf']
@@ -561,6 +563,30 @@ def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
         # pprint.pprint(vars(arg_obj))
 
     return
+
+
+def make_canonical(bel_tree_obj, endpoint):
+
+    if isinstance(bel_tree_obj, Function):
+        for arg in bel_tree_obj.args:
+            make_canonical(arg, endpoint)
+
+    elif isinstance(bel_tree_obj, NSParam):
+        given_term_id = '{}:{}'.format(bel_tree_obj.namespace, bel_tree_obj.value)
+        canon_request_url = endpoint.format(given_term_id)
+        r = requests.get(canon_request_url)
+
+        if r.status_code == 200:
+            canonicalized_id = r.json().get('term_id', given_term_id)
+            ns, value = canonicalized_id.split(':')
+            bel_tree_obj.change_nsvalue(ns, value)
+            return bel_tree_obj
+
+        else:
+            return bel_tree_obj
+
+    return bel_tree_obj
+
 
 
 # def simple_params(params, bel_obj):

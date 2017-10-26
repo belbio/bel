@@ -79,6 +79,11 @@ class Function(object):
     def set_full_string(self, string):
         self.full_string = string
 
+    def to_string(self):
+
+        arg_string = ', '.join([a.to_string() for a in self.args])
+        return '{}({})'.format(self.name, arg_string)
+
 #####################
 # Parameter objects #
 #####################
@@ -105,9 +110,19 @@ class NSParam(Param):
         self.namespace = namespace
         self.value = value
 
+    def change_nsvalue(self, namespace, value):
+        self.namespace = namespace
+        self.value = value
+
+    def to_string(self):
+        return '{}:{}'.format(self.namespace, self.value)
+
 
 class StrParam(Param):
 
     def __init__(self, value, parent_function):
         Param.__init__(self, parent_function)
         self.value = value
+
+    def to_string(self):
+        return '{}'.format(self.value)
