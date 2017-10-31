@@ -220,6 +220,24 @@ def get_all_computed_sigs(bel_obj):
     d = bel_obj.yaml_dict
     sigs = d.get('computed_signatures', [])
 
+    our_signatures = {}
+    sigs_applicable_to_all = []
+
+    for key, signature in sigs.items():
+        sig_filters = signature.get('trigger_filter', [])
+
+        if not sig_filters:  # this signature applies to all functions
+            sigs_applicable_to_all.append(signature)
+            continue
+        else:
+            for filter_name in sig_filters:
+                if filter_name not in our_signatures:
+                    our_signatures[filter_name] = [signature]
+                else:
+                    our_signatures[filter_name].append(signature)
+
+    pprint.pprint(sigs_applicable_to_all)
+
     # give each term's alternative name the same computed rule
     for initial_name in list(sigs):
         try:
@@ -338,10 +356,18 @@ def decode(ast_dict):
             pass
 
 
-def compute(object_to_compute, bel_obj):
+def compute(object_to_compute, bel_obj, rule_set):
 
     # print('{}OBJECT TO COMPUTE:{} {}'.format(Colors.BLUE, Colors.END, object_to_compute))
     computed_objs = []
+
+    if rule_set is not None:
+        filter_rules = True
+    else:
+        filter_rules = False
+
+    print(object_to_compute)
+    print(bel_obj)
 
     # first see if the object itself is a function
     if isinstance(object_to_compute, Function):
@@ -395,7 +421,7 @@ def compute(object_to_compute, bel_obj):
         # print('function {}() is not computable but we can check their args for hope'.format(object_to_compute.name))
 
         for child in object_to_compute.args:
-            computed_objs.extend(compute(child, bel_obj))
+            computed_objs.extend(compute(child, bel_obj, rule_set))
 
     return sorted(computed_objs)
 

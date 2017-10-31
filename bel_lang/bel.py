@@ -378,12 +378,13 @@ class BEL(object):
 
         return ''
 
-    def computed(self, ast: AST):
+    def computed(self, ast: AST, rule_set: list = None):
         """
         Takes an AST and computes all canonicalized edges.
 
         Args:
             ast (AST): BEL AST
+            rule_set (list): a list of rules to filter; only the rules in this list will be applied to computed
 
         Returns:
             dict:
@@ -399,12 +400,12 @@ class BEL(object):
         # make the objects for both subject and object if they exist, and extend computed list
         if s is not None:
             subject_obj = tools.function_ast_to_objects(s, self)
-            subject_computed_objects = tools.compute(subject_obj, self)  # returns list of objects
+            subject_computed_objects = tools.compute(subject_obj, self, rule_set)  # returns list of objects
             list_of_computed_objects.extend(subject_computed_objects)
 
         if o is not None:
             object_obj = tools.function_ast_to_objects(o, self)
-            object_computed_objects = tools.compute(object_obj, self)  # returns list of objects
+            object_computed_objects = tools.compute(object_obj, self, rule_set)  # returns list of objects
             list_of_computed_objects.extend(object_computed_objects)
 
         return list_of_computed_objects

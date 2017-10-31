@@ -929,25 +929,32 @@ computed_signatures:
   #  or object in the graph database that is the EdgeStore. Modifier functions
   #  will NOT be exposed as a componentOf.
 
-  functionComponentOf:
+  function_component_of:
     trigger_type: function
+    trigger_filter: []
     subject: "{{ full }}"
     relationship: componentOf
     object: "{{ p_full }}"
+    examples:
+      - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+        computed:
+          - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
 
-  entityComponentOf:
-    trigger_type: entity
+  entity_component_of:
+    trigger_type: function
+    trigger_filter: []
     subject: "{{ parameters[n] }}"
     relationship: componentOf
     object: "{{ full }}"
     examples:
-      - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-      - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
-      - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+      - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+        computed:
+          - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
+          - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
 
   degradation:
     trigger_type: function
-    trigger_name: degradation
+    trigger_filter: [degradation]
     subject: "{{ full }}"
     relationship: directlyDecreases
     object: "{{ parameters }}"
@@ -957,46 +964,64 @@ computed_signatures:
           - "deg(r(HGNC:MYC)) directlyDecreases r(HGNC:MYC)"
 
   activity:
+    trigger_type: function
+    trigger_filter: [activity]
     subject: "{{ parameters[f] }}"
     relationship: hasActivity
     object: "{{ full }}"
 
   variant:
+    trigger_type: function
+    trigger_filter: [variant]
     subject: "{{ p_name(p_parameters[n]) }}"
     relationship: hasVariant
     object: "{{ p_full }}"
 
   fusion:
+    trigger_type: function
+    trigger_filter: [fusion]
     subject: "{{ p_name(parameters[n]) }}"
     relationship: hasFusion
     object: "{{ p_full }}"
 
   proteinModification:
+    trigger_type: function
+    trigger_filter: [proteinModification]
     subject: "{{ p_name(p_parameters[n]) }}"
     relationship: hasModification
     object: "{{ p_full }}"
 
   reactants:
+    trigger_type: function
+    trigger_filter: [reactants]
     subject: "{{ p_full }}"
     relationship: hasReactant
     object: "{{ parameters }}"
 
   products:
+    trigger_type: function
+    trigger_filter: [products]
     subject: "{{ p_full }}"
     relationship: hasProduct
     object: "{{ parameters }}"
 
   list:
+    trigger_type: function
+    trigger_filter: [list]
     subject: "{{ full }}"
     relationship: hasMember
     object: "{{ parameters }}"
 
   composite:
+    trigger_type: function
+    trigger_filter: [composite]
     subject: "{{ full }}"
     relationship: hasMember
     object: "{{ parameters }}"
 
   complex:
+    trigger_type: function
+    trigger_filter: [complex]
     subject: "{{ full }}"
     relationship: hasComponent
     object: "{{ parameters }}"
