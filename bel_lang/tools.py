@@ -236,17 +236,20 @@ def get_all_computed_sigs(bel_obj):
                 else:
                     our_signatures[filter_name].append(signature)
 
-    pprint.pprint(sigs_applicable_to_all)
+    # add the sigs applicable to all to all other computed rules
+    for applicable_sig in sigs_applicable_to_all:
+        for key, signature in our_signatures.items():
+            signature.append(applicable_sig)
 
     # give each term's alternative name the same computed rule
-    for initial_name in list(sigs):
+    for initial_name in list(our_signatures):
         try:
             alternate = bel_obj.translate_terms[initial_name]
-            sigs[alternate] = sigs[initial_name]
+            our_signatures[alternate] = our_signatures[initial_name]
         except KeyError:
             continue
 
-    return sigs
+    return our_signatures
 
 
 def get_all_computed_funcs(bel_obj):

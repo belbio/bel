@@ -64,6 +64,8 @@ class BEL(object):
             self.computed_funcs = tools.get_all_computed_funcs(self)
             self.computed_mfuncs = tools.get_all_computed_mfuncs(self)
 
+            pprint.pprint(self.computed_sigs) # left off 10-31-17 2:15pm
+
             # print(self.computed_sigs.keys())
             # print('COMPUTED SIGS FUNCTIONS')
             # print(self.computed_funcs)
