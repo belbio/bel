@@ -585,10 +585,6 @@ def make_canonical(bel_tree_obj, endpoint):
             canonicalized_id = r.json().get('term_id', given_term_id)
             ns, value = canonicalized_id.split(':')
             bel_tree_obj.change_nsvalue(ns, value)
-            return bel_tree_obj
-
-        else:
-            return bel_tree_obj
 
     return bel_tree_obj
 

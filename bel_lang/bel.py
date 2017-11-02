@@ -340,10 +340,10 @@ class BEL(object):
             ast (AST): BEL AST
 
         Returns:
-            str: The canonicalized string generated from the AST.
+            dict: The canonicalized dict generated from the AST.
         """
 
-        canonicalize_endpoint = 'https://api.bel.bio/v1/term/{}/canonicalize'
+        canonicalize_endpoint = 'https://api.bel.bio/v1/terms/{}/canonicalized'
 
         s = ast.get('subject', None)
         r = ast.get('relationship', None)
@@ -360,20 +360,24 @@ class BEL(object):
             object_obj = tools.function_ast_to_objects(o, self)
             canonical_object = tools.make_canonical(object_obj, canonicalize_endpoint)
 
-        return {'subject': canonical_subject.to_string(), 'relation': r, 'object': canonical_object.to_string()}
+            return {'subject': canonical_subject.to_string(), 'relation': r, 'object': canonical_object.to_string()}
+
+
+        return {'subject': canonical_subject.to_string(), 'relation': None, 'object': None}
+
 
     def orthologize(self, gene_id, species_id):
 
         if gene_id == '' or species_id == '':
             return ''
 
-        ortho_endpoint = 'https://api.bel.bio/v1/ortholog/{}/{}'
+        ortho_endpoint = 'https://api.bel.bio/v1/orthologs/{}/{}'
         ortho_request_url = ortho_endpoint.format(gene_id, species_id)
 
         r = requests.get(ortho_request_url)
 
         if r.status_code == 200:
-            ortho = r.json().get('ortholog', '')
+            ortho = r.json().get('orthologs', '')
             return ortho
 
         return ''
