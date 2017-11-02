@@ -17,14 +17,41 @@ from bel_lang.semantics import BELSemantics
 from bel_lang.tools import ValidationObject, ParseObject
 import bel_lang.tools as tools
 
+import logging
+log = logging.getLogger(__name__)
+
 sys.path.append('../')
+
+
+def bel_versions(self) -> Mapping[str, Any]:
+    """Get BEL Language versions supported
+
+    Get the default BEL Language version supported and the list
+    of all BEL Language versions supported.
+
+    Returns:
+        Mapping[str, Any]: {"default": "2.0.0", "versions": ["2.0.0", ]}
+    """
+
+    files = glob.glob('{}/versions/bel_v*.yaml'.format(os.path.dirname(__file__)))
+    versions = []
+    for fn in files:
+        yaml_dict = yaml.load(open(fn, 'r').read())
+        versions.append(yaml_dict['version'])
+
+    return {'default': self.version, 'versions': versions}
 
 
 class BEL(object):
 
     def __init__(self, version: str, endpoint: str):
 
+        if version not in bel_versions['versions']:
+            log.error('Version {} not available in bel_lang package'.format(version))
+            sys.exit()
+
         self.version = version
+
         self.endpoint = endpoint
 
         # use this variable to find our parser file since periods aren't recommended in file names
@@ -71,28 +98,11 @@ class BEL(object):
             # print(self.computed_mfuncs)
 
         except Exception as e:
-            print(e)
-            traceback.print_exc()
-            print('Warning: Version {} YAML not found. Some functions will not work correctly.'.format(self.version))
-            pass
-
-    def bel_versions(self) -> Mapping[str, Any]:
-        """Get BEL Language versions supported
-
-        Get the default BEL Language version supported and the list
-        of all BEL Language versions supported.
-
-        Returns:
-            Mapping[str, Any]: {"default": "2.0.0", "versions": ["2.0.0", ]}
-        """
-
-        files = glob.glob('{}/versions/bel_v*.yaml'.format(os.path.dirname(__file__)))
-        versions = []
-        for fn in files:
-            yaml_dict = yaml.load(open(fn, 'r').read())
-            versions.append(yaml_dict['version'])
-
-        return {'default': self.version, 'versions': versions}
+            # print(e)
+            # traceback.print_exc()
+            # print('Warning: Version {} YAML not found. Some functions will not work correctly.'.format(self.version))
+            log.error('Warning: BEL Specification for Version {} YAML not found. Cannot proceed.'.format(self.version))
+            sys.exit()
 
     def parse(self, statement: str, strict: bool = False, parseinfo: bool = False):
         """
@@ -128,8 +138,7 @@ class BEL(object):
             # if an error is returned, send to handle_syntax, error
             error, err_visual = tools.handle_syntax_error(e)
         except Exception as e:
-            print(e)
-            print(type(e))
+            log.error('Error {}, error type: {}'.format(e, type(e)))
 
         # return everything in a ParseObject
         return ParseObject(ast, error, err_visual)
