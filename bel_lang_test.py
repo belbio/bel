@@ -16,12 +16,8 @@ class Colors:
 
 VERSION = '2.0.0'
 ENDPOINT = 'http://example.com/endpoint'
-# statement_to_parse = 'a(CHEBI:"nitrogen atom")'
-# statement_to_parse = 'deg(r(HGNC:MYC))'
-# statement_to_parse = 'g(HGNC:CFTR, var("c.1521_1523delCTT"))'
-# statement_to_parse = 'act(p(HGNC:AKT1), ma(kin)) increases complex(p(HGNC:SKP2), p(SFAM:"FOXO Family"))'
-statement_to_parse = 'p(fusion(HGNC:BCR, "p.1_426", HGNC:JAK2, "p.812_1132"))'
-# statement_to_parse = 'act(p(MGI:Met), ma(kin))'
+# statement_to_parse = 'tloc(p(HGNC:NFE2L2), fromLoc(MESHCL:Cytoplasm), toLoc(MESHCL:"Cell Nucleus"))'
+statement_to_parse = 'act(p(SFAM:"MAPK p38 Family"), ma(GO:"kinase activity")) decreases deg(p(HGNC:HBP1))'
 
 
 bel_instance = bel_lang.BEL(VERSION, ENDPOINT)

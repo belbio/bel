@@ -221,33 +221,28 @@ def get_all_computed_sigs(bel_obj):
     sigs = d.get('computed_signatures', [])
 
     our_signatures = {}
-    sigs_applicable_to_all = []
 
     for key, signature in sigs.items():
-        sig_filters = signature.get('trigger_filter', [])
 
-        if not sig_filters:  # this signature applies to all functions
-            sigs_applicable_to_all.append(signature)
-            continue
-        else:
-            for filter_name in sig_filters:
-                if filter_name not in our_signatures:
-                    our_signatures[filter_name] = [signature]
-                else:
+        sig_filters = signature.get('trigger', [])
+
+        if sig_filters == 'all':
+            sig_filters = list(bel_obj.function_signatures.keys())
+        elif sig_filters == 'modifier':
+            sig_filters = bel_obj.modifier_functions
+        elif sig_filters == 'primary':
+            sig_filters = bel_obj.primary_functions
+
+        for filter_name in sig_filters:
+
+            if filter_name not in our_signatures:  # for each filtered sig add it only to that func + alt func
+                our_signatures[filter_name] = [signature]
+                our_signatures[bel_obj.translate_terms.get(filter_name, '')] = [signature]
+            else:  # append if not already appended
+                if signature not in our_signatures[filter_name]:
                     our_signatures[filter_name].append(signature)
-
-    # add the sigs applicable to all to all other computed rules
-    for applicable_sig in sigs_applicable_to_all:
-        for key, signature in our_signatures.items():
-            signature.append(applicable_sig)
-
-    # give each term's alternative name the same computed rule
-    for initial_name in list(our_signatures):
-        try:
-            alternate = bel_obj.translate_terms[initial_name]
-            our_signatures[alternate] = our_signatures[initial_name]
-        except KeyError:
-            continue
+                    if filter_name != bel_obj.translate_terms.get(filter_name, ''):
+                        our_signatures[bel_obj.translate_terms.get(filter_name, '')].append(signature)
 
     return our_signatures
 
@@ -369,59 +364,31 @@ def compute(object_to_compute, bel_obj, rule_set):
     else:
         filter_rules = False
 
-    print(object_to_compute)
-    print(bel_obj)
-
     # first see if the object itself is a function
     if isinstance(object_to_compute, Function):
-        if object_to_compute.name in bel_obj.computed_funcs+bel_obj.computed_mfuncs:
-            # since this occur if function is computable, obtain the rules needed to compute
-            sig_to_use = bel_obj.computed_sigs[object_to_compute.name]
-            sub_rule = sig_to_use.get('subject', None)
-            effect_rule = sig_to_use.get('relationship', None)
-            obj_rule = sig_to_use.get('object', None)
+        # all primary functions + some m_funcs have some level of computation
 
-            # use these three rules to return the computed objs
+        compute_rules = bel_obj.computed_sigs.get(object_to_compute.name, [])
 
-            # get object partials using these rules
+        for rule in compute_rules:
+            sub_rule = rule.get('subject', None)
+            effect_rule = rule.get('relationship', None)
+            obj_rule = rule.get('object', None)
+
             sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
             obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
+
+            # print(getattr(object_to_compute, 'name', 'NOT A FUNCTION'))
+            # print(sub_rule, sub_rule_partials)
+            # print(obj_rule, obj_rule_partials)
+
+            if not sub_rule_partials or not obj_rule_partials:
+                continue
 
             for s in sub_rule_partials:
                 for o in obj_rule_partials:
                     computed_string = '{} {} {}'.format(s, effect_rule, o)
                     computed_objs.append(computed_string)
-
-            # functionComponentOf ONLY IF FUNCTION HAS A PARENT
-            if object_to_compute.parent_function is not None:
-                sig_to_use = bel_obj.computed_sigs['functionComponentOf']
-                sub_rule = sig_to_use.get('subject', None)
-                effect_rule = sig_to_use.get('relationship', None)
-                obj_rule = sig_to_use.get('object', None)
-
-                sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
-                obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
-
-                for s in sub_rule_partials:
-                    for o in obj_rule_partials:
-                        computed_string = '{} {} {}'.format(s, effect_rule, o)
-                        computed_objs.append(computed_string)
-
-            # entityComponentOf
-            sig_to_use = bel_obj.computed_sigs['entityComponentOf']
-            sub_rule = sig_to_use.get('subject', None)
-            effect_rule = sig_to_use.get('relationship', None)
-            obj_rule = sig_to_use.get('object', None)
-
-            sub_rule_partials = extract_obj_partials_from_rule(sub_rule, object_to_compute)
-            obj_rule_partials = extract_obj_partials_from_rule(obj_rule, object_to_compute)
-
-            for s in sub_rule_partials:
-                for o in obj_rule_partials:
-                    computed_string = '{} {} {}'.format(s, effect_rule, o)
-                    computed_objs.append(computed_string)
-
-        # print('function {}() is not computable but we can check their args for hope'.format(object_to_compute.name))
 
         for child in object_to_compute.args:
             computed_objs.extend(compute(child, bel_obj, rule_set))
@@ -435,8 +402,17 @@ def extract_obj_partials_from_rule(rule, function_obj):
     if rule == '{{ full }}':
         return [function_obj.full_string]
 
-    if rule == '{{ p_full }}':
-        return [function_obj.parent_function.full_string]
+    try:
+        #  not all functions have a parent, so if that's the case then this rule can't be computed
+        if rule == '{{ p_full }}':
+            return [function_obj.parent_function.full_string]
+    except AttributeError:
+        return []
+
+    if rule == '{{ closest_primary }}':  # return the closest non-modifier parent function
+        while function_obj.ftype == 'modifier':
+            function_obj = function_obj.parent_function
+        return [function_obj.full_string]
 
     parameter_pattern = '{{ (p_name|name)?\(?(p_)?parameters(\[[fmns]\])?\)? }}'
     regex_pattern = re.compile(parameter_pattern)
