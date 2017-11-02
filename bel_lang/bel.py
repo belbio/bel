@@ -362,7 +362,6 @@ class BEL(object):
 
             return {'subject': canonical_subject.to_string(), 'relation': r, 'object': canonical_object.to_string()}
 
-
         return {'subject': canonical_subject.to_string(), 'relation': None, 'object': None}
 
 

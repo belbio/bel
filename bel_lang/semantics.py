@@ -8,6 +8,8 @@ This file defines the semantic class used in our parser for BEL statements.
 import collections
 import math
 import os
+import pprint
+import requests
 
 import yaml
 
@@ -34,6 +36,8 @@ class BELSemantics(object):
         self.name_to_abbre = self.names_to_abbreviations(yaml_dict)
         self.function_signatures = self.get_function_signatures(yaml_dict)
         self.relationships = self.get_relationships(yaml_dict)
+
+        self.term_store_endpoint = 'https://api.bel.bio/v1/terms/{}'
 
     #######################
     # SEMANTIC RULE NAMES #
@@ -69,15 +73,14 @@ class BELSemantics(object):
         return ast
 
     def relationship(self, ast):
-        # r_given = ast.get('relation', None)
+        # r_given = ast.get('relation', None)s
         self.check_valid_relationship(ast)
 
         return ast
 
     def namespace_arg(self, ast):
-        # nspace = ast['ns_arg']['nspace']
-        # ns_value = ast['ns_arg']['ns_value']
-        # print('Namespace argument found: {}:{}.'.format(nspace, ns_value))
+        self.check_signature_params(ast)
+
         return ast
 
     def string_arg(self, ast):
@@ -264,8 +267,19 @@ class BELSemantics(object):
     # SEMANTIC CHECKING STAGE 3 OF 3 #
     ##################################
 
-    def check_signature_params(self):
+    def check_signature_params(self, ast):
         # Stage 3 of 3: check each of the parameters in the function call to see if they are valid
+        ns_arg = ast.get('ns_arg', {})
+
+        ns = ns_arg.get('nspace', '')
+        nsv = ns_arg.get('ns_value', '')
+
+        term = '{}:{}'.format(ns, nsv)
+        r_url = self.term_store_endpoint.format(term)
+
+        r = requests.get(r_url)
+        if r.status_code == 404:
+            print('WARNING: {} is not a valid namespace in your TermStore API!'.format(term))
 
         #  can't check this until TermStore is ready
 

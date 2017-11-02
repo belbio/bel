@@ -16,17 +16,13 @@ class Colors:
 
 VERSION = '2.0.0'
 ENDPOINT = 'http://example.com/endpoint'
+bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
+
 # statement_to_parse = 'tloc(p(HGNC:NFE2L2), fromLoc(MESHCL:Cytoplasm), toLoc(MESHCL:"Cell Nucleus"))'
 statement_to_parse = 'act(p(SFAM:"MAPK p38 Family"), ma(GO:"kinase activity")) decreases deg(p(HGNC:HBP1))'
-
-
-bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
-parse_obj = bel_instance.parse(statement_to_parse)
-
 print('{}STATEMENT TO PARSE: {}{}'.format(Colors.RED, statement_to_parse, Colors.END))
 
-# print(bel_instance.orthologize('HGNC:A1BG', 'TAX:10090'))
-
+parse_obj = bel_instance.parse(statement_to_parse)
 comp = bel_instance.computed(parse_obj.ast)
 
 print()
