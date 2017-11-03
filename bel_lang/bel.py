@@ -4,7 +4,7 @@ import pprint
 import requests
 import sys
 import glob
-from typing import Mapping, Any
+from typing import Mapping, Any, List
 
 import yaml
 from tatsu.ast import AST
@@ -14,8 +14,9 @@ import time
 
 from bel_lang.exceptions import NoParserFound
 from bel_lang.semantics import BELSemantics
-from bel_lang.tools import ValidationObject, ParseObject
+from bel_lang.tools import ParseObject
 import bel_lang.tools as tools
+from bel_lang.defaults import defaults
 
 import logging
 log = logging.getLogger(__name__)
@@ -23,14 +24,13 @@ log = logging.getLogger(__name__)
 sys.path.append('../')
 
 
-def bel_versions(self) -> Mapping[str, Any]:
+def get_bel_versions() -> List[str]:
     """Get BEL Language versions supported
 
-    Get the default BEL Language version supported and the list
-    of all BEL Language versions supported.
+    Get the list of all BEL Language versions supported.
 
     Returns:
-        Mapping[str, Any]: {"default": "2.0.0", "versions": ["2.0.0", ]}
+        List[str]: list of versions
     """
 
     files = glob.glob('{}/versions/bel_v*.yaml'.format(os.path.dirname(__file__)))
@@ -39,14 +39,21 @@ def bel_versions(self) -> Mapping[str, Any]:
         yaml_dict = yaml.load(open(fn, 'r').read())
         versions.append(yaml_dict['version'])
 
-    return {'default': self.version, 'versions': versions}
+    return versions
 
 
 class BEL(object):
 
-    def __init__(self, version: str, endpoint: str):
+    def __init__(self, version: str = defaults['bel_version'], endpoint: str = defaults['belapi_endpoint']) -> None:
+        """Initialize BEL object used for validating/processing/etc BEL statements
 
-        if version not in bel_versions['versions']:
+        Args:
+            version (str): BEL Version, defaults to bel_lang.defaults.defaults['bel_version']
+            endpoint (str): BEL API endpoint,  defaults to bel_lang.defaults.defaults['belapi_endpoint']
+        """
+
+        bel_versions = get_bel_versions()
+        if version not in bel_versions:
             log.error('Version {} not available in bel_lang package'.format(version))
             sys.exit()
 
@@ -140,8 +147,13 @@ class BEL(object):
         except Exception as e:
             log.error('Error {}, error type: {}'.format(e, type(e)))
 
+        # checks for the existence of the AST tree from parse(), and sets the valid boolean accordingly.
+        valid = False
+        if ast:
+            valid = True
+
         # return everything in a ParseObject
-        return ParseObject(ast, error, err_visual)
+        return ParseObject(ast, error, err_visual, valid)
 
     def stmt_components(self, statement: str):
         """
@@ -283,31 +295,6 @@ class BEL(object):
         f.close()
 
         return statements
-
-    def validate(self, statement: str, strict: bool = False):
-        """
-        Validates a BEL statement and returns a ValidationObject. validate() simply calls parse() but will have a
-        boolean to describe the existence of an AST from the ParseObject returned.
-
-        Args:
-            statement (str): BEL statement
-            strict (bool): specify to use strict or loose parsing; defaults to loose
-
-        Returns:
-            ValidationObject: The ValidationObject which contain either an AST or error messages, and valid boolean.
-
-        """
-
-        # begins with a call to parse
-        p = self.parse(statement)
-
-        # checks for the existence of the AST tree from parse(), and sets the valid boolean accordingly.
-        if p.ast is None:
-            valid = False
-        else:
-            valid = True
-
-        return ValidationObject(p.ast, p.error, p.err_visual, valid)
 
     def suggest(self, partial: str, value_type: str):
         """

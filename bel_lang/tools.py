@@ -718,15 +718,16 @@ class Colors:
 
 
 class ParseObject(object):
-    def __init__(self, ast, error, err_visual):
+    """Parse object for BEL statement/triples
+
+    ast = instance variable containing the AST generated from the parse, None if parse failed
+    error = instance variable containing errors and warnings from parse
+    err_visual = visual indicator of error location in string
+    """
+    def __init__(self, ast, error, err_visual, valid):
         self.ast = ast
         self.error = error
         self.err_visual = err_visual
-
-
-class ValidationObject(ParseObject):
-    def __init__(self, ast, error, err_visual, valid):
-        ParseObject.__init__(self, ast, error, err_visual)
         self.valid = valid
 
 
