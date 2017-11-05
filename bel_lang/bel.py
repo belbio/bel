@@ -43,6 +43,21 @@ def get_bel_versions() -> List[str]:
 
 
 class BEL(object):
+    """BEL Language object
+
+    To convert BEL Statement to BEL Edges:
+
+        statement = "p(HGNC:AKT1) increases p(HGNC:EGF)"
+        bel_obj = bel_lang.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
+        bel_obj.parse(statement)  # Adds ast to bel_obj
+        bel_obj.orthologize('TAX:10090')  # Run orthologize before canonicalize if needed, updates bel_obj.ast and returns self
+        bel_obj.canonicalize()  # updates bel_obj.ast and returns self
+
+        computed_edges = bel_obj.computed()
+
+        primary_edge = bel_obj.ast.to_components()
+
+    """
 
     def __init__(self, version: str = defaults['bel_version'], endpoint: str = defaults['belapi_endpoint']) -> None:
         """Initialize BEL object used for validating/processing/etc BEL statements
@@ -54,12 +69,12 @@ class BEL(object):
 
         bel_versions = get_bel_versions()
         if version not in bel_versions:
-            log.error('Version {} not available in bel_lang package'.format(version))
+            log.error('Version {} not available in bel_lang library package'.format(version))
             sys.exit()
 
         self.version = version
-
         self.endpoint = endpoint
+        self.messages = []  # List[Tuple[str, str]], e.g. [('ERROR', 'this is an error msg'), ('WARNING', 'this is a warning'), ]
 
         # use this variable to find our parser file since periods aren't recommended in file names
         self.version_dots_as_underscores = version.replace('.', '_')
@@ -87,7 +102,7 @@ class BEL(object):
             yaml_file_path = '{}/{}'.format(current_stored_dir, yaml_file_name)
             self.yaml_dict = yaml.load(open(yaml_file_path, 'r').read())
 
-            self.translate_terms = tools.func_name_translate(self)
+            self.translate_terms = tools.func_name_translate(self)  # this killed a kitten :(
             self.relationships = tools.get_all_relationships(self)
             self.function_signatures = tools.get_all_function_signatures(self)
 
@@ -111,7 +126,7 @@ class BEL(object):
             log.error('Warning: BEL Specification for Version {} YAML not found. Cannot proceed.'.format(self.version))
             sys.exit()
 
-    def parse(self, statement: str, strict: bool = False, parseinfo: bool = False):
+    def parse(self, statement: str, strict: bool = False, parseinfo: bool = False) -> 'BEL':
         """
         Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (
         AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in
@@ -126,66 +141,145 @@ class BEL(object):
             ParseObject: The ParseObject which contain either an AST or error messages.
         """
 
-        ast = None
-        error = None
-        err_visual = None
+        self.ast = None
+        self.valid = False
+        self.visualize_error = ''
+        self.messages = []  # Reset messages when parsing a new BEL Statement
 
-        # check if user entered an empty string
-        if statement == '':
-            error = 'Please include a valid BEL statement.'
-            return ParseObject(ast, error, err_visual)
-
+        self.original_bel_stmt = statement
         # pre-process to remove extra white space, add space after commas, etc.
-        statement = tools.preprocess_bel_line(statement)
+        self.bel_stmt = tools.preprocess_bel_line(statement)
+
+        # Check to see if empty string for bel statement
+        if len(self.bel_stmt) == 0:
+            self.messages.append(('ERROR', 'Please include a valid BEL statement.'))
+            return self
 
         try:
             # see if an AST is returned without any parsing errors
-            ast = self.parser.parse(statement, rule_name='start', semantics=self.semantics, trace=False, parseinfo=parseinfo)
+            ast_dict = self.parser.parse(self.bel_stmt, rule_name='start', semantics=self.semantics, trace=False, parseinfo=parseinfo)
+
+            import json
+            print('DumpVar:\n', json.dumps(ast_dict, indent=4))
+
+            self.ast = tools.ast_dict_to_objects(ast_dict, self)
+            self.valid = True
+
         except FailedParse as e:
             # if an error is returned, send to handle_syntax, error
-            error, err_visual = tools.handle_syntax_error(e)
+            error, visualize_error = tools.handle_syntax_error(e)
+
+            self.visualize_error = visualize_error
+            self.messages.append(('ERROR', error))
+            self.ast = None
+
         except Exception as e:
             log.error('Error {}, error type: {}'.format(e, type(e)))
+            self.messages.append(('ERROR', 'Error {}, error type: {}'.format(e, type(e))))
 
-        # checks for the existence of the AST tree from parse(), and sets the valid boolean accordingly.
-        valid = False
-        if ast:
-            valid = True
+        return self
 
-        # return everything in a ParseObject
-        return ParseObject(ast, error, err_visual, valid)
-
-    def stmt_components(self, statement: str):
+    def canonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
         """
-        Returns the components of a BEL statement as values within a dictionary under the keys 'subject',
-        'relationship', and 'object'.
+        Takes an AST and returns a canonicalized BEL statement string.
 
         Args:
-            statement (str): BEL statement
+            namespace_targets (Mapping[str, List[str]]): override default canonicalization
+                settings of BEL.bio API endpoint - see {endpoint}/status to get default canonicalization settings
 
         Returns:
-            dict: The dictionary that contains the components as its values.
+            BEL: returns self
         """
 
-        # create a dictionary with the keys defined
-        components_dict = dict.fromkeys(['object', 'relationship', 'subject'])
+        # TODO Need to order position independent parameters
 
-        # send the statement to be parsed and grab the AST from the parse
-        p = self.parse(statement)
-        ast = p.ast
+        canonicalize_endpoint = self.endpoint + '/terms/{}/canonicalized'
 
-        if ast is None:  # if not AST is available, that must mean there was an error - print it
-            components_dict['object'] = None
-            components_dict['relationship'] = None
-            components_dict['subject'] = None
-            print(p.error)
-            print(p.err_visual)
-        else:  # else return the components in a dictionary
-            components_dict['object'] = ast.get('object', None)
-            components_dict['relationship'] = ast.get('relationship', None)
-            components_dict['subject'] = ast.get('subject', None)
+        self.ast = tools.convert_namespaces(self.ast, canonicalize_endpoint, namespace_targets=namespace_targets)
+        return self
 
-        return components_dict
+    def decanonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
+        """
+        Takes an AST and returns a decanonicalized BEL statement string.
+
+        Args:
+            namespace_targets (Mapping[str, List[str]]): override default decanonicalization
+                settings of BEL.bio API endpoint - see {endpoint}/status to get default decanonicalization settings
+
+        Returns:
+            BEL: returns self
+        """
+
+        decanonicalize_endpoint = self.endpoint + '/terms/{}/decanonicalized'
+
+        self.ast = tools.convert_namespaces(self.ast, decanonicalize_endpoint, namespace_targets=namespace_targets)
+        return self
+
+    def orthologize(self, species_id: str) -> 'BEL':
+        """Orthologize BEL AST to given species_id
+
+        Will return original entity (ns:value) if no ortholog found.
+
+        Args:
+            species_id (str): species id to convert genes/rna/proteins into
+
+        Returns:
+            BEL: returns self
+        """
+
+        orthologize_req_url = self.endpoint + '/orthologs/{}/' + species_id
+        self.ast = tools.orthologize(self.ast, orthologize_req_url)
+        return self
+
+    def computed(self, rule_set: List[str] = None) -> List[Mapping[str, Any]]:
+        """Computed edges from primary BEL statement
+
+        Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
+        Will run only the list of computed edge rules if given.
+
+        Args:
+            rule_set (list): a list of rules to filter; only the rules in this list will be applied to computed
+
+        Returns:
+            List[Mapping[str, Any]]
+        """
+
+        edges = tools.compute(self.ast.bel_subject, self, rule_set)
+        edges.extend(tools.compute(self.ast.bel_object, self, rule_set))
+
+        return edges
+
+    def suggest(self, partial: str, value_type: str):
+        """
+        Takes a partially completed function, modifier function, or a relationship and suggest a fuzzy match out of
+        all available options.
+
+        Args:
+            partial (str): the partial string
+            value_type (str): value type (function, modifier function, or relationship; makes sure we match right list)
+
+        Returns:
+            list: A list of suggested values.
+        """
+
+        # TODO - issue #51
+
+        suggestions = []
+        # # TODO: get the following list of things - initialize YAML into this library so we can grab all funcs,
+        # # mfuncs, and r.
+        # if value_type == 'function':
+        #     suggestions = []
+        #
+        # elif value_type == 'mfunction':
+        #     suggestions = []
+        #
+        # elif value_type == 'relationship':
+        #     suggestions = []
+        #
+        # else:
+        #     suggestions = []
+
+        return suggestions
 
     def ast_components(self, ast: AST):
         """
@@ -199,6 +293,8 @@ class BEL(object):
             dict: The dictionary that contains the components as its values.
         """
 
+        # TODO - what is this for?  Issue #49  Doesn't seem to be needed
+
         components_dict = dict()
         components_dict['subject'] = ast.get('subject', None)
 
@@ -208,6 +304,36 @@ class BEL(object):
             components_dict['relationship'] = ast.get('relationship', None)
 
         return components_dict
+
+    def flatten(self, ast: AST):
+        """
+        Takes an AST and flattens it into a BEL statement string.
+
+        Args:
+            ast (AST): BEL AST
+
+        Returns:
+            str: The string generated from the AST.
+        """
+
+        # TODO Doesn't seem to be needed
+
+        # grab the three components of the AST
+        s = ast.get('subject', None)
+        r = ast.get('relationship', None)
+        o = ast.get('object', None)
+
+        # if no relationship, this means only subject is present
+        if r is None:
+            sub = tools.decode(s)
+            final = '{}'.format(sub)
+        # else the full form BEL statement with subject, relationship, and object are present
+        else:
+            sub = tools.decode(s)
+            obj = tools.decode(o)
+            final = '{} {} {}'.format(sub, r, obj)
+
+        return final
 
     def _create(self, count: int = 1, max_params: int = 3):
         """
@@ -229,34 +355,6 @@ class BEL(object):
             return list_of_bel_stmt_objs
 
         return tools.create_invalid(self, count, max_params)
-
-    def flatten(self, ast: AST):
-        """
-        Takes an AST and flattens it into a BEL statement string.
-
-        Args:
-            ast (AST): BEL AST
-
-        Returns:
-            str: The string generated from the AST.
-        """
-
-        # grab the three components of the AST
-        s = ast.get('subject', None)
-        r = ast.get('relationship', None)
-        o = ast.get('object', None)
-
-        # if no relationship, this means only subject is present
-        if r is None:
-            sub = tools.decode(s)
-            final = '{}'.format(sub)
-        # else the full form BEL statement with subject, relationship, and object are present
-        else:
-            sub = tools.decode(s)
-            obj = tools.decode(o)
-            final = '{} {} {}'.format(sub, r, obj)
-
-        return final
 
     def load(self, filename: str, loadn: int = -1, preprocess: bool = False):
         """
@@ -296,115 +394,94 @@ class BEL(object):
 
         return statements
 
-    def suggest(self, partial: str, value_type: str):
-        """
-        Takes a partially completed function, modifier function, or a relationship and suggest a fuzzy match out of
-        all available options.
+    def wm_computed_edges(self, rule_set: List[str] = None) -> List[Mapping[str, Any]]:
+        """Computed edges from primary BEL statement
+
+        Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
+        Will run only the list of computed edge rules if given.
 
         Args:
-            partial (str): the partial string
-            value_type (str): value type (function, modifier function, or relationship; makes sure we match right list)
-
-        Returns:
-            list: A list of suggested values.
-        """
-
-        # this function is in backlog!
-
-        suggestions = []
-        # # TODO: get the following list of things - initialize YAML into this library so we can grab all funcs,
-        # # mfuncs, and r.
-        # if value_type == 'function':
-        #     suggestions = []
-        #
-        # elif value_type == 'mfunction':
-        #     suggestions = []
-        #
-        # elif value_type == 'relationship':
-        #     suggestions = []
-        #
-        # else:
-        #     suggestions = []
-
-        return suggestions
-
-    def canonicalize(self, ast: AST):
-        """
-        Takes an AST and returns a canonicalized BEL statement string.
-
-        Args:
-            ast (AST): BEL AST
-
-        Returns:
-            dict: The canonicalized dict generated from the AST.
-        """
-
-        canonicalize_endpoint = 'https://api.bel.bio/v1/terms/{}/canonicalized'
-
-        s = ast.get('subject', None)
-        r = ast.get('relationship', None)
-        o = ast.get('object', None)
-
-        canonical_subject = None
-        canonical_object = None
-
-        if s is not None:
-            subject_obj = tools.function_ast_to_objects(s, self)
-            canonical_subject = tools.make_canonical(subject_obj, canonicalize_endpoint)
-
-        if o is not None:
-            object_obj = tools.function_ast_to_objects(o, self)
-            canonical_object = tools.make_canonical(object_obj, canonicalize_endpoint)
-
-            return {'subject': canonical_subject.to_string(), 'relation': r, 'object': canonical_object.to_string()}
-
-        return {'subject': canonical_subject.to_string(), 'relation': None, 'object': None}
-
-
-    def orthologize(self, gene_id, species_id):
-
-        if gene_id == '' or species_id == '':
-            return ''
-
-        ortho_endpoint = 'https://api.bel.bio/v1/orthologs/{}/{}'
-        ortho_request_url = ortho_endpoint.format(gene_id, species_id)
-
-        r = requests.get(ortho_request_url)
-
-        if r.status_code == 200:
-            ortho = r.json().get('orthologs', '')
-            return ortho
-
-        return ''
-
-    def computed(self, ast: AST, rule_set: list = None):
-        """
-        Takes an AST and computes all canonicalized edges.
-
-        Args:
-            ast (AST): BEL AST
             rule_set (list): a list of rules to filter; only the rules in this list will be applied to computed
 
         Returns:
-            dict:
+            List[Mapping[str, Any]]
         """
 
-        # make empty list to hold our computed edge objects
-        list_of_computed_objects = []
+        computed_signatures = yaml.loads("""
+  component_of:
+    trigger_type:
+      - Function
+      - NSParam
+    subject: trigger_value
+    relation: componentOf
+    object: parent_function
+    examples:
+      - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+        computed:
+          - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+          - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
+          - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
 
-        # get both subject and object (we don't need relationship because no computing happens for relationship)
-        s = ast.get('subject', None)
-        o = ast.get('object', None)
+  degradation:
+    trigger_function: degradation
+    subject: trigger_value
+    relation: directlyDecreases
+    object: args
+    examples:
+      - given_statement: "deg(r(HGNC:MYC))"
+        computed:
+          - "deg(r(HGNC:MYC)) directlyDecreases r(HGNC:MYC)"
 
-        # make the objects for both subject and object if they exist, and extend computed list
-        if s is not None:
-            subject_obj = tools.function_ast_to_objects(s, self)
-            subject_computed_objects = tools.compute(subject_obj, self, rule_set)  # returns list of objects
-            list_of_computed_objects.extend(subject_computed_objects)
+        """)
 
-        if o is not None:
-            object_obj = tools.function_ast_to_objects(o, self)
-            object_computed_objects = tools.compute(object_obj, self, rule_set)  # returns list of objects
-            list_of_computed_objects.extend(object_computed_objects)
+        compute_rules = self.bel_specification.get('computed_signatures')
 
-        return list_of_computed_objects
+        if rule_set:
+            compute_rules = [rule for rule in compute_rules if rule in rule_set]
+
+        edges = tools.compute_edges(self, rule_set)
+
+        return edges
+
+
+def wm_compute_edges(ast, compute_rules):
+
+    from bel_lang.objects import Function
+
+    computed_edges = []
+
+    for rule in compute_rules:
+        function_name, args, parent_function = None, None, None, None
+
+        if isinstance(ast, Function):
+            function_name = ast.name  # TODO - this should be the canonical function name not randomly abbr or long form
+            args = ast.args
+            parent_function = ast.parent_function
+
+        trigger_functions = rule.get('trigger_function', None)
+        trigger_types = rule.get('trigger_type', None)
+
+        if function_name in trigger_functions:  # trigger_functions is a list of canonical function names from bel_specification
+            rule_subject_value = rule.get('subject')
+            if rule_subject_value == 'trigger_value':
+                subject = ast
+
+            relation = rule.get('relation')
+
+            rule_object_value = rule.get('object')
+            if rule_object_value == 'args':
+                for arg in args:
+                    computed_edges.extend((subject, relation, arg))
+            elif rule_object_value == 'parent_function':
+                computed_edges.extend((subject, relation, parent_function))
+
+        if isinstance(ast, trigger_types):
+            rule_subject_value = rule.get('subject')
+            if rule_subject_value == 'trigger_value':
+                subject = ast
+
+            relation = rule.get('relation')
+
+            rule_object_value = rule.get('object')
+            if rule_object_value == 'parent_function':
+                computed_edges.extend((subject, relation, parent_function))

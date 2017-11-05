@@ -1,13 +1,12 @@
 import bel_lang
 import pytest
-from bel_lang.exceptions import *
+from bel_lang.exceptions import MissingParenthesis
 
-SPECIFIED_VERSION = '2.0.0'
-SPECIFIED_VERSION_UNDERLINED = '2_0_0'
+from bel_lang.defaults import defaults
 
-SPECIFIED_ENDPOINT = 'example-endpoint'
+bel_obj = bel_lang.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
 
-B = bel_lang.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
+SPECIFIED_VERSION_UNDERLINED = defaults['bel_version'].replace('.', '_')
 
 #####################
 # SYNTAX TEST CASES #
@@ -17,43 +16,43 @@ B = bel_lang.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
 def test_extra_right_paren():
     s = 'a(CHEBI:"nitric oxide")) decreases r(HGNC:CFTR, var("c.1521_1523delCTT"))'
     with pytest.raises(MissingParenthesis):
-        v_obj = B.validate(s)
+        bel_obj.parse(s)
 
 
 def test_extra_left_paren():
     s = 'a((CHEBI:"oxygen atom")'
     with pytest.raises(MissingParenthesis):
-        v_obj = B.validate(s)
+        bel_obj.parse(s)
 
 
 def test_missing_parens():
     s = 'act(p(MGI:Akt1), ma(kin)) decreases MGI:Cdkn1b'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 
 def test_bad_namespace():
     s = 'abundance(CHEBI:"prostaglandin J2":TEST)'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 
 def test_arg_outside():
     s = 'act(p(HGNC:FOXO1)) ma(tscript)'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 
 def test_no_comma_between_args():
     s = 'act(p(HGNC:FOXO3) ma(tscript)) =| r(HGNC:MIR21)'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 
 def test_no_func_given():
     s = 'act(p(MGI:Akt1), ma(kin)) decreases (MGI:Cdkn1b)'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 
 ##############################
@@ -62,29 +61,4 @@ def test_no_func_given():
 
 
 def test_valid_statements():
-    list_of_valid_statements = [
-        'example',
-        'example',
-        'example',
-        'example',
-        'example',
-        'example',
-    ]
-
-
-# stmts = B.load('dev/bel2_test_statements.txt', preprocess=True)
-#
-# for s in stmts:
-#     print('\n\n\n\n')
-#
-#     print(s)
-#     p = B.parse(s)
-#     st = B.flatten(p.ast)
-#
-#     print(st)
-#     print(s)
-#     assert st == s
-
-# statement = 'a(CHEBI:"nitric oxide") decreases (a(CHEBI:"nitric oxide") decreases (a(CHEBI:"nitric oxide") decreases r(HGNC:CFTR, ' \
-#             'var("c.1521_1523delCTT"))))'
-# print(statement)
+    pass

@@ -10,22 +10,53 @@ This file contains helper objects.
 ########################
 
 
-class BELStatement(object):
+class BELAst(object):
 
     def __init__(self, bel_subject, bel_relationship, bel_object):
         self.bel_subject = bel_subject
         self.bel_relationship = bel_relationship
         self.bel_object = bel_object
+        self.args = [bel_subject, bel_relationship, bel_object]
+
+    def to_string(self):
+        if self.bel_subject and self.bel_relationship and self.bel_object:
+            return '{} {} {}'.format(self.bel_subject, self.bel_relationship, self.bel_object)
+
+        elif self.bel_subject:
+            return '{}'.format(self.bel_subject)
+
+        else:
+            return ''
+
+    def to_components(self):
+        if self.bel_subject and self.bel_relationship and self.bel_object:
+            return {
+                'subject': self.ast.bel_subject.to_string(),
+                'relation': self.ast.bel_relationship.to_string(),
+                'object': self.ast.bel_object.to_string(),
+            }
+
+        elif self.bel_subject:
+            return {'subject': self.ast.bel_subject.to_string(), }
+
+        else:
+            return None
 
     def __str__(self):
-        return '{} {} {}'.format(self.bel_subject, self.bel_relationship, self.bel_object)
+        return self.to_string(self)
 
 
 class BELSubject(object):
 
     def __init__(self, fn=None, bel_statement=None):
-        self.fn = fn
-        self.bel_statement = bel_statement
+        self.fn = fn  # TODO What is this for?
+        self.bel_statement = bel_statement  # TODO What is this for?
+
+    def to_string(self):
+        return '{}'.format(self.bel_subject)
+
+    def __str__(self):
+        return self.to_string(self)
 
 
 class BELRelationship(object):
@@ -33,12 +64,24 @@ class BELRelationship(object):
     def __init__(self, relationship):
         self.relationship = relationship
 
+    def to_string(self):
+        return '{}'.format(self.bel_relationship)
+
+    def __str__(self):
+        return self.to_string(self)
+
 
 class BELObject(object):
 
     def __init__(self, fn=None, bel_statement=None):
         self.fn = fn
         self.bel_statement = bel_statement
+
+    def to_string(self):
+        return '{}'.format(self.bel_object)
+
+    def __str__(self):
+        return self.to_string(self)
 
 ###################
 # Function object #
@@ -78,6 +121,10 @@ class Function(object):
 
     def set_full_string(self, string):
         self.full_string = string
+
+    def __str__(self):
+        arg_string = ', '.join([a.to_string() for a in self.args])
+        return '{}({})'.format(self.name, arg_string)
 
     def to_string(self):
 

@@ -13,10 +13,12 @@ import random
 import re
 import string
 import requests
+from typing import Mapping, List, Any
 
 import yaml
+import json
 from bel_lang.exceptions import *
-from bel_lang.objects import *
+from bel_lang.objects import BELAst, BELSubject, BELRelationship, BELObject, Function, Param, NSParam, StrParam
 
 
 ###################
@@ -359,10 +361,17 @@ def compute(object_to_compute, bel_obj, rule_set):
     # print('{}OBJECT TO COMPUTE:{} {}'.format(Colors.BLUE, Colors.END, object_to_compute))
     computed_objs = []
 
+    # TODO Rule set needs to be functional - WSH - thinking about completely re-working the compute code - see bottom of bel.py
+
     if rule_set is not None:
         filter_rules = True
     else:
         filter_rules = False
+
+    # TODO Should start with full BEL statement
+    # if isinstance(object_to_compute, BELAst):
+    #     for arg in bel_obj.ast.args:
+    #         compute(arg, bel_obj, rule_set)
 
     # first see if the object itself is a function
     if isinstance(object_to_compute, Function):
@@ -491,6 +500,34 @@ def extract_obj_partials_from_rule(rule, function_obj):
     return args_wanted
 
 
+def ast_dict_to_objects(ast_dict: Mapping[str, Any], bel_obj) -> BELAst:
+    """Convert Tatsu AST dictionary to object-based AST
+
+    Args:
+        ast_dict (Mapping[str, Any])
+
+    Returns:
+        BELStatement: object representing the BEL Statement AST
+    """
+
+    ast_subject = ast_dict.get('subject', None)
+    ast_object = ast_dict.get('object', None)
+
+    bel_subject = None
+    bel_object = None
+    bel_relationship = ast_dict.get('relationship')
+
+    if ast_subject:
+        bel_subject = function_ast_to_objects(ast_subject, bel_obj)
+
+    if ast_object:
+        bel_object = function_ast_to_objects(ast_object, bel_obj)
+
+    ast_obj = BELAst(bel_subject, bel_relationship, bel_object)
+
+    return ast_obj
+
+
 def function_ast_to_objects(fn_ast_dict, bel_obj):
     # needed and used
     func_name = fn_ast_dict.get('function', None)
@@ -570,24 +607,80 @@ def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
     return
 
 
-def make_canonical(bel_tree_obj, endpoint):
+def convert_namespaces(ast: 'BEL', endpoint: str, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
+    """Convert namespaces of BEL Entities in BEL AST using API endpoint
 
-    if isinstance(bel_tree_obj, Function):
-        for arg in bel_tree_obj.args:
-            make_canonical(arg, endpoint)
+    Canonicalization and decanonicalization is determined by endpoint used and namespace_targets.
 
-    elif isinstance(bel_tree_obj, NSParam):
-        given_term_id = '{}:{}'.format(bel_tree_obj.namespace, bel_tree_obj.value)
-        canon_request_url = endpoint.format(given_term_id)
-        r = requests.get(canon_request_url)
+    Args:
+        ast (BEL): BEL AST
+        endpoint (str): endpoint url with a placeholder for the term_id (either /terms/<term_id>/canonicalized or /terms/<term_id>/decanonicalized)
+        namespace_targets (Mapping[str, List[str]]): (de)canonical targets for converting BEL Entities
+
+    Returns:
+        BEL: BEL AST
+    """
+
+    if isinstance(ast, BELAst):
+        for arg in ast.args:
+            convert_namespaces(arg, endpoint, namespace_targets)
+
+    elif isinstance(ast, Function):
+        for arg in ast.args:
+            convert_namespaces(arg, endpoint, namespace_targets)
+
+    elif isinstance(ast, NSParam):
+        given_term_id = '{}:{}'.format(ast.namespace, ast.value)
+        request_url = endpoint.format(given_term_id)
+        if namespace_targets:
+            namespace_targets_str = json.dumps(namespace_targets)
+            payload = {'namespace_targets': namespace_targets_str}
+            r = requests.get(request_url, params=payload)
+        else:
+            r = requests.get(request_url)
 
         if r.status_code == 200:
-            canonicalized_id = r.json().get('term_id', given_term_id)
-            ns, value = canonicalized_id.split(':')
-            bel_tree_obj.change_nsvalue(ns, value)
+            updated_id = r.json().get('term_id', given_term_id)
+            ns, value = updated_id.split(':')
+            ast.change_nsvalue(ns, value)
 
-    return bel_tree_obj
+    return ast
 
+
+def orthologize(ast: 'BEL', endpoint: str) -> 'BEL':
+    """Orthologize BEL Entities in BEL AST using API endpoint
+
+    NOTE: - will take first ortholog returned in BEL.bio API result (which may return more than one ortholog)
+
+    Args:
+        ast (BEL): BEL AST
+        endpoint (str): endpoint url with a placeholder for the term_id
+
+    Returns:
+        BEL: BEL AST
+    """
+
+    if isinstance(ast, BELAst):
+        for arg in ast.args:
+            orthologize(arg, endpoint)
+
+    elif isinstance(ast, Function):
+        for arg in ast.args:
+            orthologize(arg, endpoint)
+
+    elif isinstance(ast, NSParam):
+        given_term_id = '{}:{}'.format(ast.namespace, ast.value)
+        request_url = endpoint.format(given_term_id)
+        r = requests.get(request_url)
+
+        if r.status_code == 200:
+            orthologs = r.json().get('orthologs')
+            if orthologs:
+                ortholog_id = orthologs[0]
+                ns, value = ortholog_id.split(':')
+                ast.change_nsvalue(ns, value)
+
+    return ast
 
 
 # def simple_params(params, bel_obj):

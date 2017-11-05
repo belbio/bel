@@ -1,13 +1,9 @@
 import bel_lang
-import pytest
-from bel_lang.exceptions import *
+from bel_lang.defaults import defaults
 
-SPECIFIED_VERSION = '2.0.0'
-SPECIFIED_VERSION_UNDERLINED = '2_0_0'
+bel_obj = bel_lang.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
 
-SPECIFIED_ENDPOINT = 'example-endpoint'
-
-B = bel_lang.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
+SPECIFIED_VERSION_UNDERLINED = defaults['bel_version'].replace('.', '_')
 
 #######################
 # SEMANTIC TEST CASES #
@@ -16,26 +12,26 @@ B = bel_lang.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
 
 def test_bad_function():
     s = 'atrocious(CHEBI:"nitric oxide") decreases r(HGNC:CFTR, var("c.1521_1523delCTT"))'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 
 def test_bad_relationship():
     s = 'tloc(p(HGNC:CYCS), fromLoc(MESHCS:Mitochondria), toLoc(MESHCS:Cytoplasm)) hello bp(GOBP:"apoptotic process")'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 
 def test_bad_subject():
     s = 'rnaAbundance(MGI:Mir21, extra)'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 
 def test_bad_object():
     s = 'r(fus(HGNC:TMPRSS2, "r.1_79", HGNC:ERG, "r.312_5034")) association path(SDIS:"prostate cancer", bad_arg)'
-    v_obj = B.validate(s)
-    assert not v_obj.valid
+    parse_obj = bel_obj.parse(s)
+    assert not parse_obj.valid
 
 ##############################
 # VALID STATEMENT TEST CASES #
@@ -43,11 +39,4 @@ def test_bad_object():
 
 
 def test_valid_statements():
-    list_of_valid_statements = [
-        'example',
-        'example',
-        'example',
-        'example',
-        'example',
-        'example',
-    ]
+    pass

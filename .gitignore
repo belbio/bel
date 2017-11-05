@@ -46,6 +46,7 @@ belpy_test.py
 htmlcov/
 .tox/
 .coverage
+coverage
 .coverage.*
 .cache
 nosetests.xml
