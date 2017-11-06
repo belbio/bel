@@ -17,7 +17,7 @@ from typing import Mapping, List, Any
 
 import yaml
 import json
-from bel_lang.exceptions import *
+import bel_lang.exceptions as bel_ex
 from bel_lang.objects import BELAst, BELSubject, BELRelationship, BELObject, Function, Param, NSParam, StrParam
 
 
@@ -380,6 +380,7 @@ def compute(object_to_compute, bel_obj, rule_set):
         compute_rules = bel_obj.computed_sigs.get(object_to_compute.name, [])
 
         for rule in compute_rules:
+
             sub_rule = rule.get('subject', None)
             effect_rule = rule.get('relationship', None)
             obj_rule = rule.get('object', None)
@@ -835,15 +836,18 @@ def preprocess_bel_line(line):
     right_p_ct = l.count(')')
 
     if left_p_ct < right_p_ct:
-        raise MissingParenthesis('Missing left parenthesis somewhere!')
+        raise bel_ex.MissingParenthesis('Missing left parenthesis somewhere!')
     elif right_p_ct < left_p_ct:
-        raise MissingParenthesis('Missing right parenthesis somewhere!')
+        raise bel_ex.MissingParenthesis('Missing right parenthesis somewhere!')
 
     # check for even number of quotation marks
-    quote_ct = l.count('"')
+    single_quote_ct = l.count('\'')
+    double_quote_ct = l.count('"')
 
-    if quote_ct % 2 != 0:  # odd number of quotations
-        raise MissingQuotation('Missing quotation mark somewhere!')
+    if single_quote_ct > 0:  # single quotes not allowed
+        raise bel_ex.InvalidCharacter('Single quotes are not allowed! Please use double quotes.')
+    if double_quote_ct % 2 != 0:  # odd number of quotations
+        raise bel_ex.MissingQuotation('Missing quotation mark somewhere!')
 
     return l
 

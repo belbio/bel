@@ -113,16 +113,9 @@ class BEL(object):
             self.computed_funcs = tools.get_all_computed_funcs(self)
             self.computed_mfuncs = tools.get_all_computed_mfuncs(self)
 
-            # print(self.computed_sigs.keys())
-            # print('COMPUTED SIGS FUNCTIONS')
-            # print(self.computed_funcs)
-            # print('COMPUTED SIGS M_FUNCTIONS')
-            # print(self.computed_mfuncs)
-
         except Exception as e:
             # print(e)
             # traceback.print_exc()
-            # print('Warning: Version {} YAML not found. Some functions will not work correctly.'.format(self.version))
             log.error('Warning: BEL Specification for Version {} YAML not found. Cannot proceed.'.format(self.version))
             sys.exit()
 

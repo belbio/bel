@@ -87,7 +87,6 @@ def main():
     for fn in fn_list:  # we need both the function name + it's abbreviation as keys in this dictionary
         fn_name = fn['name']
         fn_abbreviation = fn['abbreviation']
-        # print(fn_name, fn_abbreviation)
         fns_valid_mods[fn_name] = {'validModifiers': set()}
         fns_valid_mods[fn_abbreviation] = {'validModifiers': set()}
 
@@ -103,10 +102,9 @@ def main():
         fns_valid_mods[fn_name]['validModifiers'] = list(fns_valid_mods[fn_name]['validModifiers'])
         fns_valid_mods[fn_abbreviation]['validModifiers'] = list(fns_valid_mods[fn_abbreviation]['validModifiers'])
 
-
-    #########################################
-    ### TEMPLATING STARTS IN THIS SECTION ###
-    #########################################
+    #####################################
+    # TEMPLATING STARTS IN THIS SECTION #
+    #####################################
 
     #####################
     # SYNTAX TEMPLATING #

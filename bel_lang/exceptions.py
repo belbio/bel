@@ -23,6 +23,11 @@ class MissingParenthesis(Exception):
         self.message = message
 
 
+class InvalidCharacter(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
 class MissingQuotation(Exception):
     def __init__(self, message):
         self.message = message
