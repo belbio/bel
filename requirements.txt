@@ -1,7 +1,7 @@
 apipkg==1.4
 -e git+git@github.com:belbio/bel_lang.git@6a53cfbc538038b2b9b481b39ff6b4a7a9c1c483#egg=bel_lang
 bumpversion==0.5.3
-certifi==2017.7.27.1
+certifi==2017.11.5
 chardet==3.0.4
 click==6.7
 coverage==4.4.2
