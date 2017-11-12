@@ -20,7 +20,7 @@ pytest-pep8==1.0.6
 pytest-sugar==0.9.0
 PyYAML==3.12
 requests==2.18.4
-TatSu==4.2.2
+TatSu==4.2.3
 termcolor==1.1.0
 typed-ast==1.1.0
 urllib3==1.22
