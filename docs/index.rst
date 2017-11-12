@@ -12,7 +12,19 @@ Welcome to bel_lang's documentation.
    :maxdepth: 2
    :caption: Contents:
 
-   overview
+.. Functions
+.. ---------
 
-   bel_lang
+.. .. automodule:: bel_lang.bel
+..    :members:
+
+.. Classes
+.. -------
+
+.. .. autoclass:: BEL
+..    :members:
+
+
+Misc
+----
 

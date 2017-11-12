@@ -1,12 +1,23 @@
 bel\_lang package
 =================
 
-Subpackages
------------
+Classes
+-------
 
-.. toctree::
+.. autoclass:: bel_lang.bel.BEL
+    :members:
 
-    bel_lang.versions
+.. autoclass:: bel_lang.ast.BELAst
+    :members:
+
+.. autoclass:: bel_lang.ast.BELSubject
+    :members:
+
+.. autoclass:: bel_lang.ast.BELRelation
+    :members:
+
+.. autoclass:: bel_lang.ast.BELObject
+    :members:
 
 Submodules
 ----------
@@ -35,13 +46,13 @@ bel\_lang\.bel\_specification module
     :undoc-members:
     :show-inheritance:
 
-.. bel\_lang\.bel\_utils module
-.. ----------------------------
+bel\_lang\.bel\_utils module
+----------------------------
 
-.. .. automodule:: bel_lang.bel_utils
-..     :members:
-..     :undoc-members:
-..     :show-inheritance:
+.. automodule:: bel_lang.bel_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 bel\_lang\.computed\_edges module
 ---------------------------------
@@ -83,13 +94,21 @@ bel\_lang\.scripts module
     :undoc-members:
     :show-inheritance:
 
-.. bel\_lang\.semantics module
-.. ---------------------------
+bel\_lang\.semantics module
+---------------------------
 
-.. .. automodule:: bel_lang.semantics
-..     :members:
-..     :undoc-members:
-..     :show-inheritance:
+.. automodule:: bel_lang.semantics
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bel\_lang\.tools module
+-----------------------
+
+.. automodule:: bel_lang.tools
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 
 Module contents
