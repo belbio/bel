@@ -4,15 +4,18 @@ import re
 import json
 import yaml
 import requests
-from typing import Mapping, List
+from typing import Mapping, List, TYPE_CHECKING
 
 from bel_lang.ast import BELAst, NSArg
 
 import logging
 log = logging.getLogger(__name__)
 
+if TYPE_CHECKING:  # to allow type checking for a module that would be a circular import
+    import bel_lang.bel
 
-def convert_namespaces(ast: 'BEL', endpoint: str, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
+
+def convert_namespaces(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_targets: Mapping[str, List[str]] = None) -> 'bel_lang.bel.BEL':
     """Convert namespaces of BEL Entities in BEL AST using API endpoint
 
     Canonicalization and decanonicalization is determined by endpoint used and namespace_targets.
@@ -48,7 +51,7 @@ def convert_namespaces(ast: 'BEL', endpoint: str, namespace_targets: Mapping[str
     return ast
 
 
-def orthologize(ast: 'BEL', endpoint: str) -> 'BEL':
+def orthologize(ast: 'bel_lang.bel.BEL', endpoint: str) -> 'bel_lang.bel.BEL':
     """Orthologize BEL Entities in BEL AST using API endpoint
 
     NOTE: - will take first ortholog returned in BEL.bio API result (which may return more than one ortholog)

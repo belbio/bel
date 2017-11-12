@@ -1,6 +1,6 @@
 # Semantic validation code
 
-from typing import Tuple, List
+from typing import Tuple, List, TYPE_CHECKING
 import requests
 import json
 import re
@@ -10,14 +10,17 @@ from bel_lang.ast import BELAst, Function, NSArg, StrArg
 import logging
 log = logging.getLogger(__name__)
 
+if TYPE_CHECKING:  # to allow type checking for a module that would be a circular import
+    import bel_lang.bel
 
-def validate(bo: 'BEL') -> Tuple[bool, List[Tuple[str, str]]]:
+
+def validate(bo: 'bel_lang.bel.BEL') -> Tuple[bool, List[Tuple[str, str]]]:
     """Semantically validate BEL AST
 
     Add errors and warnings to bel_obj.validation_messages
 
     Args:
-        bo (BEL): main bel object
+        bo (bel_lang.bel.BEL): main bel object
 
     Returns:
         Tuple[bool, List[Tuple[str, str]]]: (is_valid, messages)
@@ -29,7 +32,7 @@ def validate(bo: 'BEL') -> Tuple[bool, List[Tuple[str, str]]]:
     return bo
 
 
-def validate_functions(ast: BELAst, bo: 'BEL') -> 'BEL':
+def validate_functions(ast: BELAst, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
     """Recursively validate function signatures
 
     Determine if function matches one of the available signatures. Also,
@@ -40,10 +43,10 @@ def validate_functions(ast: BELAst, bo: 'BEL') -> 'BEL':
         canonicalization, e.g. reactants(A, B, C) )
 
     Args:
-        bo ('BEL'): bel objectk
+        bo ('bel_lang.bel.BEL'): bel objectk
 
     Returns:
-        'BEL': bel object
+        'bel_lang.bel.BEL': bel object
     """
 
     if isinstance(ast, Function):
@@ -180,7 +183,7 @@ def check_function_args(args, signatures, function_name):
     return (valid_function, messages)
 
 
-def validate_arg_values(ast, bo: 'BEL') -> 'BEL':
+def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
     """Recursively validate arg (nsargs and strargs) values
 
     Check that NSArgs are found in BELbio API and match appropriate entity_type.
@@ -189,10 +192,10 @@ def validate_arg_values(ast, bo: 'BEL') -> 'BEL':
     Generate a WARNING if not.
 
     Args:
-        bo ('BEL'): bel object
+        bo ('bel_lang.bel.BEL'): bel object
 
     Returns:
-        'BEL': bel object
+        'bel_lang.bel.BEL': bel object
     """
 
     # Test NSArg terms

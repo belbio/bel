@@ -1,10 +1,8 @@
 import importlib
 import sys
 from typing import Mapping, Any, List, Tuple
-import yaml
 from tatsu.exceptions import FailedParse
 
-import bel_lang.tools as tools
 import bel_lang.bel_specification as bel_specification
 import bel_lang.bel_utils as bel_utils
 import bel_lang.ast as bel_lang_ast
@@ -212,7 +210,7 @@ class BEL(object):
 
         canonicalize_endpoint = self.endpoint + '/terms/{}/canonicalized'
 
-        self.ast = tools.convert_namespaces(self.ast, canonicalize_endpoint, namespace_targets=namespace_targets)
+        self.ast = bel_utils.convert_namespaces(self.ast, canonicalize_endpoint, namespace_targets=namespace_targets)
         return self
 
     def decanonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
@@ -229,7 +227,7 @@ class BEL(object):
 
         decanonicalize_endpoint = self.endpoint + '/terms/{}/decanonicalized'
 
-        self.ast = tools.convert_namespaces(self.ast, decanonicalize_endpoint, namespace_targets=namespace_targets)
+        self.ast = bel_utils.convert_namespaces(self.ast, decanonicalize_endpoint, namespace_targets=namespace_targets)
         return self
 
     def orthologize(self, species_id: str) -> 'BEL':
@@ -245,7 +243,7 @@ class BEL(object):
         """
 
         orthologize_req_url = self.endpoint + '/orthologs/{}/' + species_id
-        self.ast = tools.orthologize(self.ast, orthologize_req_url)
+        self.ast = bel_utils.orthologize(self.ast, orthologize_req_url)
         return self
 
     def compute_edges(self, rule_set: List[str] = None) -> List[Mapping[str, Any]]:
@@ -281,7 +279,7 @@ class BEL(object):
 
         return edges
 
-    def completion(self, partial: str, component_type: str, value_type: str, form='medium') -> List[Tuple[str, str, str]]:
+    def completion(self, partial: str, component_type: str, value_type: str, format='medium') -> List[Tuple[str, str, str]]:
         """Suggest bel statement completions
 
         Takes a partially completed function, modifier function, or a relation and suggest a fuzzy match out of
@@ -294,27 +292,27 @@ class BEL(object):
             partial (str): the partial string
             component_type (str): ['subject', 'relation', 'object']
             value_type (str): value type (function, modifier function, or relation; makes sure we match right list)
-            form (str): short, medium or long form of function/relationship names to be returned
+            format (str): short, medium or long form of function/relationship names to be returned
 
         Returns:
             List[Tuple[str, str, str]]: A list of suggested values as tuples
-
-                (
-                    'matched string - highlighted',
-                    'canonical_match_value',
-                    'full field replacement with match',
-                    'cursor_location'
-                )
-
-                matched string - synonym, short/long name, etc that is matched, matched string wrapped
-                    in <em></em>
-                canonical_match_value - name/value to insert
-                full field replacement - the full string to replace in the text field being completed
-                cursor location - updated location of the cursor - placed in appropriate spot
-                    of suggested string (e.g. just inside new function, at beginning
-                    of object text field if completing relation, after , or ')' if
-                    completing a function argument)
         """
+
+        # (
+        #     'matched string - highlighted',
+        #     'canonical_match_value',
+        #     'full field replacement with match',
+        #     'cursor_location'
+        # )
+
+        # matched string - synonym, short/long name, etc that is matched, matched string wrapped
+        #     in <em></em>
+        # canonical_match_value - name/value to insert
+        # full field replacement - the full string to replace in the text field being completed
+        # cursor location - updated location of the cursor - placed in appropriate spot
+        #     of suggested string (e.g. just inside new function, at beginning
+        #     of object text field if completing relation, after , or ')' if
+        #     completing a function argument)
 
         # TODO - issue #51
 
