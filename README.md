@@ -15,7 +15,7 @@ An approach is to use an EBNF template for BEL and a JSON-based data file to cre
 * Identify semantic issues in the statement and provide suggestions on fixing them
 * Identify unknown Namespaces or Namespace values
 * Read a Nanopub and validate the full Nanopub, e.g. the BEL statement, Annotations, Citation, etc
-* Provide location-based parser state information (e.g. location 10 is in the required parameter part of a protein abundance - e.g. the protein value)
+* Provide location-based parser state information (e.g. location 10 is in the required arg part of a protein abundance - e.g. the protein value)
 * Provide autocompletion suggestions given a location in the BEL Statement
 * Convert BEL statements into an AST and then back into a BEL Statement
 

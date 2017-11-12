@@ -3,7 +3,7 @@ from bel_lang.defaults import defaults
 
 bel_obj = bel_lang.bel.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
 
-# TODO Add test for specified canonical_targets - need to make sure BEL.bio API endpoint is updated to handle this querystring param
+# TODO Add test for specified canonical_targets - need to make sure BEL.bio API endpoint is updated to handle this querystring arg
 
 
 def test_canon_one():

@@ -1,11 +1,11 @@
-class InvalidParameter(Exception):
+class InvalidArgeter(Exception):
     def __init__(self, message):
         self.message = message
 
 
-class ParameterMissing(Exception):
+class ArgeterMissing(Exception):
     def __init__(self, function):
-        self.message = 'There are no parameters given to {}().'.format(function)
+        self.message = 'There are no args given to {}().'.format(function)
 
 
 class NoValidSignature(Exception):
@@ -15,7 +15,7 @@ class NoValidSignature(Exception):
 
 class InvalidRelationship(Exception):
     def __init__(self, given_r):
-        self.message = '\"{}\" is not a defined relationship.'.format(given_r)
+        self.message = '\"{}\" is not a defined relation.'.format(given_r)
 
 
 class MissingParenthesis(Exception):

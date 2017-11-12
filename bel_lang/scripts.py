@@ -34,12 +34,12 @@ def cli_parse(statement, v, s):
 
 @bel.command(name='create')
 @click.option('--c', default=1, help='Number of statements to create; defaults to 1')
-@click.option('--m', default=3, help='Max number of parameters for each function; defaults to 3')
+@click.option('--m', default=3, help='Max number of args for each function; defaults to 3')
 @click.option('--v', default=2.0, help='BEL language version; defaults to 2.0')
 def cli_create(c, m, v):
     print('------------------------------')
     print('Statements to create: {}'.format(c))
-    print('Max params per function: {}'.format(m))
+    print('Max args per function: {}'.format(m))
     print('BEL version: {}'.format(v))
     print('------------------------------')
 
@@ -61,7 +61,7 @@ def cli_components(statement, v):
     c = stmt_components(statement, version=v)
 
     print('Subject: {}'.format(c['subject']))
-    print('Relationship: {}'.format(c['relationship']))
+    print('Relationship: {}'.format(c['relation']))
     print('Object: {}'.format(c['object']))
 
     return

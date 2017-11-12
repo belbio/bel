@@ -11,7 +11,7 @@ def test_abundance():
                       'MESHD:Inflammation componentOf biologicalProcess(MESHD:Inflammation)'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
 
     assert set(expected_edges) == set(actual_edges)
 
@@ -25,7 +25,7 @@ def test_complex():
                       'ma(tscript) componentOf act(complex(SCOMP:"Nfkb Complex"), ma(tscript))'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -41,7 +41,7 @@ def test_composite():
                       'ma(kin) componentOf act(p(HGNC:PRKCA), ma(kin))'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -53,7 +53,7 @@ def test_g():
                       'var("c.1521_1523delCTT") componentOf g(REF:"NM_000492.3", var("c.1521_1523delCTT"))'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -63,7 +63,7 @@ def test_m():
     expected_edges = ['MGI:Mir21 componentOf {}'.format(statement)
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -78,7 +78,7 @@ def test_p():
                       'MESHCS:Cytoplasm componentOf loc(MESHCS:Cytoplasm)',
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -89,7 +89,7 @@ def test_r():
                       'HGNC:ENO1 componentOf rnaAbundance(HGNC:ENO1)'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -102,7 +102,7 @@ def test_bp():
                       'ma(kin) componentOf act(p(HGNC:KDR), ma(kin))'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -113,7 +113,7 @@ def test_path():
                       'MESH:"Skin Diseases" componentOf pathology(MESH:"Skin Diseases")'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -126,7 +126,7 @@ def test_act():
                       'ma(GOMF:"transporter activity") componentOf {}'.format(statement)
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -141,7 +141,7 @@ def test_tloc():
                       'toLoc(MESHCL:"Cell Nucleus") componentOf {}'.format(statement)
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -153,7 +153,7 @@ def test_sec():
                       'a(CHEBI:"nitric oxide") componentOf sec(a(CHEBI:"nitric oxide"))'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -168,7 +168,7 @@ def test_surf():
                       'complex(p(HGNC:ITGA2), p(HGNC:ITGB1)) componentOf surf(complex(p(HGNC:ITGA2), p(HGNC:ITGB1)))'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -184,7 +184,7 @@ def test_deg():
                       'deg(p(HGNC:HBP1)) directlyDecreases p(HGNC:HBP1)'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -201,7 +201,7 @@ def test_rxn():
                       'products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:"oxygen")) componentOf {}'.format(statement)
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -215,7 +215,7 @@ def test_list():
                       'p(HGNC:MAPK9) componentOf list(p(HGNC:MAPK8), p(HGNC:MAPK9))'
                       ]
 
-    actual_edges = bel_obj.parse(statement).computed()
+    actual_edges = bel_obj.parse(statement).compute_edges()
     assert set(expected_edges) == set(actual_edges)
 
 

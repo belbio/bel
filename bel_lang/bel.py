@@ -1,21 +1,16 @@
 import importlib
-import os
-import pprint
-import requests
 import sys
-import glob
-from typing import Mapping, Any, List
-
+from typing import Mapping, Any, List, Tuple
 import yaml
-from tatsu.ast import AST
 from tatsu.exceptions import FailedParse
-import traceback
-import time
 
-from bel_lang.exceptions import NoParserFound
-from bel_lang.semantics import BELSemantics
-from bel_lang.tools import ParseObject
 import bel_lang.tools as tools
+import bel_lang.bel_specification as bel_specification
+import bel_lang.bel_utils as bel_utils
+import bel_lang.ast as bel_lang_ast
+import bel_lang.exceptions as bel_ex
+import bel_lang.semantics as semantics
+import bel_lang.computed_edges as computed_edges
 from bel_lang.defaults import defaults
 
 import logging
@@ -24,26 +19,11 @@ log = logging.getLogger(__name__)
 sys.path.append('../')
 
 
-def get_bel_versions() -> List[str]:
-    """Get BEL Language versions supported
-
-    Get the list of all BEL Language versions supported.
-
-    Returns:
-        List[str]: list of versions
-    """
-
-    files = glob.glob('{}/versions/bel_v*.yaml'.format(os.path.dirname(__file__)))
-    versions = []
-    for fn in files:
-        yaml_dict = yaml.load(open(fn, 'r').read())
-        versions.append(yaml_dict['version'])
-
-    return versions
-
-
 class BEL(object):
     """BEL Language object
+
+    This object handles BEL statement/triple processing, parsing, (de)canonicalization,
+    orthologization, computing BEL Edges and (TODO) statement completion.
 
     To convert BEL Statement to BEL Edges:
 
@@ -67,63 +47,39 @@ class BEL(object):
             endpoint (str): BEL API endpoint,  defaults to bel_lang.defaults.defaults['belapi_endpoint']
         """
 
-        bel_versions = get_bel_versions()
+        bel_versions = bel_specification.get_bel_versions()
         if version not in bel_versions:
             log.error('Version {} not available in bel_lang library package'.format(version))
             sys.exit()
 
         self.version = version
         self.endpoint = endpoint
-        self.messages = []  # List[Tuple[str, str]], e.g. [('ERROR', 'this is an error msg'), ('WARNING', 'this is a warning'), ]
 
-        # use this variable to find our parser file since periods aren't recommended in file names
-        self.version_dots_as_underscores = version.replace('.', '_')
+        # Validation error/warning messages
+        # List[Tuple[str, str]], e.g. [('ERROR', 'this is an error msg'), ('WARNING', 'this is a warning'), ]
+        self.validation_messages = []
 
-        # each instance also instantiates a BELSemantics object used in parsing statements
-        self.semantics = BELSemantics()
+        # self.semantics = BELSemantics()  # each instance also instantiates a BELSemantics object used in parsing statements
+        self.spec = bel_specification.get_specification(version)
 
-        # get the current directory name, and use that to find the version's parser file location
-        cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
-        parser_dir = '{}.versions.parser_v{}'.format(cur_dir_name, self.version_dots_as_underscores)
+        bel_utils._dump_spec(self.spec)
 
+        # Import Tatsu parser
         # use importlib to import our parser (a .py file) and set the BELParse object as an instance variable
         try:
-            imported_parser_file = importlib.import_module(parser_dir)
+            imported_parser_file = importlib.import_module(self.spec['parser_path'])
             self.parser = imported_parser_file.BELParser()
         except Exception as e:
             # if not found, we raise the NoParserFound exception which can be found in bel_lang.exceptions
-            raise NoParserFound(version)
-
-        # try to load the version's YAML dictionary as well for functions like _create()
-        # set this BEL instance's relationships, signatures, term translations, etc.
-        try:
-            current_stored_dir = os.path.dirname(__file__)
-            yaml_file_name = 'versions/bel_v{}.yaml'.format(self.version_dots_as_underscores)
-            yaml_file_path = '{}/{}'.format(current_stored_dir, yaml_file_name)
-            self.yaml_dict = yaml.load(open(yaml_file_path, 'r').read())
-
-            self.translate_terms = tools.func_name_translate(self)  # this killed a kitten :(
-            self.relationships = tools.get_all_relationships(self)
-            self.function_signatures = tools.get_all_function_signatures(self)
-
-            self.primary_functions = tools.get_all_primary_funcs(self)
-            self.modifier_functions = tools.get_all_modifier_funcs(self)
-
-            self.computed_sigs = tools.get_all_computed_sigs(self)
-            self.computed_funcs = tools.get_all_computed_funcs(self)
-            self.computed_mfuncs = tools.get_all_computed_mfuncs(self)
-
-        except Exception as e:
-            # print(e)
-            # traceback.print_exc()
-            log.error('Warning: BEL Specification for Version {} YAML not found. Cannot proceed.'.format(self.version))
-            sys.exit()
+            raise bel_ex.NoParserFound(self.version)
 
     def parse(self, statement: str, strict: bool = False, parseinfo: bool = False) -> 'BEL':
-        """
-        Parses a BEL statement given as a string and returns a ParseObject, which contains an abstract syntax tree (
-        AST) if the statement is valid. Else, the AST attribute is None and there will be exception messages in
-        ParseObject.error and ParseObject.visual_err.
+        """Parse and semantically validate BEL statement
+
+        Parses a BEL statement given as a string and returns an AST, Abstract Syntax Tree (defined in ast.py)
+        if the statement is valid, self.parse_valid. Else, the AST attribute is None and there will be validation error messages
+        in self.validation_messages.  self.validation_messages will contain WARNINGS if
+        warranted even if the statement parses correctly.
 
         Args:
             statement (str): BEL statement
@@ -135,40 +91,108 @@ class BEL(object):
         """
 
         self.ast = None
-        self.valid = False
-        self.visualize_error = ''
-        self.messages = []  # Reset messages when parsing a new BEL Statement
+        self.parse_valid = False
+        self.parse_visualize_error = ''
+        self.validation_messages = []  # Reset messages when parsing a new BEL Statement
 
         self.original_bel_stmt = statement
+
         # pre-process to remove extra white space, add space after commas, etc.
-        self.bel_stmt = tools.preprocess_bel_line(statement)
+        self.bel_stmt = bel_utils.preprocess_bel_stmt(statement)
+
+        # TODO - double check these tests before enabling
+        # is_valid, messages = bel_utils.simple_checks(self.bel_stmt)
+        # if not is_valid:
+        #     self.validation_messages.extend(messages)
+        #     return self
 
         # Check to see if empty string for bel statement
         if len(self.bel_stmt) == 0:
-            self.messages.append(('ERROR', 'Please include a valid BEL statement.'))
+            self.validation_messages.append(('ERROR', 'Please include a valid BEL statement.'))
             return self
 
         try:
             # see if an AST is returned without any parsing errors
-            ast_dict = self.parser.parse(self.bel_stmt, rule_name='start', semantics=self.semantics, trace=False, parseinfo=parseinfo)
+            ast_dict = self.parser.parse(self.bel_stmt, rule_name='start', trace=False, parseinfo=parseinfo)
 
-            import json
-            print('DumpVar:\n', json.dumps(ast_dict, indent=4))
+            self.ast = bel_lang_ast.ast_dict_to_objects(ast_dict, self)
 
-            self.ast = tools.ast_dict_to_objects(ast_dict, self)
-            self.valid = True
+            self.parse_valid = True
 
         except FailedParse as e:
             # if an error is returned, send to handle_syntax, error
-            error, visualize_error = tools.handle_syntax_error(e)
-
-            self.visualize_error = visualize_error
-            self.messages.append(('ERROR', error))
+            error, visualize_error = bel_utils.handle_parser_syntax_error(e)
+            self.parse_visualize_error = visualize_error
+            self.validation_messages.append(('ERROR', error))
             self.ast = None
 
         except Exception as e:
             log.error('Error {}, error type: {}'.format(e, type(e)))
-            self.messages.append(('ERROR', 'Error {}, error type: {}'.format(e, type(e))))
+            self.validation_messages.append(('ERROR', 'Error {}, error type: {}'.format(e, type(e))))
+
+        # Run semantics validation - and decorate AST with nsarg entity_type and arg optionality
+        semantics.validate(self)
+
+        return self
+
+    def syntax_parse(self, statement: str, strict: bool = False, parseinfo: bool = False) -> 'BEL':
+        """Syntax parse - does not semantically validate
+
+        Parses a BEL statement given as a string and returns a AST object.  self.parse_valid
+        is True if a valid syntax parse.  self.validation_messages will show
+        any ERRORS or WARNINGS.
+
+        This method can be used for BEL Edge parsing in order to alter the statement
+        format (short, medium, long).
+
+        Args:
+            statement (str): BEL statement
+            strict (bool): specify to use strict or loose parsing; defaults to loose
+            parseinfo (bool): specify whether or not to include Tatsu parse information in AST
+
+        Returns:
+            ParseObject: The ParseObject which contain either an AST or error messages.
+        """
+
+        self.ast = None
+        self.parse_valid = False
+        self.parse_visualize_error = ''
+        self.validation_messages = []  # Reset messages when parsing a new BEL Statement
+
+        self.original_bel_stmt = statement
+
+        # pre-process to remove extra white space, add space after commas, etc.
+        self.bel_stmt = bel_utils.preprocess_bel_stmt(statement)
+
+        # TODO - double check these tests before enabling
+        # is_valid, messages = bel_utils.simple_checks(self.bel_stmt)
+        # if not is_valid:
+        #     self.validation_messages.extend(messages)
+        #     return self
+
+        # Check to see if empty string for bel statement
+        if len(self.bel_stmt) == 0:
+            self.validation_messages.append(('ERROR', 'Please include a valid BEL statement.'))
+            return self
+
+        try:
+            # see if an AST is returned without any parsing errors
+            ast_dict = self.parser.parse(self.bel_stmt, rule_name='start', trace=False, parseinfo=parseinfo)
+
+            self.ast = bel_lang_ast.ast_dict_to_objects(ast_dict, self)
+
+            self.parse_valid = True
+
+        except FailedParse as e:
+            # if an error is returned, send to handle_syntax, error
+            error, visualize_error = bel_utils.handle_parser_syntax_error(e)
+            self.parse_visualize_error = visualize_error
+            self.validation_messages.append(('ERROR', error))
+            self.ast = None
+
+        except Exception as e:
+            log.error('Error {}, error type: {}'.format(e, type(e)))
+            self.validation_messages.append(('ERROR', 'Error {}, error type: {}'.format(e, type(e))))
 
         return self
 
@@ -184,7 +208,7 @@ class BEL(object):
             BEL: returns self
         """
 
-        # TODO Need to order position independent parameters
+        # TODO Need to order position independent args
 
         canonicalize_endpoint = self.endpoint + '/terms/{}/canonicalized'
 
@@ -224,7 +248,7 @@ class BEL(object):
         self.ast = tools.orthologize(self.ast, orthologize_req_url)
         return self
 
-    def computed(self, rule_set: List[str] = None) -> List[Mapping[str, Any]]:
+    def compute_edges(self, rule_set: List[str] = None) -> List[Mapping[str, Any]]:
         """Computed edges from primary BEL statement
 
         Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
@@ -237,22 +261,59 @@ class BEL(object):
             List[Mapping[str, Any]]
         """
 
-        edges = tools.compute(self.ast.bel_subject, self, rule_set)
-        edges.extend(tools.compute(self.ast.bel_object, self, rule_set))
+        compute_rules = self.spec['computed_signatures'].keys()
+
+        if rule_set:
+            compute_rules = [rule for rule in compute_rules if rule in rule_set]
+
+        edges_ast = computed_edges.compute_edges(self.ast, self.spec, compute_rules)
+
+        edges = []
+        for es, er, eo in edges_ast:
+
+            # Some components are not part of AST - e.g. NSArg
+            if isinstance(es, bel_lang_ast.Function):
+                es = es.to_string(format='medium')
+            if isinstance(eo, bel_lang_ast.Function):
+                eo = eo.to_string(format='medium')
+
+            edges.append({'subject': es, 'relation': er, 'object': eo})
 
         return edges
 
-    def suggest(self, partial: str, value_type: str):
-        """
-        Takes a partially completed function, modifier function, or a relationship and suggest a fuzzy match out of
-        all available options.
+    def completion(self, partial: str, component_type: str, value_type: str, form='medium') -> List[Tuple[str, str, str]]:
+        """Suggest bel statement completions
+
+        Takes a partially completed function, modifier function, or a relation and suggest a fuzzy match out of
+        all available options filtering by context, e.g.:
+
+           - functions if in function context
+           - nsarg filtered by entity_type based on surrounding function, etc
 
         Args:
             partial (str): the partial string
-            value_type (str): value type (function, modifier function, or relationship; makes sure we match right list)
+            component_type (str): ['subject', 'relation', 'object']
+            value_type (str): value type (function, modifier function, or relation; makes sure we match right list)
+            form (str): short, medium or long form of function/relationship names to be returned
 
         Returns:
-            list: A list of suggested values.
+            List[Tuple[str, str, str]]: A list of suggested values as tuples
+
+                (
+                    'matched string - highlighted',
+                    'canonical_match_value',
+                    'full field replacement with match',
+                    'cursor_location'
+                )
+
+                matched string - synonym, short/long name, etc that is matched, matched string wrapped
+                    in <em></em>
+                canonical_match_value - name/value to insert
+                full field replacement - the full string to replace in the text field being completed
+                cursor location - updated location of the cursor - placed in appropriate spot
+                    of suggested string (e.g. just inside new function, at beginning
+                    of object text field if completing relation, after , or ')' if
+                    completing a function argument)
         """
 
         # TODO - issue #51
@@ -266,7 +327,7 @@ class BEL(object):
         # elif value_type == 'mfunction':
         #     suggestions = []
         #
-        # elif value_type == 'relationship':
+        # elif value_type == 'relation':
         #     suggestions = []
         #
         # else:
@@ -274,207 +335,19 @@ class BEL(object):
 
         return suggestions
 
-    def ast_components(self, ast: AST):
-        """
-        Returns the components of a BEL AST as values within a dictionary under the keys 'subject', 'relationship',
-        and 'object'.
+    def relation_list(self, format: str ="long") -> List[str]:
+        """Return relation list for this BEL Version in the requested format
 
         Args:
-            ast (AST): BEL AST
+            format (str): format of relation name: long, medium or short (abbreviation)
 
         Returns:
-            dict: The dictionary that contains the components as its values.
+            List[str]: list of relation names in requested format
         """
 
-        # TODO - what is this for?  Issue #49  Doesn't seem to be needed
-
-        components_dict = dict()
-        components_dict['subject'] = ast.get('subject', None)
-
-        # if a relationship exists, this means that an object must also exist
-        if ast.get('relationship', None) is not None:
-            components_dict['object'] = ast.get('object', None)
-            components_dict['relationship'] = ast.get('relationship', None)
-
-        return components_dict
-
-    def flatten(self, ast: AST):
-        """
-        Takes an AST and flattens it into a BEL statement string.
-
-        Args:
-            ast (AST): BEL AST
-
-        Returns:
-            str: The string generated from the AST.
-        """
-
-        # TODO Doesn't seem to be needed
-
-        # grab the three components of the AST
-        s = ast.get('subject', None)
-        r = ast.get('relationship', None)
-        o = ast.get('object', None)
-
-        # if no relationship, this means only subject is present
-        if r is None:
-            sub = tools.decode(s)
-            final = '{}'.format(sub)
-        # else the full form BEL statement with subject, relationship, and object are present
+        if format == 'short':
+            return [self.spec['relations'][relation]['abbreviation'] for relation in self.spec['relations']]
         else:
-            sub = tools.decode(s)
-            obj = tools.decode(o)
-            final = '{} {} {}'.format(sub, r, obj)
-
-        return final
-
-    def _create(self, count: int = 1, max_params: int = 3):
-        """
-        Creates a specified number of invalid BEL statement objects for testing purposes.
-
-        Args:
-            count (int): the number of statements to create; defaults to 1
-            max_params (int): max number of params each function can take (a large number may exceed recursive depth)
-
-        Returns:
-            list: A list of InvalidStatementObject objects.
-        """
-
-        # statements will be inside objects, so we need a new list for those
-        list_of_bel_stmt_objs = []
-
-        # if user specifies < 1 test statements, do as he/she wishes and return an empty list
-        if count < 1:
-            return list_of_bel_stmt_objs
-
-        return tools.create_invalid(self, count, max_params)
-
-    def load(self, filename: str, loadn: int = -1, preprocess: bool = False):
-        """
-        Reads a text file of BEL statements separated by newlines, and returns an array of the BEL statement strings.
-
-        Args:
-            filename (str): location/name of the text file
-            loadn (int): how many statements to load from the file. If unspecified, all are loaded
-            preprocess (bool): denote whether or not to run each statement through the preprocessor
-
-        Returns:
-            list: The list of statement strings.
-        """
-
-        # create an empty list to put our loaded statements
-        statements = []
-
-        # open the file that we're loading statements off of
-        f = open(filename)
-        line_count = 0
-
-        # for each statement in our file (each statement should be on a newline)
-        for line in f:
-            if line_count == loadn:  # once number of lines processed equals user specified, stop
-                break
-
-            if preprocess:  # if preprocess if selected, clean up the statement string
-                line = tools.preprocess_bel_line(line)
-            else:
-                line = line.strip()
-
-            statements.append(line)
-            line_count += 1
-
-        # close the file and return the list
-        f.close()
-
-        return statements
-
-    def wm_computed_edges(self, rule_set: List[str] = None) -> List[Mapping[str, Any]]:
-        """Computed edges from primary BEL statement
-
-        Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
-        Will run only the list of computed edge rules if given.
-
-        Args:
-            rule_set (list): a list of rules to filter; only the rules in this list will be applied to computed
-
-        Returns:
-            List[Mapping[str, Any]]
-        """
-
-        computed_signatures = yaml.loads("""
-  component_of:
-    trigger_type:
-      - Function
-      - NSParam
-    subject: trigger_value
-    relation: componentOf
-    object: parent_function
-    examples:
-      - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-        computed:
-          - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-          - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
-          - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-
-  degradation:
-    trigger_function: degradation
-    subject: trigger_value
-    relation: directlyDecreases
-    object: args
-    examples:
-      - given_statement: "deg(r(HGNC:MYC))"
-        computed:
-          - "deg(r(HGNC:MYC)) directlyDecreases r(HGNC:MYC)"
-
-        """)
-
-        compute_rules = self.bel_specification.get('computed_signatures')
-
-        if rule_set:
-            compute_rules = [rule for rule in compute_rules if rule in rule_set]
-
-        edges = tools.compute_edges(self, rule_set)
-
-        return edges
+            return [relation for relation in self.spec['relations']]
 
 
-def wm_compute_edges(ast, compute_rules):
-
-    from bel_lang.objects import Function
-
-    computed_edges = []
-
-    for rule in compute_rules:
-        function_name, args, parent_function = None, None, None, None
-
-        if isinstance(ast, Function):
-            function_name = ast.name  # TODO - this should be the canonical function name not randomly abbr or long form
-            args = ast.args
-            parent_function = ast.parent_function
-
-        trigger_functions = rule.get('trigger_function', None)
-        trigger_types = rule.get('trigger_type', None)
-
-        if function_name in trigger_functions:  # trigger_functions is a list of canonical function names from bel_specification
-            rule_subject_value = rule.get('subject')
-            if rule_subject_value == 'trigger_value':
-                subject = ast
-
-            relation = rule.get('relation')
-
-            rule_object_value = rule.get('object')
-            if rule_object_value == 'args':
-                for arg in args:
-                    computed_edges.extend((subject, relation, arg))
-            elif rule_object_value == 'parent_function':
-                computed_edges.extend((subject, relation, parent_function))
-
-        if isinstance(ast, trigger_types):
-            rule_subject_value = rule.get('subject')
-            if rule_subject_value == 'trigger_value':
-                subject = ast
-
-            relation = rule.get('relation')
-
-            rule_object_value = rule.get('object')
-            if rule_object_value == 'parent_function':
-                computed_edges.extend((subject, relation, parent_function))

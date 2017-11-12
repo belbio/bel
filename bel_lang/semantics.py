@@ -1,370 +1,254 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# Semantic validation code
 
-"""
-This file defines the semantic class used in our parser for BEL statements.
-"""
-
-import collections
-import math
-import os
-import pprint
+from typing import Tuple, List
 import requests
+import json
+import re
 
-import yaml
+from bel_lang.ast import BELAst, Function, NSArg, StrArg
 
-from bel_lang.exceptions import *
-
-
-###################
-# SEMANTICS CLASS #
-###################
+import logging
+log = logging.getLogger(__name__)
 
 
-class BELSemantics(object):
-    def __init__(self, version='2_0_0'):
+def validate(bo: 'BEL') -> Tuple[bool, List[Tuple[str, str]]]:
+    """Semantically validate BEL AST
 
-        # load the dict from yaml file here
+    Add errors and warnings to bel_obj.validation_messages
 
-        current_directory = os.path.dirname(__file__)
-        path_to_yaml_file = '{}/versions/bel_v{}.yaml'.format(current_directory, version)
+    Args:
+        bo (BEL): main bel object
 
-        yaml_file = open(path_to_yaml_file, 'r').read()
-        yaml_dict = yaml.load(yaml_file)
+    Returns:
+        Tuple[bool, List[Tuple[str, str]]]: (is_valid, messages)
+    """
 
-        self.abbre_to_name = self.abbreviations_to_names(yaml_dict)
-        self.name_to_abbre = self.names_to_abbreviations(yaml_dict)
-        self.function_signatures = self.get_function_signatures(yaml_dict)
-        self.relationships = self.get_relationships(yaml_dict)
+    bo = validate_functions(bo.ast, bo)
+    bo = validate_arg_values(bo.ast, bo)  # validates NSArg and StrArg values
 
-        self.term_store_endpoint = 'https://api.bel.bio/v1/terms/{}'
+    return bo
 
-    #######################
-    # SEMANTIC RULE NAMES #
-    #######################
 
-    def function(self, ast):
+def validate_functions(ast: BELAst, bo: 'BEL') -> 'BEL':
+    """Recursively validate function signatures
 
-        fn_given = ast.get('function', None)
-        args_given = ast.get('function_args', None)
+    Determine if function matches one of the available signatures. Also,
 
-        self.check_valid_signature(fn_given, args_given)
+    1. Add entity types to AST NSArg, e.g. Abundance, ...
+    2. Add optional to  AST Arg (optional means it is not a
+        fixed, required argument and needs to be sorted for
+        canonicalization, e.g. reactants(A, B, C) )
 
-        # print('Function found: {}().'.format(fn_given))
-        # print('arguments: ')
-        # pprint(args_given, indent=2)
-        # print('\n')
+    Args:
+        bo ('BEL'): bel objectk
 
-        # for arg in args_given:
-        #     if arg:  # if the given argument list is not empty
-        #         if 'm_function' in arg:
-        #             m_fn = arg['m_function']
-        #             # print('modifier function: {}'.format(m_fn))
-        #             self.check_function_modifier(fn, m_fn)
-        #
-        #     else:  # if the list is empty, move to the next arg
-        #         continue
+    Returns:
+        'BEL': bel object
+    """
 
-        return ast
+    if isinstance(ast, Function):
+        log.debug(f'Validating: {ast.name}, {ast.function_type}, {ast.args}')
+        function_signatures = bo.spec['function_signatures'][ast.name]['signatures']
 
-    def modifier_function(self, ast):
-        # mfn = ast['m_function']
-        # print('Modifier function found: {}().'.format(mfn))
-        return ast
+        function_name = ast.name
+        (valid_function, messages) = check_function_args(ast.args, function_signatures, function_name)
+        if not valid_function:
+            message = ', '.join(messages)
+            bo.validation_messages.append(('ERROR', 'Invalid BEL Statement function {} - problem with function signatures: {}'.format(ast.to_string(), message)))
+            bo.parse_valid = False
 
-    def relationship(self, ast):
-        # r_given = ast.get('relation', None)s
-        self.check_valid_relationship(ast)
+    # Recursively process every NSArg by processing BELAst, BELSubject/Object, and Functions
+    if hasattr(ast, 'args'):
+        for arg in ast.args:
+            validate_functions(arg, bo)
 
-        return ast
+    return bo
 
-    def namespace_arg(self, ast):
-        self.check_signature_params(ast)
 
-        return ast
+def check_function_args(args, signatures, function_name):
+    """Check function args - return message if function args don't match function signature
 
-    def string_arg(self, ast):
-        # str_arg = ast['str_arg']
-        # print('String argument found: {}.'.format(str_arg))
-        return ast
+    We have following types of arguments to validate:
+        1. Required, position_dependent arguments, e.g. p(HGNC:AKT1), NSArg HGNC:AKT1 is required and must be first argument
+        2. Optional, position_dependent arguments, e.g. pmod(P, T, 308) - T and 308 are optional and position_dependent
+        3. Optional, e.g. loc() modifier can only be found once, but anywhere after the position_dependent arguments
+        4. Multiple, e.g. var(), can have more than one var() modifier in p() function
 
-    ##################################
-    # SEMANTIC CHECKING STAGE 1 OF 3 #
-    ##################################
+    Args:
+        args (Union['Function', 'NSArg', 'StrArg']): AST Function arguments
+        signatures (Mapping[str, Any]): function signatures from spec_dict, may be more than one per function
+        function_name (str): passed in to improve error messaging
 
-    def get_function_signatures(self, yaml_dict):
-        """
-        This is stage 1 of semantic checking. It has one argument:
+    Returns:
+        Tuple[bool, List[str]]: (function_valid?, list of error messages per signature)
+    """
 
-        1. yaml_dict: This is the dictionary parsed from the given YAML file defined by the user.
+    messages = []
 
-        We are focused on the function_signature key found inside yaml_dict, as that gives us the information we need to
-        build our dictionary-based signature definitions. For each signature, we store both a required_params and a
-        optional_params OrderedDict(). This serves two purpose: we need to keep track of each param type's optional and
-        multiple booleans in a key/value pair, but also need to keep the dict ordered for the required parameters.
-        """
+    arg_types = []
+    for arg in args:
+        arg_type = arg.__class__.__name__
+        if arg_type == 'Function':
+            arg_types.append((arg.name, ''))
+        elif arg_type == 'NSArg':
+            arg_types.append((arg_type, f'{arg.namespace}:{arg.value}'))
+        elif arg_type == 'StrArg':
+            arg_types.append((arg_type, arg.value))
+    log.debug(f'Arg_types {arg_types}')
 
-        signature_dict = {}
+    matched_signature_idx = -1
+    valid_function = False
+    for sig_argset_idx, sig_argset in enumerate(signatures):
+        sig_req_args = sig_argset['req_args']  # required position_dependent arguments
+        sig_pos_args = sig_argset['pos_args']  # optional position_dependent arguments
+        sig_opt_args = sig_argset['opt_args']  # optional arguments
+        sig_mult_args = sig_argset['mult_args']  # multiple arguments
 
-        for func in yaml_dict.get('function_signatures', []):  # for each function in the yaml function signatures...
-            f_name = func.get('name', 'unknown')  # get the name of the function in yaml
-            f_sigs = func.get('signatures', [])  # get the signatures of the function
-            signature_dict[f_name] = f_sigs  # set function name as key, and yaml's f_sigs as the value for this key
+        # log.debug(f'{sig_argset_idx} Req: {sig_req_args}')
+        # log.debug(f'{sig_argset_idx} Pos: {sig_pos_args}')
+        # log.debug(f'{sig_argset_idx} Opt: {sig_opt_args}')
+        # log.debug(f'{sig_argset_idx} Mult: {sig_mult_args}')
 
-            for valid_sig in f_sigs:  # for each signature from signatures...
-                params = valid_sig.get('parameters', None)  # get the parameter types of this signature
-                required_params = collections.OrderedDict()  # required param types list (must be ordered)
-                optional_params = collections.OrderedDict()  # optional param types list (does not need to be ordered)
+        # Check required arguments
+        reqs_mismatch_flag = False
+        for sig_idx, sig_req in enumerate(sig_req_args):
+            log.debug(f'Req args: arg_type {arg_types[sig_idx][0]} vs sig_req {sig_req}')
+            if arg_types[sig_idx][0] not in sig_req:
+                reqs_mismatch_flag = True
+                msg = f'Missing required arguments for {function_name} signature: {sig_argset_idx}'
+                messages.append(msg)
+                log.debug(msg)
+                break
+        if reqs_mismatch_flag:
+            continue  # test next argset
 
-                for par in params:  # for each type in parameter types
-                    par_type = par.get('type', 'Unknown')  # get the type name
-                    optional = par.get('optional', False)  # get the optional boolean
-                    multiple = par.get('multiple', False)  # get the multiple boolean
+        # Check position_dependent optional arguments
+        pos_dep_arg_types = arg_types[len(sig_req_args):]
+        log.debug(f'Optional arg types {pos_dep_arg_types}')
 
-                    # param is REQUIRED AND SINGULAR
-                    # set the value as the number of times this type can appear
-                    if not optional and not multiple:
-                        required_params[par_type] = required_params.get(par_type, 0) + 1
+        pos_mismatch_flag = False
+        for sig_pos_idx, sig_pos in enumerate(sig_pos_args):
+            log.debug(f'arg_type {pos_dep_arg_types[sig_idx][0]} vs position_dependent {sig_pos}')
+            if pos_dep_arg_types[sig_pos_idx][0] not in sig_pos:
+                pos_mismatch_flag = True
+                msg = f'Missing position_dependent arguments for {function_name} signature: {sig_argset_idx}'
+                messages.append(msg)
+                log.debug(msg)
+                break
+        if pos_mismatch_flag:
+            continue  # test next argset
 
-                    # param is REQUIRED AND MULTIPLE
-                    # set the value to infinity as we'll always have 1 or more of this type
-                    elif not optional and multiple:
-                        required_params[par_type] = math.inf
+        reqpos_arglen = len(sig_req_args) + len(sig_pos_args)
+        optional_arg_types = arg_types[reqpos_arglen:]
 
-                    # param is OPTIONAL AND SINGULAR
-                    # set the value as the number of times this type can appear
-                    elif optional and not multiple:
-                        optional_params[par_type] = optional_params.get(par_type, 0) + 1
+        # Remove function args that are found in the mult_args signature
+        optional_types = [(opt_type, opt_val) for opt_type, opt_val in optional_arg_types if opt_type not in sig_mult_args]
+        log.debug(f'Optional types after sig mult args removed {optional_types}')
 
-                    # param is OPTIONAL AND MULTIPLE
-                    # set the value to infinity as we'll always have 0 or more of this type
-                    else:
-                        optional_params[par_type] = math.inf
+        # Check if any remaining function args are duplicated and therefore not unique opt_args
+        if len(optional_types) != len(set(optional_types)):
+            msg = f'Duplicate optional arguments {optional_types} for {function_name} signature: {sig_argset_idx}'
+            messages.append(msg)
+            log.debug(msg)
+            continue
 
-                # add these two OrderedDicts as key/values within valid_sig so we can refer to them later on
-                valid_sig['required'] = required_params
-                valid_sig['optional'] = optional_params
+        optional_types = [(opt_type, opt_val) for opt_type, opt_val in optional_types if opt_type not in sig_opt_args]
+        if len(optional_types) > 0:
+            msg = f'Invalid arguments {optional_types} for {function_name} signature: {sig_argset_idx}'
+            messages.append(msg)
+            log.debug(msg)
+            continue
 
-            # clone the value of f_name into its respective abbreviation key
-            # e.g. signature_dict[activity] == signature_dict[act]; signature_dict[pathology] == signature_dict[path]
-            signature_dict[self.name_to_abbre[f_name]] = f_sigs
+        matched_signature_idx = sig_argset_idx
+        messages = []  # reset messages if signature is matched
+        valid_function = True
+        break
 
-        return signature_dict
+    if matched_signature_idx > -1:
+        for sig_idx, sig_arg in enumerate(signatures[matched_signature_idx]['arguments']):
+            if sig_arg['type'] in ['NSArg', 'StrArg', 'StrArgNSArg']:
+                log.debug(f'    Arg: {args[sig_idx].to_string()} Sig arg: {sig_arg}')
+                args[sig_idx].add_value_types(sig_arg['values'])
+                args[sig_idx].add_position_dependent(sig_arg['position_dependent'])
+            else:
+                break
 
-    ##################################
-    # SEMANTIC CHECKING STAGE 2 OF 3 #
-    ##################################
+    for arg in args:
+        if arg.__class__.__name__ in ['NSArg', 'StrArg']:
+            log.debug(f'Arg: {arg.to_string()} Value_types: {arg.value_types}')
 
-    def check_valid_signature(self, fn_given, args_given):
-        """
-        This is stage 2 of semantic checking. It has three arguments:
+    return (valid_function, messages)
 
-        1. fn_given: This is the given function from the BEL statement.
 
-        For example, consider the following BEL statement:
+def validate_arg_values(ast, bo: 'BEL') -> 'BEL':
+    """Recursively validate arg (nsargs and strargs) values
 
-        tloc(p(HGNC:SGK1), fromLoc(MESHCS:Cytoplasm), toLoc(MESHCS:"Cell Nucleus")) association bp(GOBP:"cell cycle")
+    Check that NSArgs are found in BELbio API and match appropriate entity_type.
+    Check that StrArgs match their value - either default namespace or regex string
 
-        The functions present above are p(), tloc(), and bp(), and thus this BEL statement will require three calls to
-        check_valid_signature(), once for each of the present BEL functions.
+    Generate a WARNING if not.
 
-        2. args_given: These are the arguments given with each respective fn_given from above in the form of an AST.
-        3. function_signatures: The signatures defined from stage 1 above.
+    Args:
+        bo ('BEL'): bel object
 
-        The purpose of check_valid_signature is to check that the function given from the BEL statement matches one of
-        the function signatures defined from stage 1. Specifically, it first checks if the parameter types (Entity,
-        Modifier, Function, String, etc.), their optionality, and their multiplicity match with the args_given. Then,
-        it checks to see if each given parameter is valid for their respective defined parameter type. In the example
-        above, tloc()'s arguments match the signature definition [Function, Modifier, Modifier], but we also have to
-        check that p() is a valid value for tloc()'s Function parameter, fromLoc() is a valid value for tloc()'s
-        Modifier parameter, etc.
-        """
+    Returns:
+        'BEL': bel object
+    """
 
-        # these are specific functions to ignore in case their signatures are wrong or need reworking
-        # if fn_given in ['activity']:
-        #     return
+    # Test NSArg terms
+    if isinstance(ast, NSArg):
+        term_id = '{}:{}'.format(ast.namespace, ast.value)
+        value_types = ast.value_types  # TODO - add value_types to Args
+        value_types = ['Activity']
+        # Default namespaces are defined in the bel_specification file
+        if ast.namespace == 'DEFAULT':  # may use the DEFAULT namespace or not
+            for value_type in value_types:
+                if ast.value in bo.spec['default_namespaces'][value_type]:
+                    log.debug('Default namespace valid term: {}'.format(term_id))
+                    break
+            else:  # if for loop doesn't hit the break, run this else
+                log.debug('Default namespace invalid term: {}'.format(term_id))
+                bo.validation_messages.append(('WARNING', f'Default Term: {term_id} not found'))
 
-        func_sig_detected = self.detect_function_signature(fn_given, args_given)
-
-        if func_sig_detected is not None:
-            # print('\t\033[91mIdentified signature:\033[0m {}'.format(func_sig_detected))
-            return True
+        # Process normal, non-default-namespace terms
         else:
-            # print('\t\033[91mNo function signature detected.\033[0m')
-            return False
+            request_url = bo.endpoint + '/terms/{}'.format(term_id)
 
-    def detect_function_signature(self, fn_given, args_given):
+            r = requests.get(request_url)  # TODO add filter for entity_types
+            result = r.json()
 
-        msg_or_sig = None
+            # Term not found in BEL.bio API endpoint
+            if r.status_code != 200:
+                log.debug('Invalid Term: {}'.format(term_id))
+                bo.validation_messages.append(('WARNING', f'Term: {term_id} not found'))
+            # function signature term value_types doesn't match up with API term entity_types
+            elif len(set(ast.value_types).intersection(result['entity_types'])) == 0:
+                log.debug('Invalid Term - statement term allowable entity types: {} do not match API term entity types: {}'.format(ast.value_types, result['entity_types']))
+                bo.validation_messages.append(('WARNING', 'Invalid Term - statement term allowable entity types: {} do not match API term entity types: {}'.format(ast.value_types, result['entity_types'])))
+            # Term is valid
+            else:
+                log.debug('Valid Term: {}'.format(term_id))
 
-        # check if at least one parameter is given
-        if not args_given:
+    # Process StrArgs
+    if isinstance(ast, StrArg):
+        log.debug(f'  Check String Arg: {ast.value}  {ast.value_types}')
+        for value_type in ast.value_types:
+            # Is this a regex to match against
+            if re.match('/', value_type):
+                value_type = re.sub('^/', '', value_type)
+                value_type = re.sub('/$', '', value_type)
+                match = re.match(value_type, ast.value)
+                if match:
+                    break
+            if value_type in bo.spec['default_namespaces']:
+                if ast.value in bo.spec['default_namespaces'][value_type]:
+                    break
+        else:  # If for loop doesn't hit the break, no matches found, therefore for StrArg value is bad
+            bo.validation_messages.append(('WARNING', f'String value {ast.value} does not match default namespace value or regex pattern: {ast.value_types}'))
 
-            raise ParameterMissing(fn_given)
+    # Recursively process every NSArg by processing BELAst, BELSubject/Object, and Functions
+    if hasattr(ast, 'args'):
+        for arg in ast.args:
+            validate_arg_values(arg, bo)
 
-        valid_sigs = self.function_signatures.get(fn_given, [])
-        given_param_list = self.args_to_given_sig_list(args_given)
-
-        for v_sig in valid_sigs:
-
-            valid, msg_or_sig = self.check_valid_sig_given_args(v_sig, given_param_list)
-            if valid:  # if valid is true, return message back
-                return msg_or_sig
-
-        # this exception will be raised if valid is False
-        raise InvalidParameter(msg_or_sig)
-
-    def check_valid_sig_given_args(self, v_sig, given_param_list):
-
-        required = v_sig.get('required', [])
-        optional = v_sig.get('optional', [])
-
-        idx = 0  # keeps track of our given parameter index we're currently checking
-
-        required_count = len(required)  # number of required param TYPES (not total, as types can have multiples)
-        given_param_count = len(given_param_list)  # number of params given
-
-        if given_param_count < required_count:
-            exception_msg = '{} parameter type(s) are required. {} given.'.format(required_count, given_param_count)
-            return False, exception_msg
-
-        for required_param_type in required:
-            if required[required_param_type] == 1:  # singular parameter
-                if required_param_type == given_param_list[idx]:  # if the given parameter at the index == required type
-                    idx += 1
-                    continue  # continue to the next required parameter type
-                else:  # given parameter at index is not a required type. set matched to False and break out of loop
-                    exception_msg = 'A required \"{}\" type was expected, but \"{}\" type was given instead.'.format(
-                        required_param_type, given_param_list[idx])
-                    return False, exception_msg
-            else:  # this parameter type can have multiples - loop until end or diff type
-                while idx < given_param_count:
-                    if required_param_type == given_param_list[idx]:
-                        idx += 1
-                    else:  # break the loop because we encountered a parameter that is not our multiple param type
-                        break
-
-        if idx < given_param_count:  # there are still optional parameters given that have not been accounted for
-            remaining_params = given_param_list[idx:]
-            for remain in remaining_params:
-                if remain in optional:
-
-                    # check occurences of this optional param is less than the max allowed
-                    if remaining_params.count(remain) <= optional[remain]:
-                        continue
-                    else:
-                        exception_msg = 'Too many optional parameters of type \"{}\" in statement. ' \
-                                        'Does not match any function signatures.'.format(remain)
-                        return False, exception_msg
-
-                else:
-                    exception_msg = '\"{}\" is not a valid optional parameter type for this function.'.format(remain)
-                    return False, exception_msg
-
-        return True, v_sig
-
-    ##################################
-    # SEMANTIC CHECKING STAGE 3 OF 3 #
-    ##################################
-
-    def check_signature_params(self, ast):
-        # Stage 3 of 3: check each of the parameters in the function call to see if they are valid
-        ns_arg = ast.get('ns_arg', {})
-
-        ns = ns_arg.get('nspace', '')
-        nsv = ns_arg.get('ns_value', '')
-
-        term = '{}:{}'.format(ns, nsv)
-        r_url = self.term_store_endpoint.format(term)
-
-        r = requests.get(r_url)
-        if r.status_code == 404:
-            print('WARNING: {} is not a valid namespace in your TermStore API!'.format(term))
-
-        #  can't check this until TermStore is ready
-
-        return
-
-    ##############################
-    # VALID RELATIONSHIP CHECKER #
-    ##############################
-
-    def check_valid_relationship(self, given):
-        # checks against all relationships in YAML to make sure the given one is valid
-
-        if given not in self.relationships:
-            raise InvalidRelationship(given)
-
-        return
-
-    ###############################
-    # SEMANTIC HELPER DEFINITIONS #
-    ###############################
-
-    def abbreviations_to_names(self, yaml_dict):
-        # uses YAML to translate from abbreviated name to actual full-length name
-
-        abbreviations = {}
-
-        for fn in yaml_dict.get('functions', []):
-            f_name = fn.get('name', 'unknown')
-            f_abbr = fn.get('abbreviation', 'unknown')
-            abbreviations[f_abbr] = f_name
-
-        for m_fn in yaml_dict.get('modifier_functions', []):
-            mf_name = m_fn.get('name', 'unknown')
-            mf_abbr = m_fn.get('abbreviation', 'unknown')
-            abbreviations[mf_abbr] = mf_name
-
-        return abbreviations
-
-    def names_to_abbreviations(self, yaml_dict):
-        # uses YAML to translate from full-length name to abbreviated name.
-
-        names = {}
-
-        for fn in yaml_dict.get('functions', []):
-            f_name = fn.get('name', 'unknown')
-            f_abbr = fn.get('abbreviation', 'unknown')
-            names[f_name] = f_abbr
-
-        for m_fn in yaml_dict.get('modifier_functions', []):
-            mf_name = m_fn.get('name', 'unknown')
-            mf_abbr = m_fn.get('abbreviation', 'unknown')
-            names[mf_name] = mf_abbr
-
-        return names
-
-    def args_to_given_sig_list(self, args_given):
-        signature_list = []
-
-        for arg in args_given:
-            for arg_type in arg:
-                if arg_type == 'ns_arg':
-                    signature_list.append('Entity')
-                elif arg_type == 'function':
-                    signature_list.append('Function')
-                elif arg_type == 'm_function':
-                    signature_list.append('Modifier')
-                elif arg_type == 'str_arg':
-                    signature_list.append('String')
-                else:  # else could simply be an argument of a function, we don't need to include this in signature
-                    pass
-
-        return signature_list
-
-    def get_relationships(self, yaml_dict):
-        """
-        Retrieves all valid relationships specified in the YAML and returns a list of unique relationships.
-        """
-
-        relationships = set()
-
-        for relationship in yaml_dict.get('relationships', []):
-            r_name = relationship.get('name', None)
-            r_abbr = relationship.get('abbreviation', None)
-
-            relationships.add(r_name)
-            relationships.add(r_abbr)
-
-        return list(relationships)
+    return bo

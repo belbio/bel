@@ -8,11 +8,10 @@ Use this script to convert the user defined YAML file to two other files:
     - an EBNF file used by Tatsu to compile into a parser (syntax)
 """
 
-from jinja2 import Template, Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader
 import datetime
 import sys
 import yaml
-from pprint import pprint
 from itertools import chain
 
 NAME_OF_YAML_FILE = sys.argv[1]  # take a YAML file as argument
@@ -23,8 +22,8 @@ DIRECTORY_OF_EBNFTEMP_FILE = '.'  # directory of where our Jinja template is loc
 NAME_OF_EBNFTEMP_FILE = PATH_SPLIT[0]  # name of Jinja template for the EBNF file
 NAME_OF_OUTPUT_SYNTAX_FILE = sys.argv[3]  # where to output our .ebnf file
 
-def main():
 
+def main():
 
     # load a dictionary from the YAML file to make data access easier
     yaml_dict = yaml_to_dict(NAME_OF_YAML_FILE)
@@ -36,15 +35,6 @@ def main():
     bel_version = yaml_dict['version']  # e.g. version 2.1.5
     bel_major_version = yaml_dict['version'][0]  # e.g. version 2
     created_time = datetime.datetime.now().strftime('%B %d, %Y - %I:%M:%S%p')
-
-    ##########################
-    # ENTITY TYPES FROM YAML #
-    ##########################
-
-    # get the entity types list
-    et_list = yaml_dict['entity_types']
-    # sort the list of entity types by length in descending order
-    entities = sorted(et_list, key=len, reverse=True)
 
     ###############################
     # PRIMARY FUNCTIONS FROM YAML #
@@ -72,10 +62,10 @@ def main():
     # RELATIONSHIPS FROM YAML #
     ###########################
 
-    # gather all names and abbreviations from the list of relationship objects present in the dictionary
-    list_rships = set(chain.from_iterable((rl['name'], rl['abbreviation']) for rl in yaml_dict['relationships']))
+    # gather all names and abbreviations from the list of relation objects present in the dictionary
+    list_relations = set(chain.from_iterable((rl['name'], rl['abbreviation']) for rl in yaml_dict['relations']))
     # sort the list of functions by length in descending order
-    relationships = sorted(list(list_rships), key=len, reverse=True)
+    relations = sorted(list(list_relations), key=len, reverse=True)
 
     ##############################################
     # VALID MODIFIER FUNCTIONS FOR EACH FUNCTION #
@@ -116,7 +106,7 @@ def main():
     # replace template placeholders with appropriate variables
     ebnf = template.render(functions=functions,
                            m_functions=m_functions,
-                           relationships=relationships,
+                           relations=relations,
                            bel_version=bel_version,
                            bel_major_version=bel_major_version,
                            created_time=created_time)

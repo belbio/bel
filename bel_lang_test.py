@@ -20,7 +20,7 @@ bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
 
 # statement_to_parse = 'tloc(p(HGNC:NFE2L2), fromLoc(MESHCL:Cytoplasm), toLoc(MESHCL:"Cell Nucleus"))'
 # statement_to_parse = 'act(p(SFAM:"MAPK p38 Family"), ma(GO:"kinase activity")) decreases deg(p(HGNC:HBP1))'
-statement_to_parse = 'p(HGNC:AKT1) increases p("HGNC:EGF)'
+statement_to_parse = 'p(HGNC:AKT1) increases p(HGNC:EGF)'
 print('{}STATEMENT TO PARSE: {}{}'.format(Colors.RED, statement_to_parse, Colors.END))
 
 parse_obj = bel_instance.parse(statement_to_parse)

@@ -88,13 +88,13 @@ class BELParser(Parser):
         self.name_last_node('subject')
         self._cut()
         with self._optional():
-            self._relationship_()
-            self.name_last_node('relationship')
+            self._relation_()
+            self.name_last_node('relation')
             self._cut()
             self._obj_()
             self.name_last_node('object')
         self.ast._define(
-            ['object', 'relationship', 'subject'],
+            ['object', 'relation', 'subject'],
             []
         )
 
@@ -288,7 +288,7 @@ class BELParser(Parser):
         self._gather(block0, sep0)
 
     @tatsumasu()
-    def _relationship_(self):  # noqa
+    def _relation_(self):  # noqa
         self._relations_()
 
     @tatsumasu()
@@ -460,7 +460,7 @@ class BELSemantics(object):
     def m_args(self, ast):  # noqa
         return ast
 
-    def relationship(self, ast):  # noqa
+    def relation(self, ast):  # noqa
         return ast
 
     def relations(self, ast):  # noqa

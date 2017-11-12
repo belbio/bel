@@ -13,7 +13,7 @@
 #########################
 
 start = bel_statement $ ;
-bel_statement = subject:function ~ [relationship:relationship ~ object:obj] ;
+bel_statement = subject:function ~ [relation:relation ~ object:obj] ;
 
 obj = (function | enclosed_statement) ;
 enclosed_statement = function_open bel_statement:bel_statement function_close ;
@@ -36,9 +36,9 @@ m_args = ','.{(function | namespace_arg | string_arg)}* ;
 
 ##### RELATIONSHIPS #####
 
-relationship = relations ;
+relation = relations ;
 relations =
-    {% for relationship in relationships %}'{{ relationship }}'{{ " | " if not loop.last }}{% endfor %} ;
+    {% for relation in relations %}'{{ relation }}'{{ " | " if not loop.last }}{% endfor %} ;
 
 ##### MISCELLANEOUS #####
 
