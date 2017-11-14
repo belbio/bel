@@ -18,7 +18,7 @@ setup(name='bel_lang',
       ],
       entry_points={
         'console_scripts': [
-            'bel=bel_lang.scripts:bel'
+            'belstmt=bel_lang.scripts:bel'
         ]
       },
       zip_safe=False)

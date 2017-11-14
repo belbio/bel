@@ -246,23 +246,23 @@ class BEL(object):
         self.ast = bel_utils.orthologize(self.ast, orthologize_req_url)
         return self
 
-    def compute_edges(self, rule_set: List[str] = None) -> List[Mapping[str, Any]]:
+    def compute_edges(self, rules: List[str] = None, format="medium") -> List[Mapping[str, Any]]:
         """Computed edges from primary BEL statement
 
         Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
         Will run only the list of computed edge rules if given.
 
         Args:
-            rule_set (list): a list of rules to filter; only the rules in this list will be applied to computed
-
+            rules (list): a list of rules to filter; only the rules in this list will be applied to computed
+            format (str): short, medium or long version of BEL Edge (function and relation names)
         Returns:
-            List[Mapping[str, Any]]
+            List[Mapping[str, Any]]: BEL Edges in medium format
         """
 
         compute_rules = self.spec['computed_signatures'].keys()
 
-        if rule_set:
-            compute_rules = [rule for rule in compute_rules if rule in rule_set]
+        if rules:
+            compute_rules = [rule for rule in compute_rules if rule in rules]
 
         edges_ast = computed_edges.compute_edges(self.ast, self.spec, compute_rules)
 

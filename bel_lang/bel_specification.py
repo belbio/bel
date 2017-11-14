@@ -58,17 +58,9 @@ def get_specification(version) -> dict:
     # add modifier keys modifier_list, modifier_to_short, modifier_to_long
     spec_dict = add_modifiers(spec_dict)
 
-    # TODO - decide whether to get rid of this function
-    # # add function signatures
-    # spec_dict = add_function_signatures(spec_dict)
-
     spec_dict = enhance_function_signatures(spec_dict)
 
     spec_dict = enhance_default_namespaces(spec_dict)
-
-    # TODO - redo this
-    # add computed signatures
-    # spec_dict = add_computed_signatures(spec_dict)
 
     return spec_dict
 
@@ -262,100 +254,3 @@ def enhance_default_namespaces(spec_dict: Mapping[str, Any]) -> Mapping[str, Any
 
     return spec_dict
 
-
-def add_function_signatures(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Add function signature keys to spec_dict
-
-    Args:
-        spec_dict (Mapping[str, Any]): bel specification dictionary
-
-    Returns:
-        Mapping[str, Any]: bel specification dictionary with added function signature keys
-    """
-
-    # TODO: PyCharm gives warning when instantiating the list and the two dicts below in spec_dict:
-    # Class 'Mapping' does not define '__setitem__', so the '[]' operator cannot be used on its instances
-
-    # TODO: Enhance the original dict by adding `required_args` and `optional_args` to the same level as `arguments`
-    # When we call the signatures in the future for semantic checking, we'll have to simply go one level deeper
-    # This way we can merge into one dictionary instead of making a second copy
-
-    spec_dict['func_signatures'] = {}
-
-    for func_name in spec_dict['function_signatures']:
-        func = spec_dict['function_signatures'][func_name]
-
-        f_sigs = func.get('signatures', [])  # get the signatures of the function
-        spec_dict['func_signatures'][func_name] = f_sigs  # set func_name as key, and f_sigs as the value for this key
-
-        for valid_sig in f_sigs:  # for each signature from signatures...
-            args = valid_sig.get('arguments', None)  # get the arg types of this signature
-            required_args = collections.OrderedDict()  # required arg types list (must be ordered)
-            optional_args = collections.OrderedDict()  # optional arg types list (does not need to be ordered)
-
-            for arg in args:  # for each type in arg types
-                arg_type = arg.get('type', 'Unknown')  # get the type name
-                optional = arg.get('optional', False)  # get the optional boolean
-                multiple = arg.get('multiple', False)  # get the multiple boolean
-
-                # arg is REQUIRED AND SINGULAR
-                # set the value as the number of times this type can appear
-                if not optional and not multiple:
-                    required_args[arg_type] = required_args.get(arg_type, 0) + 1
-
-                # arg is REQUIRED AND MULTIPLE
-                # set the value to infinity as we'll always have 1 or more of this type
-                elif not optional and multiple:
-                    required_args[arg_type] = math.inf
-
-                # arg is OPTIONAL AND SINGULAR
-                # set the value as the number of times this type can appear
-                elif optional and not multiple:
-                    optional_args[arg_type] = optional_args.get(arg_type, 0) + 1
-
-                # arg is OPTIONAL AND MULTIPLE
-                # set the value to infinity as we'll always have 0 or more of this type
-                else:
-                    optional_args[arg_type] = math.inf
-
-            # add these two OrderedDicts as key/values within valid_sig so we can refer to them later on
-            valid_sig['required'] = required_args
-            valid_sig['optional'] = optional_args
-
-    return spec_dict
-
-
-# TODO - rework this - take a look at initial efforts at bottom of bel.py
-def add_computed_signatures(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Add computed signature keys to spec_dict
-
-    Args:
-        spec_dict (Mapping[str, Any]): bel specification dictionary
-
-    Returns:
-        Mapping[str, Any]: bel specification dictionary with added computed signature keys
-    """
-
-    # TODO: PyCharm gives warning when instantiating the list and the two dicts below in spec_dict:
-    # Class 'Mapping' does not define '__setitem__', so the '[]' operator cannot be used on its instances
-    spec_dict['comp_signatures'] = {}
-
-    for key, signature in spec_dict['computed_signatures'].items():
-        sig_filters = signature.get('trigger', [])
-
-        if sig_filters == 'all':
-            sig_filters = list(spec_dict['func_signatures'].keys())
-        elif sig_filters == 'modifier':
-            sig_filters = spec_dict['modifier_list']
-        elif sig_filters == 'primary':
-            sig_filters = spec_dict['function_list']
-
-        for filter_name in sig_filters:
-
-            if filter_name not in spec_dict['comp_signatures']:  # for each filtered sig add it only to that function
-                spec_dict['comp_signatures'][filter_name] = [signature]
-            else:  # append if not already appended
-                if signature not in spec_dict['comp_signatures'][filter_name]:
-                    spec_dict['comp_signatures'][filter_name].append(signature)
-
-    return spec_dict

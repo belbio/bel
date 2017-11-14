@@ -172,7 +172,6 @@ def check_function_args(args, signatures, function_name):
             if sig_arg['type'] in ['NSArg', 'StrArg', 'StrArgNSArg']:
                 log.debug(f'    Arg: {args[sig_idx].to_string()} Sig arg: {sig_arg}')
                 args[sig_idx].add_value_types(sig_arg['values'])
-                args[sig_idx].add_position_dependent(sig_arg['position_dependent'])
             else:
                 break
 
@@ -219,7 +218,7 @@ def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
 
             r = requests.get(request_url)  # TODO add filter for entity_types
             result = r.json()
-
+            print(result)
             # Term not found in BEL.bio API endpoint
             if r.status_code != 200:
                 log.debug('Invalid Term: {}'.format(term_id))
