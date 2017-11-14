@@ -26,7 +26,7 @@ def compute_edges(ast: BELAst, spec: Mapping[str, Any], compute_rules: List[str]
             continue
 
         # print('Rule', spec['computed_signatures'][rule])
-        log.info(f'Starting rule {rule}')
+        log.debug(f'Starting rule {rule}')
         process_rule(edges, ast, spec['computed_signatures'][rule])
 
     return edges
@@ -49,7 +49,7 @@ def process_rule(edges: List[Tuple[Union[Function, str], str, Function]], ast: F
     rule_relation = rule.get('relation')
     rule_object = rule.get('object')
 
-    log.info(f'Running {rule_relation}  Type: {ast_type}')
+    log.debug(f'Running {rule_relation}  Type: {ast_type}')
 
     if isinstance(ast, Function):
         function_name = ast.name
@@ -62,10 +62,10 @@ def process_rule(edges: List[Tuple[Union[Function, str], str, Function]], ast: F
 
             if rule_object == 'args':
                 for arg in args:
-                    log.info(f'1: {subject} {arg}')
+                    log.debug(f'1: {subject} {arg}')
                     edges.append((subject, rule_relation, arg))
             elif rule_object == 'parent_function' and parent_function:
-                log.info(f'2: {subject} {parent_function}')
+                log.debug(f'2: {subject} {parent_function}')
                 edges.append((subject, rule_relation, parent_function))
 
         elif ast_type in trigger_types:
@@ -74,10 +74,10 @@ def process_rule(edges: List[Tuple[Union[Function, str], str, Function]], ast: F
 
             if rule_object == 'args':
                 for arg in args:
-                    log.info(f'3: {subject} {arg}')
+                    log.debug(f'3: {subject} {arg}')
                     edges.append((subject, rule_relation, arg))
             elif rule_object == 'parent_function' and parent_function:
-                log.info(f'4: {subject} {parent_function}')
+                log.debug(f'4: {subject} {parent_function}')
                 edges.append((subject, rule_relation, parent_function))
 
     if isinstance(ast, NSArg):
@@ -90,10 +90,10 @@ def process_rule(edges: List[Tuple[Union[Function, str], str, Function]], ast: F
 
             if rule_object == 'args':
                 for arg in args:
-                    log.info(f'5: {subject} {arg}')
+                    log.debug(f'5: {subject} {arg}')
                     edges.append((subject, rule_relation, arg))
             elif rule_object == 'parent_function' and parent_function:
-                log.info(f'6: {subject} {parent_function}')
+                log.debug(f'6: {subject} {parent_function}')
                 edges.append((subject, rule_relation, parent_function))
 
     # Recursively process every element by processing BELAst, BELSubject/Object, and Functions
