@@ -60,7 +60,7 @@ class BEL(object):
         # self.semantics = BELSemantics()  # each instance also instantiates a BELSemantics object used in parsing statements
         self.spec = bel_specification.get_specification(version)
 
-        bel_utils._dump_spec(self.spec)
+        # bel_utils._dump_spec(self.spec)
 
         # Import Tatsu parser
         # use importlib to import our parser (a .py file) and set the BELParse object as an instance variable
