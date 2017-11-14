@@ -246,7 +246,7 @@ class BEL(object):
         self.ast = bel_utils.orthologize(self.ast, orthologize_req_url)
         return self
 
-    def compute_edges(self, rules: List[str] = None, format="medium") -> List[Mapping[str, Any]]:
+    def compute_edges(self, rules: List[str] = None, fmt="medium") -> List[Mapping[str, Any]]:
         """Computed edges from primary BEL statement
 
         Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
@@ -254,7 +254,7 @@ class BEL(object):
 
         Args:
             rules (list): a list of rules to filter; only the rules in this list will be applied to computed
-            format (str): short, medium or long version of BEL Edge (function and relation names)
+            fmt (str): short, medium or long version of BEL Edge (function and relation names)
         Returns:
             List[Mapping[str, Any]]: BEL Edges in medium format
         """
@@ -271,15 +271,15 @@ class BEL(object):
 
             # Some components are not part of AST - e.g. NSArg
             if isinstance(es, bel_lang_ast.Function):
-                es = es.to_string(format='medium')
+                es = es.to_string(fmt='medium')
             if isinstance(eo, bel_lang_ast.Function):
-                eo = eo.to_string(format='medium')
+                eo = eo.to_string(fmt='medium')
 
             edges.append({'subject': es, 'relation': er, 'object': eo})
 
         return edges
 
-    def completion(self, partial: str, component_type: str, value_type: str, format='medium') -> List[Tuple[str, str, str]]:
+    def completion(self, partial: str, component_type: str, value_type: str, fmt='medium') -> List[Tuple[str, str, str]]:
         """Suggest bel statement completions
 
         Takes a partially completed function, modifier function, or a relation and suggest a fuzzy match out of
@@ -292,7 +292,7 @@ class BEL(object):
             partial (str): the partial string
             component_type (str): ['subject', 'relation', 'object']
             value_type (str): value type (function, modifier function, or relation; makes sure we match right list)
-            format (str): short, medium or long form of function/relationship names to be returned
+            fmt (str): short, medium or long form of function/relationship names to be returned
 
         Returns:
             List[Tuple[str, str, str]]: A list of suggested values as tuples
@@ -333,17 +333,17 @@ class BEL(object):
 
         return suggestions
 
-    def relation_list(self, format: str ="long") -> List[str]:
+    def relation_list(self, fmt: str ="long") -> List[str]:
         """Return relation list for this BEL Version in the requested format
 
         Args:
-            format (str): format of relation name: long, medium or short (abbreviation)
+            fmt (str): format of relation name: long, medium or short (abbreviation)
 
         Returns:
             List[str]: list of relation names in requested format
         """
 
-        if format == 'short':
+        if fmt == 'short':
             return [self.spec['relations'][relation]['abbreviation'] for relation in self.spec['relations']]
         else:
             return [relation for relation in self.spec['relations']]

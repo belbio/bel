@@ -6,8 +6,6 @@ ast_dict from Tatsu is converted to this Ast Class object and used for
 validation and BEL transformation (e.g. canonicalization, orthologization, etc)
 """
 
-# TODO add short, medium, long format options to to_string method, default to medium
-
 from typing import Mapping, Any
 
 import logging
@@ -26,11 +24,11 @@ class BELAst(object):
         self.spec = spec  # bel specification dictionary
         self.args = [bel_subject, bel_relation, bel_object]
 
-    def to_string(self, format: str = 'medium') -> str:
+    def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string
 
         Args:
-            format (str): short, medium, long formatted BEL statements
+            fmt (str): short, medium, long formatted BEL statements
                 short = short function and short relation format
                 medium = short function and long relation format
                 long = long function and long relation format
@@ -47,16 +45,21 @@ class BELAst(object):
         else:
             return ''
 
-    def to_components(self, format='medium'):
+    def to_components(self, fmt='medium'):
         if self.bel_subject and self.bel_relation and self.bel_object:
+            if fmt == 'short':
+                bel_relation = self.spec['relation_to_short'].get(self.bel_relation, None)
+            else:
+                bel_relation = self.spec['relation_to_long'].get(self.bel_relation, None)
+
             return {
-                'subject': self.ast.bel_subject.to_string(format),
-                'relation': self.ast.bel_relation.to_string(format),
-                'object': self.ast.bel_object.to_string(format),
+                'subject': self.bel_subject.to_string(fmt),
+                'relation': bel_relation,
+                'object': self.bel_object.to_string(fmt),
             }
 
         elif self.bel_subject:
-            return {'subject': self.ast.bel_subject.to_string(format), }
+            return {'subject': self.bel_subject.to_string(fmt), }
 
         else:
             return None
@@ -81,11 +84,11 @@ class BELRelation(object):
         self.relation = spec['relation_to_long'][relation]
         self.spec = spec  # bel specification dictionary
 
-    def to_string(self, format: str = 'medium') -> str:
+    def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string
 
         Args:
-            format (str): short, medium, long formatted BEL statements
+            fmt (str): short, medium, long formatted BEL statements
                 short = short function and short relation format
                 medium = short function and long relation format
                 long = long function and long relation format
@@ -94,9 +97,9 @@ class BELRelation(object):
             str: string version of BEL AST
         """
 
-        if format in ['short']:
+        if fmt in ['short']:
             relation_name = self.spec['relation_to_short'][self.name]
-        elif format == 'long':
+        elif fmt == 'long':
             relation_name = self.bel_relation  # self.bel_relation is long format of function name
 
         return '{}'.format(relation_name)
@@ -155,11 +158,11 @@ class Function(object):
     def change_function_type(self, function_type):
         self.function_type = function_type
 
-    def to_string(self, format: str = 'medium') -> str:
+    def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string
 
         Args:
-            format (str): short, medium, long formatted BEL statements
+            fmt (str): short, medium, long formatted BEL statements
                 short = short function and short relation format
                 medium = short function and long relation format
                 long = long function and long relation format
@@ -168,11 +171,11 @@ class Function(object):
             str: string version of BEL AST
         """
 
-        arg_string = ', '.join([a.to_string(format=format) for a in self.args])
+        arg_string = ', '.join([a.to_string(fmt=fmt) for a in self.args])
 
-        if format in ['short', 'medium']:
+        if fmt in ['short', 'medium']:
             function_name = self.spec['function_to_short'][self.name]
-        elif format == 'long':
+        elif fmt == 'long':
             function_name = self.name  # self.name is long format of function name
 
         return '{}({})'.format(function_name, arg_string)
@@ -217,11 +220,11 @@ class NSArg(Arg):
     def add_value_types(self, value_types):
         self.value_types = value_types
 
-    def to_string(self, format: str = 'medium') -> str:
+    def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string
 
         Args:
-            format (str): short, medium, long formatted BEL statements
+            fmt (str): short, medium, long formatted BEL statements
                 short = short function and short relation format
                 medium = short function and long relation format
                 long = long function and long relation format
@@ -247,11 +250,11 @@ class StrArg(Arg):
     def add_value_types(self, value_types):
         self.value_types = value_types
 
-    def to_string(self, format: str = 'medium') -> str:
+    def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string
 
         Args:
-            format (str): short, medium, long formatted BEL statements
+            fmt (str): short, medium, long formatted BEL statements
                 short = short function and short relation format
                 medium = short function and long relation format
                 long = long function and long relation format
@@ -366,8 +369,5 @@ def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
                 continue
             else:
                 arg_obj.add_sibling(sibling_arg_obj)
-
-        # print('\n{}'.format(arg_obj))
-        # pprint.pprint(vars(arg_obj))
 
     return

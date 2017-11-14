@@ -34,8 +34,8 @@ def convert_namespaces(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_targets
         request_url = endpoint.format(given_term_id)
         if namespace_targets:
             namespace_targets_str = json.dumps(namespace_targets)
-            payload = {'namespace_targets': namespace_targets_str}
-            r = requests.get(request_url, args=payload)
+            params = {'namespace_targets': namespace_targets_str}
+            r = requests.get(request_url, params=params)
         else:
             r = requests.get(request_url)
 
@@ -45,8 +45,9 @@ def convert_namespaces(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_targets
             ast.change_nsvalue(ns, value)
 
     # Recursively process every NSArg by processing BELAst, BELSubject/Object, and Functions
-    for arg in ast.args:
-        convert_namespaces(arg, endpoint, namespace_targets)
+    if hasattr(ast, 'args'):
+        for arg in ast.args:
+            convert_namespaces(arg, endpoint, namespace_targets)
 
     return ast
 
