@@ -13,7 +13,6 @@ import datetime
 import sys
 import yaml
 from itertools import chain
-import pprint
 
 NAME_OF_YAML_FILE = sys.argv[1]  # take a YAML file as argument
 
