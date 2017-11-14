@@ -1030,7 +1030,7 @@ computed_signatures:
     examples:
       - given_statement: "deg(r(HGNC:MYC))"
         computed:
-          - "deg(r(HGNC:MYC)) directlyDecreases r(HGNC:MYC)"
+          - "deg(r(HGNC:MYC)) decreases r(HGNC:MYC)"
 
 #  activity:
 #    trigger: [activity]

@@ -123,6 +123,7 @@ def add_functions(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
         spec_dict['function_to_long'][abbreviated_name] = func_name
         spec_dict['function_to_long'][func_name] = func_name
 
+    print(spec_dict['function_to_short'])
     return spec_dict
 
 
