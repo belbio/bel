@@ -173,10 +173,10 @@ class Function(object):
 
         arg_string = ', '.join([a.to_string(fmt=fmt) for a in self.args])
 
+        function_name = self.name
+
         if fmt in ['short', 'medium']:
-            function_name = self.spec['function_to_short'][self.name]
-        elif fmt == 'long':
-            function_name = self.name  # self.name is long format of function name
+            function_name = self.spec['function_to_short'].get(self.name, self.spec['modifier_to_short'].get(self.name, self.name))
 
         return '{}({})'.format(function_name, arg_string)
 

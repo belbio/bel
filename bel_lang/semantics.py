@@ -218,7 +218,7 @@ def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
 
             r = requests.get(request_url)  # TODO add filter for entity_types
             result = r.json()
-            print(result)
+
             # Term not found in BEL.bio API endpoint
             if r.status_code != 200:
                 log.debug('Invalid Term: {}'.format(term_id))
