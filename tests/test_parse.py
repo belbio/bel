@@ -10,7 +10,7 @@ def test_empty_string():
     bel_obj.parse(statement)
 
     assert bel_obj.ast is None
-    assert bel_obj.messages[0][1] == 'Please include a valid BEL statement.'
+    assert 'Please include a valid BEL statement.' in bel_obj.validation_messages[0][1]
 
 
 def test_bad_string_start():
@@ -19,7 +19,7 @@ def test_bad_string_start():
     bel_obj.parse(statement)
 
     assert bel_obj.ast is None
-    assert 'Failed parse at position 0.' in bel_obj.messages[0][1]
+    assert 'Failed parse at position 0.' in bel_obj.validation_messages[0][1]
 
 # def test_whitespace_string():
 #

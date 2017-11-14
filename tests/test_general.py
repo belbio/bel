@@ -12,11 +12,10 @@ bel_obj = bel_lang.BEL(SPECIFIED_VERSION, SPECIFIED_ENDPOINT)
 ######################
 
 
-def test_semantic_class_instance():
-    assert isinstance(bel_obj.semantics, bel_lang.semantics.BELSemantics)
+# def test_semantic_class_instance():
+#     assert isinstance(bel_obj.semantics, bel_lang.semantics.BELSemantics)
 
 
 def test_correct_instantiation():
     assert bel_obj.version == SPECIFIED_VERSION
     assert bel_obj.endpoint == SPECIFIED_ENDPOINT
-    assert bel_obj.version_dots_as_underscores == SPECIFIED_VERSION_UNDERLINED

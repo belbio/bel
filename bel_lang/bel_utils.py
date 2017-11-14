@@ -6,7 +6,7 @@ import yaml
 import requests
 from typing import Mapping, List, TYPE_CHECKING
 
-from bel_lang.ast import BELAst, NSArg
+from bel_lang.ast import BELAst, NSArg, Function
 
 import logging
 log = logging.getLogger(__name__)
