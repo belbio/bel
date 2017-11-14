@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Usage: python yaml_to_ebnf.py <.yaml file>
+Usage: python yaml_to_ebnf.py <path to .yaml file> <path to Jinja template> <path to output .ebnf file>
 
 Use this script to convert the user defined YAML file to two other files:
     - an EBNF file used by Tatsu to compile into a parser (syntax)
@@ -13,6 +13,7 @@ import datetime
 import sys
 import yaml
 from itertools import chain
+import pprint
 
 NAME_OF_YAML_FILE = sys.argv[1]  # take a YAML file as argument
 
@@ -43,7 +44,7 @@ def main():
     # get the function list
     fn_list = yaml_dict['functions']
     # gather all names and abbreviations from the list of function objects present in the dictionary
-    list_funcs = set(chain.from_iterable((fc['name'], fc['abbreviation']) for fc in fn_list))
+    list_funcs = set(chain.from_iterable((fn_list[fc]['name'], fn_list[fc]['abbreviation']) for fc in fn_list))
     # sort the list of functions by length in descending order
     functions = sorted(list(list_funcs), key=len, reverse=True)
 
@@ -54,7 +55,7 @@ def main():
     # get the modifier function list
     m_fn_list = yaml_dict['modifier_functions']
     # gather all names and abbreviations from the list of modifier function objects present in the dictionary
-    list_m_funcs = set(chain.from_iterable((mf['name'], mf['abbreviation']) for mf in m_fn_list))
+    list_m_funcs = set(chain.from_iterable((m_fn_list[mf]['name'], m_fn_list[mf]['abbreviation']) for mf in m_fn_list))
     # sort the list of functions by length in descending order
     m_functions = sorted(list(list_m_funcs), key=len, reverse=True)
 
@@ -62,8 +63,10 @@ def main():
     # RELATIONSHIPS FROM YAML #
     ###########################
 
+    # get the relations list
+    rl_list = yaml_dict['relations']
     # gather all names and abbreviations from the list of relation objects present in the dictionary
-    list_relations = set(chain.from_iterable((rl['name'], rl['abbreviation']) for rl in yaml_dict['relations']))
+    list_relations = set(chain.from_iterable((rl_list[rl]['name'], rl_list[rl]['abbreviation']) for rl in rl_list))
     # sort the list of functions by length in descending order
     relations = sorted(list(list_relations), key=len, reverse=True)
 
@@ -75,16 +78,16 @@ def main():
     fns_valid_mods = {}
 
     for fn in fn_list:  # we need both the function name + it's abbreviation as keys in this dictionary
-        fn_name = fn['name']
-        fn_abbreviation = fn['abbreviation']
+        fn_name = fn_list[fn]['name']
+        fn_abbreviation = fn_list[fn]['abbreviation']
         fns_valid_mods[fn_name] = {'validModifiers': set()}
         fns_valid_mods[fn_abbreviation] = {'validModifiers': set()}
 
         for mod_fn in m_fn_list:
-            for allowed_fn in mod_fn['primary_function']:
+            for allowed_fn in m_fn_list[mod_fn]['primary_function']:
                 if allowed_fn in [fn_name, fn_abbreviation]:
-                    m_fn_name = mod_fn['name']  # name of modifier function that can be used with this primary func
-                    m_fn_abbr = mod_fn['abbreviation']  # same as above but for the abbreviated name of this mod func
+                    m_fn_name = m_fn_list[mod_fn]['name']  # name of modifier function that can be used with this primary func
+                    m_fn_abbr = m_fn_list[mod_fn]['abbreviation']  # same as above but for the abbreviated name of this mod func
 
                     fns_valid_mods[fn_name]['validModifiers'].update([m_fn_name, m_fn_abbr])  # adds to fn name set
                     fns_valid_mods[fn_abbreviation]['validModifiers'].update([m_fn_name, m_fn_abbr])  # adds to fn abbr set

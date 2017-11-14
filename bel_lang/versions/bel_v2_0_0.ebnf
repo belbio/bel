@@ -6,7 +6,7 @@
 ##############
 
 # BEL VERSION: 2.0.0
-# EBNF CREATION TIMESTAMP: August 10, 2017 - 11:08:18AM
+# EBNF CREATION TIMESTAMP: November 14, 2017 - 03:43:10PM
 
 #########################
 #  GRAMMAR DEFINITIONS  #
@@ -22,7 +22,7 @@ enclosed_statement = function_open bel_statement:bel_statement function_close ;
 
 function = function:funcs function_open function_args:f_args function_close ;
 funcs =
-    'cellSurfaceExpression' | 'compositeAbundance' | 'microRNAAbundance' | 'biologicalProcess' | 'complexAbundance' | 'proteinAbundance' | 'geneAbundance' | 'cellSecretion' | 'translocation' | 'rnaAbundance' | 'degradation' | 'pathology' | 'composite' | 'abundance' | 'reaction' | 'activity' | 'complex' | 'tloc' | 'surf' | 'list' | 'path' | 'deg' | 'act' | 'rxn' | 'sec' | 'bp' | 'p' | 'g' | 'a' | 'r' | 'm' ;
+    'cellSurfaceExpression' | 'compositeAbundance' | 'microRNAAbundance' | 'biologicalProcess' | 'proteinAbundance' | 'complexAbundance' | 'cellSecretion' | 'geneAbundance' | 'translocation' | 'rnaAbundance' | 'degradation' | 'abundance' | 'pathology' | 'composite' | 'reaction' | 'activity' | 'complex' | 'list' | 'surf' | 'path' | 'tloc' | 'rxn' | 'sec' | 'act' | 'deg' | 'bp' | 'a' | 'p' | 'g' | 'm' | 'r' ;
 
 f_args = ','.{(function | modifier_function | namespace_arg | string_arg)}* ;
 
@@ -30,7 +30,7 @@ f_args = ','.{(function | modifier_function | namespace_arg | string_arg)}* ;
 
 modifier_function = m_function:m_funcs function_open m_function_args:m_args function_close ;
 m_funcs =
-    'proteinModification' | 'molecularActivity' | 'reactants' | 'fragment' | 'location' | 'products' | 'variant' | 'fromLoc' | 'fusion' | 'toLoc' | 'pmod' | 'frag' | 'var' | 'fus' | 'loc' | 'ma' ;
+    'proteinModification' | 'molecularActivity' | 'reactants' | 'location' | 'products' | 'fragment' | 'variant' | 'fromLoc' | 'fusion' | 'toLoc' | 'pmod' | 'frag' | 'loc' | 'fus' | 'var' | 'ma' ;
 
 m_args = ','.{(function | namespace_arg | string_arg)}* ;
 
@@ -38,7 +38,7 @@ m_args = ','.{(function | namespace_arg | string_arg)}* ;
 
 relation = relations ;
 relations =
-    'prognosticBiomarkerFor' | 'negativeCorrelation' | 'positiveCorrelation' | 'rateLimitingStepOf' | 'directlyDecreases' | 'directlyIncreases' | 'causesNoChange' | 'transcribedTo' | 'hasComponents' | 'biomarkerFor' | 'translatedTo' | 'subProcessOf' | 'hasComponent' | 'association' | 'orthologous' | 'hasMembers' | 'analogous' | 'increases' | 'hasMember' | 'regulates' | 'decreases' | 'cnc' | 'neg' | 'isA' | 'pos' | 'reg' | '--' | '>>' | '-|' | ':>' | '=>' | '->' | '=|' ;
+    'prognosticBiomarkerFor' | 'negativeCorrelation' | 'positiveCorrelation' | 'rateLimitingStepOf' | 'directlyIncreases' | 'directlyDecreases' | 'causesNoChange' | 'hasComponents' | 'transcribedTo' | 'translatedTo' | 'hasComponent' | 'biomarkerFor' | 'subProcessOf' | 'association' | 'orthologous' | 'hasMembers' | 'analogous' | 'regulates' | 'hasMember' | 'decreases' | 'increases' | 'reg' | 'neg' | 'cnc' | 'pos' | 'isA' | '-|' | '->' | ':>' | '>>' | '=>' | '=|' | '--' ;
 
 ##### MISCELLANEOUS #####
 
