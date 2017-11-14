@@ -28,9 +28,9 @@ f_args = ','.{(function | modifier_function | namespace_arg | string_arg)}* ;
 
 ##### MODIFIER FUNCTIONS #####
 
-modifier_function = m_function:m_funcs function_open m_function_args:m_args function_close ;
+modifier_function = modifier:m_funcs function_open modifier_args:m_args function_close ;
 m_funcs =
-    {% for m_function in m_functions %}'{{ m_function }}'{{ " | " if not loop.last }}{% endfor %} ;
+    {% for modifier in m_functions %}'{{ modifier }}'{{ " | " if not loop.last }}{% endfor %} ;
 
 m_args = ','.{(function | namespace_arg | string_arg)}* ;
 
@@ -43,7 +43,7 @@ relations =
 ##### MISCELLANEOUS #####
 
 namespace_arg = ns_arg:full_nsv ;
-full_nsv = nspace:ns_string ':' ns_value:(quoted_string | string) ;
+full_nsv = ns:ns_string ':' ns_value:(quoted_string | string) ;
 
 string_arg = str_arg:full_string ;
 full_string = (quoted_string | string) ;
