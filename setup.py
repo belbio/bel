@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='bel_lang',
@@ -8,8 +8,12 @@ setup(
     author='William Hayes, David Chen',
     author_email='',
     license='Apache',
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
     include_package_data=True,
+    package_data={
+        # Include all files in the bel_lang/versions directory
+        'bel_lang': ['versions/*'],
+    },
     install_requires=[
         'click==6.7',
         'TatSu==4.2.2',
