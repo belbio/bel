@@ -52,7 +52,7 @@ def convert_namespaces(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_targets
     return ast
 
 
-def orthologize(ast: 'bel_lang.bel.BEL', endpoint: str) -> 'bel_lang.bel.BEL':
+def orthologize(ast, bo: 'bel_lang.bel.BEL', species_id: str) -> 'bel_lang.bel.BEL':
     """Orthologize BEL Entities in BEL AST using API endpoint
 
     NOTE: - will take first ortholog returned in BEL.bio API result (which may return more than one ortholog)
@@ -65,18 +65,14 @@ def orthologize(ast: 'bel_lang.bel.BEL', endpoint: str) -> 'bel_lang.bel.BEL':
         BEL: BEL AST
     """
 
-    if isinstance(ast, BELAst):
-        for arg in ast.args:
-            orthologize(arg, endpoint)
+    if not species_id:
+        bo.validation_messages.append(('WARNING', 'No species id was provided'))
+        return ast
 
-    elif isinstance(ast, Function):
-        for arg in ast.args:
-            orthologize(arg, endpoint)
-
-    elif isinstance(ast, NSArg):
+    if isinstance(ast, NSArg):
         given_term_id = '{}:{}'.format(ast.namespace, ast.value)
-        request_url = endpoint.format(given_term_id)
-        r = requests.get(request_url)
+        orthologize_req_url = f'{bo.endpoint}/orthologs/{given_term_id}/{species_id}'
+        r = requests.get(orthologize_req_url)
 
         if r.status_code == 200:
             orthologs = r.json().get('orthologs')
@@ -84,6 +80,13 @@ def orthologize(ast: 'bel_lang.bel.BEL', endpoint: str) -> 'bel_lang.bel.BEL':
                 ortholog_id = orthologs[0]
                 ns, value = ortholog_id.split(':')
                 ast.change_nsvalue(ns, value)
+        else:
+            bo.validation_messages.append(('WARNING', f'No ortholog found for {given_term_id}'))
+
+    # Recursively process every NSArg by processing BELAst, BELSubject/Object, and Functions
+    if hasattr(ast, 'args'):
+        for arg in ast.args:
+            orthologize(arg, bo, species_id)
 
     return ast
 

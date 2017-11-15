@@ -107,10 +107,10 @@ def check_function_args(args, signatures, function_name):
         sig_opt_args = sig_argset['opt_args']  # optional arguments
         sig_mult_args = sig_argset['mult_args']  # multiple arguments
 
-        # log.debug(f'{sig_argset_idx} Req: {sig_req_args}')
-        # log.debug(f'{sig_argset_idx} Pos: {sig_pos_args}')
-        # log.debug(f'{sig_argset_idx} Opt: {sig_opt_args}')
-        # log.debug(f'{sig_argset_idx} Mult: {sig_mult_args}')
+        log.debug(f'{sig_argset_idx} Req: {sig_req_args}')
+        log.debug(f'{sig_argset_idx} Pos: {sig_pos_args}')
+        log.debug(f'{sig_argset_idx} Opt: {sig_opt_args}')
+        log.debug(f'{sig_argset_idx} Mult: {sig_mult_args}')
 
         # Check required arguments
         reqs_mismatch_flag = False
@@ -128,10 +128,11 @@ def check_function_args(args, signatures, function_name):
         # Check position_dependent optional arguments
         pos_dep_arg_types = arg_types[len(sig_req_args):]
         log.debug(f'Optional arg types {pos_dep_arg_types}')
-
+        log.debug(f'{sig_argset_idx} Pos: {sig_pos_args}')
         pos_mismatch_flag = False
         for sig_pos_idx, sig_pos in enumerate(sig_pos_args):
-            log.debug(f'arg_type {pos_dep_arg_types[sig_idx][0]} vs position_dependent {sig_pos}')
+            if sig_pos_idx == len(pos_dep_arg_types):
+                break  # stop checking position dependent arguments when we run out of them vs signature optional position dependent arguments
             if pos_dep_arg_types[sig_pos_idx][0] not in sig_pos:
                 pos_mismatch_flag = True
                 msg = f'Missing position_dependent arguments for {function_name} signature: {sig_argset_idx}'
@@ -169,6 +170,8 @@ def check_function_args(args, signatures, function_name):
 
     if matched_signature_idx > -1:
         for sig_idx, sig_arg in enumerate(signatures[matched_signature_idx]['arguments']):
+            if sig_idx == len(args):
+                break  # stop when we've run out of args vs function signature args
             if sig_arg['type'] in ['NSArg', 'StrArg', 'StrArgNSArg']:
                 log.debug(f'    Arg: {args[sig_idx].to_string()} Sig arg: {sig_arg}')
                 args[sig_idx].add_value_types(sig_arg['values'])
@@ -196,6 +199,10 @@ def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
     Returns:
         'bel_lang.bel.BEL': bel object
     """
+
+    if not bo.endpoint:
+        log.info('No API endpoint defined')
+        return self
 
     # Test NSArg terms
     if isinstance(ast, NSArg):
@@ -225,8 +232,8 @@ def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
                 bo.validation_messages.append(('WARNING', f'Term: {term_id} not found'))
             # function signature term value_types doesn't match up with API term entity_types
             elif len(set(ast.value_types).intersection(result['entity_types'])) == 0:
-                log.debug('Invalid Term - statement term allowable entity types: {} do not match API term entity types: {}'.format(ast.value_types, result['entity_types']))
-                bo.validation_messages.append(('WARNING', 'Invalid Term - statement term allowable entity types: {} do not match API term entity types: {}'.format(ast.value_types, result['entity_types'])))
+                log.debug('Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result['entity_types']))
+                bo.validation_messages.append(('WARNING', 'Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result['entity_types'])))
             # Term is valid
             else:
                 log.debug('Valid Term: {}'.format(term_id))

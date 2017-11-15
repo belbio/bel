@@ -37,6 +37,8 @@ class BEL(object):
 
     """
 
+    # TODO - don't provide defaults - was a bad idea
+
     def __init__(self, version: str = defaults['bel_version'], endpoint: str = defaults['belapi_endpoint']) -> None:
         """Initialize BEL object used for validating/processing/etc BEL statements
 
@@ -242,8 +244,8 @@ class BEL(object):
             BEL: returns self
         """
 
-        orthologize_req_url = self.endpoint + '/orthologs/{}/' + species_id
-        self.ast = bel_utils.orthologize(self.ast, orthologize_req_url)
+        self.ast = bel_utils.orthologize(self.ast, self, species_id)
+
         return self
 
     def compute_edges(self, rules: List[str] = None, fmt="medium") -> List[Mapping[str, Any]]:

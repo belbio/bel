@@ -14,7 +14,6 @@ setup(
         'click==6.7',
         'TatSu==4.2.2',
         'PyYAML==3.12',
-        'pytest==3.2.1',
         'requests==2.18.4',
     ],
     entry_points={
