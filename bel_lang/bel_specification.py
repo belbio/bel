@@ -17,14 +17,38 @@ from typing import Mapping, List, Any
 import logging
 log = logging.getLogger(__name__)
 
+'''
+Keys available in spec_dict:
 
-def get_specification(version) -> dict:
+- 'version_underscored'
+- 'parser_path'
+- 'jinja_template'
+- 'relation_list'
+- 'relation_to_short'
+- 'relation_to_long'
+- 'relations'
+- 'function_list'
+- 'function_to_short'
+- 'function_to_long'
+- 'functions'
+- 'modifier_list'
+- 'modifier_to_short'
+- 'modifier_to_long'
+- 'modifier_functions'
+- 'function_signatures'
+- 'default_namespaces'
+'''
+
+
+def get_specification(version) -> Mapping[str, Any]:
 
     spec_dict = {}
 
     bel_versions = get_bel_versions()
     if version not in bel_versions:
-        log.error('Version {} not available in bel_lang library package'.format(version))
+        log.error('Version \"{}\" is not available in bel_lang library package.'.format(version))
+        log.error('Available versions:')
+        log.error('\n'.join(['- {}'.format(v) for v in bel_versions]))
         sys.exit()
 
     # use this variable to find our parser file since periods aren't recommended in file names
@@ -50,6 +74,9 @@ def get_specification(version) -> dict:
     # admin-related keys
     spec_dict['version_underscored'] = version_underscored
     spec_dict['parser_path'] = parser_path
+
+    # keys related to creation of EBNF file inside yaml_to_ebnf
+    spec_dict['jinja_template'] = 'bel.ebnf.j2'
 
     # add relation keys relation_list, relation_to_short, relation_to_long
     spec_dict = add_relations(spec_dict)
@@ -123,7 +150,6 @@ def add_functions(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
         spec_dict['function_to_long'][abbreviated_name] = func_name
         spec_dict['function_to_long'][func_name] = func_name
 
-    print(spec_dict['function_to_short'])
     return spec_dict
 
 
@@ -254,4 +280,3 @@ def enhance_default_namespaces(spec_dict: Mapping[str, Any]) -> Mapping[str, Any
         spec_dict['default_namespaces'][ns_type] = copy.deepcopy(new_ns[ns_type])
 
     return spec_dict
-
