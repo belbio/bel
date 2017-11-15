@@ -8,7 +8,7 @@ setup(
     author='William Hayes, David Chen',
     author_email='',
     license='Apache',
-    packages=['bel_lang'],
+    packages=setuptools.find_packages(),
     include_package_data=True,
     install_requires=[
         'click==6.7',
