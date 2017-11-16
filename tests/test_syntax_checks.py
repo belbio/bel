@@ -1,6 +1,4 @@
 import bel_lang
-import pytest
-from bel_lang.exceptions import MissingParenthesis
 
 from bel_lang.defaults import defaults
 
