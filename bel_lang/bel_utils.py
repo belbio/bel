@@ -44,7 +44,7 @@ def convert_namespaces(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_targets
             ns, value = updated_id.split(':')
             ast.change_nsvalue(ns, value)
 
-    # Recursively process every NSArg by processing BELAst, BELSubject/Object, and Functions
+    # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
             convert_namespaces(arg, endpoint, namespace_targets)
@@ -83,7 +83,7 @@ def orthologize(ast, bo: 'bel_lang.bel.BEL', species_id: str) -> 'bel_lang.bel.B
         else:
             bo.validation_messages.append(('WARNING', f'No ortholog found for {given_term_id}'))
 
-    # Recursively process every NSArg by processing BELAst, BELSubject/Object, and Functions
+    # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
             orthologize(arg, bo, species_id)

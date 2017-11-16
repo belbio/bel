@@ -10,13 +10,16 @@ Classes
 .. autoclass:: bel_lang.ast.BELAst
     :members:
 
-.. autoclass:: bel_lang.ast.BELSubject
+.. autoclass:: bel_lang.ast.Function
     :members:
 
-.. autoclass:: bel_lang.ast.BELRelation
+.. autoclass:: bel_lang.ast.Arg
     :members:
 
-.. autoclass:: bel_lang.ast.BELObject
+.. autoclass:: bel_lang.ast.NSArg
+    :members:
+
+.. autoclass:: bel_lang.ast.StrArg
     :members:
 
 Submodules

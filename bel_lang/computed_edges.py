@@ -96,7 +96,7 @@ def process_rule(edges: List[Tuple[Union[Function, str], str, Function]], ast: F
                 log.debug(f'6: {subject} {parent_function}')
                 edges.append((subject, rule_relation, parent_function))
 
-    # Recursively process every element by processing BELAst, BELSubject/Object, and Functions
+    # Recursively process every element by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
             process_rule(edges, arg, rule)

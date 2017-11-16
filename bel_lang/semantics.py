@@ -60,7 +60,7 @@ def validate_functions(ast: BELAst, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL
             bo.validation_messages.append(('ERROR', 'Invalid BEL Statement function {} - problem with function signatures: {}'.format(ast.to_string(), message)))
             bo.parse_valid = False
 
-    # Recursively process every NSArg by processing BELAst, BELSubject/Object, and Functions
+    # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
             validate_functions(arg, bo)
@@ -256,7 +256,7 @@ def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
         else:  # If for loop doesn't hit the break, no matches found, therefore for StrArg value is bad
             bo.validation_messages.append(('WARNING', f'String value {ast.value} does not match default namespace value or regex pattern: {ast.value_types}'))
 
-    # Recursively process every NSArg by processing BELAst, BELSubject/Object, and Functions
+    # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
             validate_arg_values(arg, bo)

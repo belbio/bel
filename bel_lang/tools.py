@@ -18,7 +18,7 @@ from typing import Mapping, List, Any
 import yaml
 import json
 import bel_lang.exceptions as bel_ex
-from bel_lang.ast import BELAst, BELSubject, BELRelation, BELObject, Function, Arg, NSArg, StrArg
+from bel_lang.ast import BELAst, Function, Arg, NSArg, StrArg
 
 
 ###################
