@@ -37,7 +37,10 @@ class BELAst(object):
             str: string version of BEL AST
         """
         if self.bel_subject and self.bel_relation and self.bel_object:
-            return '{} {} {}'.format(self.bel_subject, self.bel_relation, self.bel_object)
+            if isinstance(self.bel_object, BELAst):
+                return '{} {} ({})'.format(self.bel_subject, self.bel_relation, self.bel_object)
+            else:
+                return '{} {} {}'.format(self.bel_subject, self.bel_relation, self.bel_object)
 
         elif self.bel_subject:
             return '{}'.format(self.bel_subject)
@@ -70,55 +73,10 @@ class BELAst(object):
     __repr__ = __str__
 
 
-class BELSubject(object):
-
-    def __init__(self, spec, function=None, bel_statement=None):
-        self.spec = spec  # bel specification dictionary
-        self.function = function  # TODO What is this for?
-        self.bel_statement = bel_statement  # TODO What is this for?
-
-
-class BELRelation(object):
-
-    def __init__(self, relation, spec):
-        self.relation = spec['relation_to_long'][relation]
-        self.spec = spec  # bel specification dictionary
-
-    def to_string(self, fmt: str = 'medium') -> str:
-        """Convert AST object to string
-
-        Args:
-            fmt (str): short, medium, long formatted BEL statements
-                short = short function and short relation format
-                medium = short function and long relation format
-                long = long function and long relation format
-
-        Returns:
-            str: string version of BEL AST
-        """
-
-        if fmt in ['short']:
-            relation_name = self.spec['relation_to_short'][self.name]
-        elif fmt == 'long':
-            relation_name = self.bel_relation  # self.bel_relation is long format of function name
-
-        return '{}'.format(relation_name)
-
-    def __str__(self):
-        return self.to_string(self)
-
-
-class BELObject(object):
-
-    def __init__(self, spec, function=None, bel_statement=None):
-        self.spec = spec  # bel specification dictionary
-        self.function = function  # TODO see questions in BELSubject
-        self.bel_statement = bel_statement
-
-
 ###################
 # Function object #
 ###################
+
 class Function(object):
 
     def __init__(self, name, spec, parent_function=None):
@@ -279,7 +237,6 @@ def ast_dict_to_objects(ast_dict: Mapping[str, Any], bel_obj) -> BELAst:
     Returns:
         BELAst: object representing the BEL Statement AST
     """
-
     ast_subject = ast_dict.get('subject', None)
     ast_object = ast_dict.get('object', None)
 
@@ -305,12 +262,16 @@ def function_ast_to_objects(fn_ast_dict, bel_obj):
     spec = bel_obj.spec  # bel specification
 
     func_name = fn_ast_dict.get('function', None)
+    potential_bel_stmt = fn_ast_dict.get('bel_statement', None)
 
-    tmp_fn_obj = Function(func_name, spec)
-    tmp_fn_obj_args = fn_ast_dict.get('function_args', None)
+    if func_name is None and potential_bel_stmt is not None:  # this is a nested BEL statement
+        tmp_fn_obj = ast_dict_to_objects(potential_bel_stmt, bel_obj)
+    else:
+        tmp_fn_obj = Function(func_name, spec)
+        tmp_fn_obj_args = fn_ast_dict.get('function_args', None)
 
-    # for each argument in tmp_fn_obj_args, add it to our function object using add_args_to_compute_obj()
-    add_args_to_compute_obj(bel_obj, tmp_fn_obj, tmp_fn_obj_args)
+        # for each argument in tmp_fn_obj_args, add it to our function object using add_args_to_compute_obj()
+        add_args_to_compute_obj(bel_obj, tmp_fn_obj, tmp_fn_obj_args)
 
     return tmp_fn_obj
 

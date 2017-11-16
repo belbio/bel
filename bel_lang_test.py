@@ -20,13 +20,14 @@ bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
 
 # statement_to_parse = 'tloc(p(HGNC:NFE2L2), fromLoc(MESHCL:Cytoplasm), toLoc(MESHCL:"Cell Nucleus"))'
 # statement_to_parse = 'act(p(SFAM:"MAPK p38 Family"), ma(GO:"kinase activity")) decreases deg(p(HGNC:HBP1))'
-statement_to_parse = 'p(HGNC:AKT1) increases p(HGNC:EGF)'
+statement_to_parse = 'abundance(CHEBI:antioxidant) decreases (abundance(SCHEM:"7-Ketocholesterol") increases biologicalProcess(GO:"apoptotic process"))'
+# statement_to_parse = 'abundance(CHEBI:antioxidant) decreases deg(p(HGNC:HBP1))'
 print('{}STATEMENT TO PARSE: {}{}'.format(Colors.RED, statement_to_parse, Colors.END))
 
 parse_obj = bel_instance.parse(statement_to_parse)
-comp = bel_instance.computed(parse_obj.ast)
+ast = parse_obj.ast
+comp = bel_instance.compute_edges()
 
-print()
 print('{}ALL COMPUTED STATEMENTS: {}'.format(Colors.RED, Colors.END))
 for num, computed, in enumerate(comp, start=1):
     print('{}. {}'.format(num, computed))

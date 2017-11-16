@@ -224,16 +224,17 @@ def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
             request_url = bo.endpoint + '/terms/{}'.format(term_id)
 
             r = requests.get(request_url)  # TODO add filter for entity_types
-            result = r.json()
 
             # Term not found in BEL.bio API endpoint
             if r.status_code != 200:
                 log.debug('Invalid Term: {}'.format(term_id))
                 bo.validation_messages.append(('WARNING', f'Term: {term_id} not found'))
             # function signature term value_types doesn't match up with API term entity_types
-            elif len(set(ast.value_types).intersection(result['entity_types'])) == 0:
-                log.debug('Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result['entity_types']))
-                bo.validation_messages.append(('WARNING', 'Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result['entity_types'])))
+            elif r.status_code == 200:
+                result = r.json()
+                if len(set(ast.value_types).intersection(result['entity_types'])) == 0:
+                    log.debug('Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result['entity_types']))
+                    bo.validation_messages.append(('WARNING', 'Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result['entity_types'])))
             # Term is valid
             else:
                 log.debug('Valid Term: {}'.format(term_id))
