@@ -39,3 +39,14 @@ def test_ortho_two():
     bel_obj.parse(statement)
     bel_obj.orthologize('TAX:10090')
     assert bel_obj.ast.to_string() == expected
+
+
+# TODO: uncomment and fix expected when orthologs API is back online.
+# def test_ortho_nested():
+#
+#     statement = 'a(CHEBI:"MAPK Erk1/2 Family") decreases (a(SCHEM:"7-Ketocholesterol") increases bp(GO:"apoptotic process"))'
+#     expected = 'abundance(CHEBI:"MAPK Erk1/2 Family") decreases (abundance(SCHEM:"7-Ketocholesterol") increases biologicalProcess(GO:"apoptotic process"))'
+#
+#     bel_obj.parse(statement)
+#     bel_obj.orthologize('TAX:10090')
+#     assert bel_obj.ast.to_string() == expected

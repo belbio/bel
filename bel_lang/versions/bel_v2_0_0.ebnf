@@ -49,7 +49,6 @@ string_arg = str_arg:full_string ;
 full_string = (quoted_string | string) ;
 
 
-
 # quoted_string: Matches like any string but requires it to be in quotation marks.
 quoted_string = /\"(?:[^"\\]|\\.)*\"/ ;
 

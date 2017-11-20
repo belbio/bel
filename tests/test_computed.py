@@ -21,9 +21,6 @@ def test_abundance():
 
         actual_edges.append('{} {} {}'.format(s, r, o))
 
-    print(set(expected_edges))
-    print(set(actual_edges))
-
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -313,8 +310,6 @@ def test_deg():
 
         actual_edges.append('{} {} {}'.format(s, r, o))
 
-    print('EXPECTED: {}'.format(expected_edges))
-    print('ACTUAL: {}'.format(actual_edges))
     assert set(expected_edges) == set(actual_edges)
 
 
@@ -352,6 +347,49 @@ def test_list():
                       'HGNC:MAPK9 componentOf p(HGNC:MAPK9)',
                       'p(HGNC:MAPK8) componentOf list(p(HGNC:MAPK8), p(HGNC:MAPK9))',
                       'p(HGNC:MAPK9) componentOf list(p(HGNC:MAPK8), p(HGNC:MAPK9))'
+                      ]
+
+    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges = []
+
+    for each in actual_edges_partials:
+        s = each.get('subject', '')
+        r = each.get('relation', '')
+        o = each.get('object', '')
+
+        actual_edges.append('{} {} {}'.format(s, r, o))
+
+    assert set(expected_edges) == set(actual_edges)
+
+
+def test_nested_one():
+
+    statement = 'abundance(CHEBI:"MAPK Erk1/2 Family") decreases (abundance(SCHEM:"7-Ketocholesterol") increases biologicalProcess(GO:"apoptotic process"))'
+    expected_edges = ['CHEBI:"MAPK Erk1/2 Family" componentOf a(CHEBI:"MAPK Erk1/2 Family")',
+                      'SCHEM:"7-Ketocholesterol" componentOf a(SCHEM:"7-Ketocholesterol")',
+                      'GO:"apoptotic process" componentOf bp(GO:"apoptotic process")'
+                      ]
+
+    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges = []
+
+    for each in actual_edges_partials:
+        s = each.get('subject', '')
+        r = each.get('relation', '')
+        o = each.get('object', '')
+
+        actual_edges.append('{} {} {}'.format(s, r, o))
+
+    assert set(expected_edges) == set(actual_edges)
+
+
+def test_nested_two():
+
+    statement = 'abundance(CHEBI:"MAPK Erk1/2 Family") decreases (abundance(SCHEM:"7-Ketocholesterol") increases (biologicalProcess(GO:"apoptotic process") decreases abundance(CHEBI:"EXAMPLE2")))'
+    expected_edges = ['CHEBI:"MAPK Erk1/2 Family" componentOf a(CHEBI:"MAPK Erk1/2 Family")',
+                      'SCHEM:"7-Ketocholesterol" componentOf a(SCHEM:"7-Ketocholesterol")',
+                      'GO:"apoptotic process" componentOf bp(GO:"apoptotic process")',
+                      'CHEBI:"EXAMPLE2" componentOf a(CHEBI:"EXAMPLE2")'
                       ]
 
     actual_edges_partials = bel_obj.parse(statement).compute_edges()
