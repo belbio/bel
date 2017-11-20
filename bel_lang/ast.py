@@ -55,10 +55,16 @@ class BELAst(object):
             else:
                 bel_relation = self.spec['relation_to_long'].get(self.bel_relation, None)
 
+            bel_subject = self.bel_subject.to_string(fmt)
+
+            if isinstance(self.bel_object, (BELAst)):
+                bel_object = f'({self.bel_object.to_string(fmt)})'
+            else:
+                bel_object = self.bel_object.to_string(fmt)
             return {
-                'subject': self.bel_subject.to_string(fmt),
+                'subject': bel_subject,
                 'relation': bel_relation,
-                'object': self.bel_object.to_string(fmt),
+                'object': bel_object,
             }
 
         elif self.bel_subject:

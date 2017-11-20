@@ -23,7 +23,7 @@ bel_obj = bel_lang.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
 def test_ortho_one():
 
     statement = 'act(p(HGNC:AKT1), ma(GO:"kinase activity"))'
-    expected = 'activity(p(SP:P31750), ma(GO:"kinase activity"))'
+    expected = 'activity(p(MGI:Akt1), ma(GO:"kinase activity"))'
 
     bel_obj.parse(statement)
     bel_obj.orthologize('TAX:10090')
@@ -34,7 +34,7 @@ def test_ortho_one():
 def test_ortho_two():
 
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2))'
-    expected = 'activity(p(SP:Q19LI2), ma(GO:"catalytic activity")) directlyIncreases complexAbundance(p(EG:19877), p(EG:20655), p(EG:21858))'
+    expected = 'activity(p(MGI:A1bg), ma(GO:"catalytic activity")) directlyIncreases complexAbundance(p(MGI:Rock1), p(MGI:Sod1), p(EG:21858))'
 
     bel_obj.parse(statement)
     bel_obj.orthologize('TAX:10090')
