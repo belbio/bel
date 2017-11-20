@@ -41,12 +41,11 @@ def test_ortho_two():
     assert bel_obj.ast.to_string() == expected
 
 
-# TODO: uncomment and fix expected when orthologs API is back online.
-# def test_ortho_nested():
-#
-#     statement = 'a(CHEBI:"MAPK Erk1/2 Family") decreases (a(SCHEM:"7-Ketocholesterol") increases bp(GO:"apoptotic process"))'
-#     expected = 'abundance(CHEBI:"MAPK Erk1/2 Family") decreases (abundance(SCHEM:"7-Ketocholesterol") increases biologicalProcess(GO:"apoptotic process"))'
-#
-#     bel_obj.parse(statement)
-#     bel_obj.orthologize('TAX:10090')
-#     assert bel_obj.ast.to_string() == expected
+def test_ortho_nested():
+
+    statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases (complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2)) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2)))'
+    expected = 'activity(p(MGI:A1bg), ma(GO:"catalytic activity")) directlyIncreases (complexAbundance(p(MGI:Rock1), p(MGI:Sod1), p(EG:21858)) directlyIncreases complexAbundance(p(MGI:Rock1), p(MGI:Sod1), p(EG:21858)))'
+
+    bel_obj.parse(statement)
+    bel_obj.orthologize('TAX:10090')
+    assert bel_obj.ast.to_string() == expected
