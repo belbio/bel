@@ -45,11 +45,6 @@ def get_specification(version) -> Mapping[str, Any]:
     spec_dict = {}
 
     bel_versions = get_bel_versions()
-    if version not in bel_versions:
-        log.error('Version \"{}\" is not available in bel_lang library package.'.format(version))
-        log.error('Available versions:')
-        log.error('\n'.join(['- {}'.format(v) for v in bel_versions]))
-        sys.exit()
 
     # use this variable to find our parser file since periods aren't recommended in file names
 

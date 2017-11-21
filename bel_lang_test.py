@@ -14,7 +14,7 @@ class Colors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-VERSION = '2.0.0'
+VERSION = '1.0.5'
 ENDPOINT = 'http://example.com/endpoint'
 bel_instance = bel_lang.BEL(VERSION, ENDPOINT)
 

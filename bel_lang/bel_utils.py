@@ -4,6 +4,7 @@ import re
 import json
 import yaml
 import requests
+import sys
 from typing import Mapping, List, TYPE_CHECKING
 
 from bel_lang.ast import BELAst, NSArg, Function
@@ -189,8 +190,50 @@ def _dump_spec(spec):
         yaml.dump(spec, f, Dumper=MyDumper, default_flow_style=False)
 
 
+def _default_to_version(version, available_versions):
+
+    if not available_versions:
+        log.error('No versions available. Exiting.')
+        sys.exit()
+
+    version_semantic_regex = r'(\d+)(?:\.(\d+))?(?:\.(\d+))?'
+    our_match = re.match(version_semantic_regex, version)
+
+    if our_match:
+        major = int(our_match.group(1)) if our_match.group(1) else 0
+        minor = int(our_match.group(2)) if our_match.group(2) else 0
+        patch = int(our_match.group(3)) if our_match.group(3) else 0
+        formatted_version = '{}.{}.{}'.format(major, minor, patch)
+    else:
+        log.error('Invalid version number entered. Examples: \'2\', \'3.1\', \'3.2.6\'.')
+        sys.exit()
+
+    if formatted_version in available_versions:
+        return formatted_version
+
+    # now we need to find closest available version
+
+    available_versions.sort(key=lambda s: list(map(int, s.split('.'))))
+
+    v = None
+
+    for v in available_versions:
+        v_split = v.split('.')
+        v_maj = int(v_split[0])
+        v_min = int(v_split[1])
+        v_pat = int(v_split[2])
+
+        if v_maj > major or (v_maj == major and v_min > minor) or (v_maj == major and v_min == minor and v_pat > patch):
+            break
+        else:
+            continue
+
+    log.error('Version {} is not available in bel_lang library package.\nDefaulting to version {}.'.format(version, v))
+
+    return v
+
+
 class MyDumper(yaml.Dumper):
 
     def increase_indent(self, flow=False, indentless=False):
         return super(MyDumper, self).increase_indent(flow, False)
-

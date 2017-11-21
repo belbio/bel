@@ -48,11 +48,9 @@ class BEL(object):
         """
 
         bel_versions = bel_specification.get_bel_versions()
-        if version not in bel_versions:
-            log.error('Version {} not available in bel_lang library package'.format(version))
-            sys.exit()
 
-        self.version = version
+        # use bel_utils._default_to_version to check if valid version, and if it exists or not
+        self.version = bel_utils._default_to_version(version, bel_versions)
         self.endpoint = endpoint
 
         # Validation error/warning messages
@@ -60,7 +58,7 @@ class BEL(object):
         self.validation_messages = []
 
         # self.semantics = BELSemantics()  # each instance also instantiates a BELSemantics object used in parsing statements
-        self.spec = bel_specification.get_specification(version)
+        self.spec = bel_specification.get_specification(self.version)
 
         # bel_utils._dump_spec(self.spec)
 
