@@ -193,8 +193,8 @@ def _dump_spec(spec):
 def _default_to_version(version, available_versions):
 
     if not available_versions:
-        log.error('No versions available. Exiting.')
-        sys.exit()
+        log.error('No versions available.')
+        return ''
 
     version_semantic_regex = r'(\d+)(?:\.(\d+))?(?:\.(\d+))?'
     our_match = re.match(version_semantic_regex, version)
@@ -206,7 +206,7 @@ def _default_to_version(version, available_versions):
         formatted_version = '{}.{}.{}'.format(major, minor, patch)
     else:
         log.error('Invalid version number entered. Examples: \'2\', \'3.1\', \'3.2.6\'.')
-        sys.exit()
+        return ''
 
     if formatted_version in available_versions:
         return formatted_version
