@@ -51,6 +51,11 @@ class BEL(object):
 
         # use bel_utils._default_to_version to check if valid version, and if it exists or not
         self.version = bel_utils._default_to_version(version, bel_versions)
+
+        if self.version == '':
+            log.error('Cannot continue with invalid version. Exiting.')
+            sys.exit()
+        
         self.endpoint = endpoint
 
         # Validation error/warning messages
