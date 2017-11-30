@@ -55,7 +55,7 @@ class BEL(object):
         if self.version == '':
             log.error('Cannot continue with invalid version. Exiting.')
             sys.exit()
-        
+
         self.endpoint = endpoint
 
         # Validation error/warning messages
@@ -76,7 +76,7 @@ class BEL(object):
             # if not found, we raise the NoParserFound exception which can be found in bel_lang.exceptions
             raise bel_ex.NoParserFound(self.version)
 
-    def parse(self, statement: str, strict: bool = False, parseinfo: bool = False) -> 'BEL':
+    def parse(self, statement: str, strict: bool = False, parseinfo: bool = False, rule_name: str = 'start') -> 'BEL':
         """Parse and semantically validate BEL statement
 
         Parses a BEL statement given as a string and returns an AST, Abstract Syntax Tree (defined in ast.py)
@@ -116,7 +116,7 @@ class BEL(object):
 
         try:
             # see if an AST is returned without any parsing errors
-            ast_dict = self.parser.parse(self.bel_stmt, rule_name='start', trace=False, parseinfo=parseinfo)
+            ast_dict = self.parser.parse(self.bel_stmt, rule_name=rule_name, trace=False, parseinfo=parseinfo)
 
             self.ast = bel_lang_ast.ast_dict_to_objects(ast_dict, self)
 
@@ -215,7 +215,7 @@ class BEL(object):
 
         canonicalize_endpoint = self.endpoint + '/terms/{}/canonicalized'
 
-        self.ast = bel_utils.convert_namespaces(self.ast, canonicalize_endpoint, namespace_targets=namespace_targets)
+        self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize_endpoint, namespace_targets=namespace_targets)
         return self
 
     def decanonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
@@ -232,7 +232,7 @@ class BEL(object):
 
         decanonicalize_endpoint = self.endpoint + '/terms/{}/decanonicalized'
 
-        self.ast = bel_utils.convert_namespaces(self.ast, decanonicalize_endpoint, namespace_targets=namespace_targets)
+        self.ast = bel_utils.convert_namespaces_ast(self.ast, decanonicalize_endpoint, namespace_targets=namespace_targets)
         return self
 
     def orthologize(self, species_id: str) -> 'BEL':

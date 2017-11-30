@@ -8,6 +8,7 @@ import sys
 from typing import Mapping, List, TYPE_CHECKING
 
 from bel_lang.ast import BELAst, NSArg, Function
+from bel_lang.Config import config
 
 import logging
 log = logging.getLogger(__name__)
@@ -16,7 +17,62 @@ if TYPE_CHECKING:  # to allow type checking for a module that would be a circula
     import bel_lang.bel
 
 
-def convert_namespaces(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_targets: Mapping[str, List[str]] = None) -> 'bel_lang.bel.BEL':
+# TODO - normalize convert_namespaces_{str|ast} - too much duplicate code - not very elegant
+def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets: Mapping[str, List[str]] = None, canonicalize: bool = False, decanonicalize: bool = False) -> str:
+    """Convert namespace in string
+
+    Uses a regex expression to extract all NSArgs and replace them with the
+    updated NSArg from the BEL.bio API terms endpoint.
+
+    Args:
+        bel_str (str): bel statement string or partial string (e.g. subject or object)
+        api_url (str): BEL.bio api url to use, e.g. https://api.bel.bio/v1
+        namespace_targets (Mapping[str, List[str]]): formatted as in configuration file example
+        canonicalize (bool): use canonicalize endpoint/namespace targets
+        decanonicalize (bool): use decanonicalize endpoint/namespace targets
+
+    Results:
+        str: bel statement with namespaces converted
+    """
+
+    if not api_url:
+        api_url = config['bel_api']['servers']['api_url']
+        if not api_url:
+            log.error('Missing api url - cannot convert namespace')
+            return None
+
+    params = None
+    if not namespace_targets:
+        if canonicalize:
+            api_url = api_url + '/terms/{}/canonicalized'
+        elif decanonicalize:
+            api_url = api_url + '/terms/{}/decanonicalized'
+        else:
+            log.warning('Missing namespace targets or (de)canonical flag - cannot convert namespaces')
+            return bel_str
+    else:
+        namespace_targets_str = json.dumps(namespace_targets)
+        params = {'namespace_targets': namespace_targets_str}
+        api_url = api_url + '/terms/{}/canonicalized'  # overriding with namespace_targets
+
+    # pattern - look for capitalized namespace followed by colon
+    #           and either a quoted string or a string that
+    #           can include any char other than space, comma or ')'
+    matches = re.findall(r'([A-Z]+:"(?:\\.|[^"\\])*"|[A-Z]+:(?:[^\),\s]+))', bel_str)
+    for match in matches:
+        if 'DEFAULT:' in match:  # skip default namespaces
+            continue
+
+        request_url = api_url.format(match)
+        r = requests.get(request_url, params=params)
+        if r.status_code == 200:
+            updated_term = r.json().get('term_id', match)
+            bel_str = bel_str.replace(match, updated_term)
+
+    return bel_str
+
+
+def convert_namespaces_ast(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_targets: Mapping[str, List[str]] = None) -> 'bel_lang.bel.BEL':
     """Convert namespaces of BEL Entities in BEL AST using API endpoint
 
     Canonicalization and decanonicalization is determined by endpoint used and namespace_targets.
@@ -48,7 +104,7 @@ def convert_namespaces(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_targets
     # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
-            convert_namespaces(arg, endpoint, namespace_targets)
+            convert_namespaces_ast(arg, endpoint, namespace_targets)
 
     return ast
 
