@@ -1,3 +1,0 @@
-default_version: 2.0.0
-default_endpoint: http://somethinghere.com/endpoint
-default_loose_parse: True
