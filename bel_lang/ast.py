@@ -171,9 +171,7 @@ class NSArg(Arg):
     def __init__(self, namespace, value, parent_function, value_types=[]):
         Arg.__init__(self, parent_function)
         self.namespace = namespace
-        print('O', value)
         self.value = self.normalize_nsarg_value(value)
-        print('C', self.value)
         self.value_types = value_types
 
         # What entity types can this be from the function signatures?
