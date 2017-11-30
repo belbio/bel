@@ -7,6 +7,7 @@ validation and BEL transformation (e.g. canonicalization, orthologization, etc)
 """
 
 from typing import Mapping, Any
+import re
 
 import logging
 log = logging.getLogger(__name__)
@@ -170,7 +171,9 @@ class NSArg(Arg):
     def __init__(self, namespace, value, parent_function, value_types=[]):
         Arg.__init__(self, parent_function)
         self.namespace = namespace
-        self.value = value
+        print('O', value)
+        self.value = self.normalize_nsarg_value(value)
+        print('C', self.value)
         self.value_types = value_types
 
         # What entity types can this be from the function signatures?
@@ -183,6 +186,32 @@ class NSArg(Arg):
 
     def add_value_types(self, value_types):
         self.value_types = value_types
+
+    def normalize_nsarg_value(self, nsarg_value):
+        """Normalize NSArg value
+
+        If needs quotes (only if it contains whitespace, comma or ')' ), make sure
+        it is quoted, else remove quotes
+
+        Args:
+            nsarg_value (str): NSArg value, e.g. AKT1 of HGNC:AKT1
+
+        Returns:
+            str:
+
+        """
+        quoted = re.findall('^"(.*)"$', nsarg_value)
+
+        if re.search('[),\s]', nsarg_value):  # quote only if it contains whitespace, comma or ')'
+            if quoted:
+                return nsarg_value
+            else:
+                return f'"{nsarg_value}"'
+        else:
+            if quoted:
+                return quoted[0]
+            else:
+                return nsarg_value
 
     def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string
