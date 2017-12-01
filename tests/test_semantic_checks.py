@@ -53,3 +53,18 @@ def test_valid_statements():
         error_msgs = [msg for msg_level, msg in bo.validation_messages if msg_level == 'ERROR']
         assert error_msgs == []
 
+
+##############################
+# VALID STATEMENT TEST CASES #
+##############################
+def test_arg_values():
+    stmts = [
+        'activity(complexAbundance(SCOMP:"TORC2 Complex"), molecularActivity(DEFAULT:kin))'
+    ]
+
+    # TODO - Invalid Term - statement term SCOMP:"TORC2 Complex" allowable entity types: [] do not match API term entity types: ['Complex']
+
+    for s in stmts:
+        bo.parse(s)
+        assert False
+

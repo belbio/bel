@@ -115,13 +115,15 @@ def check_function_args(args, signatures, function_name):
         # Check required arguments
         reqs_mismatch_flag = False
         for sig_idx, sig_req in enumerate(sig_req_args):
-            log.debug(f'Req args: arg_type {arg_types[sig_idx][0]} vs sig_req {sig_req}')
-            if arg_types[sig_idx][0] not in sig_req:
-                reqs_mismatch_flag = True
-                msg = f'Missing required arguments for {function_name} signature: {sig_argset_idx}'
-                messages.append(msg)
-                log.debug(msg)
-                break
+            if len(arg_types) > sig_idx:
+                log.debug('Req args: arg_type {} vs sig_req {}'.format(arg_types[sig_idx][0], sig_req))
+                if arg_types[sig_idx][0] not in sig_req:
+                    reqs_mismatch_flag = True
+                    msg = f'Missing required arguments for {function_name} signature: {sig_argset_idx}'
+                    messages.append(msg)
+                    log.debug(msg)
+                    break
+
         if reqs_mismatch_flag:
             continue  # test next argset
 
@@ -221,23 +223,28 @@ def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
 
         # Process normal, non-default-namespace terms
         else:
-            request_url = bo.endpoint + '/terms/{}'.format(term_id)
 
-            r = requests.get(request_url)  # TODO add filter for entity_types
+            try:
+                request_url = bo.endpoint + '/terms/{}'.format(term_id)
+                r = requests.get(request_url, timeout=5)  # TODO add filter for entity_types
 
-            # Term not found in BEL.bio API endpoint
-            if r.status_code != 200:
-                log.debug('Invalid Term: {}'.format(term_id))
-                bo.validation_messages.append(('WARNING', f'Term: {term_id} not found'))
-            # function signature term value_types doesn't match up with API term entity_types
-            elif r.status_code == 200:
-                result = r.json()
-                if len(set(ast.value_types).intersection(result['entity_types'])) == 0:
-                    log.debug('Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result['entity_types']))
-                    bo.validation_messages.append(('WARNING', 'Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result['entity_types'])))
-            # Term is valid
-            else:
-                log.debug('Valid Term: {}'.format(term_id))
+                # Term not found in BEL.bio API endpoint
+                if r.status_code != 200:
+                    log.debug('Invalid Term: {}'.format(term_id))
+                    bo.validation_messages.append(('WARNING', f'Term: {term_id} not found'))
+                # function signature term value_types doesn't match up with API term entity_types
+                elif r.status_code == 200:
+                    result = r.json()
+                    # print('Result:\n', json.dumps(result, indent=4))
+                    if len(set(ast.value_types).intersection(result.get('entity_types', []))) == 0:
+                        log.debug('Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result.get('entity_types', [])))
+                        bo.validation_messages.append(('WARNING', 'Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result.get('entity_types', []))))
+                # Term is valid
+                else:
+                    log.debug('Valid Term: {}'.format(term_id))
+
+            except requests.exceptions.Timeout:
+                log.error(f'Request timeout occurred for {request_url} in semantics.validate_arg_values')
 
     # Process StrArgs
     if isinstance(ast, StrArg):

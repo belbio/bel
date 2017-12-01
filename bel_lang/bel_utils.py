@@ -64,10 +64,14 @@ def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets:
             continue
 
         request_url = api_url.format(match)
-        r = requests.get(request_url, params=params)
-        if r.status_code == 200:
-            updated_term = r.json().get('term_id', match)
-            bel_str = bel_str.replace(match, updated_term)
+        try:
+            r = requests.get(request_url, params=params, timeout=5)
+            if r.status_code == 200:
+                updated_term = r.json().get('term_id', match)
+                bel_str = bel_str.replace(match, updated_term)
+
+        except requests.exceptions.Timeout:
+            log.error(f'Request timeout occurred for {request_url} in bel_utils.convert_namespaces_str')
 
     return bel_str
 
@@ -88,18 +92,21 @@ def convert_namespaces_ast(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_tar
 
     if isinstance(ast, NSArg):
         given_term_id = '{}:{}'.format(ast.namespace, ast.value)
-        request_url = endpoint.format(given_term_id)
-        if namespace_targets:
-            namespace_targets_str = json.dumps(namespace_targets)
-            params = {'namespace_targets': namespace_targets_str}
-            r = requests.get(request_url, params=params)
-        else:
-            r = requests.get(request_url)
+        try:
+            request_url = endpoint.format(given_term_id)
+            if namespace_targets:
+                namespace_targets_str = json.dumps(namespace_targets)
+                params = {'namespace_targets': namespace_targets_str}
+                r = requests.get(request_url, params=params, timeout=5)
+            else:
+                r = requests.get(request_url, timeout=5)
 
-        if r.status_code == 200:
-            updated_id = r.json().get('term_id', given_term_id)
-            ns, value = updated_id.split(':')
-            ast.change_nsvalue(ns, value)
+            if r.status_code == 200:
+                updated_id = r.json().get('term_id', given_term_id)
+                ns, value = updated_id.split(':')
+                ast.change_nsvalue(ns, value)
+        except requests.exceptions.Timeout:
+            log.error(f'Request timeout occurred for {request_url} in bel_utils.convert_namespaces_ast')
 
     # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
