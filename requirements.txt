@@ -71,7 +71,7 @@ Sphinx==1.6.5
 sphinx-autodoc-typehints==1.2.3
 sphinx-rtd-theme==0.2.4
 sphinxcontrib-websupport==1.0.1
-TatSu==4.2.2
+TatSu==4.2.5
 termcolor==1.1.0
 terminado==0.7
 testpath==0.3.1
