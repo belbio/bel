@@ -1,9 +1,8 @@
-import pprint
 import click
-import os
-import yaml
 import json
 
+import bel_lang.Config
+from bel_lang.Config import config
 from bel_lang.bel import BEL
 
 import logging
@@ -28,24 +27,9 @@ def first_true(iterable, default=False, pred=None):
     return next(filter(pred, iterable), default)
 
 
-def get_config(fn):
-    """Get config from file"""
-
-    try:
-        with open(os.path.expanduser(fn), 'r') as f:
-            config = yaml.load(f)
-        return config
-    except Exception:
-        return {}
-
-
 class Context(object):
     def __init__(self):
-        self.config = {}
-        for fn in ['./belbio_conf.yaml', './.belbio_conf', '~/.belbio_conf', ]:
-            if os.path.isfile(os.path.expanduser(fn)):
-                self.config = get_config(fn)
-                break
+        self.config = config
 
 
 pass_context = click.make_pass_decorator(Context, ensure=True)
@@ -66,23 +50,27 @@ def bel():
 @bel.command(name='validate')
 @click.option('--version', help='BEL language version')
 @click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config', help="BEL Pipeline configuration file - overrides default configuration files")
+@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
 @click.argument('statement')
 @pass_context
-def validate(ctx, statement, version, api, config):
+def validate(ctx, statement, version, api, config_fn):
     """Parse statement and validate """
 
+    if config_fn:
+        config = bel_lang.Config.merge_config(ctx.config, override_config_fn=config_fn)
+    else:
+        config = ctx.config
+
     # Configuration - will return the first truthy result in list else the default option
-    config = first_true([get_config(config), ctx.config], {})
-    api = first_true([api, config.get('api', None)], None)
-    version = first_true([version, config.get('bel_version', None)], None)
+    api_url = first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
+    version = first_true([version, config['bel_lang'].get('default_bel_version', None)], None)
 
     print('------------------------------')
     print('BEL version: {}'.format(version))
-    print('API Endpoint: {}'.format(api))
+    print('API Endpoint: {}'.format(api_url))
     print('------------------------------')
 
-    bo = BEL(version=version, endpoint=api)
+    bo = BEL(version=version, endpoint=api_url)
     bo.parse(statement)
 
     if bo.ast is None:
@@ -102,10 +90,10 @@ def validate(ctx, statement, version, api, config):
 @click.option('--namespace_targets', help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}')
 @click.option('--version', help='BEL language version')
 @click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config', help="BEL Pipeline configuration file - overrides default configuration files")
+@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
 @click.argument('statement')
 @pass_context
-def canonicalize(ctx, statement, namespace_targets, version, api, config):
+def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
     """Canonicalize statement
 
     Target namespaces can be provided in the following manner:
@@ -115,20 +103,24 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config):
             reserving double quotes for the dictionary elements
     """
 
+    if config_fn:
+        config = bel_lang.Config.merge_config(ctx.config, override_config_fn=config_fn)
+    else:
+        config = ctx.config
+
     # Configuration - will return the first truthy result in list else the default option
     if namespace_targets:
         namespace_targets = json.loads(namespace_targets)
-    config = first_true([get_config(config), ctx.config], {})
-    namespace_targets = first_true([namespace_targets, config.get('canonical')], None)
-    api = first_true([api, config.get('api', None)], None)
-    version = first_true([version, config.get('bel_version', None)], None)
+    namespace_targets = first_true([namespace_targets, config['bel_lang'].get('canonical')], None)
+    api_url = first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
+    version = first_true([version, config['bel_lang'].get('default_bel_version', None)], None)
 
     print('------------------------------')
     print('BEL version: {}'.format(version))
-    print('API Endpoint: {}'.format(api))
+    print('API Endpoint: {}'.format(api_url))
     print('------------------------------')
 
-    bo = BEL(version=version, endpoint=api)
+    bo = BEL(version=version, endpoint=api_url)
     bo.parse(statement).canonicalize(namespace_targets=namespace_targets)
 
     if bo.ast is None:
@@ -149,10 +141,10 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config):
 @click.option('--species_id', help='Species ID format TAX:<tax_id_number>')
 @click.option('--version', help='BEL language version')
 @click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config', help="BEL Pipeline configuration file - overrides default configuration files")
+@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
 @click.argument('statement')
 @pass_context
-def orthologize(ctx, statement, species_id, version, api, config):
+def orthologize(ctx, statement, species_id, version, api, config_fn):
     """Canonicalize statement
 
     Species ID needs to be the NCBI Taxonomy ID in this format: TAX:<tax_id_number>
@@ -160,17 +152,21 @@ def orthologize(ctx, statement, species_id, version, api, config):
       (basically whatever is supported at the api orthologs endpoint)
     """
 
+    if config_fn:
+        config = bel_lang.Config.merge_config(ctx.config, override_config_fn=config_fn)
+    else:
+        config = ctx.config
+
     # Configuration - will return the first truthy result in list else the default option
-    config = first_true([get_config(config), ctx.config], {})
-    api = first_true([api, config.get('api', None)], None)
-    version = first_true([version, config.get('bel_version', None)], None)
+    api_url = first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
+    version = first_true([version, config['bel_lang'].get('default_bel_version', None)], None)
 
     print('------------------------------')
     print('BEL version: {}'.format(version))
-    print('API Endpoint: {}'.format(api))
+    print('API Endpoint: {}'.format(api_url))
     print('------------------------------')
 
-    bo = BEL(version=version, endpoint=api)
+    bo = BEL(version=version, endpoint=api_url)
     bo.parse(statement).orthologize(species_id)
 
     if bo.ast is None:
@@ -193,28 +189,33 @@ def orthologize(ctx, statement, species_id, version, api, config):
 @click.option('--namespace_targets', help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}')
 @click.option('--version', help='BEL language version')
 @click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config', help="BEL Pipeline configuration file - overrides default configuration files")
+@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
 @click.argument('statement')
 @pass_context
-def edges(ctx, statement, rules, species_id, namespace_targets, version, api, config):
+def edges(ctx, statement, rules, species_id, namespace_targets, version, api, config_fn):
     """Create BEL Edges"""
+
+    if config_fn:
+        config = bel_lang.Config.merge_config(ctx.config, override_config_fn=config_fn)
+    else:
+        config = ctx.config
 
     # Configuration - will return the first truthy result in list else the default option
     if namespace_targets:
         namespace_targets = json.loads(namespace_targets)
     if rules:
         rules = rules.replace(' ', '').split(',')
-    config = first_true([get_config(config), ctx.config], {})
-    namespace_targets = first_true([namespace_targets, config.get('canonical')], None)
-    api = first_true([api, config.get('api', None)], None)
-    version = first_true([version, config.get('bel_version', None)], None)
+
+    namespace_targets = first_true([namespace_targets, config['bel_lang'].get('canonical')], None)
+    api_url = first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
+    version = first_true([version, config['bel_lang'].get('default_bel_version', None)], None)
 
     print('------------------------------')
     print('BEL version: {}'.format(version))
-    print('API Endpoint: {}'.format(api))
+    print('API Endpoint: {}'.format(api_url))
     print('------------------------------')
 
-    bo = BEL(version=version, endpoint=api)
+    bo = BEL(version=version, endpoint=api_url)
     if species_id:
         edges = bo.parse(statement).orthologize(species_id).canonicalize(namespace_targets=namespace_targets).compute_edges(rules=rules)
     else:

@@ -40,11 +40,14 @@ Keys available in spec_dict:
 '''
 
 
-def get_specification(version) -> Mapping[str, Any]:
+def get_specification(version: str) -> Mapping[str, Any]:
 
     spec_dict = {}
 
     bel_versions = get_bel_versions()
+    if version not in bel_versions:
+        log.error('Cannot get unknown version BEL specification')
+        return spec_dict
 
     # use this variable to find our parser file since periods aren't recommended in file names
 

@@ -1,7 +1,7 @@
 import bel_lang
-from bel_lang.defaults import defaults
+from bel_lang.Config import config
 
-bel_obj = bel_lang.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
+bel_obj = bel_lang.bel.BEL(config['bel_lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 
 def test_empty_string():

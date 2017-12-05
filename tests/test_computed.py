@@ -1,7 +1,7 @@
-import bel_lang
-from bel_lang.defaults import defaults
+import bel_lang.bel
+from bel_lang.Config import config
 
-bel_obj = bel_lang.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
+bel_obj = bel_lang.bel.BEL(config['bel_lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 
 def test_abundance():
@@ -73,10 +73,10 @@ def test_composite():
 
 def test_g():
 
-    statement = 'g(REF:"NM_000492.3", var("c.1521_1523delCTT")) association bp(GOBP:"wound healing")'
-    expected_edges = ['REF:"NM_000492.3" componentOf g(REF:"NM_000492.3", var("c.1521_1523delCTT"))',
+    statement = 'g(REF:NM_000492.3, var("c.1521_1523delCTT")) association bp(GOBP:"wound healing")'
+    expected_edges = ['REF:NM_000492.3 componentOf g(REF:NM_000492.3, var("c.1521_1523delCTT"))',
                       'GOBP:"wound healing" componentOf bp(GOBP:"wound healing")',
-                      'var("c.1521_1523delCTT") componentOf g(REF:"NM_000492.3", var("c.1521_1523delCTT"))'
+                      'var("c.1521_1523delCTT") componentOf g(REF:NM_000492.3, var("c.1521_1523delCTT"))'
                       ]
 
     actual_edges_partials = bel_obj.parse(statement).compute_edges()
@@ -88,6 +88,9 @@ def test_g():
         o = each.get('object', '')
 
         actual_edges.append('{} {} {}'.format(s, r, o))
+
+    print('Expected edges', expected_edges)
+    print('Actual edges', actual_edges)
 
     assert set(expected_edges) == set(actual_edges)
 
@@ -315,15 +318,15 @@ def test_deg():
 
 def test_rxn():
 
-    statement = 'rxn(reactants(a(CHEBI:superoxide)), products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:"oxygen")))'
+    statement = 'rxn(reactants(a(CHEBI:superoxide)), products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:oxygen)))'
     expected_edges = ['CHEBI:superoxide componentOf a(CHEBI:superoxide)',
                       'CHEBI:"hydrogen peroxide" componentOf a(CHEBI:"hydrogen peroxide")',
-                      'CHEBI:"oxygen" componentOf a(CHEBI:"oxygen")',
+                      'CHEBI:oxygen componentOf a(CHEBI:oxygen)',
                       'a(CHEBI:superoxide) componentOf reactants(a(CHEBI:superoxide))',
-                      'a(CHEBI:"hydrogen peroxide") componentOf products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:"oxygen"))',
-                      'a(CHEBI:"oxygen") componentOf products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:"oxygen"))',
+                      'a(CHEBI:"hydrogen peroxide") componentOf products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:oxygen))',
+                      'a(CHEBI:oxygen) componentOf products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:oxygen))',
                       'reactants(a(CHEBI:superoxide)) componentOf {}'.format(statement),
-                      'products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:"oxygen")) componentOf {}'.format(statement)
+                      'products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:oxygen)) componentOf {}'.format(statement)
                       ]
 
     actual_edges_partials = bel_obj.parse(statement).compute_edges()
@@ -364,9 +367,9 @@ def test_list():
 
 def test_nested_one():
 
-    statement = 'abundance(CHEBI:"MAPK Erk1/2 Family") decreases (abundance(SCHEM:"7-Ketocholesterol") increases biologicalProcess(GO:"apoptotic process"))'
+    statement = 'abundance(CHEBI:"MAPK Erk1/2 Family") decreases (abundance(SCHEM:7-Ketocholesterol) increases biologicalProcess(GO:"apoptotic process"))'
     expected_edges = ['CHEBI:"MAPK Erk1/2 Family" componentOf a(CHEBI:"MAPK Erk1/2 Family")',
-                      'SCHEM:"7-Ketocholesterol" componentOf a(SCHEM:"7-Ketocholesterol")',
+                      'SCHEM:7-Ketocholesterol componentOf a(SCHEM:7-Ketocholesterol)',
                       'GO:"apoptotic process" componentOf bp(GO:"apoptotic process")'
                       ]
 
@@ -385,11 +388,11 @@ def test_nested_one():
 
 def test_nested_two():
 
-    statement = 'abundance(CHEBI:"MAPK Erk1/2 Family") decreases (abundance(SCHEM:"7-Ketocholesterol") increases (biologicalProcess(GO:"apoptotic process") decreases abundance(CHEBI:"EXAMPLE2")))'
+    statement = 'abundance(CHEBI:"MAPK Erk1/2 Family") decreases (abundance(SCHEM:7-Ketocholesterol) increases (biologicalProcess(GO:"apoptotic process") decreases abundance(CHEBI:EXAMPLE2)))'
     expected_edges = ['CHEBI:"MAPK Erk1/2 Family" componentOf a(CHEBI:"MAPK Erk1/2 Family")',
-                      'SCHEM:"7-Ketocholesterol" componentOf a(SCHEM:"7-Ketocholesterol")',
+                      'SCHEM:7-Ketocholesterol componentOf a(SCHEM:7-Ketocholesterol)',
                       'GO:"apoptotic process" componentOf bp(GO:"apoptotic process")',
-                      'CHEBI:"EXAMPLE2" componentOf a(CHEBI:"EXAMPLE2")'
+                      'CHEBI:EXAMPLE2 componentOf a(CHEBI:EXAMPLE2)'
                       ]
 
     actual_edges_partials = bel_obj.parse(statement).compute_edges()

@@ -2,7 +2,6 @@
 
 from typing import Tuple, List, TYPE_CHECKING
 import requests
-import json
 import re
 
 from bel_lang.ast import BELAst, Function, NSArg, StrArg

@@ -11,58 +11,21 @@ import os
 import os.path
 import yaml
 import copy
-import re
+import importlib.util
 from typing import Mapping, Any
-import collections
 import functools
+import collections
 
 import logging
 log = logging.getLogger(__name__)
 
 
-def get_current_module_dir() -> str:
-    """Get current module filepath"""
-
-    cur_module_fp = os.path.dirname(os.path.realpath(__file__))
-    return cur_module_fp
-
-
-def get_root_filepath() -> str:
-    """Get bel_resource root filepath
-
-    root filepath is 2 levels up from where this Config.py file is located
-    """
-
-    cmd = get_current_module_dir()
-    bel_resources_root = os.path.dirname(os.path.dirname(cmd))
-
-    return bel_resources_root
-
-
-def get_version() -> str:
-
-    bel_resources_root = get_root_filepath()
-    version_fp = f'{bel_resources_root}/VERSION'
-
-    version = None
-    if os.path.exists(version_fp):
-        with open(version_fp, 'r') as f:
-            version = f.readline().rstrip()
-
-    return version
-
-
 def get_belbio_conf_files():
     """Get first belbio_conf and belbio_secrets files in current dir or home directory
 
-    This will look for belbio_conf.yaml or .belbio_conf in current or home directories
-    It will also look for belbio_secrets.yaml or .belbio_secrets in current or parent dirs
+    This will look for belbio_conf.{yml|yaml} or .belbio_conf in current or home directories
+    It will also look for belbio_secrets.{yml|yaml} or .belbio_secrets in current or parent dirs
     """
-
-    # for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-    #     print('Root', root)
-    #     for fn in files:
-    #         print('  FN:', fn)
 
     home = os.path.expanduser('~')
     cwd = os.getcwd()
@@ -71,7 +34,7 @@ def get_belbio_conf_files():
     for path in [cwd, home]:
         if belbio_conf_fp:
             break
-        for fn in ['belbio_conf.yaml', '.belbio_conf']:
+        for fn in ['belbio_conf.yml', 'belbio_conf.yaml', '.belbio_conf']:
             if os.path.exists(f'{path}/{fn}'):
                 belbio_conf_fp = f'{path}/{fn}'
                 log.info(f'Using {belbio_conf_fp} file for configuration')
@@ -80,7 +43,7 @@ def get_belbio_conf_files():
     for path in [cwd, home]:
         if belbio_secrets_fp:
             break
-        for fn in ['belbio_secrets.yaml', '.belbio_secrets']:
+        for fn in ['belbio_secrets.yml', 'belbio_secrets.yaml', '.belbio_secrets']:
             if os.path.exists(f'{path}/{fn}'):
                 belbio_secrets_fp = f'{path}/{fn}'
                 log.info(f'Using {belbio_secrets_fp} file for secrets configuration')
@@ -96,16 +59,42 @@ def get_belbio_conf_files():
     return (belbio_conf_fp, belbio_secrets_fp)
 
 
-def process_files(config):
-    """"""
+def get_versions(config) -> dict:
+    """Get versions of bel modules and tools"""
 
-    root_fp = get_root_filepath()
-    config['bel_resources']['file_locations']['root'] = root_fp
+    try:
+        import bel_lang.__version__
+        config['bel_lang']['version'] = bel_lang.__version__.__version__
+    except KeyError:
+        config['bel_lang'] = {'version': bel_lang.__version__.__version__}
+    except ModuleNotFoundError:
+        pass
 
-    for loc in config['bel_resources']['file_locations']:
-        loc_val = config['bel_resources']['file_locations'][loc]
-        if not re.match('/', loc_val):
-            config['bel_resources']['file_locations'][loc] = f'{root_fp}/{loc_val}'
+    try:
+        import bel_nanopub.__version__
+        config['bel_nanopub']['version'] = bel_nanopub.__version__.__version__
+    except KeyError:
+        config['bel_nanopub'] = {'version': bel_nanopub.__version__.__version__}
+    except ModuleNotFoundError:
+        pass
+
+    try:
+        import tools.__version__
+        config['bel_resources']['version'] = tools.__version__.__version__
+    except KeyError:
+        config['bel_resources'] = {'version': tools.__version__.__version__}
+    except ModuleNotFoundError:
+        pass
+
+    try:
+        import __version__
+        if __version__.__name__ == 'BELBIO API':
+            config['bel_api']['version'] = __version__.__version__
+    except KeyError:
+        if __version__.__name__ == 'BELBIO API':
+            config['bel_api'] = {'version': __version__.__version__}
+    except ModuleNotFoundError:
+        pass
 
     return config
 
@@ -124,25 +113,9 @@ def load_configuration():
             secrets = yaml.load(f)
             config['secrets'] = copy.deepcopy(secrets)
 
-    version = get_version()
-    config['bel_resources'].update({'version': version})
-
-    config = process_files(config)
+    config = get_versions(config)
 
     return config
-
-
-# https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
-def dict_merge(a, b):
-    if not isinstance(b, dict):
-        return b
-    result = copy.deepcopy(a)
-    for k, v in b.iteritems():
-        if k in result and isinstance(result[k], dict):
-                result[k] = dict_merge(result[k], v)
-        else:
-            result[k] = copy.deepcopy(v)
-    return result
 
 
 # https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
@@ -202,3 +175,19 @@ if __name__ == '__main__':
 
 else:
     config = load_configuration()
+
+
+# Ideas for providing hierarchical settings
+# https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
+# def dict_merge(a, b):
+#     if not isinstance(b, dict):
+#         return b
+#     result = copy.deepcopy(a)
+#     for k, v in b.iteritems():
+#         if k in result and isinstance(result[k], dict):
+#                 result[k] = dict_merge(result[k], v)
+#         else:
+#             result[k] = copy.deepcopy(v)
+#     return result
+
+

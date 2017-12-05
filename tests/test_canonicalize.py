@@ -1,7 +1,8 @@
 import bel_lang
-from bel_lang.defaults import defaults
 
-bel_obj = bel_lang.bel.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
+from bel_lang.Config import config
+
+bel_obj = bel_lang.bel.BEL(config['bel_lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 # TODO Add test for specified canonical_targets - need to make sure BEL.bio API endpoint is updated to handle this querystring arg
 

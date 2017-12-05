@@ -6,54 +6,11 @@
 #   - ./.belbio_conf       (a dotfile file, e.g. hidden, in local directory)
 #   - ~/.belbio_conf       (a dotfile in the home directory)
 
-### DEPRECATED ###
-
-# Use config['bel_api']['servers']['api_url']
-# API endpoint to use for BEL Entity or Context terminology validation
-api: https://api.bel.bio/v1
-servers:
-  # API endpoint to use for BEL Entity or Context terminology validation
-  api: https://api.bel.bio/v1
-
-# use config['general']['bel_version']
-# Default BEL version to use
-bel_version: 2.0.0
-
-# use config['bel_nanopub']['schema_uri']
-# JSON Schema for BEL Nanopubs (in YAML format :)
-schema_uri: https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml
-
-# use config['bel_nanopub']['pipeline_edge_rules']
-# Rules to apply for computing BEL Edges from BEL Nanopubs
-# pipeline_edge_rules: ["component_of", "degradation"]
-pipeline_edge_rules: False
-
-# use config['bel_lang']['canonical']
-# Term Canonicalization and decanonicalization
-# Note that we don't decanonicalize CHEBI (this is not necessarily a symmetric process)
-canonical:
-  HGNC: ["EG", "SP"]
-  MGI: ["EG", "SP"]
-  RGD: ["EG", "SP"]
-  ZFIN: ["EG", "SP"]
-  SP: ["EG"]
-  CHEMBL: ["CHEBI"]
-
-# use config['bel_lang']['decanonical']
-decanonical:
-  # EG will convert into the first valid namespace based on species
-  EG: ['HGNC', "MGI", 'RGD', "ZFIN", "SP"]
-
-### END DEPRECATION ###
-
-
-general:
-  # Default BEL version to use
-  bel_version: 2.0.0
-
 
 # bel_lang package settings
 bel_lang:
+  default_bel_version: 2.0.0
+
   # Term Canonicalization and decanonicalization
   # Note that we don't decanonicalize CHEBI (this is not necessarily a symmetric process)
   canonical:
@@ -82,7 +39,7 @@ bel_nanopub:
 bel_api:
 
   # Should we require authentication in API?
-  authenticated: true
+  authenticated: false
 
   # Log configuration is in the conf-logging.yml file
 
@@ -91,15 +48,18 @@ bel_api:
     server_type: DEV
 
     # TODO - remove api_url in favor of top-level api value
-    api_url: http://localhost:8010
+    # api_url: http://localhost:8181
+    api_url: https://api.bel.bio/v1
 
     # elasticsearch: http://docker.for.mac.localhost:9200
     elasticsearch: http://localhost:9200
 
-    arangodb_host: docker.for.mac.localhost
+    # arangodb_host: docker.for.mac.localhost
+    arangodb_host: localhost
     arangodb_protocol: http
     arangodb_port: 8529
     arangodb_username: ''
+    # arangodb_password - comes from secrets file - will be merged in as config['secrets']['bel_api']['servers']['arangodb_password']
 
 
 bel_resources:
@@ -151,6 +111,7 @@ bel_resources:
       AFFX: http://resources.openbel.org/belframework/20150611/namespace/affy-probeset-ids.belns
       # LMSD: http://belief-demo.scai.fraunhofer.de/openbel/repository/namespaces/LMSD.belns
       PMIBP: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmibp.belns
+      PMICHEM: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmichem.belns
       PMICOMP: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmicomp.belns
       PMIDIS: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmidis.belns
       PMIPFAM: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmipfam.belns

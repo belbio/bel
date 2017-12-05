@@ -140,17 +140,17 @@ class BELParser(Parser):
             with self._option():
                 self._token('compositeAbundance')
             with self._option():
-                self._token('microRNAAbundance')
-            with self._option():
                 self._token('biologicalProcess')
+            with self._option():
+                self._token('microRNAAbundance')
             with self._option():
                 self._token('complexAbundance')
             with self._option():
                 self._token('proteinAbundance')
             with self._option():
-                self._token('geneAbundance')
-            with self._option():
                 self._token('cellSecretion')
+            with self._option():
+                self._token('geneAbundance')
             with self._option():
                 self._token('translocation')
             with self._option():
@@ -158,45 +158,47 @@ class BELParser(Parser):
             with self._option():
                 self._token('degradation')
             with self._option():
-                self._token('pathology')
+                self._token('abundance')
             with self._option():
                 self._token('composite')
             with self._option():
-                self._token('abundance')
-            with self._option():
-                self._token('reaction')
+                self._token('pathology')
             with self._option():
                 self._token('activity')
             with self._option():
-                self._token('complex')
+                self._token('reaction')
             with self._option():
-                self._token('tloc')
+                self._token('complex')
             with self._option():
                 self._token('surf')
             with self._option():
                 self._token('list')
             with self._option():
+                self._token('list')
+            with self._option():
                 self._token('path')
             with self._option():
-                self._token('deg')
+                self._token('tloc')
             with self._option():
                 self._token('act')
             with self._option():
-                self._token('rxn')
-            with self._option():
                 self._token('sec')
+            with self._option():
+                self._token('deg')
+            with self._option():
+                self._token('rxn')
             with self._option():
                 self._token('bp')
             with self._option():
-                self._token('p')
+                self._token('a')
             with self._option():
                 self._token('g')
             with self._option():
-                self._token('a')
+                self._token('m')
+            with self._option():
+                self._token('p')
             with self._option():
                 self._token('r')
-            with self._option():
-                self._token('m')
             self._error('no available options')
 
     @tatsumasu()
@@ -222,13 +224,13 @@ class BELParser(Parser):
     @tatsumasu()
     def _modifier_function_(self):  # noqa
         self._m_funcs_()
-        self.name_last_node('m_function')
+        self.name_last_node('modifier')
         self._function_open_()
         self._m_args_()
-        self.name_last_node('m_function_args')
+        self.name_last_node('modifier_args')
         self._function_close_()
         self.ast._define(
-            ['m_function', 'm_function_args'],
+            ['modifier', 'modifier_args'],
             []
         )
 
@@ -242,29 +244,37 @@ class BELParser(Parser):
             with self._option():
                 self._token('reactants')
             with self._option():
+                self._token('reactants')
+            with self._option():
                 self._token('fragment')
             with self._option():
                 self._token('location')
             with self._option():
                 self._token('products')
             with self._option():
-                self._token('variant')
+                self._token('products')
             with self._option():
                 self._token('fromLoc')
+            with self._option():
+                self._token('fromLoc')
+            with self._option():
+                self._token('variant')
             with self._option():
                 self._token('fusion')
             with self._option():
                 self._token('toLoc')
             with self._option():
-                self._token('pmod')
+                self._token('toLoc')
             with self._option():
                 self._token('frag')
             with self._option():
-                self._token('var')
+                self._token('pmod')
             with self._option():
                 self._token('fus')
             with self._option():
                 self._token('loc')
+            with self._option():
+                self._token('var')
             with self._option():
                 self._token('ma')
             self._error('no available options')
@@ -297,9 +307,13 @@ class BELParser(Parser):
             with self._option():
                 self._token('prognosticBiomarkerFor')
             with self._option():
+                self._token('prognosticBiomarkerFor')
+            with self._option():
                 self._token('negativeCorrelation')
             with self._option():
                 self._token('positiveCorrelation')
+            with self._option():
+                self._token('rateLimitingStepOf')
             with self._option():
                 self._token('rateLimitingStepOf')
             with self._option():
@@ -309,39 +323,57 @@ class BELParser(Parser):
             with self._option():
                 self._token('causesNoChange')
             with self._option():
-                self._token('transcribedTo')
+                self._token('hasComponents')
             with self._option():
                 self._token('hasComponents')
             with self._option():
+                self._token('transcribedTo')
+            with self._option():
                 self._token('biomarkerFor')
             with self._option():
-                self._token('translatedTo')
+                self._token('biomarkerFor')
+            with self._option():
+                self._token('hasComponent')
+            with self._option():
+                self._token('hasComponent')
             with self._option():
                 self._token('subProcessOf')
             with self._option():
-                self._token('hasComponent')
+                self._token('subProcessOf')
+            with self._option():
+                self._token('translatedTo')
             with self._option():
                 self._token('association')
             with self._option():
                 self._token('orthologous')
             with self._option():
+                self._token('orthologous')
+            with self._option():
+                self._token('hasMembers')
+            with self._option():
                 self._token('hasMembers')
             with self._option():
                 self._token('analogous')
             with self._option():
-                self._token('increases')
-            with self._option():
-                self._token('hasMember')
-            with self._option():
-                self._token('regulates')
+                self._token('analogous')
             with self._option():
                 self._token('decreases')
             with self._option():
+                self._token('hasMember')
+            with self._option():
+                self._token('hasMember')
+            with self._option():
+                self._token('increases')
+            with self._option():
+                self._token('regulates')
+            with self._option():
                 self._token('cnc')
             with self._option():
-                self._token('neg')
+                self._token('isA')
             with self._option():
                 self._token('isA')
+            with self._option():
+                self._token('neg')
             with self._option():
                 self._token('pos')
             with self._option():
@@ -349,17 +381,17 @@ class BELParser(Parser):
             with self._option():
                 self._token('--')
             with self._option():
-                self._token('>>')
-            with self._option():
                 self._token('-|')
             with self._option():
-                self._token(':>')
+                self._token('=|')
             with self._option():
                 self._token('=>')
             with self._option():
                 self._token('->')
             with self._option():
-                self._token('=|')
+                self._token(':>')
+            with self._option():
+                self._token('>>')
             self._error('no available options')
 
     @tatsumasu()
@@ -374,7 +406,7 @@ class BELParser(Parser):
     @tatsumasu()
     def _full_nsv_(self):  # noqa
         self._ns_string_()
-        self.name_last_node('nspace')
+        self.name_last_node('ns')
         self._token(':')
         with self._group():
             with self._choice():
@@ -385,7 +417,7 @@ class BELParser(Parser):
                 self._error('no available options')
         self.name_last_node('ns_value')
         self.ast._define(
-            ['ns_value', 'nspace'],
+            ['ns', 'ns_value'],
             []
         )
 
@@ -414,7 +446,7 @@ class BELParser(Parser):
 
     @tatsumasu()
     def _string_(self):  # noqa
-        self._pattern(r'\w+')
+        self._pattern(r'[^\s\),]+')
 
     @tatsumasu()
     def _ns_string_(self):  # noqa

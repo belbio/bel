@@ -79,6 +79,13 @@ class BELAst(object):
 
     __repr__ = __str__
 
+    def print_tree(self, ast_obj=None):
+        if not ast_obj:
+            ast_obj = self
+        self.bel_subject.print_tree(ast_obj, indent=0)
+        print(self.bel_relation)
+        self.bel_object.print_tree(ast_obj, indent=0)
+
 
 ###################
 # Function object #
@@ -150,6 +157,16 @@ class Function(object):
         return '{}({})'.format(self.name, arg_string)
 
     __repr__ = __str__
+
+    def print_tree(self, ast_obj=None, indent=0):
+        if not ast_obj:
+            ast_obj = self
+        print('\t' * indent + str(self))
+        for arg in self.args:
+            if arg.__class__.__name__ == 'Function':
+                arg.print_tree(arg, indent + 1)
+            else:
+                print('\t' * (indent + 1) + str(arg))
 
 
 #####################
@@ -325,15 +342,15 @@ def add_args_to_compute_obj(our_bel_obj, our_obj, our_obj_args):
 
             tmp_arg_obj = Function(fn, our_bel_obj.spec, parent_function=fn_parent)
 
-        elif 'm_function' in argument:
-            fn = argument.get('m_function', None)
+        elif 'modifier' in argument:
+            fn = argument.get('modifier', None)
             fn_parent = our_obj
-            fn_args = argument.get('m_function_args', [])
+            fn_args = argument.get('modifier_args', [])
 
             tmp_arg_obj = Function(fn, our_bel_obj.spec, parent_function=fn_parent)
 
         elif 'ns_arg' in argument:
-            ns = argument['ns_arg']['nspace']
+            ns = argument['ns_arg']['ns']
             nsv = argument['ns_arg']['ns_value']
             ns_parent = our_obj
 

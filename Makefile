@@ -28,6 +28,14 @@ deploy-patch:
 	${deploy_commands}
 
 
+.PHONY: update_ebnf
+update_ebnf:
+	./bin/yaml_to_ebnf.py
+
+.PHONY: update_parsers
+update_parsers: update_ebnf_files
+	./bin/ebnf_to_parsers.py
+
 
 .PHONY: list  # ensures list is mis-identified with a file of the same name
 list:

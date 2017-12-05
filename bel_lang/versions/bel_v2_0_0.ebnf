@@ -6,7 +6,7 @@
 ##############
 
 # BEL VERSION: 2.0.0
-# EBNF CREATION TIMESTAMP: November 14, 2017 - 03:53:57PM
+# EBNF CREATION TIMESTAMP: December 04, 2017 - 04:32:38PM
 
 #########################
 #  GRAMMAR DEFINITIONS  #
@@ -22,7 +22,7 @@ enclosed_statement = function_open bel_statement:bel_statement function_close ;
 
 function = function:funcs function_open function_args:f_args function_close ;
 funcs =
-    'cellSurfaceExpression' | 'compositeAbundance' | 'biologicalProcess' | 'microRNAAbundance' | 'complexAbundance' | 'proteinAbundance' | 'geneAbundance' | 'translocation' | 'cellSecretion' | 'rnaAbundance' | 'degradation' | 'abundance' | 'pathology' | 'composite' | 'reaction' | 'activity' | 'complex' | 'path' | 'list' | 'tloc' | 'surf' | 'rxn' | 'act' | 'deg' | 'sec' | 'bp' | 'r' | 'g' | 'a' | 'm' | 'p' ;
+    'cellSurfaceExpression' | 'compositeAbundance' | 'biologicalProcess' | 'microRNAAbundance' | 'complexAbundance' | 'proteinAbundance' | 'cellSecretion' | 'geneAbundance' | 'translocation' | 'rnaAbundance' | 'degradation' | 'abundance' | 'composite' | 'pathology' | 'activity' | 'reaction' | 'complex' | 'surf' | 'list' | 'list' | 'path' | 'tloc' | 'act' | 'sec' | 'deg' | 'rxn' | 'bp' | 'a' | 'g' | 'm' | 'p' | 'r' ;
 
 f_args = ','.{(function | modifier_function | namespace_arg | string_arg)}* ;
 
@@ -30,7 +30,7 @@ f_args = ','.{(function | modifier_function | namespace_arg | string_arg)}* ;
 
 modifier_function = modifier:m_funcs function_open modifier_args:m_args function_close ;
 m_funcs =
-    'proteinModification' | 'molecularActivity' | 'reactants' | 'products' | 'fragment' | 'location' | 'variant' | 'fromLoc' | 'fusion' | 'toLoc' | 'frag' | 'pmod' | 'fus' | 'loc' | 'var' | 'ma' ;
+    'proteinModification' | 'molecularActivity' | 'reactants' | 'reactants' | 'fragment' | 'location' | 'products' | 'products' | 'fromLoc' | 'fromLoc' | 'variant' | 'fusion' | 'toLoc' | 'toLoc' | 'frag' | 'pmod' | 'fus' | 'loc' | 'var' | 'ma' ;
 
 m_args = ','.{(function | namespace_arg | string_arg)}* ;
 
@@ -38,7 +38,7 @@ m_args = ','.{(function | namespace_arg | string_arg)}* ;
 
 relation = relations ;
 relations =
-    'prognosticBiomarkerFor' | 'positiveCorrelation' | 'negativeCorrelation' | 'rateLimitingStepOf' | 'directlyIncreases' | 'directlyDecreases' | 'causesNoChange' | 'transcribedTo' | 'hasComponents' | 'biomarkerFor' | 'subProcessOf' | 'translatedTo' | 'hasComponent' | 'association' | 'orthologous' | 'hasMembers' | 'decreases' | 'analogous' | 'regulates' | 'increases' | 'hasMember' | 'pos' | 'reg' | 'neg' | 'cnc' | 'isA' | ':>' | '=>' | '>>' | '-|' | '->' | '--' | '=|' ;
+    'prognosticBiomarkerFor' | 'prognosticBiomarkerFor' | 'negativeCorrelation' | 'positiveCorrelation' | 'rateLimitingStepOf' | 'rateLimitingStepOf' | 'directlyDecreases' | 'directlyIncreases' | 'causesNoChange' | 'hasComponents' | 'hasComponents' | 'transcribedTo' | 'biomarkerFor' | 'biomarkerFor' | 'hasComponent' | 'hasComponent' | 'subProcessOf' | 'subProcessOf' | 'translatedTo' | 'association' | 'orthologous' | 'orthologous' | 'hasMembers' | 'hasMembers' | 'analogous' | 'analogous' | 'decreases' | 'hasMember' | 'hasMember' | 'increases' | 'regulates' | 'cnc' | 'isA' | 'isA' | 'neg' | 'pos' | 'reg' | '--' | '-|' | '=|' | '=>' | '->' | ':>' | '>>' ;
 
 ##### MISCELLANEOUS #####
 
@@ -49,11 +49,12 @@ string_arg = str_arg:full_string ;
 full_string = (quoted_string | string) ;
 
 
+
 # quoted_string: Matches like any string but requires it to be in quotation marks.
 quoted_string = /\"(?:[^"\\]|\\.)*\"/ ;
 
-# string: Matches any letter, digit or underscore once or more.
-string = /\w+/ ;
+# string: Matches any char other than space, comma or ')'
+string = /[^\s\),]+/ ;
 
 # ns_string: Matches any capital letter or digit.
 ns_string = /[A-Z0-9]+/ ;

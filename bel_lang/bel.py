@@ -9,7 +9,8 @@ import bel_lang.ast as bel_lang_ast
 import bel_lang.exceptions as bel_ex
 import bel_lang.semantics as semantics
 import bel_lang.computed_edges as computed_edges
-from bel_lang.defaults import defaults
+
+from bel_lang.Config import config
 
 import logging
 log = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class BEL(object):
     To convert BEL Statement to BEL Edges:
 
         statement = "p(HGNC:AKT1) increases p(HGNC:EGF)"
-        bel_obj = bel_lang.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
+        bel_obj = bel_lang.BEL('2.0.0', 'https://api.bel.bio/v1')  # can get default version and endpoint from belbio_conf.yml file as well
         bel_obj.parse(statement)  # Adds ast to bel_obj
         bel_obj.orthologize('TAX:10090')  # Run orthologize before canonicalize if needed, updates bel_obj.ast and returns self
         bel_obj.canonicalize()  # updates bel_obj.ast and returns self
@@ -37,26 +38,33 @@ class BEL(object):
 
     """
 
-    # TODO - don't provide defaults - was a bad idea
-
-    def __init__(self, version: str = defaults['bel_version'], endpoint: str = defaults['belapi_endpoint']) -> None:
+    def __init__(self, version: str = None, endpoint: str = None) -> None:
         """Initialize BEL object used for validating/processing/etc BEL statements
 
         Args:
-            version (str): BEL Version, defaults to bel_lang.defaults.defaults['bel_version']
-            endpoint (str): BEL API endpoint,  defaults to bel_lang.defaults.defaults['belapi_endpoint']
+            version (str): BEL Version, defaults to config['bel_lang']['default_bel_version']
+            endpoint (str): BEL API endpoint,  defaults to config['bel_api']['servers']['api_url']
         """
 
         bel_versions = bel_specification.get_bel_versions()
 
         # use bel_utils._default_to_version to check if valid version, and if it exists or not
-        self.version = bel_utils._default_to_version(version, bel_versions)
+        if not version:
+            self.version = config['bel_lang']['default_bel_version']
+        else:
+            self.version = version
 
-        if self.version == '':
+        # TODO WSH - need to review version matching before deploying -- see tests
+        # self.version = bel_utils._default_to_version(version, bel_versions)
+
+        if self.version not in bel_versions:
             log.error('Cannot continue with invalid version. Exiting.')
             sys.exit()
 
-        self.endpoint = endpoint
+        if not endpoint:
+            self.endpoint = config['bel_api']['servers']['api_url']
+        else:
+            self.endpoint = endpoint
 
         # Validation error/warning messages
         # List[Tuple[str, str]], e.g. [('ERROR', 'this is an error msg'), ('WARNING', 'this is a warning'), ]

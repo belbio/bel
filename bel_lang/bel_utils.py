@@ -6,6 +6,7 @@ import yaml
 import requests
 import sys
 from typing import Mapping, List, TYPE_CHECKING
+import functools
 
 from bel_lang.ast import BELAst, NSArg, Function
 from bel_lang.Config import config
@@ -17,7 +18,22 @@ if TYPE_CHECKING:  # to allow type checking for a module that would be a circula
     import bel_lang.bel
 
 
+class Memoize:
+
+    def __init__(self, fn):
+        self.fn = fn
+        self.memo = {}
+
+    def __call__(self, *args, **kwargs):
+        if args not in self.memo:
+            self.memo[args] = self.fn(*args, **kwargs)
+        log.info(f'Using memo value {self.memo[args]}')
+        return self.memo[args]
+
+
 # TODO - normalize convert_namespaces_{str|ast} - too much duplicate code - not very elegant
+# @Memoize
+@functools.lru_cache(maxsize=500)
 def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets: Mapping[str, List[str]] = None, canonicalize: bool = False, decanonicalize: bool = False) -> str:
     """Convert namespace in string
 
@@ -69,7 +85,10 @@ def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets:
             if r.status_code == 200:
                 updated_term = r.json().get('term_id', match)
                 bel_str = bel_str.replace(match, updated_term)
-
+            if match != updated_term:
+                log.info(f'convert_namespaces_str Term: {match} New: {updated_term}')
+            else:
+                log.debug(f'convert_namespaces_str Term: {match} New: {updated_term}')
         except requests.exceptions.Timeout:
             log.error(f'Request timeout occurred for {request_url} in bel_utils.convert_namespaces_str')
 

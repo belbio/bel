@@ -1,9 +1,9 @@
 import bel_lang
-from bel_lang.defaults import defaults
+from bel_lang.Config import config
 
-bo = bel_lang.BEL(defaults['bel_version'], defaults['belapi_endpoint'])
+bo = bel_lang.bel.BEL(config['bel_lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
-SPECIFIED_VERSION_UNDERLINED = defaults['bel_version'].replace('.', '_')
+SPECIFIED_VERSION_UNDERLINED = config['bel_lang']['default_bel_version']
 
 #######################
 # SEMANTIC TEST CASES #
