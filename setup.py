@@ -16,7 +16,7 @@ setup(
     },
     install_requires=[
         'click==6.7',
-        'TatSu==4.2.2',
+        'TatSu==4.2.5',
         'PyYAML==3.12',
         'requests==2.18.4',
     ],
