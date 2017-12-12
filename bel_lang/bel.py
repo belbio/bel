@@ -361,4 +361,52 @@ class BEL(object):
         else:
             return [relation for relation in self.spec['relations']]
 
+    def to_string(self, fmt: str = 'medium') -> str:
+        """Convert AST object to string
+
+        Args:
+            fmt (str): short, medium, long formatted BEL statements
+                short = short function and short relation format
+                medium = short function and long relation format
+                long = long function and long relation format
+
+        Returns:
+            str: string version of BEL AST
+        """
+
+        if self.ast:
+            return self.ast.to_string(ast_obj=self.ast, fmt=fmt)
+        else:
+            return ''
+
+    def to_triple(self, fmt: str = 'medium') -> dict:
+        """Convert AST object to BEL triple
+
+        Args:
+            fmt (str): short, medium, long formatted BEL statements
+                short = short function and short relation format
+                medium = short function and long relation format
+                long = long function and long relation format
+
+        Returns:
+            dict: {'subject': <subject>, 'relation': <relations>, 'object': <object>}
+        """
+
+        if self.ast:
+            return self.ast.to_components(ast_obj=self.ast, fmt=fmt)
+        else:
+            return {}
+
+    def print_tree(self) -> str:
+        """Convert AST object to tree view of BEL AST
+
+        Returns:
+            printed tree of BEL AST
+        """
+
+        if self.ast:
+            return self.ast.print_tree(ast_obj=self.ast)
+        else:
+            return ''
+
 

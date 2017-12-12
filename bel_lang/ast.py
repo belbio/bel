@@ -25,7 +25,7 @@ class BELAst(object):
         self.spec = spec  # bel specification dictionary
         self.args = [bel_subject, bel_relation, bel_object]
 
-    def to_string(self, fmt: str = 'medium') -> str:
+    def to_string(self, ast_obj=None, fmt: str = 'medium') -> str:
         """Convert AST object to string
 
         Args:
@@ -37,19 +37,43 @@ class BELAst(object):
         Returns:
             str: string version of BEL AST
         """
-        if self.bel_subject and self.bel_relation and self.bel_object:
+
+        if not ast_obj:
+            ast_obj = self
+
+        bel_relation = None
+        if self.bel_relation and fmt == 'short':
+            bel_relation = self.spec['relation_to_short'].get(self.bel_relation, None)
+        elif self.bel_relation:
+            bel_relation = self.spec['relation_to_long'].get(self.bel_relation, None)
+
+        if self.bel_subject and bel_relation and self.bel_object:
             if isinstance(self.bel_object, BELAst):
-                return '{} {} ({})'.format(self.bel_subject, self.bel_relation, self.bel_object)
+                return '{} {} ({})'.format(self.bel_subject.to_string(fmt), bel_relation, self.bel_object.to_string(fmt))
             else:
-                return '{} {} {}'.format(self.bel_subject, self.bel_relation, self.bel_object)
+                return '{} {} {}'.format(self.bel_subject.to_string(fmt), bel_relation, self.bel_object.to_string(fmt))
 
         elif self.bel_subject:
-            return '{}'.format(self.bel_subject)
+            return '{}'.format(self.bel_subject.to_string(fmt))
 
         else:
             return ''
 
-    def to_components(self, fmt='medium'):
+    def to_components(self, ast_obj=None, fmt='medium'):
+        """Convert AST object to BEL triple
+
+        Args:
+            fmt (str): short, medium, long formatted BEL statements
+                short = short function and short relation format
+                medium = short function and long relation format
+                long = long function and long relation format
+
+        Returns:
+            dict: {'subject': <subject>, 'relation': <relations>, 'object': <object>}
+        """
+        if not ast_obj:
+            ast_obj = self
+
         if self.bel_subject and self.bel_relation and self.bel_object:
             if fmt == 'short':
                 bel_relation = self.spec['relation_to_short'].get(self.bel_relation, None)
@@ -80,6 +104,12 @@ class BELAst(object):
     __repr__ = __str__
 
     def print_tree(self, ast_obj=None):
+        """Convert AST object to tree view of BEL AST
+
+        Returns:
+            printed tree of BEL AST
+        """
+
         if not ast_obj:
             ast_obj = self
         self.bel_subject.print_tree(ast_obj, indent=0)
