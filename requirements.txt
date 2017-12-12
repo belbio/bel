@@ -4,7 +4,7 @@ appnope==0.1.0
 attrs==17.3.0
 Babel==2.5.1
 -e git+git@github.com:belbio/bel_lang.git@db18c3343ff4d03e9ef0cb603e11bd4067fa6799#egg=bel_lang
-bleach==2.1.1
+bleach==2.1.2
 bumpversion==0.5.3
 certifi==2017.7.27.1
 chardet==3.0.4
