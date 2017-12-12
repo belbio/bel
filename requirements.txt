@@ -3,7 +3,7 @@ apipkg==1.4
 appnope==0.1.0
 attrs==17.3.0
 Babel==2.5.1
--e git+git@github.com:belbio/bel_lang.git@db18c3343ff4d03e9ef0cb603e11bd4067fa6799#egg=bel_lang
+-e git+git@github.com:belbio/bel_lang.git@c75541fb700a02c55e115e8ef066d0ec27e49bac#egg=bel_lang
 bleach==2.1.1
 bumpversion==0.5.3
 certifi==2017.7.27.1
@@ -15,6 +15,7 @@ decorator==4.1.2
 docutils==0.14
 entrypoints==0.2.3
 execnet==1.5.0
+fastcache==1.0.2
 html5lib==1.0b10
 idna==2.6
 imagesize==0.7.1

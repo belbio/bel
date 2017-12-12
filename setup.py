@@ -19,6 +19,7 @@ setup(
         'TatSu==4.2.2',
         'PyYAML==3.12',
         'requests==2.18.4',
+        'fastcache>=1.0.2',
     ],
     entry_points={
         'console_scripts': [
