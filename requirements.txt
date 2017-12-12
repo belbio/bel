@@ -3,8 +3,8 @@ apipkg==1.4
 appnope==0.1.0
 attrs==17.3.0
 Babel==2.5.1
--e git+git@github.com:belbio/bel_lang.git@c75541fb700a02c55e115e8ef066d0ec27e49bac#egg=bel_lang
-bleach==2.1.1
+-e git+git@github.com:belbio/bel_lang.git@db18c3343ff4d03e9ef0cb603e11bd4067fa6799#egg=bel_lang
+bleach==2.1.2
 bumpversion==0.5.3
 certifi==2017.7.27.1
 chardet==3.0.4
@@ -16,10 +16,10 @@ docutils==0.14
 entrypoints==0.2.3
 execnet==1.5.0
 fastcache==1.0.2
-html5lib==1.0b10
+html5lib==1.0.1
 idna==2.6
 imagesize==0.7.1
-ipykernel==4.6.1
+ipykernel==4.7.0
 ipython==6.2.1
 ipython-genutils==0.2.0
 ipywidgets==7.0.5
@@ -33,14 +33,14 @@ jupyter-core==4.4.0
 MarkupSafe==1.0
 matplotlib==2.1.0
 matplotlib-venn==0.11.5
-mistune==0.8.1
-mypy==0.540
+mistune==0.8.3
+mypy==0.550
 nbconvert==5.3.1
 nbformat==4.4.0
-notebook==5.2.1
+notebook==5.2.2
 numpy==1.13.3
 pandocfilters==1.4.2
-parso==0.1.0
+parso==0.1.1
 pep8==1.7.1
 pexpect==4.3.0
 pickleshare==0.7.4
@@ -51,7 +51,7 @@ py==1.5.2
 pyflakes==1.6.0
 Pygments==2.2.0
 pyparsing==2.2.0
-pytest==3.3.0
+pytest==3.3.1
 pytest-cache==1.0
 pytest-cov==2.5.1
 pytest-flakes==2.0.0
@@ -72,9 +72,9 @@ Sphinx==1.6.5
 sphinx-autodoc-typehints==1.2.3
 sphinx-rtd-theme==0.2.4
 sphinxcontrib-websupport==1.0.1
-TatSu==4.2.2
+TatSu==4.2.5
 termcolor==1.1.0
-terminado==0.7
+terminado==0.8.1
 testpath==0.3.1
 tornado==4.5.2
 traitlets==4.3.2
