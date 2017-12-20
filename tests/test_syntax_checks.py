@@ -1,5 +1,5 @@
 import bel_lang
-from bel_lang.Config import config
+from bel_db.Config import config
 
 bo = bel_lang.bel.BEL(config['bel_lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 

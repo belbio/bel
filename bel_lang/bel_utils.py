@@ -7,9 +7,10 @@ import requests
 import sys
 from typing import Mapping, List, TYPE_CHECKING
 import functools
+import fastcache
 
 from bel_lang.ast import BELAst, NSArg, Function
-from bel_lang.Config import config
+from bel_db.Config import config
 
 import logging
 log = logging.getLogger(__name__)
@@ -18,22 +19,18 @@ if TYPE_CHECKING:  # to allow type checking for a module that would be a circula
     import bel_lang.bel
 
 
-class Memoize:
-
-    def __init__(self, fn):
-        self.fn = fn
-        self.memo = {}
-
-    def __call__(self, *args, **kwargs):
-        if args not in self.memo:
-            self.memo[args] = self.fn(*args, **kwargs)
-        log.info(f'Using memo value {self.memo[args]}')
-        return self.memo[args]
-
-
 # TODO - normalize convert_namespaces_{str|ast} - too much duplicate code - not very elegant
-# @Memoize
-@functools.lru_cache(maxsize=500)
+
+@fastcache.lru_cache(maxsize=500, unhashable="ignore")
+def get_url(url, params=None, timeout=5):
+
+    try:
+        r = requests.get(url)
+        return r
+    except requests.exceptions.Timeout:
+        return None
+
+
 def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets: Mapping[str, List[str]] = None, canonicalize: bool = False, decanonicalize: bool = False) -> str:
     """Convert namespace in string
 
@@ -81,7 +78,9 @@ def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets:
 
         request_url = api_url.format(match)
         try:
-            r = requests.get(request_url, params=params, timeout=5)
+            updated_term = ''
+            r = get_url(request_url, params=params)
+
             if r.status_code == 200:
                 updated_term = r.json().get('term_id', match)
                 bel_str = bel_str.replace(match, updated_term)
@@ -116,10 +115,9 @@ def convert_namespaces_ast(ast: 'bel_lang.bel.BEL', endpoint: str, namespace_tar
             if namespace_targets:
                 namespace_targets_str = json.dumps(namespace_targets)
                 params = {'namespace_targets': namespace_targets_str}
-                r = requests.get(request_url, params=params, timeout=5)
+                r = get_url(request_url, params=params)
             else:
-                r = requests.get(request_url, timeout=5)
-
+                r = get_url(request_url)
             if r.status_code == 200:
                 updated_id = r.json().get('term_id', given_term_id)
                 ns, value = updated_id.split(':')
@@ -155,7 +153,8 @@ def orthologize(ast, bo: 'bel_lang.bel.BEL', species_id: str) -> 'bel_lang.bel.B
     if isinstance(ast, NSArg):
         given_term_id = '{}:{}'.format(ast.namespace, ast.value)
         orthologize_req_url = f'{bo.endpoint}/orthologs/{given_term_id}/{species_id}'
-        r = requests.get(orthologize_req_url)
+
+        r = get_url(orthologize_req_url)
 
         if r.status_code == 200:
             orthologs = r.json().get('orthologs')

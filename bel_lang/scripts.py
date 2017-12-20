@@ -1,8 +1,8 @@
 import click
 import json
 
-import bel_lang.Config
-from bel_lang.Config import config
+import bel_db.Config
+from bel_db.Config import config
 from bel_lang.bel import BEL
 
 import logging
@@ -57,7 +57,7 @@ def validate(ctx, statement, version, api, config_fn):
     """Parse statement and validate """
 
     if config_fn:
-        config = bel_lang.Config.merge_config(ctx.config, override_config_fn=config_fn)
+        config = bel_db.Config.merge_config(ctx.config, override_config_fn=config_fn)
     else:
         config = ctx.config
 
@@ -104,7 +104,7 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
     """
 
     if config_fn:
-        config = bel_lang.Config.merge_config(ctx.config, override_config_fn=config_fn)
+        config = bel_db.Config.merge_config(ctx.config, override_config_fn=config_fn)
     else:
         config = ctx.config
 
@@ -153,7 +153,7 @@ def orthologize(ctx, statement, species_id, version, api, config_fn):
     """
 
     if config_fn:
-        config = bel_lang.Config.merge_config(ctx.config, override_config_fn=config_fn)
+        config = bel_db.Config.merge_config(ctx.config, override_config_fn=config_fn)
     else:
         config = ctx.config
 
@@ -196,7 +196,7 @@ def edges(ctx, statement, rules, species_id, namespace_targets, version, api, co
     """Create BEL Edges"""
 
     if config_fn:
-        config = bel_lang.Config.merge_config(ctx.config, override_config_fn=config_fn)
+        config = bel_db.Config.merge_config(ctx.config, override_config_fn=config_fn)
     else:
         config = ctx.config
 

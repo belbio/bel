@@ -669,12 +669,12 @@ function_signatures:
         values:
         - location
         - fragment
-        - proteinModification
       - multiple: true
         optional: true
         type: Modifier
         values:
         - variant
+        - proteinModification
     - arguments:
       - entity_types:
         - Protein
@@ -1006,7 +1006,7 @@ computed_signatures:
   #  or object in the graph database that is the EdgeStore. Modifier functions
   #  will NOT be exposed as a componentOf.
   component_of:
-    subject: trigger_value
+    subject: trigger_value`
     relation: componentOf
     object: parent_function
     trigger_type:

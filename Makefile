@@ -1,5 +1,9 @@
 # Run make help to find out what the commands are
 
+.PHONY: deploy-major deploy-minor deploy-patch update_ebnf update_parsers
+.PHONY: list help
+
+
 define deploy_commands
 
     @echo "Update CHANGELOG"
@@ -9,48 +13,39 @@ define deploy_commands
 	git push --tags
 endef
 
-.PHONY: deploy-major
-deploy-major:
+
+deploy-major: update_parsers
 	@echo Deploying major update
 	bumpversion major
 	@${deploy_commands}
 
-.PHONY: deploy-minor
-deploy-minor:
+deploy-minor: update_parsers
 	@echo Deploying minor update
 	bumpversion minor
 	@${deploy_commands}
 
-.PHONY: deploy-patch
-deploy-patch:
+deploy-patch: update_parsers
 	@echo Deploying patch update
 	bumpversion --allow-dirty patch
 	${deploy_commands}
 
 
-.PHONY: update_ebnf
 update_ebnf:
 	./bin/yaml_to_ebnf.py
 
-.PHONY: update_parsers
-update_parsers: update_ebnf_files
+
+update_parsers: update_ebnf
 	./bin/ebnf_to_parsers.py
 
 
-.PHONY: list  # ensures list is mis-identified with a file of the same name
 list:
 	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 
-.PHONY: help
 help:
 	@echo "List of commands"
 	@echo "   deploy-{major|minor|patch} -- bump version and tag"
 	@echo "   help -- This listing "
 	@echo "   list -- Automated listing of all targets"
-
-.PHONY: check
-check:
-	@echo $(HOME)
 
 

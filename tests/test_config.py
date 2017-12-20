@@ -1,4 +1,4 @@
-import bel_lang.Config as Config
+import bel_db.Config as Config
 
 
 def test_config():

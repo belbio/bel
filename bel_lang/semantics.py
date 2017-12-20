@@ -5,6 +5,7 @@ import requests
 import re
 
 from bel_lang.ast import BELAst, Function, NSArg, StrArg
+import bel_lang.bel_utils as bu
 
 import logging
 log = logging.getLogger(__name__)
@@ -225,7 +226,9 @@ def validate_arg_values(ast, bo: 'bel_lang.bel.BEL') -> 'bel_lang.bel.BEL':
 
             try:
                 request_url = bo.endpoint + '/terms/{}'.format(term_id)
-                r = requests.get(request_url, timeout=5)  # TODO add filter for entity_types
+                r = bu.get_url(request_url)
+
+                # r = requests.get(request_url, timeout=5)  # TODO add filter for entity_types
 
                 # Term not found in BEL.bio API endpoint
                 if r.status_code != 200:
