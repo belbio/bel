@@ -3,12 +3,13 @@ apipkg==1.4
 appnope==0.1.0
 attrs==17.3.0
 Babel==2.5.1
--e git+git@github.com:belbio/bel_lang.git@db18c3343ff4d03e9ef0cb603e11bd4067fa6799#egg=bel_lang
+-e git+git@github.com:belbio/bel_lang.git@36060341f5c9e28fe79098da1c1693a90a4c24d1#egg=bel_lang
 bleach==2.1.2
 bumpversion==0.5.3
 certifi==2017.7.27.1
 chardet==3.0.4
 click==6.7
+colorama==0.3.9
 coverage==4.4.1
 cycler==0.10.0
 decorator==4.1.2
@@ -46,6 +47,7 @@ pexpect==4.3.0
 pickleshare==0.7.4
 pluggy==0.6.0
 prompt-toolkit==1.0.15
+psutil==5.4.2
 ptyprocess==0.5.2
 py==1.5.2
 pyflakes==1.6.0
@@ -60,6 +62,7 @@ pytest-pep8==1.0.6
 pytest-sugar==0.9.0
 python-dateutil==2.6.1
 pytz==2017.3
+pywinpty==0.5.1
 PyYAML==3.12
 pyzmq==16.0.3
 qtconsole==4.3.1

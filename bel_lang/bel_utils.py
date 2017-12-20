@@ -275,28 +275,32 @@ def _default_to_version(version, available_versions):
 
     if not available_versions:
         log.error('No versions available.')
-        return ''
+        return None
+
+    if any(char.isalpha() for char in version):
+        log.error('Invalid version number entered. Examples: \'2\', \'3.1\', \'3.2.6\'.')
+        return None
 
     version_semantic_regex = r'(\d+)(?:\.(\d+))?(?:\.(\d+))?'
     our_match = re.match(version_semantic_regex, version)
 
     if our_match:
-        major = int(our_match.group(1)) if our_match.group(1) else 0
-        minor = int(our_match.group(2)) if our_match.group(2) else 0
-        patch = int(our_match.group(3)) if our_match.group(3) else 0
-        formatted_version = '{}.{}.{}'.format(major, minor, patch)
+        wanted_major = int(our_match.group(1)) if our_match.group(1) else 'x'
+        wanted_minor = int(our_match.group(2)) if our_match.group(2) else 'x'
+        wanted_patch = int(our_match.group(3)) if our_match.group(3) else 'x'
+        formatted_version = '{}.{}.{}'.format(wanted_major, wanted_minor, wanted_patch)
     else:
         log.error('Invalid version number entered. Examples: \'2\', \'3.1\', \'3.2.6\'.')
-        return ''
+        return None
 
     if formatted_version in available_versions:
         return formatted_version
 
-    # now we need to find closest available version
+    # now we need to find closest available version that is EQUAL OR GREATER
 
     available_versions.sort(key=lambda s: list(map(int, s.split('.'))))
 
-    v = None
+    best_choice = None
 
     for v in available_versions:
         v_split = v.split('.')
@@ -304,14 +308,21 @@ def _default_to_version(version, available_versions):
         v_min = int(v_split[1])
         v_pat = int(v_split[2])
 
-        if v_maj > major or (v_maj == major and v_min > minor) or (v_maj == major and v_min == minor and v_pat > patch):
-            break
-        else:
+        if wanted_major == v_maj and wanted_minor == v_min and wanted_patch == v_pat:
+            return v  # exact version found. return.
+        elif wanted_major == v_maj and wanted_minor == v_min and wanted_patch == 'x':
+            best_choice = v  # continue to see if higher patch number available
+            continue
+        elif wanted_major == v_maj and wanted_minor == 'x' and wanted_patch == 'x':
+            best_choice = v  # continue to see if higher minor/patch number available
             continue
 
-    log.error('Version {} is not available in bel_lang library package.\nDefaulting to version {}.'.format(version, v))
+    if best_choice is not None:
+        log.error('Version {} not available in library. Defaulting to {}.'.format(version, best_choice))
+    else:
+        log.error('Version {} not available in library.'.format(version))
 
-    return v
+    return best_choice
 
 
 class MyDumper(yaml.Dumper):
