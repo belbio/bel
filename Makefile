@@ -3,9 +3,10 @@
 .PHONY: deploy-major deploy-minor deploy-patch update_ebnf update_parsers
 .PHONY: list help
 
+VERSIONS_DIRECTORY = bel_lang/versions
+YAMLS=$(wildcard $(VERSIONS_DIRECTORY)/*.yaml)
 
 define deploy_commands
-
     @echo "Update CHANGELOG"
     @echo "Create Github release and attach the gem file"
 
@@ -30,9 +31,11 @@ deploy-patch: update_parsers
 	${deploy_commands}
 
 
-update_ebnf:
-	./bin/yaml_to_ebnf.py
 
+update_ebnf: $(YAMLS)
+
+%.yaml: %.ebnf
+	python bin/yaml_to_ebnf.py --belspec_fn "$@" --ebnf_fn "$<"
 
 update_parsers: update_ebnf
 	./bin/ebnf_to_parsers.py

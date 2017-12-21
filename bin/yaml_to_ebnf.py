@@ -27,6 +27,8 @@ tmpl_fn = 'bel.ebnf.j2'
 
 def render_ebnf(tmpl_fn, bel_version, created_time, bel_spec):
 
+    specs = get_specification(bel_version)
+
     tmpl_dir = os.path.dirname(tmpl_fn)
     tmpl_basename = os.path.basename(tmpl_fn)
 
@@ -36,9 +38,9 @@ def render_ebnf(tmpl_fn, bel_version, created_time, bel_spec):
     template = env.get_template(tmpl_basename)  # get the template
 
     # replace template placeholders with appropriate variables
-    ebnf = template.render(functions=sorted(bel_spec['function_list'], key=len, reverse=True),
-                           m_functions=sorted(bel_spec['modifier_list'], key=len, reverse=True),
-                           relations=sorted(bel_spec['relation_list'], key=len, reverse=True),
+    ebnf = template.render(functions=sorted(specs['function_list'], key=len, reverse=True),
+                           m_functions=sorted(specs['modifier_list'], key=len, reverse=True),
+                           relations=sorted(specs['relation_list'], key=len, reverse=True),
                            bel_version=bel_version,
                            bel_major_version=bel_major_version,
                            created_time=created_time)
@@ -77,6 +79,7 @@ def main(belspec_fn, ebnf_fn, ebnf_tmpl_fn):
             print(f'EBNF output file name is: {ebnf_fn}')
 
         ebnf = render_ebnf(ebnf_tmpl_fn, bel_version, created_time, belspec_fn)
+        print(ebnf_fn)
         save_ebnf(ebnf_fn, ebnf)
 
     else:

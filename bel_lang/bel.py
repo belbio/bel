@@ -10,7 +10,7 @@ import bel_lang.exceptions as bel_ex
 import bel_lang.semantics as semantics
 import bel_lang.computed_edges as computed_edges
 
-from bel_db.Config import config
+from bel_db.Config import config/
 
 import logging
 log = logging.getLogger(__name__)
