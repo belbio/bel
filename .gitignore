@@ -6,12 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
-# Compiled python modules.
+# Compiled python modules
 *.pyc
 
 # Setuptools distribution folder.
 /dist/
-
 # Distribution / packaging
 .Python
 env/
@@ -30,6 +29,9 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# PyCharm settings
+.idea
 
 # PyInstaller
 # Usually these files are written by a python script from a template
@@ -98,6 +100,7 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+venv*
 
 # Spyder project settings
 .spyderproject
