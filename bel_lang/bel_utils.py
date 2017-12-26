@@ -10,7 +10,7 @@ import functools
 import fastcache
 
 from bel_lang.ast import BELAst, NSArg, Function
-from bel_db.Config import config
+# from bel_db.Config import config
 
 import logging
 log = logging.getLogger(__name__)

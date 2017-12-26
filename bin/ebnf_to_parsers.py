@@ -25,10 +25,15 @@ def main(ebnf_fn, parser_fn):
     If you do not specify any options, then this will process all of the BEL EBNF
     files in bel_lang/versions into EBNF files
     """
+    if ebnf_fn:
+        files = glob.glob(f'{root_dir}/{ebnf_fn}')
+    else:
+        files = glob.glob(f'{root_dir}/bel_lang/versions/bel_v*ebnf')
 
-    files = glob.glob(f'{root_dir}/bel_lang/versions/bel_v*ebnf')
     for fn in files:
-        parser_fn = fn.replace('bel_v', 'parser_v').replace('ebnf', 'py')
+        if parser_fn is None:
+            parser_fn = fn.replace('bel_v', 'parser_v').replace('ebnf', 'py')
+
         with open(fn, 'r') as f:
             grammar = f.read()
 
