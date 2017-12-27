@@ -10,7 +10,6 @@ YAMLS=$(wildcard $(VDIR)/*.yaml)
 EBNFS = $(patsubst $(VDIR)/%.yaml, $(VDIR)/%.ebnf, $(YAMLS))
 PARSERS = $(patsubst $(VDIR)/bel%.yaml, $(VDIR)/parser%.py, $(YAMLS))
 
-define deploy_commands
     @echo "Update CHANGELOG"
     @echo "Create Github release and attach the gem file"
 
@@ -38,6 +37,7 @@ deploy-patch: update_parsers
 # set update_ebnf as command dependent on all EBNFs to be made from YAMLs
 update_ebnf: $(EBNFS)
 	@echo Updating all EBNF files
+	spec_yaml2json
 
 # each EBNF is dependent upon the corresponding YAML
 $(VDIR)/%.ebnf: $(VDIR)/%.yaml
