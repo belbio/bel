@@ -10,6 +10,7 @@ YAMLS=$(wildcard $(VDIR)/*.yaml)
 EBNFS = $(patsubst $(VDIR)/%.yaml, $(VDIR)/%.ebnf, $(YAMLS))
 PARSERS = $(patsubst $(VDIR)/bel%.yaml, $(VDIR)/parser%.py, $(YAMLS))
 
+define deploy_commands
     @echo "Update CHANGELOG"
     @echo "Create Github release and attach the gem file"
 
