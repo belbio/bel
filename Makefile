@@ -1,10 +1,11 @@
 # Run make help to find out what the commands are
 
-.PHONY: deploy-major deploy-minor deploy-patch update_ebnf update_parsers
-.PHONY: list help
+.PHONY: deploy_major deploy_minor deploy_patch update_ebnf update_parsers
+.PHONY: tests list help clean_pyc clean_build clean_generated dev_install
+.PHONY: livedocs
 
 # VDIR = directory of versions
-VDIR = bel_lang/versions
+VDIR = bel/lang/versions
 
 YAMLS=$(wildcard $(VDIR)/*.yaml)
 EBNFS = $(patsubst $(VDIR)/%.yaml, $(VDIR)/%.ebnf, $(YAMLS))
@@ -19,26 +20,33 @@ define deploy_commands
 endef
 
 
-deploy-major: update_parsers
+deploy_major: update_parsers
 	@echo Deploying major update
 	bumpversion major
 	@${deploy_commands}
 
-deploy-minor: update_parsers
+deploy_minor: update_parsers
 	@echo Deploying minor update
 	bumpversion minor
 	@${deploy_commands}
 
-deploy-patch: update_parsers
+deploy_patch: update_parsers
 	@echo Deploying patch update
 	bumpversion --allow-dirty patch
 	${deploy_commands}
 
+belspec_json:
+	belspec_yaml2json
+
+clean_generated:
+	rm bel/lang/versions/*.json
+	rm bel/lang/versions/parser*
+	rm bel/lang/versions/*.ebnf
 
 # set update_ebnf as command dependent on all EBNFs to be made from YAMLs
-update_ebnf: $(EBNFS)
-	@echo Updating all EBNF files
-	spec_yaml2json
+#    and create enhanced specification file as JSON
+update_ebnf: belspec_json $(EBNFS)
+	@echo Updating all EBNF files and enhanced BEL Spec JSON files
 
 # each EBNF is dependent upon the corresponding YAML
 $(VDIR)/%.ebnf: $(VDIR)/%.yaml
@@ -53,6 +61,36 @@ update_parsers: $(PARSERS)
 $(VDIR)/parser%.py: $(VDIR)/bel%.ebnf
 	@echo Turning $< into $@
 	python bin/ebnf_to_parsers.py --ebnf_fn "$<"
+
+tests: clean_pyc
+	py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
+
+clean_pyc:
+	find . -name '*.pyc' -exec rm -r -- {} +
+	find . -name '*.pyo' -exec rm -r -- {} +
+	find . -name '__pycache__' -exec rm -r -- {} +
+
+
+clean_build:
+	rm --force --recursive build/
+	rm --force --recursive dist/
+	rm --force --recursive *.egg-info
+
+
+dev_install:
+	python3.6 -m venv .venv --prompt bel
+	.venv/bin/pip install --upgrade pip
+	.venv/bin/pip install --upgrade setuptools
+
+	.venv/bin/pip install -e .
+	.venv/bin/pip install -r requirements.txt
+
+livedocs:
+	cd docs; sphinx-autobuild -q -p 0 --open-browser --delay 5 source build/html
+
+# TODO
+upload: tests
+	twine upload
 
 list:
 	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'

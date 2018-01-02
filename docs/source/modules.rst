@@ -1,7 +1,7 @@
-bel_lang
+bel
 ========
 
 .. toctree::
    :maxdepth: 4
 
-   bel_lang
+   bel

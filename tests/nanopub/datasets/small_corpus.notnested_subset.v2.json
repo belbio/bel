@@ -1,0 +1,3893 @@
+[
+    {
+        "metadata": {
+            "annotations": {
+                "TextLocation": [
+                    "Abstract",
+                    "Results",
+                    "Legend",
+                    "Review"
+                ],
+                "Anatomy": "http://resource.belframework.org/belframework/20150611/annotation/anatomy.belanno",
+                "Cell": "http://resource.belframework.org/belframework/20150611/annotation/cell.belanno",
+                "CellLine": "http://resource.belframework.org/belframework/20150611/annotation/cell-line.belanno",
+                "CellStructure": "http://resource.belframework.org/belframework/20150611/annotation/cell-structure.belanno",
+                "Disease": "http://resource.belframework.org/belframework/20150611/annotation/disease.belanno",
+                "MeSHAnatomy": "http://resource.belframework.org/belframework/20150611/annotation/mesh-anatomy.belanno",
+                "Species": "http://resource.belframework.org/belframework/20150611/annotation/species-taxonomy-id.belanno"
+            },
+            "namespaces": {
+                "CHEBI": "http://resource.belframework.org/belframework/20150611/namespace/chebi.belns",
+                "CHEBIID": "http://resource.belframework.org/belframework/20150611/namespace/chebi-ids.belns",
+                "EGID": "http://resource.belframework.org/belframework/20150611/namespace/entrez-gene-ids.belns",
+                "GOBP": "http://resource.belframework.org/belframework/20150611/namespace/go-biological-process.belns",
+                "HGNC": "http://resource.belframework.org/belframework/20150611/namespace/hgnc-human-genes.belns",
+                "MESHCS": "http://resource.belframework.org/belframework/20150611/namespace/mesh-cellular-structures.belns",
+                "MESHD": "http://resource.belframework.org/belframework/20150611/namespace/mesh-diseases.belns",
+                "MESHPP": "http://resource.belframework.org/belframework/20150611/namespace/mesh-processes.belns",
+                "MGI": "http://resource.belframework.org/belframework/20150611/namespace/mgi-mouse-genes.belns",
+                "RGD": "http://resource.belframework.org/belframework/20150611/namespace/rgd-rat-genes.belns",
+                "SCHEM": "http://resource.belframework.org/belframework/20150611/namespace/selventa-legacy-chemicals.belns",
+                "SCOMP": "http://resource.belframework.org/belframework/20150611/namespace/selventa-named-complexes.belns",
+                "SDIS": "http://resource.belframework.org/belframework/20150611/namespace/selventa-legacy-diseases.belns",
+                "SFAM": "http://resource.belframework.org/belframework/20150611/namespace/selventa-protein-families.belns",
+                "SPID": "http://resource.belframework.org/belframework/20150611/namespace/swissprot-ids.belns"
+            },
+            "BELVersion": "2.0",
+            "Name": "BEL Framework Small Corpus Document",
+            "Description": "Approximately 2000 hand curated statements drawn from 57 PubMeds.",
+            "Version": "20150611",
+            "Copyright": "Copyright (c) 2011-2015, Selventa. All Rights Reserved.",
+            "Authors": "Selventa",
+            "Licenses": "Creative Commons Attribution-Non-Commercial-ShareAlike 3.0 Unported License",
+            "ContactInfo": "support@belframework.org"
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Barry RE",
+                    "Krek W"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "15350900"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:dioxygen)",
+                    "relation": "increases",
+                    "object": "proteinAbundance(HGNC:HIF1A, proteinModification(H, P))"
+                }
+            ],
+            "evidence": "The stabilization of HIF in response to hypoxia involves the inactivation of prolylhydroxylases that modify HIF at specific proline residues in an oxygendependent manner. Proline hydroxylation marks HIF for degradation by the VCB\u2013Cul2 E3 ligase complex (Figure 3 and Box 1).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 3"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "complexAbundance(proteinAbundance(MGI:Akt1), proteinAbundance(MGI:Mapkap1))",
+                    "relation": null,
+                    "object": null
+                }
+            ],
+            "evidence": "As shown in Figures 5E and 5F, SIN1 was able to associate with Akt under normal growth, starvation, or restimulated conditions. Although SIN1 and Akt interacted under starved condition, the SIN1 bound Akt was not phosphorylated on Ser473 (Figure 5E).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "pathology(MESH:Atherosclerosis)",
+                    "relation": "positiveCorrelation",
+                    "object": "biologicalProcess(GO:\"lipid oxidation\")"
+                }
+            ],
+            "evidence": "Oxidation and nitration of macromolecules, such as proteins, DNA and lipids, are prominent in atherosclerotic arteries.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "pathology(MESH:Atherosclerosis)",
+                    "relation": "positiveCorrelation",
+                    "object": "biologicalProcess(GO:\"protein oxidation\")"
+                }
+            ],
+            "evidence": "Oxidation and nitration of macromolecules, such as proteins, DNA and lipids, are prominent in atherosclerotic arteries.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "biologicalProcess(GO:\"response to oxidative stress\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "Arterial cells are highly susceptible to oxidative stress, which can induce both necrosis and apoptosis (programmed cell death) [1,2]",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "biologicalProcess(GO:\"response to oxidative stress\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:necrosis)"
+                }
+            ],
+            "evidence": "Arterial cells are highly susceptible to oxidative stress, which can induce both necrosis and apoptosis (programmed cell death) [1,2]",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(SCHEM:\"Oxidized Low Density Lipoprotein\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "One such risk factor is oxLDL, which exert pro-apoptotic effects on a variety of cell lineages, including endothelial cells and VSMCs, both in cultured cells and in arteries [19\u201326]. Increased formation of oxygen radicals (and other radical species) facilitates LDL oxidation and influences oxidation-sensitive mechanisms [15].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(SCHEM:\"Oxidized Low Density Lipoprotein\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "One such risk factor is oxLDL, which exert pro-apoptotic effects on a variety of cell lineages, including endothelial cells and VSMCs, both in cultured cells and in arteries [19\u201326]. Increased formation of oxygen radicals (and other radical species) facilitates LDL oxidation and influences oxidation-sensitive mechanisms [15].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:\"oxygen radical\")",
+                    "relation": "increases",
+                    "object": "abundance(SCHEM:\"Oxidized Low Density Lipoprotein\")"
+                }
+            ],
+            "evidence": "One such risk factor is oxLDL, which exert pro-apoptotic effects on a variety of cell lineages, including endothelial cells and VSMCs, both in cultured cells and in arteries [19\u201326]. Increased formation of oxygen radicals (and other radical species) facilitates LDL oxidation and influences oxidation-sensitive mechanisms [15].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:\"reactive oxygen species\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "Not surprisingly, high concentrations of exogenous reactive oxygen species (ROS), generated by enzymatic reactions or by radiation, also stimulate the apoptosis of endothelial cells in vitro [29\u201331].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:\"angiotensin II\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "The peptide hormone angiotensin II and pro-inflammatory cytokines also trigger the apoptotic program in endothelial cells [33,34].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "biologicalProcess(GO:aging)",
+                    "relation": "positiveCorrelation",
+                    "object": "pathology(MESH:\"Plaque, Atherosclerotic\")"
+                }
+            ],
+            "evidence": "Aging, one of the major predictors for atherosclerotic lesion formation, increases the sensitivity of endothelial cells to apoptosis induced by in vitro and in vivo stimuli [35\u201337].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "biologicalProcess(GO:aging)",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "Aging, one of the major predictors for atherosclerotic lesion formation, increases the sensitivity of endothelial cells to apoptosis induced by in vitro and in vivo stimuli [35\u201337].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "biologicalProcess(GO:\"response to fluid shear stress\")",
+                    "relation": "increases",
+                    "object": "rnaAbundance(HGNC:NOS3)"
+                }
+            ],
+            "evidence": "Shear stress enhances expression of the gene encoding the endothelial nitric oxide synthase (eNOS) and further stimulates its enzymatic activity, leading to physiologic low concentrations of nitric oxide (NO) within endothelial cells [44\u201346]. This continuous generation of NO prevents the apoptosis of endothelial cells, thereby protecting the endothelial monolayer from injury [47,48].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "biologicalProcess(GO:\"response to fluid shear stress\")",
+                    "relation": "increases",
+                    "object": "activity(proteinAbundance(HGNC:NOS3), molecularActivity(DEFAULT:cat))"
+                }
+            ],
+            "evidence": "Shear stress enhances expression of the gene encoding the endothelial nitric oxide synthase (eNOS) and further stimulates its enzymatic activity, leading to physiologic low concentrations of nitric oxide (NO) within endothelial cells [44\u201346]. This continuous generation of NO prevents the apoptosis of endothelial cells, thereby protecting the endothelial monolayer from injury [47,48].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:NOS3), molecularActivity(DEFAULT:cat))",
+                    "relation": "directlyIncreases",
+                    "object": "abundance(CHEBI:\"nitric oxide\")"
+                }
+            ],
+            "evidence": "Shear stress enhances expression of the gene encoding the endothelial nitric oxide synthase (eNOS) and further stimulates its enzymatic activity, leading to physiologic low concentrations of nitric oxide (NO) within endothelial cells [44\u201346]. This continuous generation of NO prevents the apoptosis of endothelial cells, thereby protecting the endothelial monolayer from injury [47,48].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:\"nitric oxide\")",
+                    "relation": "decreases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "Shear stress enhances expression of the gene encoding the endothelial nitric oxide synthase (eNOS) and further stimulates its enzymatic activity, leading to physiologic low concentrations of nitric oxide (NO) within endothelial cells [44\u201346]. This continuous generation of NO prevents the apoptosis of endothelial cells, thereby protecting the endothelial monolayer from injury [47,48].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "artery"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:\"L-arginine\")",
+                    "relation": "decreases",
+                    "object": "pathology(MESH:Atherosclerosis)"
+                }
+            ],
+            "evidence": "More importantly, intervention with L-arginine has induced beneficial effects on atherosclerosis in experimental and human studies [46,49].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(SCHEM:\"Oxidized Low Density Lipoprotein\")",
+                    "relation": "increases",
+                    "object": "abundance(CHEBI:\"reactive oxygen species\")"
+                }
+            ],
+            "evidence": "OxLDL induces the generation of ROS in different vascular cell types [15,58], and might also promote a rise in ROS levels through a decrease in ROS degradation, because oxLDL induces a reduction in the antioxidant enzymes Cu/Zn superoxide dismutase [59] and glutathione peroxidase [60].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(SCHEM:\"Oxidized Low Density Lipoprotein\")",
+                    "relation": "decreases",
+                    "object": "proteinAbundance(HGNC:SOD1)"
+                }
+            ],
+            "evidence": "OxLDL induces the generation of ROS in different vascular cell types [15,58], and might also promote a rise in ROS levels through a decrease in ROS degradation, because oxLDL induces a reduction in the antioxidant enzymes Cu/Zn superoxide dismutase [59] and glutathione peroxidase [60].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(SCHEM:\"Oxidized Low Density Lipoprotein\")",
+                    "relation": "decreases",
+                    "object": "proteinAbundance(SFAM:\"GPX Family\")"
+                }
+            ],
+            "evidence": "OxLDL induces the generation of ROS in different vascular cell types [15,58], and might also promote a rise in ROS levels through a decrease in ROS degradation, because oxLDL induces a reduction in the antioxidant enzymes Cu/Zn superoxide dismutase [59] and glutathione peroxidase [60].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(SCHEM:\"7-Ketocholesterol\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "For instance, during 7-ketocholesterol-induced apoptosis of U937 cells, the cellular antioxidant content falls rapidly [64], but administration of two potent antioxidants, the aminothiols glutathione and N-acetylcysteine, can protect themonocytic cells from 7-ketocholesterol-induced apoptotic cell death [64].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(SCHEM:\"7-Ketocholesterol\")",
+                    "relation": "negativeCorrelation",
+                    "object": "abundance(CHEBI:antioxidant)"
+                }
+            ],
+            "evidence": "For instance, during 7-ketocholesterol-induced apoptosis of U937 cells, the cellular antioxidant content falls rapidly [64], but administration of two potent antioxidants, the aminothiols glutathione and N-acetylcysteine, can protect themonocytic cells from 7-ketocholesterol-induced apoptotic cell death [64].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:\"hydrogen peroxide\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "In addition, another oxygen-radical scavenger enzyme, catalase, can prevent VSMC apoptosis triggered by hydrogen peroxide [27,65].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:MYC)",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "The proto-oncogene c-myc can promote cell death (probably mediated through p53) or cell proliferation, depending on its expression level. It functions as a nuclear phosphoprotein with particular properties of a transcription factor [68,69]. In serum deprived cultures, cells overexpressing c-myc readily undergo apoptosis. In addition, deregulation of c-myc causes apoptosis of VSMCs deprived of growth factors or treated with cytokines such as interferon-g [70].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:MYC)",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:\"cell proliferation\")"
+                }
+            ],
+            "evidence": "The proto-oncogene c-myc can promote cell death (probably mediated through p53) or cell proliferation, depending on its expression level. It functions as a nuclear phosphoprotein with particular properties of a transcription factor [68,69]. In serum deprived cultures, cells overexpressing c-myc readily undergo apoptosis. In addition, deregulation of c-myc causes apoptosis of VSMCs deprived of growth factors or treated with cytokines such as interferon-g [70].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(complexAbundance(proteinAbundance(HGNC:F3), proteinAbundance(HGNC:F7)), molecularActivity(DEFAULT:pep))",
+                    "relation": "directlyIncreases",
+                    "object": "activity(proteinAbundance(HGNC:F9), molecularActivity(DEFAULT:pep))"
+                }
+            ],
+            "evidence": "Tissue factor (TF) is a 47 kDa transmembrane glycoprotein that initiates blood coagulation by binding coagulation factor VII and its activated form (factor VIIa), to produce a high-affinity complex [72] that proteolytically activates factors IX and X, leading to thrombin generation.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(complexAbundance(proteinAbundance(HGNC:F3), proteinAbundance(HGNC:F7)), molecularActivity(DEFAULT:pep))",
+                    "relation": "directlyIncreases",
+                    "object": "activity(proteinAbundance(HGNC:F10), molecularActivity(DEFAULT:pep))"
+                }
+            ],
+            "evidence": "Tissue factor (TF) is a 47 kDa transmembrane glycoprotein that initiates blood coagulation by binding coagulation factor VII and its activated form (factor VIIa), to produce a high-affinity complex [72] that proteolytically activates factors IX and X, leading to thrombin generation.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:F9), molecularActivity(DEFAULT:pep))",
+                    "relation": "increases",
+                    "object": "activity(proteinAbundance(HGNC:F2), molecularActivity(DEFAULT:pep))"
+                }
+            ],
+            "evidence": "Tissue factor (TF) is a 47 kDa transmembrane glycoprotein that initiates blood coagulation by binding coagulation factor VII and its activated form (factor VIIa), to produce a high-affinity complex [72] that proteolytically activates factors IX and X, leading to thrombin generation.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:F10), molecularActivity(DEFAULT:pep))",
+                    "relation": "increases",
+                    "object": "activity(proteinAbundance(HGNC:F2), molecularActivity(DEFAULT:pep))"
+                }
+            ],
+            "evidence": "Tissue factor (TF) is a 47 kDa transmembrane glycoprotein that initiates blood coagulation by binding coagulation factor VII and its activated form (factor VIIa), to produce a high-affinity complex [72] that proteolytically activates factors IX and X, leading to thrombin generation.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cell Membrane"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:\"phosphatidyl-L-serine\")",
+                    "relation": "increases",
+                    "object": "activity(proteinAbundance(HGNC:F3), molecularActivity(DEFAULT:pep))"
+                }
+            ],
+            "evidence": "TF works at the surface of cell membranes, and its activity is highly dependent on the presence of phosphatidylserine (PS), an anionic phospholipid that is redistributed on the cell surface during apoptotic death and confers a potent pro-coagulant activity to the apoptotic cell [74].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cell Membrane"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "biologicalProcess(GO:\"apoptotic process\")",
+                    "relation": "increases",
+                    "object": "abundance(CHEBI:\"phosphatidyl-L-serine\")"
+                }
+            ],
+            "evidence": "TF works at the surface of cell membranes, and its activity is highly dependent on the presence of phosphatidylserine (PS), an anionic phospholipid that is redistributed on the cell surface during apoptotic death and confers a potent pro-coagulant activity to the apoptotic cell [74].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cell Membrane"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:\"phosphatidyl-L-serine\")",
+                    "relation": "increases",
+                    "object": "biologicalProcess(GO:coagulation)"
+                }
+            ],
+            "evidence": "TF works at the surface of cell membranes, and its activity is highly dependent on the presence of phosphatidylserine (PS), an anionic phospholipid that is redistributed on the cell surface during apoptotic death and confers a potent pro-coagulant activity to the apoptotic cell [74].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cell Membrane"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:TIMP3)",
+                    "relation": "decreases",
+                    "object": "biologicalProcess(GO:angiogenesis)"
+                }
+            ],
+            "evidence": "TIMP-3 can be anti-angiogenic by direct binding to vascular endothelial growth factor (VEGF) receptor 2 in a matrix-metalloproteinase- independent manner [94].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cell Membrane"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "complexAbundance(proteinAbundance(HGNC:TIMP3), proteinAbundance(HGNC:KDR))",
+                    "relation": "decreases",
+                    "object": "biologicalProcess(GO:angiogenesis)"
+                }
+            ],
+            "evidence": "TIMP-3 can be anti-angiogenic by direct binding to vascular endothelial growth factor (VEGF) receptor 2 in a matrix-metalloproteinase- independent manner [94].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Abstract"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:AKT1, proteinModification(P, T, 308))",
+                    "relation": "directlyIncreases",
+                    "object": "activity(proteinAbundance(HGNC:AKT1), molecularActivity(DEFAULT:kin))"
+                }
+            ],
+            "evidence": "Phosphorylation at Ser473, along with Thr308 of its activation loop, is deemed necessary for Akt function, although the regulatory mechanisms and physiological importance of each phosphorylation site remain to be fully understood.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Abstract"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:AKT1, proteinModification(P, S, 473))",
+                    "relation": "directlyIncreases",
+                    "object": "activity(proteinAbundance(HGNC:AKT1), molecularActivity(DEFAULT:kin))"
+                }
+            ],
+            "evidence": "Phosphorylation at Ser473, along with Thr308 of its activation loop, is deemed necessary for Akt function, although the regulatory mechanisms and physiological importance of each phosphorylation site remain to be fully understood.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Abstract"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:MAPKAP1)",
+                    "relation": "increases",
+                    "object": "proteinAbundance(HGNC:AKT1, proteinModification(P, S, 473))"
+                }
+            ],
+            "evidence": "Genetic ablation of sin1 abolished Akt-Ser473 phosphorylation and disrupted rictor-mTOR interaction but maintained Thr308 phosphorylation.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Mapkap1)",
+                    "relation": "increases",
+                    "object": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 473))"
+                }
+            ],
+            "evidence": "We next examined the Akt T-loop Thr308 phosphorylation in wild-type and SIN1\u2212/\u2212 cells. We found that although Ser473 phosphorylation was completely abolished in the SIN1\u2212/\u2212 cells, Thr308 phosphorylation of Akt was not blocked (Figure 3A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Mapkap1)",
+                    "relation": "causesNoChange",
+                    "object": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 308))"
+                }
+            ],
+            "evidence": "We next examined the Akt T-loop Thr308 phosphorylation in wild-type and SIN1\u2212/\u2212 cells. We found that although Ser473 phosphorylation was completely abolished in the SIN1\u2212/\u2212 cells, Thr308 phosphorylation of Akt was not blocked (Figure 3A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Akt1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Tsc2, proteinModification(P, S, 939))"
+                }
+            ],
+            "evidence": "We also examined phosphorylation of TSC2, another Akt target (Manning et al., 2002), at the Akt target sites Ser939 and Thr1462 and found no significant difference between wild-type and SIN1\u2212/\u2212 cells upon serum and insulin stimulation (Figure 3C).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Akt1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Tsc2, proteinModification(P, T, 1462))"
+                }
+            ],
+            "evidence": "We also examined phosphorylation of TSC2, another Akt target (Manning et al., 2002), at the Akt target sites Ser939 and Thr1462 and found no significant difference between wild-type and SIN1\u2212/\u2212 cells upon serum and insulin stimulation (Figure 3C).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Mapkap1)",
+                    "relation": "increases",
+                    "object": "proteinAbundance(MGI:Foxo1, proteinModification(P, T, 24))"
+                }
+            ],
+            "evidence": "To identify a function that could be linked specifically to Akt-Ser473 phosphorylation, we further examined known Akt substrates that may have defective phosphorylation in SIN1\u2212/\u2212 cells. We found that phosphorylation of FoxO1/3a (also called FKHR/FKHRL1) (Greer and Brunet, 2005), was affected in SIN1\u2212/\u2212 cells. In particular, phosphorylation of FoxO1/3a at Thr24/Thr32 was significantly decreased in the absence of SIN1 under normal growing and restimulated conditions (Figure 4A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Mapkap1)",
+                    "relation": "increases",
+                    "object": "proteinAbundance(MGI:Foxo3, proteinModification(P, T, 32))"
+                }
+            ],
+            "evidence": "To identify a function that could be linked specifically to Akt-Ser473 phosphorylation, we further examined known Akt substrates that may have defective phosphorylation in SIN1\u2212/\u2212 cells. We found that phosphorylation of FoxO1/3a (also called FKHR/FKHRL1) (Greer and Brunet, 2005), was affected in SIN1\u2212/\u2212 cells. In particular, phosphorylation of FoxO1/3a at Thr24/Thr32 was significantly decreased in the absence of SIN1 under normal growing and restimulated conditions (Figure 4A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Akt1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Foxo1, proteinModification(P, T, 24))"
+                }
+            ],
+            "evidence": "To identify a function that could be linked specifically to Akt-Ser473 phosphorylation, we further examined known Akt substrates that may have defective phosphorylation in SIN1\u2212/\u2212 cells. We found that phosphorylation of FoxO1/3a (also called FKHR/FKHRL1) (Greer and Brunet, 2005), was affected in SIN1\u2212/\u2212 cells. In particular, phosphorylation of FoxO1/3a at Thr24/Thr32 was significantly decreased in the absence of SIN1 under normal growing and restimulated conditions (Figure 4A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Akt1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Foxo3, proteinModification(P, T, 32))"
+                }
+            ],
+            "evidence": "To identify a function that could be linked specifically to Akt-Ser473 phosphorylation, we further examined known Akt substrates that may have defective phosphorylation in SIN1\u2212/\u2212 cells. We found that phosphorylation of FoxO1/3a (also called FKHR/FKHRL1) (Greer and Brunet, 2005), was affected in SIN1\u2212/\u2212 cells. In particular, phosphorylation of FoxO1/3a at Thr24/Thr32 was significantly decreased in the absence of SIN1 under normal growing and restimulated conditions (Figure 4A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 473))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Foxo1, proteinModification(P, T, 24))"
+                }
+            ],
+            "evidence": "We also found that the recombinant FoxO1 could not be phosphorylated at Thr24/32 in vitro by an Akt mutant harboring an alanine mutation in either Thr308 or Ser473, whereas a Ser473 to Ala mutated Akt could still phosphorylate recombinant GSK3 (Figure S2). These results indicate that Akt-Ser473 phosphorylation is required for FoxO1/3a phosphorylation at Thr24/32.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 473))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Foxo3, proteinModification(P, T, 32))"
+                }
+            ],
+            "evidence": "We also found that the recombinant FoxO1 could not be phosphorylated at Thr24/32 in vitro by an Akt mutant harboring an alanine mutation in either Thr308 or Ser473, whereas a Ser473 to Ala mutated Akt could still phosphorylate recombinant GSK3 (Figure S2). These results indicate that Akt-Ser473 phosphorylation is required for FoxO1/3a phosphorylation at Thr24/32.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Akt1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Foxo1, proteinModification(P, T, 24))"
+                }
+            ],
+            "evidence": "We also found that the recombinant FoxO1 could not be phosphorylated at Thr24/32 in vitro by an Akt mutant harboring an alanine mutation in either Thr308 or Ser473, whereas a Ser473 to Ala mutated Akt could still phosphorylate recombinant GSK3 (Figure S2). These results indicate that Akt-Ser473 phosphorylation is required for FoxO1/3a phosphorylation at Thr24/32.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Akt1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Foxo3, proteinModification(P, T, 32))"
+                }
+            ],
+            "evidence": "We also found that the recombinant FoxO1 could not be phosphorylated at Thr24/32 in vitro by an Akt mutant harboring an alanine mutation in either Thr308 or Ser473, whereas a Ser473 to Ala mutated Akt could still phosphorylate recombinant GSK3 (Figure S2). These results indicate that Akt-Ser473 phosphorylation is required for FoxO1/3a phosphorylation at Thr24/32.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 473))",
+                    "relation": "directlyIncreases",
+                    "object": "activity(proteinAbundance(MGI:Akt1), molecularActivity(DEFAULT:kin))"
+                }
+            ],
+            "evidence": "We also found that the recombinant FoxO1 could not be phosphorylated at Thr24/32 in vitro by an Akt mutant harboring an alanine mutation in either Thr308 or Ser473, whereas a Ser473 to Ala mutated Akt could still phosphorylate recombinant GSK3 (Figure S2). These results indicate that Akt-Ser473 phosphorylation is required for FoxO1/3a phosphorylation at Thr24/32.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Mapkap1)",
+                    "relation": "decreases",
+                    "object": "biologicalProcess(GO:\"apoptotic process\")"
+                }
+            ],
+            "evidence": "In etoposide-treated cells, there was a 2-fold increase in the number of cells that underwent apoptosis after 48 hr in SIN1 knockouts (Figure\u00a04D). Thus, we find that the SIN1\u2212/\u2212 cells were more sensitive to stress-induced apoptosis, suggesting that Akt-Ser473 phosphorylation plays an important role in cell survival (Figures 4C and 4D).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(complexAbundance(SCOMP:\"TORC1 Complex\"), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Rps6kb1, proteinModification(P, T, 412))"
+                }
+            ],
+            "evidence": "The phosphorylation of S6K at Thr389, which is the TORC1-mediated site, was not inhibited in the SIN1-/- cells (Figure 5A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(complexAbundance(SCOMP:\"TORC2 Complex\"), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Eif4ebp1, proteinModification(P, T, 36))"
+                }
+            ],
+            "evidence": "Likewise, phosphorylation of another translational regulator, 4E-BP1, at the mTOR target site Thr37/46 (Gingras et al., 1999), was also not impaired in SIN1\u2212/\u2212 cells (Figure 5A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(complexAbundance(SCOMP:\"TORC2 Complex\"), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Eif4ebp1, proteinModification(P, T, 45))"
+                }
+            ],
+            "evidence": "Likewise, phosphorylation of another translational regulator, 4E-BP1, at the mTOR target site Thr37/46 (Gingras et al., 1999), was also not impaired in SIN1\u2212/\u2212 cells (Figure 5A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Mtor), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Eif4ebp1, proteinModification(P, T, 36))"
+                }
+            ],
+            "evidence": "Likewise, phosphorylation of another translational regulator, 4E-BP1, at the mTOR target site Thr37/46 (Gingras et al., 1999), was also not impaired in SIN1\u2212/\u2212 cells (Figure 5A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Mtor), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "proteinAbundance(MGI:Eif4ebp1, proteinModification(P, T, 45))"
+                }
+            ],
+            "evidence": "Likewise, phosphorylation of another translational regulator, 4E-BP1, at the mTOR target site Thr37/46 (Gingras et al., 1999), was also not impaired in SIN1\u2212/\u2212 cells (Figure 5A).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Mapkap1)",
+                    "relation": "increases",
+                    "object": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 473))"
+                }
+            ],
+            "evidence": "Akt Ser473 was strongly induced in wild-type cells by different growth factors such as the platelet-derived growth factor, epidermal growth factor, and insulin, even in the absence of amino acids and glucose (Figure 5B). In SIN1\u2212/\u2212 cells, Akt-Ser473 phosphorylation was not induced by any type of stimulus.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(SFAM:\"PDGF Family\")",
+                    "relation": "increases",
+                    "object": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 473))"
+                }
+            ],
+            "evidence": "Akt Ser473 was strongly induced in wild-type cells by different growth factors such as the platelet-derived growth factor, epidermal growth factor, and insulin, even in the absence of amino acids and glucose (Figure 5B). In SIN1\u2212/\u2212 cells, Akt-Ser473 phosphorylation was not induced by any type of stimulus.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(MGI:Egf)",
+                    "relation": "increases",
+                    "object": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 473))"
+                }
+            ],
+            "evidence": "Akt Ser473 was strongly induced in wild-type cells by different growth factors such as the platelet-derived growth factor, epidermal growth factor, and insulin, even in the absence of amino acids and glucose (Figure 5B). In SIN1\u2212/\u2212 cells, Akt-Ser473 phosphorylation was not induced by any type of stimulus.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(SFAM:\"INS Family\")",
+                    "relation": "increases",
+                    "object": "proteinAbundance(MGI:Akt1, proteinModification(P, S, 473))"
+                }
+            ],
+            "evidence": "Akt Ser473 was strongly induced in wild-type cells by different growth factors such as the platelet-derived growth factor, epidermal growth factor, and insulin, even in the absence of amino acids and glucose (Figure 5B). In SIN1\u2212/\u2212 cells, Akt-Ser473 phosphorylation was not induced by any type of stimulus.",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Results"
+                },
+                {
+                    "type": "Species",
+                    "id": "10090"
+                },
+                {
+                    "type": "Cell",
+                    "id": "fibroblast"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Jacinto E",
+                    "Facchinetti V",
+                    "Liu D",
+                    "Soto N",
+                    "Wei S",
+                    "Jung SY",
+                    "Huang Q",
+                    "Qin J",
+                    "Su B"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16962653"
+                },
+                "date_published": "2006-10-07",
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(MGI:Akt1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyDecreases",
+                    "object": "activity(proteinAbundance(SFAM:\"FOXO Family\"), molecularActivity(DEFAULT:tscript))"
+                }
+            ],
+            "evidence": "Akt has been well characterized as a prosurvival molecule, and part of this function is mediated through its suppression of the activity of the FoxO proteins (Greer and Brunet, 2005).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 2"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Barry RE",
+                    "Krek W"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "15350900"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:VHL)",
+                    "relation": "negativeCorrelation",
+                    "object": "pathology(MESH:\"Carcinoma, Renal Cell\")"
+                }
+            ],
+            "evidence": "For example, the inactivation of VHL has been demonstrated in 70\u201380% of all sporadic clear cell RCC, the major form of RCC, which accounts for ~2% of all cancer deaths worldwide [8].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 3"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Barry RE",
+                    "Krek W"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "15350900"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "complexAbundance(proteinAbundance(HGNC:VHL), proteinAbundance(HGNC:TCEB1), proteinAbundance(HGNC:TCEB2), proteinAbundance(HGNC:CUL2), proteinAbundance(HGNC:RBX1))",
+                    "relation": null,
+                    "object": null
+                }
+            ],
+            "evidence": "The best-established function of pVHL to date has been as a substrate recognition component of an E3 ubiquitinprotein ligase complex, comprising pVHL, Elongin C, Elongin B, Cullin 2 and the RING finger protein, Rbx1, and this is referred to as the VCB\u2013Cul2 complex [17].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 3"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Barry RE",
+                    "Krek W"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "15350900"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:VHL), molecularActivity(DEFAULT:act))",
+                    "relation": "directlyIncreases",
+                    "object": "degradation(proteinAbundance(HGNC:HIF1A))"
+                }
+            ],
+            "evidence": "In this setting, pVHL targets the \u03b1-subunits of hypoxiainducible factor (HIF) for ubiquitin-mediated proteolysis under normal oxygen conditions [18].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 3"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Barry RE",
+                    "Krek W"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "15350900"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:VHL), molecularActivity(DEFAULT:act))",
+                    "relation": "directlyIncreases",
+                    "object": "degradation(proteinAbundance(HGNC:EPAS1))"
+                }
+            ],
+            "evidence": "In this setting, pVHL targets the \u03b1-subunits of hypoxiainducible factor (HIF) for ubiquitin-mediated proteolysis under normal oxygen conditions [18].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 3"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Barry RE",
+                    "Krek W"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "15350900"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:VHL), molecularActivity(DEFAULT:act))",
+                    "relation": "directlyIncreases",
+                    "object": "degradation(proteinAbundance(HGNC:HIF3A))"
+                }
+            ],
+            "evidence": "In this setting, pVHL targets the \u03b1-subunits of hypoxiainducible factor (HIF) for ubiquitin-mediated proteolysis under normal oxygen conditions [18].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 3"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Barry RE",
+                    "Krek W"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "15350900"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:HIF1A, proteinModification(H, P))",
+                    "relation": "directlyIncreases",
+                    "object": "degradation(proteinAbundance(HGNC:HIF1A))"
+                }
+            ],
+            "evidence": "The stabilization of HIF in response to hypoxia involves the inactivation of prolylhydroxylases that modify HIF at specific proline residues in an oxygendependent manner. Proline hydroxylation marks HIF for degradation by the VCB\u2013Cul2 E3 ligase complex (Figure 3 and Box 1).",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 3"
+            }
+        }
+    }
+]

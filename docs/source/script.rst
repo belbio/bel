@@ -1,0 +1,2 @@
+
+.. click:: bel.scripts:bel

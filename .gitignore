@@ -114,3 +114,4 @@ venv*
 
 # mypy
 .mypy_cache/
+bel_lang/versions/*.json

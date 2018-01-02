@@ -1,0 +1,271 @@
+$schema: http://json-schema.org/draft-04/schema#
+description: |
+  NOTE: This schema is NOT an official Nanopub JSON Schema by the
+  [Nanopub Organization](http://nanopub.org/). It is conceptually derived
+  from their fine work for the needs of [BEL.bio](http://bel.bio).
+
+  The purpose of this schema is to manage assertions (labeled as edges in
+  the schema) and associated metadata such as assertion citation, context and
+  general metadata.  This format is designed for use with [BEL](http://bel.bio).
+  It differs from the nanopub_graphdati schema due to a stricter specification
+  of the nanopub context object.
+
+  Please provide feedback as github issues or pull requests at
+  https://github.com/belbio/schemas.
+
+  The master version of this JSON Schema is managed at:
+  https://github.com/belbio/schemas/blob/master/schemas/nanopub_bel-0.9.0.yaml
+
+  A nanopub file is either a single nanopub, an array of nanopubs or uses
+  the JSON Lines (http://jsonlines.org/) format with a nanopub (or schema_uri,
+  metadata object) per line.
+
+  Note: This JSON schema is designed to work with the Swagger Specification as a
+  schema object which does not allow 'type' to be an array so not able to specify
+  optional elements as "type": ["string", "null"] for example.
+
+  Nanopubs can be stored as either individual JSON files with a single optional
+  metadata JSON file OR as collection using an array of JSON Nanopubs or a JSONLines
+  version where each line is a nanopub JSON object.  In an array or JSONLines
+  version, the metadata and schema_uri objects need to be at the top.
+
+  Obviously some combinations of the following objects in the anyOf below
+  are not compatible.  It doesn't make sense to use the nanopub object and
+  array of nanopub objects at the same time.
+
+anyOf:
+  - $ref: '#/definitions/nanopub'
+  - $ref: "#/definitions/schema_uri"
+  - $ref: "#/definitions/metadata"
+  - type: array
+    items:
+      anyOf:
+        - $ref: '#/definitions/nanopub'
+        - $ref: "#/definitions/schema_uri"
+        - $ref: '#/definitions/metadata'
+
+definitions:
+  schema_uri:
+    type: object
+    additionalProperties: false
+    required:
+      - schema_uri
+    properties:
+      schema_uri:
+        type: object
+        additionalProperties: false
+        required:
+          - uri
+        properties:
+          uri:
+            type: string
+            format: uri
+            description: JSON Schema definition URI
+  metadata:
+    description: Nanopub collection metadata used to document and validate nanopub collection
+    type: object
+    required:
+      - metadata
+    description: suggested but not required properties are listed below
+    properties:
+      metadata:
+        type: object
+        additionalProperties: true
+        properties:
+          copyright:
+            type: string
+          collection_name:
+            type: string
+          description:
+            type: string
+            description: |
+              add any additional information here on why this collection was
+              created, what is consists of, additional contact instructions, etc
+          version:
+            type: string
+          license:
+            type: string
+          contact:
+            type: string
+            description: email address to contact for details on this nanopub collection
+          namespaces:
+            type: array
+            description: |
+              If using a namespace:value entity in your edge or context objects, this provides a
+              way of providing an abbreviated namespace to support an unambiguous
+              namespace value.
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                uri:
+                  type: string
+                  format: uri
+
+  nanopub:
+    description: Smallest unit of relational knowledge with context (see http://nanopub.org/)
+    type: object
+    additionalProperties: false
+    required:
+      - nanopub
+    properties:
+      nanopub:
+        type: object
+        additionalProperties: false
+        required:
+          - type
+          - citation
+          - edges
+        properties:
+          schema_uri:
+            type: string
+            format: uri
+          id:
+            oneOf:
+              - type: string
+              - type: "null"
+            description: ID of nanopub
+          type:
+            description: 'Type of nanopub: BEL version 2.0.0, PEL, Legal, etc'
+            type: object
+            additionalProperties: false
+            required:
+              - name
+              - version
+            properties:
+              name:
+                type: string
+                description: Name of Nanopub type, e.g. BEL
+              version:
+                type: string
+                description: Version of Nanopub type, e.g. 2.0.0
+          context:
+            description: Context of the edge[s] (e.g for BEL nanopubs, the species, tissue, disease)
+              state, ...
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  description: type of context, e.g. Disease, Species, etc
+                  type: string
+                id:
+                  description: context ID such as TAX:9606 (e.g. human) for Species context type
+                  type: string
+                label:
+                  description: human friendly label
+                  type: string
+          citation:
+            description: |
+              Reference to the source. The specific type of nanopub may have
+              specific objects required for citations.
+              The following properties are optional.
+            type: object
+            additionalProperties: true
+            anyOf:
+              - required:
+                - uri
+              - required:
+                - database
+              - required:
+                - reference
+
+            properties:
+              uri:
+                type: string
+                format: uri
+                description: URL of this citation, e.g. a website cited should have this field
+
+              database:
+                type: object
+                required:
+                  - name
+                  - id
+                properties:
+                  name:
+                    type: string
+                    description: name of database, e.g. Pubmed, DOI, etc
+                  id:
+                    description: Source ID of citation, e.g. Pubmed ID for Pubmed citations
+                    oneOf:
+                     - type: string
+                     - type: number
+
+              reference:
+                oneOf:
+                  - type: string
+                    description: |
+                      Citation as single unparsed string, e.g.
+                      Edmunds W, Pebody R, et al. 2000. The sero-epidemiology of
+                      diptheria in Western Europe. Epidemiol Infect 125(1):113-25.
+                  - type: object
+                    description: reference object
+
+              authors:
+                type: array
+                items:
+                  type: string
+              source_name:
+                type: string
+                description: name of journal, book, website, database
+              source_type:
+                type: string
+                description: type of citation, journal, book, website, database
+              title:
+                type: string
+                description: Title of citation (journal article title, web page title, book chapter title)
+              date_published:
+                type: string
+                description: ISO Date format, e.g. 2016-12-31 for December 31, 2016
+              comments:
+                type: string
+                description: Comments about the citation by Nanopub creator(s)
+          edges:
+            description: List of edges, minimum of 1 edge required, all edges must match context
+            type: array
+            minItems: 1
+            items:
+              type: object
+              properties:
+                edge:
+                  type: object
+                  additionalProperties: false
+                  required:
+                    - subject
+                  properties:
+                    subject:
+                      type: string
+                    relation:
+                      type: string
+                    object:
+                      type: string
+
+          evidence:
+            description: Any specific summary text that serves as a basis for this edge and context.
+            type: string
+          metadata:
+            description: |
+              Optional metadata elements - Creator information, creation date, additional notes, etc
+              Any additional metadata elements can be added as needed.
+            type: object
+            additionalProperties: true
+            properties:
+              creation_date:
+                type: string
+                format: date
+              modification_date:
+                type: string
+                format: date
+              nanopub_collection:
+                type: string
+                description: Name of a set of nanopubs if applicable, used to group nanopubs into sets
+              author_name:
+                type: string
+              author_email:
+                type: string
+                format: email
+              notes:
+                type: string
+                description: General notes about Nanopub created by author or editors.
+

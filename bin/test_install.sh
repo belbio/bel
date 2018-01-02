@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# run via: bash <(curl -s https://raw.githubusercontent.com/belbio/bel_lang/master/bin/test_install.sh)
+# run via: bash <(curl -s https://raw.githubusercontent.com/belbio/bel/master/bin/test_install.sh)
 
 echo
 echo "Setting up virtual environment using python 3.6 and activating it"
-python3.6 -m venv .venv --prompt 'bel_lang'
+python3.6 -m venv .venv --prompt 'bel'
 
 activate() {
   source .venv/bin/activate
@@ -14,16 +14,16 @@ activate
 
 echo
 echo
-echo "Installing bel_lang package"
-# pip install git+https://github.com/belbio/bel_lang@v0.5.3#egg=bel_lang-0.5.3
-pip install git+https://github.com/belbio/bel_lang#egg=bel_lang
+echo "Installing bel package"
+# pip install git+https://github.com/belbio/bel@v0.5.3#egg=bel-0.5.3
+pip install git+https://github.com/belbio/bel#egg=bel
 
 echo
 echo
 echo "Confirming belbio_conf.yaml file is available"
-if [ ! -e "belbio_conf.yaml" ] && [! -e "~/.belbio_conf" ]
+if [ ! -e "belbio_conf.yml" ] && [! -e "~/.belbio_conf" ]
 then
-    echo "   Missing belbio_conf.yaml or ~/.belbio_conf - will not be able to run test install script"
+    echo "   Missing belbio_conf.yml or ~/.belbio_conf - will not be able to run test install script"
 fi
 
 echo

@@ -1,0 +1,69 @@
+settings:
+  analysis:
+    filter:
+      autocomplete_filter:
+          type: edge_ngram
+          min_gram: 1
+          max_gram: 10
+    analyzer:
+      autocomplete:
+        type: custom
+        tokenizer: standard
+        filter:
+        - lowercase
+        - autocomplete_filter
+mappings:
+  term:
+    properties:
+      autocomplete:
+        type: text
+        store: true
+        analyzer: autocomplete
+        search_analyzer: standard
+      src_id:
+        type: keyword
+        copy_to: autocomplete
+      namespace:
+        type: keyword
+      id:
+        type: keyword
+        copy_to: autocomplete
+        boost: 4
+      alt_ids:
+        type: keyword
+        copy_to: autocomplete
+      label:
+        type: text
+        copy_to: autocomplete
+      name:
+        type: text
+        copy_to: autocomplete
+        boost: 2
+      description:
+        type: text
+      entity_types:
+        type: keyword
+      annotations_types:
+        type: keyword
+      synonyms:
+        type: text
+        copy_to: autocomplete
+      species_id:
+        type: keyword
+      species_label:
+        type: keyword
+      obsolete_ids:
+        type: keyword
+      taxonomy_rank:
+        type: keyword
+      taxonomy_tree:
+        type: keyword
+      equivalences:
+        type: text
+        index: false
+      children:
+        type: text
+        index: false
+      taxonomy_names:
+        type: object
+        enabled: false

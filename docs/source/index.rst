@@ -6,13 +6,13 @@
 Introduction
 ------------
 
-Welcome to bel_lang's documentation.
+Welcome to bel's documentation.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    overview
-
-   bel_lang
+   scripts
+   lang
 

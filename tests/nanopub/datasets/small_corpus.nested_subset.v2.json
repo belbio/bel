@@ -1,0 +1,322 @@
+[
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "abundance(CHEBI:antioxidant)",
+                    "relation": "decreases",
+                    "object": "(abundance(SCHEM:\"7-Ketocholesterol\") increases biologicalProcess(GO:\"apoptotic process\"))"
+                }
+            ],
+            "evidence": "For instance, during 7-ketocholesterol-induced apoptosis of U937 cells, the cellular antioxidant content falls rapidly [64], but administration of two potent antioxidants, the aminothiols glutathione and N-acetylcysteine, can protect themonocytic cells from 7-ketocholesterol-induced apoptotic cell death [64].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "Disease",
+                    "id": "atherosclerosis"
+                },
+                {
+                    "type": "Anatomy",
+                    "id": "cardiovascular system endothelium"
+                },
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Cell",
+                    "id": "endothelial cell"
+                },
+                {
+                    "type": "MeSHAnatomy",
+                    "id": "Muscle, Smooth, Vascular"
+                },
+                {
+                    "type": "CellLine",
+                    "id": "U-937 cell"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "de Nigris F",
+                    "Lerman A",
+                    "Ignarro LJ",
+                    "Williams-Ignarro S",
+                    "Sica V",
+                    "Baker AH",
+                    "Lerman LO",
+                    "Geng YJ",
+                    "Napoli C"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "12928037"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "proteinAbundance(HGNC:CAT)",
+                    "relation": "decreases",
+                    "object": "(abundance(CHEBI:\"hydrogen peroxide\") increases biologicalProcess(GO:\"apoptotic process\"))"
+                }
+            ],
+            "evidence": "In addition, another oxygen-radical scavenger enzyme, catalase, can prevent VSMC apoptosis triggered by hydrogen peroxide [27,65].",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 1"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cell Membrane"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Beeram M",
+                    "Patnaik A",
+                    "Rowinsky EK"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16170185"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:RAP1A), molecularActivity(DEFAULT:gtp))",
+                    "relation": "increases",
+                    "object": "(activity(proteinAbundance(HGNC:BRAF), molecularActivity(DEFAULT:kin)) increases proteinAbundance(SFAM:\"MAPK Erk1/2 Family\", proteinModification(P)))"
+                }
+            ],
+            "evidence": "Additional support for the diverse functionality of Raf family members is provided by the disparate responses of B-Raf and C-Raf to identical stimuli, as well as the distinct messages that each isoform relays downstream to Rap1, which is a small GTPase that functions as both an activator and repressor of Raf.115  Rap1-mediated stimulation of B-Raf by cyclic adenosine monophosphate (cAMP) phosphorylates ERK, whereas stimulation of C-Raf inhibits ERK phosphorylation.115",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 4"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cytoplasm"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Beeram M",
+                    "Patnaik A",
+                    "Rowinsky EK"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16170185"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(SFAM:\"RHO Family\"), molecularActivity(DEFAULT:gtp))",
+                    "relation": "increases",
+                    "object": "(activity(proteinAbundance(SFAM:\"RAS Family\"), molecularActivity(DEFAULT:gtp)) directlyIncreases activity(proteinAbundance(HGNC:RAF1), molecularActivity(DEFAULT:kin)))"
+                }
+            ],
+            "evidence": "The Rho family of small GTPases, consisting of Rho, Rac, and cyclin-dependent kinase (Cdc) 42, regulate cytoskeletal organization during the cell cycle and also mediate Ras-induced activation of Raf, especially C-Raf.134-136  These GTPases do not directly bind to Raf but, instead, signal by activating downstream kinases. Rho signals by activating the serine/threonine protein kinases N1 and N2 and Rho-associated kinase 1, whereas Rac and Cdc42 signal through p21-activated kinase (PAK).134-136",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 4"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cytoplasm"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Beeram M",
+                    "Patnaik A",
+                    "Rowinsky EK"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16170185"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:RAF1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "(activity(proteinAbundance(HGNC:BCL2), molecularActivity(DEFAULT:act)) decreases biologicalProcess(GO:\"apoptotic process\"))"
+                }
+            ],
+            "evidence": "Other antiapoptotic effects of C-Raf are mediated by a mitochondrial pool of the protein, which, on stimulation, localizes to the mitochondrial membrane where the protein interacts with and phosphorylates Bcl-2, Bcl-2\u2013associated athanogene, and other pro-apoptotic regulators, abrogating their pro-apoptotic effects.157,167 The antiapoptotic effects of C-Raf are also mediated through the ankyrin-repeat protein Tvl-1 and apoptosis signal-regulated kinase-1.166,168,169",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 4"
+            }
+        }
+    },
+    {
+        "nanopub": {
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-0.9.0.yaml",
+            "type": {
+                "name": "BEL",
+                "version": "2.0.0"
+            },
+            "context": [
+                {
+                    "type": "TextLocation",
+                    "id": "Review"
+                },
+                {
+                    "type": "Species",
+                    "id": "9606"
+                },
+                {
+                    "type": "CellStructure",
+                    "id": "Cytoplasm"
+                }
+            ],
+            "citation": {
+                "authors": [
+                    "Beeram M",
+                    "Patnaik A",
+                    "Rowinsky EK"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "16170185"
+                },
+                "comment": "}"
+            },
+            "edges": [
+                {
+                    "subject": "activity(proteinAbundance(HGNC:RAF1), molecularActivity(DEFAULT:kin))",
+                    "relation": "directlyIncreases",
+                    "object": "(activity(proteinAbundance(HGNC:BAG1), molecularActivity(DEFAULT:act)) decreases biologicalProcess(GO:\"apoptotic process\"))"
+                }
+            ],
+            "evidence": "Other antiapoptotic effects of C-Raf are mediated by a mitochondrial pool of the protein, which, on stimulation, localizes to the mitochondrial membrane where the protein interacts with and phosphorylates Bcl-2, Bcl-2\u2013associated athanogene, and other pro-apoptotic regulators, abrogating their pro-apoptotic effects.157,167 The antiapoptotic effects of C-Raf are also mediated through the ankyrin-repeat protein Tvl-1 and apoptosis signal-regulated kinase-1.166,168,169",
+            "metadata": {
+                "status": "published",
+                "stmt_group": "Group 4"
+            }
+        }
+    }
+]
+
+

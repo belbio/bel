@@ -20,9 +20,9 @@ VERSIONS=(2_0_0 2_0_1)
 for v in "${VERSIONS[@]}"
 do
 
-    EBNF_SYNTAX_FILE="bel_lang/versions/bel_v$v.ebnf"
-    PARSER_PY_FILE="bel_lang/versions/parser_v$v.py"
-    YAML_FILE_NAME="bel_lang/versions/bel_v$v.yaml"
+    EBNF_SYNTAX_FILE="bel/lang/versions/bel_v$v.ebnf"
+    PARSER_PY_FILE="bel/lang/versions/parser_v$v.py"
+    YAML_FILE_NAME="bel/lang/versions/bel_v$v.yaml"
 
     printf "\nBUILDING VERSION %s ********************************************************\n\n" "$v"
 

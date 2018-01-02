@@ -1,0 +1,42 @@
+# 1 edge and citation.database
+nanopub:
+  type:
+    name: BEL
+    version: 2.0.0
+  schema_uri: http://json.schemastore.org/nanopub-1.0.0.json
+  edges:
+    - object: bp(GOBP:"lipid oxidation")
+      relation: positiveCorrelation
+      subject: path(MESHD:Atherosclerosis)
+  evidence: Oxidation and nitration of macromolecules, such as proteins, DNA and lipids,
+    are prominentin atherosclerotic arteries.
+  context:
+    - type: Anatomy
+      id: MESH:artery
+      label: artery
+    - type: Disease
+      id: MESH:atherosclerosis
+      label: atherosclerosis
+    - type: TextLocation
+      id: Abstract
+  citation:
+    database:
+      name: Pubmed
+      id: 12928037
+    authors:
+    - de Nigris F
+    - Lerman A
+    - Ignarro LJ
+    - Williams-Ignarro S
+    - Sica V
+    - Baker AH
+    - Lerman LO
+    - Geng YJ
+    - Napoli C
+    comments: ''
+    date_published: "2010-10-01"
+    source_name: Trends in molecular medicine
+    source_type: journal
+  metadata:
+    stmt_group: Group 1
+

@@ -6,7 +6,7 @@
 Introduction
 ------------
 
-Welcome to bel_lang's documentation.
+Welcome to bel's documentation.
 
 .. toctree::
    :maxdepth: 2
@@ -15,7 +15,7 @@ Welcome to bel_lang's documentation.
 .. Functions
 .. ---------
 
-.. .. automodule:: bel_lang.bel
+.. .. automodule:: bel.lang.bel
 ..    :members:
 
 .. Classes

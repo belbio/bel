@@ -10,13 +10,10 @@ Use this script to convert the user defined YAML file to two other files:
 
 import datetime
 import logging
-import sys
-from itertools import chain
 import glob
-import yaml
 import os.path
 import click
-from bel_lang.bel_specification import get_specification
+from bel.lang.bel_specification import get_specification
 from jinja2 import Environment, FileSystemLoader
 
 log = logging.getLogger(__name__)
@@ -63,12 +60,12 @@ def save_ebnf(ebnf_fn, ebnf):
 @click.command()
 @click.option('--belspec_fn', help='BEL Language Specification filename')
 @click.option('--ebnf_fn', help='Specify EBNF filename')
-@click.option('--ebnf_tmpl_fn', default="./bel_lang/versions/bel.ebnf.j2", help='EBNF template filename')
+@click.option('--ebnf_tmpl_fn', default="./bel/lang/versions/bel.ebnf.j2", help='EBNF template filename')
 def main(belspec_fn, ebnf_fn, ebnf_tmpl_fn):
     """Create EBNF files from BEL Specification yaml files and template
 
     If you do not specify any options, then this will process all of the BEL Specification
-    files in bel_lang/versions into EBNF files
+    files in bel/lang/versions into EBNF files
     """
     created_time = datetime.datetime.now().strftime('%B %d, %Y - %I:%M:%S%p')
 
@@ -83,7 +80,7 @@ def main(belspec_fn, ebnf_fn, ebnf_tmpl_fn):
         save_ebnf(ebnf_fn, ebnf)
 
     else:
-        files = glob.glob(f'{root_dir}/bel_lang/versions/bel_v*yaml')
+        files = glob.glob(f'{root_dir}/bel/lang/versions/bel_v*yaml')
         for fn in files:
             bel_version = get_version(fn)
             bel_spec = get_specification(bel_version)

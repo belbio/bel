@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# bel_nanopub documentation build configuration file, created by
+# bel documentation build configuration file, created by
 # sphinx-quickstart on Mon Aug  7 15:03:45 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -23,7 +23,7 @@ import sys
 import sphinx_rtd_theme
 
 
-path = os.path.abspath('../bel_nanopub')
+path = os.path.abspath('../bel')
 print(path)
 sys.path.insert(0, path)
 
@@ -36,7 +36,7 @@ sys.path.insert(0, path)
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx_autodoc_typehints', 'nbsphinx']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx_autodoc_typehints', 'sphinx']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'bel_nanopub'
+project = 'bel'
 copyright = '2017, William Hayes, David Chen'
 author = 'William Hayes, David Chen'
 
@@ -87,9 +87,9 @@ todo_include_todos = False
 
 # html_theme = 'alabaster'
 # html_theme_options = {
-#     'description': 'A Python library that allows biologists and developers to parse, test, and validate BEL nanopubs.',
+#     'description': 'A Python library that allows biologists and developers to parse, test, and validate BEL.',
 #     'github_user': 'belbio',
-#     'github_repo': 'bel_nanopub',
+#     'github_repo': 'bel',
 #     'github_button': True,
 #     'fixed_sidebar': True,
 # }
@@ -128,7 +128,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'bel_nanopubdoc'
+htmlhelp_basename = 'bel_doc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -155,7 +155,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'bel_nanopub.tex', 'bel_nanopub Documentation',
+    (master_doc, 'bel.tex', 'bel Documentation',
      'William Hayes, David Chen', 'manual'),
 ]
 
@@ -165,7 +165,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'bel_nanopub', 'bel_nanopub Documentation',
+    (master_doc, 'bel', 'bel Documentation',
      [author], 1)
 ]
 
@@ -176,8 +176,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'bel_nanopub', 'bel_nanopub Documentation',
-     author, 'bel_nanopub', 'BEL Nanopub tools and services.',
+    (master_doc, 'bel', 'bel Documentation',
+     author, 'bel', 'BEL tools and services.',
      'Miscellaneous'),
 ]
 
