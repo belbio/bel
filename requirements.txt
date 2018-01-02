@@ -20,7 +20,7 @@ sphinx-autobuild==0.7.1
 sphinx-autodoc-typehints==1.2.3
 sphinx-rtd-theme==0.2.4
 sphinx-click==1.0.4
-TatSu==4.2.2
+TatSu==4.2.5
 twine==1.9.1
 typing==3.6.2
 ulid-py==0.0.6
