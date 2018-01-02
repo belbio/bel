@@ -8,11 +8,21 @@ Introduction
 
 Welcome to bel's documentation.
 
+.. image:: https://api.codeclimate.com/v1/badges/3fdfec7ee96fc639bb09/maintainability
+   :target: https://codeclimate.com/github/belbio/bel/maintainability
+   :alt: Maintainability
+
+.. image:: https://api.codeclimate.com/v1/badges/3fdfec7ee96fc639bb09/test_coverage
+   :target: https://codeclimate.com/github/belbio/bel/test_coverage
+   :alt: Test Coverage
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    overview
-   scripts
+   script
+   modules
    lang
 

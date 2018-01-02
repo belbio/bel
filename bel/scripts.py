@@ -5,16 +5,15 @@ import gzip
 import re
 
 import bel.db
+import bel.utils as utils
+import bel.Config
+from bel.Config import config
 
 from bel.lang.bel import BEL
 
 import bel.nanopub.nanopubs as bnn
 import bel.nanopub.files as bnf
-import bel.nanopub.utils as utils
 import bel.nanopub.belscripts
-
-import bel.Config
-from bel.Config import config
 
 import logging
 import logging.config
@@ -36,6 +35,7 @@ def bel():
     """ BEL commands
 
     Uses first file found to load in default configuration:
+
         ./belbio_conf.yaml
         ./.belbio_conf
         ~/.belbio_conf
@@ -291,7 +291,7 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
 
     Target namespaces can be provided in the following manner:
 
-        belstmt canonicalize "<BELStmt>" --namespace_targets '{"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}'
+        bel stmt canonicalize "<BELStmt>" --namespace_targets '{"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}'
             the value of target_namespaces must be JSON and embedded in single quotes
             reserving double quotes for the dictionary elements
     """
@@ -339,7 +339,7 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
 @click.argument('statement')
 @pass_context
 def orthologize(ctx, statement, species_id, version, api, config_fn):
-    """Canonicalize statement
+    """Orthologize statement
 
     Species ID needs to be the NCBI Taxonomy ID in this format: TAX:<tax_id_number>
     You can use the following common names for species_id: human, mouse, rat
@@ -387,7 +387,7 @@ def orthologize(ctx, statement, species_id, version, api, config_fn):
 @click.argument('statement')
 @pass_context
 def edges(ctx, statement, rules, species_id, namespace_targets, version, api, config_fn):
-    """Create BEL Edges"""
+    """Create BEL Edges from BEL Statement"""
 
     if config_fn:
         config = bel.db.Config.merge_config(ctx.config, override_config_fn=config_fn)

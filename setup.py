@@ -98,7 +98,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'bel=bel.nanopub.scripts:bel',
+            'bel=bel.scripts:bel',
             'belspec_yaml2json=bel.lang.bel_specification:belspec_yaml2json',
         ],
     },
