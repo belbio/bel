@@ -16,6 +16,12 @@ Welcome to bel's documentation.
    :target: https://codeclimate.com/github/belbio/bel/test_coverage
    :alt: Test Coverage
 
+.. image:: https://badge.fury.io/py/bel.svg
+    :target: https://badge.fury.io/py/bel
+
+.. image:: https://badge.waffle.io/belbio/project.svg?columns=all
+ :target: https://waffle.io/belbio/project
+ :alt: 'Waffle.io - Columns and their card count'
 
 .. toctree::
    :maxdepth: 2

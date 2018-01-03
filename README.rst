@@ -1,6 +1,21 @@
 BEL package
 =================
 
+.. image:: https://api.codeclimate.com/v1/badges/3fdfec7ee96fc639bb09/maintainability
+   :target: https://codeclimate.com/github/belbio/bel/maintainability
+   :alt: Maintainability
+
+.. image:: https://api.codeclimate.com/v1/badges/3fdfec7ee96fc639bb09/test_coverage
+   :target: https://codeclimate.com/github/belbio/bel/test_coverage
+   :alt: Test Coverage
+
+.. image:: https://badge.fury.io/py/bel.svg
+    :target: https://badge.fury.io/py/bel
+
+.. image:: https://badge.waffle.io/belbio/project.svg?columns=all
+ :target: https://waffle.io/belbio/project
+ :alt: 'Waffle.io - Columns and their card count'
+
 BEL Language
 ----------------
 
