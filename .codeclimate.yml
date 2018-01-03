@@ -1,0 +1,6 @@
+## Code climate configuration
+
+exclude_patterns:
+  - "bel/lang/versions/parser*"
+  - "dist/"
+  - "tests/"

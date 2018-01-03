@@ -6,8 +6,13 @@ install:
 before_script:
   - cp belbio_conf.yml.test belbio_conf.yml
   - cp belbio_secrets.yml.test belbio_secrets.yml
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 script:
   - make tests
-
-after_success:
-  - CODECLIMATE_REPO_TOKEN=yourtoken codeclimate-test-reporter
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+env:
+  global:
+    - CC_TEST_REPORTER_ID=be0b36e872b86350595ad3d79cde328a37e3943848f95dd39e0b50e2286cf1ce
