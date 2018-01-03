@@ -15,7 +15,8 @@ with open(f"{local_dir}/datasets/nanopub_bel-bad_test-0.9.0.yaml", 'r') as f:
 with open(f"{local_dir}/datasets/nanopub_bel-good_test-0.9.0.yaml", 'r') as f:
     good_nanopub = yaml.load(f)
 
-@pytest.mark.skip(reason="Not finished")
+
+@pytest.mark.skip(reason="Not finished with this test")
 def test_valid_schema():
 
     (is_valid, messages) = nb.validate_to_schema(good_nanopub, schema)

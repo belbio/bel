@@ -1,4 +1,4 @@
-import bel.lang
+import bel.lang.bel
 from bel.Config import config
 
 bo = bel.lang.bel.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
