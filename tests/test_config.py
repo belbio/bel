@@ -13,5 +13,4 @@ def test_merge_config():
     override_config = {'bel_api': {'servers': {'server_type': 'DEV2'}}}
     new_config = Config.merge_config(config, override_config=override_config)
 
-    assert config['bel_api']['servers']['server_type'] == 'DEV'
-    assert new_config['bel_api']['servers']['server_type'] == 'DEV2'
+    assert config['bel_api']['servers']['server_type'] != new_config['bel_api']['servers']['server_type']
