@@ -1,0 +1,75 @@
+## Used for testing by Travis CI
+
+# YAML Configuration file for BELbio tools
+# Uses virtualenv for BELbio API and server for Elasticsearch/ArangoDB
+
+# Location of this file can be found in one of the following locations
+#   first found is the one that is used
+#   - ./belbio_conf.yml    (just a regular file in the local directory or any parent directory)
+#   - ~/.belbio_conf       (a dotfile in the home directory)
+
+
+# bel package settings
+bel:
+  lang:
+    default_bel_version: 2.0.0
+
+    # Term Canonicalization and decanonicalization
+    # Note that we don't decanonicalize CHEBI (this is not necessarily a symmetric process)
+    canonical:
+      HGNC: ["EG", "SP"]
+      MGI: ["EG", "SP"]
+      RGD: ["EG", "SP"]
+      ZFIN: ["EG", "SP"]
+      SP: ["EG"]
+      CHEMBL: ["CHEBI"]
+
+    decanonical:
+      # EG will convert into the first valid namespace based on species
+      EG: ['HGNC', "MGI", 'RGD', "ZFIN", "SP"]
+
+  nanopub:
+    # JSON Schema for BEL Nanopubs (in YAML format :)
+    schema_uri: https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.0.0.yaml
+
+    # Rules to apply for computing BEL Edges from BEL Nanopubs
+    # pipeline_edge_rules: ["component_of", "degradation"]
+    pipeline_edge_rules: []  # If empty, don't filter out any of the compute rules
+
+# bel_api service settings
+bel_api:
+
+  # Should we require authentication in API?
+  authenticated: false
+
+  # For accessing localhost from docker on a mac, use special dns name 'docker.for.mac.localhost'
+  servers:
+    server_type: TEST
+
+    api_url: https://api.bel.bio/v1
+
+logging:
+  version: 1
+  disable_existing_loggers: False
+  formatters:
+    simple:
+      format: '%(levelname)s::%(name)s::%(asctime)s   %(message)s'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: INFO
+      formatter: simple
+      stream: ext://sys.stdout
+    # logfile:
+    #   class: logging.FileHandler
+    #   formatter: simple
+    #   filename: '../api.log'
+  loggers:
+    elasticsearch:
+      level: WARNING
+    urllib3:
+      level: CRITICAL
+  root:
+    level: INFO
+    handlers: [console]
+    # handlers: [console, logfile]
