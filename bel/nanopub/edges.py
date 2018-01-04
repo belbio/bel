@@ -12,7 +12,7 @@ import itertools
 import yaml
 import os
 
-import bel.lang.bel
+import bel.lang.belobj
 import bel.lang.bel_specification
 import bel.lang.bel_utils as bel_utils
 import bel.db.arangodb as arangodb
@@ -54,7 +54,7 @@ def create_edges(nanopub: Mapping[str, Any], endpoint: str, namespace_targets: M
     computed_edges = []
 
     edges = []
-    bo = bel.lang.bel.BEL(bel_version, endpoint)
+    bo = bel.lang.belobj.BEL(bel_version, endpoint)
     for edge in nanopub['nanopub']['edges']:
         if edge['relation']:
             bel_statement = f"{edge['subject']} {edge['relation']} {edge['object']}"

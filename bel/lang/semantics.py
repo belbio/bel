@@ -11,16 +11,16 @@ import logging
 log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:  # to allow type checking for a module that would be a circular import
-    import bel.lang.bel
+    import bel.lang.belobj
 
 
-def validate(bo: 'bel.lang.bel.BEL') -> Tuple[bool, List[Tuple[str, str]]]:
+def validate(bo: 'bel.lang.belobj.BEL') -> Tuple[bool, List[Tuple[str, str]]]:
     """Semantically validate BEL AST
 
     Add errors and warnings to bel_obj.validation_messages
 
     Args:
-        bo (bel.lang.bel.BEL): main bel object
+        bo (bel.lang.belobj.BEL): main bel object
 
     Returns:
         Tuple[bool, List[Tuple[str, str]]]: (is_valid, messages)
@@ -32,7 +32,7 @@ def validate(bo: 'bel.lang.bel.BEL') -> Tuple[bool, List[Tuple[str, str]]]:
     return bo
 
 
-def validate_functions(ast: BELAst, bo: 'bel.lang.bel.BEL') -> 'bel.lang.bel.BEL':
+def validate_functions(ast: BELAst, bo: 'bel.lang.belobj.BEL') -> 'bel.lang.belobj.BEL':
     """Recursively validate function signatures
 
     Determine if function matches one of the available signatures. Also,
@@ -43,10 +43,10 @@ def validate_functions(ast: BELAst, bo: 'bel.lang.bel.BEL') -> 'bel.lang.bel.BEL
         canonicalization, e.g. reactants(A, B, C) )
 
     Args:
-        bo ('bel.lang.bel.BEL'): bel objectk
+        bo ('bel.lang.belobj.BEL'): bel object
 
     Returns:
-        'bel.lang.bel.BEL': bel object
+        'bel.lang.belobj.BEL': bel object
     """
 
     if isinstance(ast, Function):
@@ -187,7 +187,7 @@ def check_function_args(args, signatures, function_name):
     return (valid_function, messages)
 
 
-def validate_arg_values(ast, bo: 'bel.lang.bel.BEL') -> 'bel.lang.bel.BEL':
+def validate_arg_values(ast, bo: 'bel.lang.belobj.BEL') -> 'bel.lang.belobj.BEL':
     """Recursively validate arg (nsargs and strargs) values
 
     Check that NSArgs are found in BELbio API and match appropriate entity_type.
@@ -196,10 +196,10 @@ def validate_arg_values(ast, bo: 'bel.lang.bel.BEL') -> 'bel.lang.bel.BEL':
     Generate a WARNING if not.
 
     Args:
-        bo ('bel.lang.bel.BEL'): bel object
+        bo ('bel.lang.belobj.BEL'): bel object
 
     Returns:
-        'bel.lang.bel.BEL': bel object
+        'bel.lang.belobj.BEL': bel object
     """
 
     if not bo.endpoint:

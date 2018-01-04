@@ -9,7 +9,7 @@ import bel.utils as utils
 import bel.Config
 from bel.Config import config
 
-from bel.lang.bel import BEL
+from bel.lang.belobj import BEL
 
 import bel.nanopub.nanopubs as bnn
 import bel.nanopub.files as bnf

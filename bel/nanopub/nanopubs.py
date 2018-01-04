@@ -1,6 +1,6 @@
 from typing import Mapping, Any, List, Iterable, Tuple
 import gzip
-import bel.lang.bel
+import bel.lang.belobj
 import jsonschema
 import requests
 
@@ -48,7 +48,7 @@ class Nanopub(object):
 
         all_messages = []
         # Validate BEL Statements
-        bel_obj = bel.lang.bel.BEL(bel_version, self.endpoint)
+        bel_obj = bel.lang.belobj.BEL(bel_version, self.endpoint)
         for edge in nanopub['nanopub']['edges']:
             bel_statement = f"{edge['subject']} {edge['relation']} {edge['object']}"
             parse_obj = bel_obj.parse(bel_statement)

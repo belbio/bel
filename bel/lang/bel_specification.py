@@ -146,7 +146,7 @@ def add_function_signature_help(spec_dict: dict) -> dict:
                         args_summary += '?'
                         text = f'Zero or one of each function(s): {", ".join([val for val in arg["values"]])}'
                     elif arg.get('optional', False):
-                        args_summary += "+"
+                        args_summary += "*"
                         text = f'Zero or more of each function(s): {", ".join([val for val in arg["values"]])}'
                     else:
                         text = f'One of following function(s): {", ".join([val for val in arg["values"]])}'

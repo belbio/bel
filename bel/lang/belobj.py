@@ -27,7 +27,7 @@ class BEL(object):
     To convert BEL Statement to BEL Edges:
 
         statement = "p(HGNC:AKT1) increases p(HGNC:EGF)"
-        bel_obj = bel.lang.BEL('2.0.0', 'https://api.bel.bio/v1')  # can get default version and endpoint from belbio_conf.yml file as well
+        bel_obj = bel.lang.belobj.BEL('2.0.0', 'https://api.bel.bio/v1')  # can get default version and endpoint from belbio_conf.yml file as well
         bel_obj.parse(statement)  # Adds ast to bel_obj
         bel_obj.orthologize('TAX:10090')  # Run orthologize before canonicalize if needed, updates bel_obj.ast and returns self
         bel_obj.canonicalize()  # updates bel_obj.ast and returns self
