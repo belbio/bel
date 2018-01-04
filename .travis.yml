@@ -7,7 +7,7 @@ install:
 before_script:
   - cp belbio_conf.yml.test belbio_conf.yml
   - cp belbio_secrets.yml.test belbio_secrets.yml
- script:
+script:
   - make ci_tests
-after_script:
-  - bash <(curl -s https://codecov.io/bash)
+after_success:
+  - bash < (curl -s https://codecov.io/bash)
