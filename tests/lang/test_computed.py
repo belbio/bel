@@ -1,7 +1,7 @@
-import bel.lang.bel
+import bel.lang.belobj
 from bel.Config import config
 
-bel_obj = bel.lang.bel.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
+bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 
 def test_abundance():
@@ -11,7 +11,7 @@ def test_abundance():
                       'MESHD:Inflammation componentOf bp(MESHD:Inflammation)'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -33,7 +33,7 @@ def test_complex():
                       'ma(tscript) componentOf act(complex(SCOMP:"Nfkb Complex"), ma(tscript))'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -58,7 +58,7 @@ def test_composite():
                       'ma(kin) componentOf act(p(HGNC:PRKCA), ma(kin))'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -79,7 +79,7 @@ def test_g():
                       'var("c.1521_1523delCTT") componentOf g(REF:NM_000492.3, var("c.1521_1523delCTT"))'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -101,7 +101,7 @@ def test_m():
     expected_edges = ['MGI:Mir21 componentOf m(MGI:Mir21)'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -125,7 +125,7 @@ def test_p():
                       'MESHCS:Cytoplasm componentOf loc(MESHCS:Cytoplasm)',
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -145,7 +145,7 @@ def test_r():
                       'HGNC:ENO1 componentOf r(HGNC:ENO1)'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -167,7 +167,7 @@ def test_bp():
                       'ma(kin) componentOf act(p(HGNC:KDR), ma(kin))'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -187,7 +187,7 @@ def test_path():
                       'MESH:"Skin Diseases" componentOf path(MESH:"Skin Diseases")'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -209,7 +209,7 @@ def test_act():
                       'ma(GOMF:"transporter activity") componentOf {}'.format(statement)
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -233,7 +233,7 @@ def test_tloc():
                       'toLoc(MESHCL:"Cell Nucleus") componentOf {}'.format(statement)
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -254,7 +254,7 @@ def test_sec():
                       'a(CHEBI:"nitric oxide") componentOf sec(a(CHEBI:"nitric oxide"))'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -278,7 +278,7 @@ def test_surf():
                       'complex(p(HGNC:ITGA2), p(HGNC:ITGB1)) componentOf surf(complex(p(HGNC:ITGA2), p(HGNC:ITGB1)))'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -303,7 +303,7 @@ def test_deg():
                       'deg(p(HGNC:HBP1)) decreases p(HGNC:HBP1)'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -329,7 +329,7 @@ def test_rxn():
                       'products(a(CHEBI:"hydrogen peroxide"), a(CHEBI:oxygen)) componentOf {}'.format(statement)
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -352,7 +352,7 @@ def test_list():
                       'p(HGNC:MAPK9) componentOf list(p(HGNC:MAPK8), p(HGNC:MAPK9))'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -373,7 +373,7 @@ def test_nested_one():
                       'GO:"apoptotic process" componentOf bp(GO:"apoptotic process")'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:
@@ -395,7 +395,7 @@ def test_nested_two():
                       'CHEBI:EXAMPLE2 componentOf a(CHEBI:EXAMPLE2)'
                       ]
 
-    actual_edges_partials = bel_obj.parse(statement).compute_edges()
+    actual_edges_partials = bo.parse(statement).compute_edges()
     actual_edges = []
 
     for each in actual_edges_partials:

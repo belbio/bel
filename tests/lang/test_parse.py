@@ -1,30 +1,30 @@
-import bel.lang
+import bel.lang.belobj
 from bel.Config import config
 
-bel_obj = bel.lang.bel.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
+bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 
 def test_empty_string():
 
     statement = ''
-    bel_obj.parse(statement)
+    bo.parse(statement)
 
-    assert bel_obj.ast is None
-    assert 'Please include a valid BEL statement.' in bel_obj.validation_messages[0][1]
+    assert bo.ast is None
+    assert 'Please include a valid BEL statement.' in bo.validation_messages[0][1]
 
 
 def test_bad_string_start():
 
     statement = '$$!@$'
-    bel_obj.parse(statement)
+    bo.parse(statement)
 
-    assert bel_obj.ast is None
-    assert 'Failed parse at position 0.' in bel_obj.validation_messages[0][1]
+    assert bo.ast is None
+    assert 'Failed parse at position 0.' in bo.validation_messages[0][1]
 
 # def test_whitespace_string():
 #
 #     statement = 'a('
-#     parse_obj = bel_obj.parse(statement)
+#     parse_obj = bo.parse(statement)
 #
 #     print(parse_obj.error)
 #     assert isinstance(parse_obj, ParseObject)

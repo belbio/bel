@@ -1,8 +1,8 @@
-import bel.lang
+import bel.lang.belobj
 
 from bel.Config import config
 
-bel_obj = bel.lang.bel.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
+bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 # TODO Add test for specified canonical_targets - need to make sure BEL.bio API endpoint is updated to handle this querystring arg
 
@@ -13,11 +13,11 @@ def test_canon_one():
 
     expected = 'activity(proteinAbundance(EG:207), molecularActivity(GO:"kinase activity"))'
 
-    bel_obj.parse(statement)
+    bo.parse(statement)
 
-    bel_obj.canonicalize()
+    bo.canonicalize()
 
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt='long') == expected
 
 
 def test_canon_two():
@@ -26,11 +26,11 @@ def test_canon_two():
 
     expected = 'activity(proteinAbundance(EG:4615), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(EG:4615), proteinAbundance(EG:3654), proteinAbundance(EG:51135))'
 
-    bel_obj.parse(statement)
+    bo.parse(statement)
 
-    bel_obj.canonicalize()
+    bo.canonicalize()
 
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt='long') == expected
 
 
 def test_canon_nested():
@@ -39,11 +39,11 @@ def test_canon_nested():
 
     expected = 'activity(proteinAbundance(EG:4615), molecularActivity(GO:"catalytic activity")) directlyIncreases (complexAbundance(proteinAbundance(EG:4615), proteinAbundance(EG:3654), proteinAbundance(EG:51135)) directlyIncreases complexAbundance(proteinAbundance(EG:4615), proteinAbundance(EG:3654), proteinAbundance(EG:51135)))'
 
-    bel_obj.parse(statement)
+    bo.parse(statement)
 
-    bel_obj.canonicalize()
+    bo.canonicalize()
 
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt='long') == expected
 
 
 def test_decanon_one():
@@ -52,11 +52,11 @@ def test_decanon_one():
 
     expected = 'activity(proteinAbundance(HGNC:AKT1), molecularActivity(GO:"kinase activity"))'
 
-    bel_obj.parse(statement)
+    bo.parse(statement)
 
-    bel_obj.decanonicalize()
+    bo.decanonicalize()
 
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt='long') == expected
 
 
 def test_decanon_two():
@@ -65,11 +65,11 @@ def test_decanon_two():
 
     expected = 'activity(proteinAbundance(HGNC:MYD88), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(HGNC:MYD88), proteinAbundance(HGNC:IRAK1), proteinAbundance(HGNC:IRAK4))'
 
-    bel_obj.parse(statement)
+    bo.parse(statement)
 
-    bel_obj.decanonicalize()
+    bo.decanonicalize()
 
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt='long') == expected
 
 
 def test_decanon_nested():
@@ -78,8 +78,8 @@ def test_decanon_nested():
 
     expected = 'activity(proteinAbundance(HGNC:MYD88), molecularActivity(GO:"catalytic activity")) directlyIncreases (complexAbundance(proteinAbundance(HGNC:MYD88), proteinAbundance(HGNC:IRAK1), proteinAbundance(HGNC:IRAK4)) directlyIncreases complexAbundance(proteinAbundance(HGNC:MYD88), proteinAbundance(HGNC:IRAK1), proteinAbundance(HGNC:IRAK4)))'
 
-    bel_obj.parse(statement)
+    bo.parse(statement)
 
-    bel_obj.decanonicalize()
+    bo.decanonicalize()
 
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt='long') == expected

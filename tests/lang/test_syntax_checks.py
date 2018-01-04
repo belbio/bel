@@ -1,7 +1,7 @@
-import bel.lang.bel
+import bel.lang.belobj
 from bel.Config import config
 
-bo = bel.lang.bel.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
+bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 SPECIFIED_VERSION_UNDERLINED = config['bel']['lang']['default_bel_version']
 

@@ -1,7 +1,7 @@
-import bel.lang
+import bel.lang.belobj
 from bel.Config import config
 
-bel_obj = bel.lang.bel.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
+bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 
 # def test_ortho():
@@ -16,7 +16,7 @@ bel_obj = bel.lang.bel.BEL(config['bel']['lang']['default_bel_version'], config[
 #                         ['EG:21858']]
 
 #     for index, (gene, species) in enumerate(gene_species_id_tuples):
-#         result = bel_obj.orthologize(gene, species)
+#         result = bo.orthologize(gene, species)
 #         assert result == list_of_expected[index]
 
 
@@ -25,10 +25,10 @@ def test_ortho_one():
     statement = 'act(p(HGNC:AKT1), ma(GO:"kinase activity"))'
     expected = 'activity(proteinAbundance(MGI:Akt1), molecularActivity(GO:"kinase activity"))'
 
-    bel_obj.parse(statement)
-    bel_obj.orthologize('TAX:10090')
+    bo.parse(statement)
+    bo.orthologize('TAX:10090')
 
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt='long') == expected
 
 
 def test_ortho_two():
@@ -36,9 +36,9 @@ def test_ortho_two():
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2))'
     expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(EG:21858))'
 
-    bel_obj.parse(statement)
-    bel_obj.orthologize('TAX:10090')
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    bo.parse(statement)
+    bo.orthologize('TAX:10090')
+    assert bo.ast.to_string(fmt='long') == expected
 
 
 def test_ortho_nested():
@@ -46,6 +46,6 @@ def test_ortho_nested():
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases (complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2)) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2)))'
     expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases (complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(EG:21858)) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(EG:21858)))'
 
-    bel_obj.parse(statement)
-    bel_obj.orthologize('TAX:10090')
-    assert bel_obj.ast.to_string(fmt='long') == expected
+    bo.parse(statement)
+    bo.orthologize('TAX:10090')
+    assert bo.ast.to_string(fmt='long') == expected
