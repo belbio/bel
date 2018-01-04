@@ -35,6 +35,9 @@ deploy_patch: update_parsers
 	bumpversion --allow-dirty patch
 	${deploy_commands}
 
+publish:
+	setup.py upload
+
 belspec_json:
 	belspec_yaml2json
 
@@ -61,6 +64,9 @@ update_parsers: $(PARSERS)
 $(VDIR)/parser%.py: $(VDIR)/bel%.ebnf
 	@echo Turning $< into $@
 	python bin/ebnf_to_parsers.py --ebnf_fn "$<"
+
+ci_tests:
+	py.test -rs --cov=./bel -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
 
 tests: clean_pyc
 	py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
