@@ -31,6 +31,7 @@ Welcome to bel's documentation.
    :target: https://readthedocs.org/projects/bel/?badge=latest
    :alt: Documentation Status
 
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -39,4 +40,7 @@ Welcome to bel's documentation.
    script
    modules
    lang
+   link_contributing
+   link_conduct
+   devops
 
