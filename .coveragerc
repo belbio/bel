@@ -2,8 +2,7 @@
 [run]
 parallel = False
 branch = False
-source =
-    bel_lang/
+source = bel
 omit =
     bin/*
     tests/*
