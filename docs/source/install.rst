@@ -15,5 +15,13 @@ Developers
 
 If you are a developer, please see the :doc:`link_contributing` first and then:
 
+    git clone <your forked version of bel>
 
-File :project:`.editorconfig`
+The following commands sets up a virtual environment, installs *bel* as an editable package and then pip installs the requirements.txt packages.
+
+    make dev_install
+
+To run the tests
+
+    make tests
+
