@@ -429,25 +429,25 @@ def edges(ctx, statement, rules, species_id, namespace_targets, version, api, co
     return
 
 
-@bel.group()
-def db():
-    """Database specific commands"""
-    pass
+# @bel.group()
+# def db():
+#     Database specific commands
+#     pass
 
 
-@bel.command()
-@click.option('--clean/--no-clean', default=False, help="Remove indexes and re-create them")
-@click.option('--index_name', default='terms_blue', help='Use this name for index. Default is "terms_blue"')
-def elasticsearch(clean, index_name):
-    """Setup Elasticsearch term indexes
+# @bel.command()
+# @click.option('--clean/--no-clean', default=False, help="Remove indexes and re-create them")
+# @click.option('--index_name', default='terms_blue', help='Use this name for index. Default is "terms_blue"')
+# def elasticsearch(clean, index_name):
+#     Setup Elasticsearch term indexes
 
-    This will by default only create the indexes and run the term index mapping
-    if the indexes don't exist.  The --clean option will force removal of the
-    index if it exists.
+#     This will by default only create the indexes and run the term index mapping
+#     if the indexes don't exist.  The --clean option will force removal of the
+#     index if it exists.
 
-    The index_name should be aliased to the index 'terms' when it's ready
-    """
+#     The index_name should be aliased to the index 'terms' when it's ready
 
-    es = bel.db.elasticsearch.get_client()
 
-    bel.db.elasticsearch.create_terms_index(es, index_name)
+#     es = bel.db.elasticsearch.get_client()
+
+#     bel.db.elasticsearch.create_terms_index(es, index_name)

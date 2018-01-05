@@ -162,7 +162,7 @@ def add_function_signature_help(spec_dict: dict) -> dict:
                         else:
                             text = f'Zero or one string argument of following type(s): {", ".join([val for val in arg["values"]])}'
                     elif arg.get('optional', False):
-                        args_summary += "+"
+                        args_summary += "*"
                         if arg['type'] in ['NSArg']:
                             text = f'Zero or more namespace arguments of following type(s): {", ".join([val for val in arg["values"]])}'
                         elif arg['type'] == 'StrArgNSArg':
@@ -340,8 +340,10 @@ def enhance_function_signatures(spec_dict: Mapping[str, Any]) -> Mapping[str, An
                 else:
                     if arg['type'] in ['Function', 'Modifier']:
                         req_args.append(arg.get('values', []))
+                        pos_args.append(arg.get('values', []))
                     elif arg['type'] in ['StrArgNSArg', 'NSArg', 'StrArg']:
                         req_args.append(arg['type'])
+                        pos_args.append(arg['type'])
 
             spec_dict['function_signatures'][func]['signatures'][i]['req_args'] = copy.deepcopy(req_args)
             spec_dict['function_signatures'][func]['signatures'][i]['pos_args'] = copy.deepcopy(pos_args)
