@@ -33,9 +33,28 @@ sys.path.insert(0, path)
 # needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx_click.ext', 'sphinx.ext.napoleon', 'sphinx_autodoc_typehints',]
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+# NOTE: Must load sphinx.ext.napoleon before sphinx_autodoc_typehints.
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx_click.ext',
+    'sphinx.ext.napoleon',
+    'sphinx_autodoc_typehints',
+    'sphinx.ext.extlinks',
+    'releases',
+    'sphinxcontrib.gravatar',
+]
+
+extlinks = {
+    'issuenum': ('https://github.com/belbio/bel/issues/%s', 'issue '),
+    'project': ('https://github.com/belbio/bel/blob/master/%s', 'project file '),
+}
+
+# define gravatar users
+gravatar_users = (
+    ('wshayes', {'email': 'william.s.hayes@gmail.com'}),
+    ('davidchen', {'email': 'chendavid96@gmail.com'}),
+)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -51,7 +70,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'bel'
-copyright = '2017, William Hayes, David Chen'
+copyright = '2017, BELBio'
 author = 'William Hayes, David Chen'
 
 # The version info for the project you're documenting, acts as replacement for

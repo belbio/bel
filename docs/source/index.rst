@@ -21,16 +21,25 @@ Welcome to *bel*'s documentation.
   :target: https://codecov.io/gh/belbio/bel
   :alt: Test Coverage
 
-.. image:: https://badge.fury.io/py/bel.svg
-   :target: https://badge.fury.io/py/bel
-   :alt: PyPi Latest
-
 .. image:: https://readthedocs.org/projects/bel/badge/?version=latest
    :target: https://readthedocs.org/projects/bel/?badge=latest
    :alt: Documentation Status
 
 Informational badges
 -----------------------
+
+.. image:: https://badge.fury.io/py/bel.svg
+   :target: https://badge.fury.io/py/bel
+   :alt: PyPi Latest
+
+.. image:: https://img.shields.io/pypi/l/bel.svg
+    :target: https://pypi.python.org/pypi/bel
+    :alt: BEL License
+
+.. image:: https://img.shields.io/pypi/pyversions/bel.svg
+    :target: https://pypi.python.org/pypi/bel
+    :alt: Python Versions Supported
+
 .. image:: https://badge.waffle.io/belbio/project.svg?columns=all
    :target: https://waffle.io/belbio/project
    :alt: 'Waffle.io - Columns and their card count'
@@ -54,4 +63,5 @@ Informational badges
    link_conduct
    install
    devops
-
+   changelog
+   authors

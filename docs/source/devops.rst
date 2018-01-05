@@ -28,7 +28,7 @@ Code Quality
 
 We are using Code Climate for code quality assessments and test coverage review.
 
-Contribution Licensing
+Contributor Licensing Agreements
 ------------------------
 
 All pull requests require signing the [CLA Assistant](https://cla-assistant.io/) Contributor's License Agreement.
