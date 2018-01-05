@@ -6,30 +6,40 @@
 Introduction
 ------------
 
-Welcome to bel's documentation.
+Welcome to *bel*'s documentation.
 
 .. image:: https://travis-ci.org/belbio/bel.svg?branch=master
    :target: https://travis-ci.org/belbio/bel
    :alt: Travis Build/Testing
 
-.. image:: https://api.codeclimate.com/v1/badges/3fdfec7ee96fc639bb09/maintainability
-   :target: https://codeclimate.com/github/belbio/bel/maintainability
-   :alt: Maintainability
+.. CodeClimate code coverage
+.. .. image:: https://api.codeclimate.com/v1/badges/3fdfec7ee96fc639bb09/test_coverage
+..    :target: https://codeclimate.com/github/belbio/bel/test_coverage
+..    :alt: Test Coverage
 
-.. image:: https://api.codeclimate.com/v1/badges/3fdfec7ee96fc639bb09/test_coverage
-   :target: https://codeclimate.com/github/belbio/bel/test_coverage
-   :alt: Test Coverage
+.. image:: https://codecov.io/gh/belbio/bel/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/belbio/bel
+  :alt: Test Coverage
 
 .. image:: https://badge.fury.io/py/bel.svg
-    :target: https://badge.fury.io/py/bel
-
-.. image:: https://badge.waffle.io/belbio/project.svg?columns=all
- :target: https://waffle.io/belbio/project
- :alt: 'Waffle.io - Columns and their card count'
+   :target: https://badge.fury.io/py/bel
+   :alt: PyPi Latest
 
 .. image:: https://readthedocs.org/projects/bel/badge/?version=latest
    :target: https://readthedocs.org/projects/bel/?badge=latest
    :alt: Documentation Status
+
+Informational badges
+-----------------------
+.. image:: https://badge.waffle.io/belbio/project.svg?columns=all
+   :target: https://waffle.io/belbio/project
+   :alt: 'Waffle.io - Columns and their card count'
+
+
+.. image:: https://api.codeclimate.com/v1/badges/3fdfec7ee96fc639bb09/maintainability
+   :target: https://codeclimate.com/github/belbio/bel/maintainability
+   :alt: Maintainability
+
 
 
 .. toctree::
@@ -42,5 +52,6 @@ Welcome to bel's documentation.
    lang
    link_contributing
    link_conduct
+   install
    devops
 

@@ -1,7 +1,7 @@
 # .coveragerc to control coverage.py
 [run]
 parallel = False
-branch = False
+branch = True
 source = bel
 omit =
     bin/*

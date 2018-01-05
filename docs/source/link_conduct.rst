@@ -1,4 +1,4 @@
 .. toctree::
     :titlesonly:
 
-.. include:: <../../CONDUCT.rst>
+.. include:: ../../CONDUCT.rst
