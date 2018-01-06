@@ -50,12 +50,12 @@ Informational badges
    :alt: Maintainability
 
 
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    overview
+   configuration
    script
    modules
    lang
