@@ -90,6 +90,7 @@ dev_install:
 
 	.venv/bin/pip install -e .
 	.venv/bin/pip install -r requirements.txt
+	.venv/bin/pip install -r requirements-docs.txt
 
 livedocs:
 	cd docs; sphinx-autobuild -q -p 0 --open-browser --delay 5 source build/html
