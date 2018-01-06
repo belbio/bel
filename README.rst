@@ -14,16 +14,25 @@ BEL package
   :target: https://codecov.io/gh/belbio/bel
   :alt: Test Coverage
 
-.. image:: https://badge.fury.io/py/bel.svg
-   :target: https://badge.fury.io/py/bel
-   :alt: PyPi Latest
-
 .. image:: https://readthedocs.org/projects/bel/badge/?version=latest
    :target: https://readthedocs.org/projects/bel/?badge=latest
    :alt: Documentation Status
 
 Informational badges
 -----------------------
+
+.. image:: https://badge.fury.io/py/bel.svg
+   :target: https://badge.fury.io/py/bel
+   :alt: PyPi Latest
+
+.. image:: https://img.shields.io/pypi/l/bel.svg
+    :target: https://pypi.python.org/pypi/bel
+    :alt: BEL License
+
+.. image:: https://img.shields.io/pypi/pyversions/bel.svg
+    :target: https://pypi.python.org/pypi/bel
+    :alt: Python Versions Supported
+
 .. image:: https://badge.waffle.io/belbio/project.svg?columns=all
    :target: https://waffle.io/belbio/project
    :alt: 'Waffle.io - Columns and their card count'
@@ -34,71 +43,31 @@ Informational badges
    :alt: Maintainability
 
 
-BEL Language
-----------------
+BEL Python Package
+---------------------
 
-Initial Plans
----------------
+Main documentation is at `<http://bel.readthedocs.io/en/latest/>`.
 
-An approach is to use an EBNF template for BEL and a JSON-based data file to create a fully-specified EBNF input for a parsing generator that will allow us to process a potential full or partial BEL statement, convert it to an AST and be able to convert an AST back to a BEL Statement.
+Currently handles BEL 2.0.0, but it is easily extensible to new versions of BEL.
 
-Goals
-------------
+Planned features
+---------------------
 
-* Read a standard language descriptor file (e.g. EBNF) for parser generation
-* Use configuration files for creating a BEL V.x parser/validator/autocomplete engine
-* Allow full or partial BEL Statements
-* Identify syntax issues in the statement and provide suggestions on fixing them
-* Identify semantic issues in the statement and provide suggestions on fixing them
-* Identify unknown Namespaces or Namespace values
-* Read a Nanopub and validate the full Nanopub, e.g. the BEL statement, Annotations, Citation, etc
-* Provide location-based parser state information (e.g. location 10 is in the required arg part of a protein abundance - e.g. the protein value)
+* [Done] Allow multiple BEL Specification files for different BEL versions (including experimental versions)
+* [Done] Provide a standard EBNF file for parser generation for each BEL Specification
+* [Done] Identify syntax issues in the statement and provide suggestions on fixing them
+* [Done] Identify semantic issues in the statement and provide suggestions on fixing them
+* [Done] Identify unknown Namespaces or Namespace values
+* [Done] Convert BEL statements into an AST and then back into a BEL Statement
 * Provide autocompletion suggestions given a location in the BEL Statement
-* Convert BEL statements into an AST and then back into a BEL Statement
+* Read a Nanopub and validate the full Nanopub, e.g. the BEL statement, Annotations, Citation, etc
+* BEL Pipeline - Process new Nanopubs in NanopubStore into Edges and load in EdgeStore
+* [Done] Convert BELScript into BEL Nanopubs
+* Command line interface (partially done)
 
 Install
 ---------------
 
-    pip install git+https://github.com/belbio/bel@v<RELEASE>#egg=bel-<RELEASE>
-
-Development Notes
--------------------
-
-We will develop a makefile to handle updating the BEL versions, creating EBNF files,
-updating the version, running tests and deploying the package to PyPi.
-
-
-Setting up bel for local development
--------------------------------------------
-
-1. `git clone git@github.com:belbio/bel.git`
-1. `cd bel`
-1. Setup Virtual Environment `python3.6 -m venv .venv --prompt bel`
-1. Install python packages needed `pip install -r requirements.txt`
-1. Install local bel `pip install -e .`
-
-Updating version
-------------------
-
-Use one of the following commands depending on what part of the semantic version you
-want to increase.
-
-    bumpversion major
-    bumpversion minor
-    bumpversion patch
-
-These commands use the .bumpversion.cfg file to determine in which files to update the
-semantic version.
-
-BEL Nanopub processing library.  The performs the following functions:
-
-* BEL Nanopub validation (in development)
-
-  * Nanopub JSONschema validation
-  * BEL statement validation
-  * BEL context validation
-
-* BEL Nanopub -> Edge conversion (BEL Pipeline)
-* CLI scripts to convert BEL Nanopubs to BEL Edges and perform validation
+    pip install bel
 
 
