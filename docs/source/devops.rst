@@ -13,7 +13,7 @@ We use TravisCI for Open Source to run builds and tests.
 Documentation
 -------------------
 
-Documentation is based on Sphinx and created and hosted by ReadTheDocs using the `belbio` user id.
+Documentation is based on Sphinx and created and hosted at `ReadTheDocs <http://bel.readthedocs.io/en/latest/>`_ using the `belbio` user id.
 
 
 Dependabot
@@ -26,7 +26,9 @@ python module requirements up to date.  It uses the `belbio` user id.
 Code Quality
 -------------------
 
-We are using Code Climate for code quality assessments and test coverage review.
+We are using `Code Climate <https://codeclimate.com/github/belbio/bel>`_ for code quality assessments.
+
+We are using `CodeCov <https://codecov.io/gh/belbio/bel>`_ for code test coverage assessments.
 
 Contributor Licensing Agreements
 ------------------------

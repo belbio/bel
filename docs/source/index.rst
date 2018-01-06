@@ -65,3 +65,10 @@ Informational badges
    devops
    changelog
    authors
+
+
+Related Documentation
+---------------------------
+
+* `BEL API documentation <http://apidocs.bel.bio>`_
+* `BEL Resource Tools documentation <http://bel_resources.readthedocs.io/en/latest/>`_

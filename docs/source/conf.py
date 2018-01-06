@@ -69,7 +69,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'bel'
+project = 'BEL Python Package'
 copyright = '2017, BELBio'
 author = 'William Hayes, David Chen'
 
