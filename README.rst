@@ -50,6 +50,11 @@ Main documentation is at `<http://bel.readthedocs.io/en/latest/>`.
 
 Currently handles BEL 2.0.0, but it is easily extensible to new versions of BEL.
 
+Install
+---------------
+
+    pip install bel
+
 Planned features
 ---------------------
 
@@ -65,9 +70,5 @@ Planned features
 * [Done] Convert BELScript into BEL Nanopubs
 * Command line interface (partially done)
 
-Install
----------------
-
-    pip install bel
 
 
