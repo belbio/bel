@@ -4,15 +4,17 @@ BEL CLI
 The BEL CLI commands are installed by pip install bel. These are nested commands
 for which you can review the help at each nested level by:
 
+*belc* stands for BEL CLI (Command Line Interface)
+
 .. code-block:: bash
 
-    bel --help
-    bel stmt --help
-    bel stmt canonicalize --help
+    belc --help
+    belc stmt --help
+    belc stmt canonicalize --help
 
 
-.. click:: bel.scripts:bel
-   :prog: bel
+.. click:: bel.scripts:belc
+   :prog: belc
    :show-nested:
 
 

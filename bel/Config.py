@@ -133,11 +133,18 @@ def load_configuration():
     if belbio_conf_fp:
         with open(belbio_conf_fp, 'r') as f:
             config = yaml.load(f)
+            config['source_files'] = {}
+            config['source_files']['conf'] = belbio_conf_fp
 
     if belbio_secrets_fp:
         with open(belbio_secrets_fp, 'r') as f:
             secrets = yaml.load(f)
             config['secrets'] = copy.deepcopy(secrets)
+            if 'source_files' in config:
+                config['source_files']['secrets'] = belbio_secrets_fp
+            else:
+                config['source_files'] = {}
+                config['source_files']['secrets'] = belbio_conf_fp
 
     config = get_versions(config)
 

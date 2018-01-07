@@ -31,6 +31,6 @@ We are using `Code Climate <https://codeclimate.com/github/belbio/bel>`_ for cod
 We are using `CodeCov <https://codecov.io/gh/belbio/bel>`_ for code test coverage assessments.
 
 Contributor Licensing Agreements
-------------------------
+--------------------------------------
 
 All pull requests require signing the [CLA Assistant](https://cla-assistant.io/) Contributor's License Agreement.

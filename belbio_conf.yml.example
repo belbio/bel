@@ -32,7 +32,7 @@ bel:
 
     # Rules to apply for computing BEL Edges from BEL Nanopubs
     # pipeline_edge_rules: ["component_of", "degradation"]
-    pipeline_edge_rules: []  # If empty, don't filter out any of the compute rules
+  pipeline_edge_rules: []  # If empty, don't filter out any of the compute rules
 
 # bel_api service settings
 bel_api:

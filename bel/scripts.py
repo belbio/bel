@@ -3,8 +3,10 @@ import json
 import yaml
 import gzip
 import re
+import sys
 
-import bel.db
+import bel.db.arangodb
+import bel.db.elasticsearch
 import bel.utils as utils
 import bel.Config
 from bel.Config import config
@@ -31,7 +33,7 @@ pass_context = click.make_pass_decorator(Context, ensure=True)
 
 
 @click.group()
-def bel():
+def belc():
     """ BEL commands
 
     Uses first file found to load in default configuration:
@@ -43,14 +45,14 @@ def bel():
     pass
 
 
-@bel.group()
+@belc.group()
 def nanopub():
     """Nanopub specific commands"""
 
     pass
 
 
-@bel.command()
+@belc.command()
 @click.argument('input_fn')
 @click.option('--output_fn', default='-', help="BEL Edges output filename - defaults to STDOUT")
 @click.option('--rules', help='Select specific rules to create BEL Edges, comma-delimited, e.g. "component_of,degradation", default is to run all rules. Special rule: "skip" does not compute edges at all - just processes primary edge')
@@ -171,8 +173,8 @@ def nanopub_validate(ctx, input_fn, output_fn, api, config_fn):
 
 
 @nanopub.command(name="belscript")
-@click.option('--output_fn', help="BEL Edges JSON output filename - defaults to STDOUT")
 @click.argument('input_fn')
+@click.argument('output_fn')
 @pass_context
 def convert_belscript(ctx, input_fn, output_fn):
     """Convert belscript to nanopubs_bel format
@@ -194,21 +196,24 @@ def convert_belscript(ctx, input_fn, output_fn):
 
     try:
         # output file
-        if re.search('gz$', output_fn):
-            fout = gzip.open(output_fn, 'wt')
-        else:
-            fout = open(output_fn, 'wt')
-
         # set output flags
         json_flag, jsonl_flag, yaml_flag = False, False, False
-        if re.search('ya?ml', output_fn):
-            yaml_flag = True
-            docs = []
-        elif 'jsonl' in output_fn:
-            jsonl_flag = True
-        elif 'json' in output_fn:
-            json_flag = True
-            docs = []
+        if output_fn:
+            if re.search('gz$', output_fn):
+                fout = gzip.open(output_fn, 'wt')
+            else:
+                fout = open(output_fn, 'wt')
+
+            if re.search('ya?ml', output_fn):
+                yaml_flag = True
+                docs = []
+            elif 'jsonl' in output_fn:
+                jsonl_flag = True
+            elif 'json' in output_fn:
+                json_flag = True
+                docs = []
+        else:
+            fout = sys.stdout
 
         # input file
         if re.search('gz$', input_fn):
@@ -233,7 +238,7 @@ def convert_belscript(ctx, input_fn, output_fn):
         fout.close()
 
 
-@bel.group()
+@belc.group()
 def stmt():
     """BEL Statement specific commands"""
 
@@ -429,25 +434,47 @@ def edges(ctx, statement, rules, species_id, namespace_targets, version, api, co
     return
 
 
-# @bel.group()
-# def db():
-#     Database specific commands
-#     pass
+@belc.group()
+def db():
+    """Database specific commands"""
+    pass
 
 
-# @bel.command()
-# @click.option('--clean/--no-clean', default=False, help="Remove indexes and re-create them")
-# @click.option('--index_name', default='terms_blue', help='Use this name for index. Default is "terms_blue"')
-# def elasticsearch(clean, index_name):
-#     Setup Elasticsearch term indexes
+@db.command()
+@click.option('--delete/--no-delete', default=False, help="Remove indexes and re-create them")
+@click.option('--index_name', default='terms_blue', help='Use this name for index. Default is "terms_blue"')
+def elasticsearch(delete, index_name):
+    """Setup Elasticsearch namespace indexes
 
-#     This will by default only create the indexes and run the term index mapping
-#     if the indexes don't exist.  The --clean option will force removal of the
-#     index if it exists.
+    This will by default only create the indexes and run the namespace index mapping
+    if the indexes don't exist.  The --delete option will force removal of the
+    index if it exists.
 
-#     The index_name should be aliased to the index 'terms' when it's ready
+    The index_name should be aliased to the index 'terms' when it's ready"""
+
+    if delete:
+        es = bel.db.elasticsearch.get_client(delete=True)
+    else:
+        es = bel.db.elasticsearch.get_client()
 
 
-#     es = bel.db.elasticsearch.get_client()
+@db.command()
+@click.argument('db_name')
+@click.option('--delete/--no-delete', default=False, help="Remove indexes and re-create them")
+def arangodb(delete, db_name):
+    """Setup ArangoDB database
 
-#     bel.db.elasticsearch.create_terms_index(es, index_name)
+    db_name: Either 'belns' or 'edgestore' - must be one or the other
+
+    This will create the database, collections and indexes on the collection if it doesn't exist.
+
+    The --delete option will force removal of the database if it exists."""
+
+    if delete:
+        client = bel.db.arangodb.get_client()
+        bel.db.arangodb.delete_database(client, db_name)
+
+    if db_name == 'belns':
+        bel.db.arangodb.get_belns_handle(client)
+    elif db_name == 'edgestore':
+        bel.db.arangodb.get_edgestore_handle(client)

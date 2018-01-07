@@ -35,31 +35,33 @@ def index_exists(es, index):
     return es.indices.exists(index=index)
 
 
-def delete_terms_index(es):
+def delete_index(es, index_name):
     """Delete the terms index"""
 
-    result = es.indices.delete(index=terms_idx_name)
+    if not index_name:
+        log.warn('No index name given to delete')
+        return None
+
+    result = es.indices.delete(index=index_name)
     return result
 
 
-def create_terms_index(es):
+def create_terms_index(es, index_name):
     """Create terms index"""
 
-    log.info(f'Mapping terms fn: {mapping_terms_fn}')
     with open(mapping_terms_fn, 'r') as f:
         mapping_terms = yaml.load(f)
 
     try:
-        es.indices.create(index=terms_idx_name, body=mapping_terms)
-        set_terms_alias(es)
+        es.indices.create(index=index_name, body=mapping_terms)
 
     except Exception as e:
         log.error(f'Could not create elasticsearch terms index: {e}')
 
-    return get_client()
+    set_terms_alias(es)
 
 
-def get_client(delete: bool = False):
+def get_client(delete: bool = False, index_name: str = terms_idx_name):
     """Get elasticsearch client
 
     Will create terms index if not available using mapping in
@@ -67,27 +69,28 @@ def get_client(delete: bool = False):
 
     Args:
         delete (bool): delete index if exists
-
+        index_name (str): index to be created or defaults to terms_idx_name
     Returns:
         es: Elasticsearch client handle
     """
 
     es = Elasticsearch([config['bel_api']['servers']['elasticsearch']], send_get_body_as='POST')
     if delete:
-        if index_exists(es, terms_idx_name):
-            delete_terms_index(es)
+        if index_exists(es, index_name):
+            delete_index(es, index_name)
 
-    if not index_exists(es, terms_idx_name):
-        create_terms_index(es)
+    if not index_exists(es, index_name):
+        create_terms_index(es, index_name)
 
     return es
 
 
-def bulk_load_terms(es, terms, index_name='terms'):
+def bulk_load_terms(es, terms):
     """Bulk load terms
 
     Args:
-        terms: Iterator of term objects
+        es: elasticsearch handle
+        terms: Iterator of term objects - includes index_name
     """
 
     chunk_size = 200

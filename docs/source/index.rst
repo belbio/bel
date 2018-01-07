@@ -6,7 +6,7 @@
 Introduction
 ------------
 
-Welcome to *bel*'s documentation.
+Welcome to the *BEL Python Package* documentation.
 
 .. image:: https://travis-ci.org/belbio/bel.svg?branch=master
    :target: https://travis-ci.org/belbio/bel
@@ -56,12 +56,12 @@ Informational badges
 
    overview
    configuration
+   install
    script
    modules
-   lang
+   glossary
    link_contributing
    link_conduct
-   install
    devops
    changelog
    authors
@@ -70,5 +70,5 @@ Informational badges
 Related Documentation
 ---------------------------
 
-* `BEL API documentation <http://apidocs.bel.bio>`_
-* `BEL Resource Tools documentation <http://bel_resources.readthedocs.io/en/latest/>`_
+* `BEL API documentation <http://apidocs.bel.bio>`_ - BEL.bio REST API documentation
+* `BEL Resource Tools documentation <http://bel_resources.readthedocs.io/en/latest/>`_ - BEL resource generation (namespaces, orthologies, etc)

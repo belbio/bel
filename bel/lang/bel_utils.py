@@ -5,7 +5,7 @@ import json
 import yaml
 import requests
 import sys
-from typing import Mapping, List, TYPE_CHECKING
+from typing import Mapping, List
 import functools
 import fastcache
 
@@ -14,9 +14,6 @@ from bel.lang.ast import BELAst, NSArg, Function
 
 import logging
 log = logging.getLogger(__name__)
-
-if TYPE_CHECKING:  # to allow type checking for a module that would be a circular import
-    import bel.lang.belobj
 
 
 # TODO - normalize convert_namespaces_{str|ast} - too much duplicate code - not very elegant
@@ -94,7 +91,7 @@ def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets:
     return bel_str
 
 
-def convert_namespaces_ast(ast: 'bel.lang.belobj.BEL', endpoint: str, namespace_targets: Mapping[str, List[str]] = None) -> 'bel.lang.bel.BEL':
+def convert_namespaces_ast(ast, endpoint: str, namespace_targets: Mapping[str, List[str]] = None):
     """Convert namespaces of BEL Entities in BEL AST using API endpoint
 
     Canonicalization and decanonicalization is determined by endpoint used and namespace_targets.
@@ -133,7 +130,7 @@ def convert_namespaces_ast(ast: 'bel.lang.belobj.BEL', endpoint: str, namespace_
     return ast
 
 
-def orthologize(ast, bo: 'bel.lang.belobj.BEL', species_id: str) -> 'bel.lang.bel.BEL':
+def orthologize(ast, bo, species_id: str):
     """Orthologize BEL Entities in BEL AST using API endpoint
 
     NOTE: - will take first ortholog returned in BEL.bio API result (which may return more than one ortholog)

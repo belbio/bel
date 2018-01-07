@@ -7,6 +7,18 @@ from bel.Config import config
 import logging
 log = logging.getLogger(__name__)
 
+edgestore_db_name = 'edgestore'
+belns_db_name = 'belns'
+
+edgestore_nodes_name = 'nodes'  # edgestore node collection name
+edgestore_edges_name = 'edges'  # edgestore edge collection name
+
+equiv_nodes_name = 'equivalence_nodes'  # equivalence node collection name
+equiv_edges_name = 'equivalence_edges'  # equivalence edge collection name
+ortholog_nodes_name = 'ortholog_nodes'  # ortholog node collection name
+ortholog_edges_name = 'ortholog_edges'  # ortholog edge collection name
+belns_definitions_name = 'belns_definitions'  # BEL Namespace metadata
+
 
 def get_client(host=None, port=None, username=None, password=None, enable_logging=True):
     """Get arango client and edgestore db handle"""
@@ -34,22 +46,15 @@ def get_edgestore_handle(client, username=None, password=None):
     username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
     password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password'), '')])
 
-    db_name = 'edgestore'
-    node_name = 'nodes'  # node collection name
-    comp_node_name = 'comp_nodes'  # node collection name
-    edges_name = 'edges'  # edge collection name
-    comp_edges_name = 'comp_edges'  # edge collection name
-
     # Create a new database named "edgestore"
     try:
-        edgestore_db = client.create_database(db_name)
+        edgestore_db = client.create_database(edgestore_db_name)
         if username and password:
             client.create_user(username, password)
-            client.grant_user_access(username, db_name)
-        nodes = edgestore_db.create_collection(node_name, index_bucket_count=64)
-        comp_nodes = edgestore_db.create_collection(comp_node_name, index_bucket_count=64)
-        edges = edgestore_db.create_collection(edges_name, edge=True, index_bucket_count=64)
-        comp_edges = edgestore_db.create_collection(comp_edges_name, edge=True, index_bucket_count=64)
+            client.grant_user_access(username, edgestore_db_name)
+        nodes = edgestore_db.create_collection(edgestore_nodes_name, index_bucket_count=64)
+        edges = edgestore_db.create_collection(edgestore_edges_name, edge=True, index_bucket_count=64)
+
         # Add a hash index to the collection
         nodes.add_hash_index(fields=['name'], unique=False)
         nodes.add_hash_index(fields=['components'], unique=False)  # add subject/object components as node properties
@@ -61,45 +66,43 @@ def get_edgestore_handle(client, username=None, password=None):
         # TODO - add a skiplist index for _from? or _key? to be able to do paging?
 
     except ArangoError as ae:
-        edgestore_db = client.db(db_name)
+        edgestore_db = client.db(edgestore_db_name)
     except Exception as e:
-        log.error('Error creating database', e)
+        log.error(f'Error creating database {edgestore_db_name}', e)
 
     return edgestore_db
 
 
-def get_belterms_handle(client, username=None, password=None):
-    """Get BEL terms arango db handle"""
+def get_belns_handle(client, username=None, password=None):
+    """Get BEL namespace arango db handle"""
 
     username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
     password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password')), ''])
 
-    db_name = 'belterms'
-    equiv_nodes_name = 'equivalence_nodes'  # node collection name
-    ortholog_nodes_name = 'ortholog_nodes'  # node collection name
-    equiv_edges_name = 'equivalence_edges'  # edge collection name
-    ortholog_edges_name = 'ortholog_edges'  # edge collection name
-
-    # Create a new database named "belterms"
+    # Create a new database named "belns"
     try:
-        belterms_db = client.create_database(db_name)
+        belns_db = client.create_database(belns_db_name)
         if username and password:
             client.create_user(username, password)
-            client.grant_user_access(username, db_name)
-        equiv_nodes = belterms_db.create_collection(equiv_nodes_name, index_bucket_count=64)
-        ortholog_nodes = belterms_db.create_collection(ortholog_nodes_name, index_bucket_count=64)
-        equiv_edges = belterms_db.create_collection(equiv_edges_name, edge=True, index_bucket_count=64)
-        ortholog_edges = belterms_db.create_collection(ortholog_edges_name, edge=True, index_bucket_count=64)
+            client.grant_user_access(username, belns_db_name)
+
+        belns_definitions = belns_db.create_collection(belns_definitions_name)
+        equiv_nodes = belns_db.create_collection(equiv_nodes_name, index_bucket_count=64)
+        ortholog_nodes = belns_db.create_collection(ortholog_nodes_name, index_bucket_count=64)
+        equiv_edges = belns_db.create_collection(equiv_edges_name, edge=True, index_bucket_count=64)
+        ortholog_edges = belns_db.create_collection(ortholog_edges_name, edge=True, index_bucket_count=64)
 
         # Add a hash index to the collection
         equiv_nodes.add_hash_index(fields=['name'], unique=True)
         ortholog_nodes.add_hash_index(fields=['name'], unique=True)
-        return belterms_db
+
+        return belns_db
+
     except ArangoError as ae:
-        belterms_db = client.db(db_name)
-        return belterms_db
+        belns_db = client.db(belns_db_name)
+        return belns_db
     except Exception as e:
-        log.error('Error creating database', e)
+        log.error(f'Error creating database {belns_db_name}', e)
         return None
 
 
