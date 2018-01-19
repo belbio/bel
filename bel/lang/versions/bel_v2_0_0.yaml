@@ -341,6 +341,10 @@ functions:
           values:
           - abundance
           - proteinAbundance
+          - geneAbundance
+          - microRNAAbundance
+          - rnaAbundance
+          - complexAbundance
         - multiple: true
           optional: true
           type: NSArg
@@ -353,7 +357,7 @@ functions:
     compositeAbundance:
       func_type: primary
       name: compositeAbundance
-      notes: Cannot embed a complex or composite function inside a compositeAbundance
+      notes: Cannot embed a composite function inside a compositeAbundance
         function, you can use named complexes inside composite functions
       signatures:
       - arguments:
@@ -363,18 +367,10 @@ functions:
           values:
           - abundance
           - proteinAbundance
+          - geneAbundance
+          - microRNAAbundance
+          - rnaAbundance
           - complexAbundance
-        - multiple: true
-          optional: true
-          type: NSArg
-          values:
-          - Complex
-          - Abundance
-          - Protein
-        - optional: true
-          type: Modifier
-          values:
-          - location
     degradation:
       func_type: primary
       name: degradation
