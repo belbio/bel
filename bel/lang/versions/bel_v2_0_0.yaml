@@ -841,167 +841,161 @@ relations:
 
 namespaces:
   default:
-    protein_modifications:
-      type: ProteinModification
-      values:
-        - name: acetylation
-          abbreviation: Ac
-        - name: ADP-ribosylation
-          abbreviation: ADPRib
-        - name: farnesylation
-          abbreviation: Farn
-        - name: geranylgeranylation
-          abbreviation: Gerger
-        - name: glycosylation
-          abbreviation: Glyco
-        - name: hydroxylation
-          abbreviation: Hy
-        - name: ISG15-protein conjugation
-          abbreviation: ISG
-        - name: methylation
-          abbreviation: Me
-        - name: mono-methylation
-          abbreviation: Me1
-        - name: di-methylation
-          abbreviation: Me2
-        - name: tri-methylation
-          abbreviation: Me3
-        - name: myristoylation
-          abbreviation: Myr
-        - name: neddylation
-          abbreviation: Nedd
-        - name: N-linked glycosylation
-          abbreviation: NGlyco
-        - name: Nitrosylation
-          abbreviation: 'NO'
-        - name: O-linked glycosylation
-          abbreviation: OGlyco
-        - name: palmitoylation
-          abbreviation: Palm
-        - name: phosphorylation
-          abbreviation: Ph
-        - name: sulfonation
-          abbreviation: Sulf
-        - name: SUMOylation
-          abbreviation: Sumo
-        - name: ubiquitination
-          abbreviation: Ub
-        - name: Lysine 48-linked polyubiquitination
-          abbreviation: UbK48
-        - name: Lysine 63-linked polyubiquitination
-          abbreviation: UbK63
-        - name: mono-ubiquitination
-          abbreviation: UbMono
-        - name: poly-ubiquitination
-          abbreviation: UbPoly
+    ProteinModification:
+      - name: acetylation
+        abbreviation: Ac
+      - name: ADP-ribosylation
+        abbreviation: ADPRib
+      - name: farnesylation
+        abbreviation: Farn
+      - name: geranylgeranylation
+        abbreviation: Gerger
+      - name: glycosylation
+        abbreviation: Glyco
+      - name: hydroxylation
+        abbreviation: Hy
+      - name: ISG15-protein conjugation
+        abbreviation: ISG
+      - name: methylation
+        abbreviation: Me
+      - name: mono-methylation
+        abbreviation: Me1
+      - name: di-methylation
+        abbreviation: Me2
+      - name: tri-methylation
+        abbreviation: Me3
+      - name: myristoylation
+        abbreviation: Myr
+      - name: neddylation
+        abbreviation: Nedd
+      - name: N-linked glycosylation
+        abbreviation: NGlyco
+      - name: Nitrosylation
+        abbreviation: 'NO'
+      - name: O-linked glycosylation
+        abbreviation: OGlyco
+      - name: palmitoylation
+        abbreviation: Palm
+      - name: phosphorylation
+        abbreviation: Ph
+      - name: sulfonation
+        abbreviation: Sulf
+      - name: SUMOylation
+        abbreviation: Sumo
+      - name: ubiquitination
+        abbreviation: Ub
+      - name: Lysine 48-linked polyubiquitination
+        abbreviation: UbK48
+      - name: Lysine 63-linked polyubiquitination
+        abbreviation: UbK63
+      - name: mono-ubiquitination
+        abbreviation: UbMono
+      - name: poly-ubiquitination
+        abbreviation: UbPoly
 
-    amino_acids:
-      type: AminoAcid
-      values:
-        - name: Alanine
-          abbreviation: A
-        - name: Alanine
-          abbreviation: Ala
-        - name: Arginine
-          abbreviation: R
-        - name: Arginine
-          abbreviation: Arg
-        - name: Asparagine
-          abbreviation: N
-        - name: Asparagine
-          abbreviation: Asn
-        - name: Aspartic Acid
-          abbreviation: D
-        - name: Aspartic Acid
-          abbreviation: Asp
-        - name: Cysteine
-          abbreviation: C
-        - name: Cysteine
-          abbreviation: Cys
-        - name: Glutamic Acid
-          abbreviation: E
-        - name: Glutamic Acid
-          abbreviation: Glu
-        - name: Glutamine
-          abbreviation: Q
-        - name: Glutamine
-          abbreviation: Gln
-        - name: Glycine
-          abbreviation: G
-        - name: Glycine
-          abbreviation: Gly
-        - name: Histidine
-          abbreviation: H
-        - name: Histidine
-          abbreviation: His
-        - name: Isoleucine
-          abbreviation: I
-        - name: Isoleucine
-          abbreviation: Ile
-        - name: Leucine
-          abbreviation: L
-        - name: Leucine
-          abbreviation: Leu
-        - name: Lysine
-          abbreviation: K
-        - name: Lysine
-          abbreviation: Lys
-        - name: Methionine
-          abbreviation: M
-        - name: Methionine
-          abbreviation: Met
-        - name: Phenylalanine
-          abbreviation: F
-        - name: Phenylalanine
-          abbreviation: Phe
-        - name: Proline
-          abbreviation: P
-        - name: Proline
-          abbreviation: Pro
-        - name: Serine
-          abbreviation: S
-        - name: Serine
-          abbreviation: Ser
-        - name: Threonine
-          abbreviation: T
-        - name: Threonine
-          abbreviation: Thr
-        - name: Tryptophan
-          abbreviation: W
-        - name: Tryptophan
-          abbreviation: Trp
-        - name: Tyrosine
-          abbreviation: Y
-        - name: Tyrosine
-          abbreviation: Tyr
-        - name: Valine
-          abbreviation: V
-        - name: Valine
-          abbreviation: Val
+    AminoAcid:
+      - name: Alanine
+        abbreviation: A
+      - name: Alanine
+        abbreviation: Ala
+      - name: Arginine
+        abbreviation: R
+      - name: Arginine
+        abbreviation: Arg
+      - name: Asparagine
+        abbreviation: N
+      - name: Asparagine
+        abbreviation: Asn
+      - name: Aspartic Acid
+        abbreviation: D
+      - name: Aspartic Acid
+        abbreviation: Asp
+      - name: Cysteine
+        abbreviation: C
+      - name: Cysteine
+        abbreviation: Cys
+      - name: Glutamic Acid
+        abbreviation: E
+      - name: Glutamic Acid
+        abbreviation: Glu
+      - name: Glutamine
+        abbreviation: Q
+      - name: Glutamine
+        abbreviation: Gln
+      - name: Glycine
+        abbreviation: G
+      - name: Glycine
+        abbreviation: Gly
+      - name: Histidine
+        abbreviation: H
+      - name: Histidine
+        abbreviation: His
+      - name: Isoleucine
+        abbreviation: I
+      - name: Isoleucine
+        abbreviation: Ile
+      - name: Leucine
+        abbreviation: L
+      - name: Leucine
+        abbreviation: Leu
+      - name: Lysine
+        abbreviation: K
+      - name: Lysine
+        abbreviation: Lys
+      - name: Methionine
+        abbreviation: M
+      - name: Methionine
+        abbreviation: Met
+      - name: Phenylalanine
+        abbreviation: F
+      - name: Phenylalanine
+        abbreviation: Phe
+      - name: Proline
+        abbreviation: P
+      - name: Proline
+        abbreviation: Pro
+      - name: Serine
+        abbreviation: S
+      - name: Serine
+        abbreviation: Ser
+      - name: Threonine
+        abbreviation: T
+      - name: Threonine
+        abbreviation: Thr
+      - name: Tryptophan
+        abbreviation: W
+      - name: Tryptophan
+        abbreviation: Trp
+      - name: Tyrosine
+        abbreviation: Y
+      - name: Tyrosine
+        abbreviation: Tyr
+      - name: Valine
+        abbreviation: V
+      - name: Valine
+        abbreviation: Val
 
-    molecular_activity:
-      type: Activity
-      values:
-        - name: catalyticActivity
-          abbreviation: cat
-        - name: chaperoneActivity
-          abbreviation: chap
-        - name: gtpBoundActivity
-          abbreviation: gtp
-        - name: kinaseActivity
-          abbreviation: kin
-        - name: molecularActivity
-          abbreviation: act
-        - name: peptidaseActivity
-          abbreviation: pep
-        - name: phosphataseActivity
-          abbreviation: phos
-        - name: ribosylationActivity
-          abbreviation: ribo
-        - name: transcriptionalActivity
-          abbreviation: tscript
-        - name: transportActivity
-          abbreviation: tport
+    Activity:
+      - name: catalyticActivity
+        abbreviation: cat
+      - name: chaperoneActivity
+        abbreviation: chap
+      - name: gtpBoundActivity
+        abbreviation: gtp
+      - name: kinaseActivity
+        abbreviation: kin
+      - name: molecularActivity
+        abbreviation: act
+      - name: peptidaseActivity
+        abbreviation: pep
+      - name: phosphataseActivity
+        abbreviation: phos
+      - name: ribosylationActivity
+        abbreviation: ribo
+      - name: transcriptionalActivity
+        abbreviation: tscript
+      - name: transportActivity
+        abbreviation: tport
 
 bel1_migration:
   amino_acids:
