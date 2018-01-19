@@ -43,7 +43,7 @@ mappings:
         type: text
       entity_types:
         type: keyword
-      annotations_types:
+      annotation_types:
         type: keyword
       synonyms:
         type: text
