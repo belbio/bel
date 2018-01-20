@@ -1,8 +1,10 @@
+CacheControl==0.12.3
 click==6.7
 coverage==4.4.2
 fastcache==1.0.2
 Jinja2==2.10
 jsonschema==2.6.0
+lxml==4.1.1
 mmh3==2.5.1
 mypy==0.560
 pytest==3.3.1
