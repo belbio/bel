@@ -172,23 +172,23 @@ class BELParser(Parser):
             with self._option():
                 self._token('complex')
             with self._option():
-                self._token('surf')
-            with self._option():
                 self._token('list')
             with self._option():
                 self._token('list')
             with self._option():
                 self._token('path')
             with self._option():
+                self._token('surf')
+            with self._option():
                 self._token('tloc')
             with self._option():
                 self._token('act')
             with self._option():
-                self._token('sec')
-            with self._option():
                 self._token('deg')
             with self._option():
                 self._token('rxn')
+            with self._option():
+                self._token('sec')
             with self._option():
                 self._token('bp')
             with self._option():

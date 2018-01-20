@@ -6,7 +6,7 @@
 ##############
 
 # BEL VERSION: 2.0.0
-# EBNF CREATION TIMESTAMP: December 29, 2017 - 10:50:19PM
+# EBNF CREATION TIMESTAMP: January 19, 2018 - 07:20:38PM
 
 #########################
 #  GRAMMAR DEFINITIONS  #
@@ -22,7 +22,7 @@ enclosed_statement = function_open bel_statement:bel_statement function_close ;
 
 function = function:funcs function_open function_args:f_args function_close ;
 funcs =
-    'cellSurfaceExpression' | 'compositeAbundance' | 'biologicalProcess' | 'microRNAAbundance' | 'complexAbundance' | 'proteinAbundance' | 'cellSecretion' | 'geneAbundance' | 'translocation' | 'rnaAbundance' | 'degradation' | 'abundance' | 'composite' | 'pathology' | 'activity' | 'reaction' | 'complex' | 'surf' | 'list' | 'list' | 'path' | 'tloc' | 'act' | 'sec' | 'deg' | 'rxn' | 'bp' | 'a' | 'g' | 'm' | 'p' | 'r' ;
+    'cellSurfaceExpression' | 'compositeAbundance' | 'biologicalProcess' | 'microRNAAbundance' | 'complexAbundance' | 'proteinAbundance' | 'cellSecretion' | 'geneAbundance' | 'translocation' | 'rnaAbundance' | 'degradation' | 'abundance' | 'composite' | 'pathology' | 'activity' | 'reaction' | 'complex' | 'list' | 'list' | 'path' | 'surf' | 'tloc' | 'act' | 'deg' | 'rxn' | 'sec' | 'bp' | 'a' | 'g' | 'm' | 'p' | 'r' ;
 
 f_args = ','.{(function | modifier_function | namespace_arg | string_arg)}* ;
 

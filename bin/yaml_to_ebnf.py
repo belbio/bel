@@ -35,9 +35,11 @@ def render_ebnf(tmpl_fn, bel_version, created_time, bel_spec):
     template = env.get_template(tmpl_basename)  # get the template
 
     # replace template placeholders with appropriate variables
-    ebnf = template.render(functions=sorted(specs['function_list'], key=len, reverse=True),
-                           m_functions=sorted(specs['modifier_list'], key=len, reverse=True),
-                           relations=sorted(specs['relation_list'], key=len, reverse=True),
+    functions_list = sorted(specs['functions']['primary']['list_short'] + specs['functions']['primary']['list_long'])
+    modifiers_list = sorted(specs['functions']['modifier']['list_short'] + specs['functions']['modifier']['list_long'])
+    ebnf = template.render(functions=sorted(functions_list, key=len, reverse=True),
+                           m_functions=sorted(modifiers_list, key=len, reverse=True),
+                           relations=sorted(specs['relations']['list'], key=len, reverse=True),
                            bel_version=bel_version,
                            bel_major_version=bel_major_version,
                            created_time=created_time)
