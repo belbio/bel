@@ -238,6 +238,38 @@ def convert_belscript(ctx, input_fn, output_fn):
         fout.close()
 
 
+@nanopub.command(name="stats")
+@click.argument('input_fn')
+@pass_context
+def nanopub_stats(ctx, input_fn):
+    """Collect statistics on nanopub file
+
+    input_fn can be json, jsonl or yaml and additionally gzipped
+    """
+
+    counts = {'nanopubs': 0, 'assertions': {'total': 0, 'subject_only': 0, 'nested': 0, 'relations': {}}}
+
+    for np in bnf.read_nanopubs(input_fn):
+        if 'nanopub' in np:
+            counts['nanopubs'] += 1
+            counts['assertions']['total'] += len(np['nanopub']['assertions'])
+            for assertion in np['nanopub']['assertions']:
+                if assertion['relation'] is None:
+                    counts['assertions']['subject_only'] += 1
+                else:
+                    if re.match('\s*\(', assertion['object']):
+                        counts['assertions']['nested'] += 1
+
+                    if not assertion.get('relation') in counts['assertions']['relations']:
+                        counts['assertions']['relations'][assertion.get('relation')] = 1
+                    else:
+                        counts['assertions']['relations'][assertion.get('relation')] += 1
+
+    counts['assertions']['relations'] = sorted(counts['assertions']['relations'])
+
+    print('DumpVar:\n', json.dumps(counts, indent=4))
+
+
 @belc.group()
 def stmt():
     """BEL Statement specific commands"""

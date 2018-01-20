@@ -10,6 +10,7 @@ import json
 import yaml
 import re
 import copy
+import sys
 from typing import Mapping, Any, List, Iterable, Tuple
 import gzip
 
@@ -80,6 +81,44 @@ def write_nanopubs(nanopubs: Mapping[str, Any], filename: str, jsonlines: bool =
         yaml (bool): create yaml file?
     """
     pass
+
+
+def create_nanopubs_fh(output_fn: str):
+    """Create Nanopubs output filehandle
+
+    \b
+    If output fn has *.gz, will written as a gzip file
+    If output fn has *.jsonl*, will written as a JSONLines file
+    IF output fn has *.json*, will be written as a JSON file
+    If output fn has *.yaml* or *.yml*,  will be written as a YAML file
+
+    Args:
+        output_fn: Name of output file
+
+    Returns:
+        (filehandle, yaml_flag, jsonl_flag, json_flag)
+    """
+
+    # output file
+    # set output flags
+    json_flag, jsonl_flag, yaml_flag = False, False, False
+    if output_fn:
+        if re.search('gz$', output_fn):
+            out_fh = gzip.open(output_fn, 'wt')
+        else:
+            out_fh = open(output_fn, 'wt')
+
+        if re.search('ya?ml', output_fn):
+            yaml_flag = True
+        elif 'jsonl' in output_fn:
+            jsonl_flag = True
+        elif 'json' in output_fn:
+            json_flag = True
+
+    else:
+        out_fh = sys.stdout
+
+    return(out_fh, yaml_flag, jsonl_flag, json_flag)
 
 
 def read_edges(fn):
