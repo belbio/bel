@@ -1,10 +1,58 @@
+"""Various utilities used throughout the BEL package
+
+NOTE: reqsess allows caching external (including ElasticSearch and ArangoDB) REST
+      requests for 1 day. This can cause stale results to show up. The cache
+      lives for the life of the application using *bel* so you'll need to restart
+      the BEL.bio API server if you update the terminologies, you expect major
+      changes in the Pubtator results, etc.
+"""
+
 import ulid
 import mmh3
 import json
 from typing import Mapping, Any
+import fastcache
+import requests
+
+from cachecontrol import CacheControl
+from cachecontrol.heuristics import ExpiresAfter
 
 import logging
 log = logging.getLogger(__name__)
+
+# Caches Requests Library GET requests -
+reqsess = CacheControl(requests.Session(), heuristic=ExpiresAfter(days=1))
+reqsess_nocache = requests.Session()
+
+
+def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = True):
+    """Wrapper for requests.get(url)
+
+    Args:
+        url: url to retrieve
+        params: query string parameters
+        timeout: allow this much time for the request and time it out if over
+        cache: Cache for up to a day unless this is false
+
+    Returns:
+        Requests Result obj or None if timed out
+    """
+
+    if cache:
+        req_obj = reqsess
+    else:
+        req_obj = reqsess_nocache
+
+    try:
+        if params:
+            params = {k: params[k] for k in sorted(params)}
+            r = req_obj.get(url, params=params, timeout=timeout)
+
+        else:
+            r = req_obj.get(url, timeout=timeout)
+        return r
+    except requests.exceptions.Timeout:
+        return None
 
 
 def first_true(iterable, default=False, pred=None):

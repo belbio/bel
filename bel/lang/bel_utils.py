@@ -10,22 +10,57 @@ import functools
 import fastcache
 
 from bel.lang.ast import BELAst, NSArg, Function
-# from bel.Config import config
+from bel.Config import config
+from bel.utils import get_url
 
 import logging
 log = logging.getLogger(__name__)
 
 
-# TODO - normalize convert_namespaces_{str|ast} - too much duplicate code - not very elegant
+def convert_nsarg(nsarg: str, api_url: str = None, namespace_targets: Mapping[str, List[str]] = None, canonicalize: bool = False, decanonicalize: bool = False) -> str:
+    """[De]Canonicalize NSArg
 
-@fastcache.lru_cache(maxsize=500, unhashable="ignore")
-def get_url(url, params=None, timeout=5):
+    Args:
+        nsarg (str): bel statement string or partial string (e.g. subject or object)
+        api_url (str): BEL.bio api url to use, e.g. https://api.bel.bio/v1
+        namespace_targets (Mapping[str, List[str]]): formatted as in configuration file example
+        canonicalize (bool): use canonicalize endpoint/namespace targets
+        decanonicalize (bool): use decanonicalize endpoint/namespace targets
 
-    try:
-        r = requests.get(url)
-        return r
-    except requests.exceptions.Timeout:
-        return None
+    Results:
+        str: converted NSArg
+    """
+
+    if not api_url:
+        api_url = config['bel_api']['servers']['api_url']
+        if not api_url:
+            log.error('Missing api url - cannot convert namespace')
+            return None
+
+    params = None
+    if namespace_targets:
+        namespace_targets_str = json.dumps(namespace_targets)
+        params = {'namespace_targets': namespace_targets_str}
+
+    if not namespace_targets:
+        if canonicalize:
+            api_url = api_url + '/terms/{}/canonicalized'
+        elif decanonicalize:
+            api_url = api_url + '/terms/{}/decanonicalized'
+        else:
+            log.warning('Missing (de)canonical flag - cannot convert namespaces')
+            return nsarg
+    else:
+
+        api_url = api_url + '/terms/{}/canonicalized'  # overriding with namespace_targets
+
+    request_url = api_url.format(nsarg)
+
+    r = get_url(request_url, params=params)
+    if r.status_code == 200:
+        nsarg = r.json().get('term_id', nsarg)
+
+    return nsarg
 
 
 def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets: Mapping[str, List[str]] = None, canonicalize: bool = False, decanonicalize: bool = False) -> str:
@@ -45,52 +80,22 @@ def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets:
         str: bel statement with namespaces converted
     """
 
-    if not api_url:
-        api_url = config['bel_api']['servers']['api_url']
-        if not api_url:
-            log.error('Missing api url - cannot convert namespace')
-            return None
-
-    params = None
-    if not namespace_targets:
-        if canonicalize:
-            api_url = api_url + '/terms/{}/canonicalized'
-        elif decanonicalize:
-            api_url = api_url + '/terms/{}/decanonicalized'
-        else:
-            log.warning('Missing namespace targets or (de)canonical flag - cannot convert namespaces')
-            return bel_str
-    else:
-        namespace_targets_str = json.dumps(namespace_targets)
-        params = {'namespace_targets': namespace_targets_str}
-        api_url = api_url + '/terms/{}/canonicalized'  # overriding with namespace_targets
-
     # pattern - look for capitalized namespace followed by colon
     #           and either a quoted string or a string that
     #           can include any char other than space, comma or ')'
     matches = re.findall(r'([A-Z]+:"(?:\\.|[^"\\])*"|[A-Z]+:(?:[^\),\s]+))', bel_str)
-    for match in matches:
-        if 'DEFAULT:' in match:  # skip default namespaces
+    for nsarg in matches:
+        if 'DEFAULT:' in nsarg:  # skip default namespaces
             continue
 
-        request_url = api_url.format(match)
-        try:
-            updated_term = ''
-            r = get_url(request_url, params=params)
-
-            if r.status_code == 200:
-                updated_term = r.json().get('term_id', match)
-                bel_str = bel_str.replace(match, updated_term)
-            if match != updated_term:
-                log.info(f'convert_namespaces_str Term: {match} New: {updated_term}')
-            else:
-                log.debug(f'convert_namespaces_str Term: {match} New: {updated_term}')
-        except requests.exceptions.Timeout:
-            log.error(f'Request timeout occurred for {request_url} in bel_utils.convert_namespaces_str')
+        updated_nsarg = convert_nsarg(nsarg, api_url=api_url, namespace_targets=namespace_targets, canonicalize=canonicalize, decanonicalize=decanonicalize)
+        if updated_nsarg != nsarg:
+            bel_str = bel_str.replace(nsarg, updated_nsarg)
 
     return bel_str
 
 
+# TODO - cleanup convert_namespaces_ast - use convert_nsarg and convert_namespaces_str parameters
 def convert_namespaces_ast(ast, endpoint: str, namespace_targets: Mapping[str, List[str]] = None):
     """Convert namespaces of BEL Entities in BEL AST using API endpoint
 
@@ -107,6 +112,7 @@ def convert_namespaces_ast(ast, endpoint: str, namespace_targets: Mapping[str, L
 
     if isinstance(ast, NSArg):
         given_term_id = '{}:{}'.format(ast.namespace, ast.value)
+
         try:
             request_url = endpoint.format(given_term_id)
             if namespace_targets:
