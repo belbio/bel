@@ -42,7 +42,7 @@ class BEL(object):
         """Initialize BEL object used for validating/processing/etc BEL statements
 
         Args:
-            version (str): BEL Version, defaults to config['lang']['default_bel_version']
+            version (str): BEL Version, defaults to config['bel']['lang']['default_bel_version']
             endpoint (str): BEL API endpoint,  defaults to config['bel_api']['servers']['api_url']
         """
 
@@ -50,7 +50,7 @@ class BEL(object):
 
         # use bel_utils._default_to_version to check if valid version, and if it exists or not
         if not version:
-            self.version = config['lang']['default_bel_version']
+            self.version = config['bel']['lang']['default_bel_version']
         else:
             self.version = version
 
@@ -62,7 +62,7 @@ class BEL(object):
             sys.exit()
 
         if not endpoint:
-            self.endpoint = config['api']['servers']['api_url']
+            self.endpoint = config['bel_api']['servers']['api_url']
         else:
             self.endpoint = endpoint
 
@@ -77,9 +77,9 @@ class BEL(object):
 
         # Import Tatsu parser
         # use importlib to import our parser (a .py file) and set the BELParse object as an instance variable
-        print(self.spec['parser_path'])
+
         try:
-            imported_parser_file = importlib.import_module(self.spec['parser_path'])
+            imported_parser_file = importlib.import_module(self.spec['admin']['parser_path'])
             self.parser = imported_parser_file.BELParser()
         except Exception as e:
             # if not found, we raise the NoParserFound exception which can be found in bel.lang.exceptions
@@ -125,8 +125,8 @@ class BEL(object):
 
         try:
             # see if an AST is returned without any parsing errors
-            ast_dict = self.parser.parse(self.bel_stmt, rule_name=rule_name, trace=False, parseinfo=parseinfo)
 
+            ast_dict = self.parser.parse(self.bel_stmt, rule_name=rule_name, trace=False, parseinfo=parseinfo)
             self.ast = lang_ast.ast_dict_to_objects(ast_dict, self)
 
             self.parse_valid = True
@@ -346,21 +346,6 @@ class BEL(object):
         #     suggestions = []
 
         return suggestions
-
-    def relation_list(self, fmt: str ="long") -> List[str]:
-        """Return relation list for this BEL Version in the requested format
-
-        Args:
-            fmt (str): format of relation name: long, medium or short (abbreviation)
-
-        Returns:
-            List[str]: list of relation names in requested format
-        """
-
-        if fmt == 'short':
-            return [self.spec['relations'][relation]['abbreviation'] for relation in self.spec['relations']]
-        else:
-            return [relation for relation in self.spec['relations']]
 
     def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string

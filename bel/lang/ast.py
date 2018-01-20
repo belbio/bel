@@ -43,9 +43,9 @@ class BELAst(object):
 
         bel_relation = None
         if self.bel_relation and fmt == 'short':
-            bel_relation = self.spec['relation_to_short'].get(self.bel_relation, None)
+            bel_relation = self.spec['relations']['to_short'].get(self.bel_relation, None)
         elif self.bel_relation:
-            bel_relation = self.spec['relation_to_long'].get(self.bel_relation, None)
+            bel_relation = self.spec['relations']['to_long'].get(self.bel_relation, None)
 
         if self.bel_subject and bel_relation and self.bel_object:
             if isinstance(self.bel_object, BELAst):
@@ -76,9 +76,9 @@ class BELAst(object):
 
         if self.bel_subject and self.bel_relation and self.bel_object:
             if fmt == 'short':
-                bel_relation = self.spec['relation_to_short'].get(self.bel_relation, None)
+                bel_relation = self.spec['relations']['to_short'].get(self.bel_relation, None)
             else:
-                bel_relation = self.spec['relation_to_long'].get(self.bel_relation, None)
+                bel_relation = self.spec['relations']['to_long'].get(self.bel_relation, None)
 
             bel_subject = self.bel_subject.to_string(fmt=fmt)
 
@@ -125,15 +125,9 @@ class Function(object):
 
     def __init__(self, name, spec, parent_function=None):
 
-        if name in spec['function_list']:
-            self.function_type = 'primary'
-            self.name = spec['function_to_long'][name]
-            self.name_short = spec['function_to_short'][name]
-
-        elif name in spec['modifier_list']:
-            self.function_type = 'modifier'
-            self.name = spec['modifier_to_long'][name]
-            self.name_short = spec['modifier_to_short'][name]
+        self.name = spec['functions']['to_long'][name]
+        self.name_short = spec['functions']['to_short'][name]
+        self.function_type = spec['functions']['info'][self.name]['type']
 
         self.parent_function = parent_function
         self.spec = spec
@@ -175,10 +169,10 @@ class Function(object):
 
         arg_string = ', '.join([a.to_string(fmt=fmt) for a in self.args])
 
-        function_name = self.name
-
         if fmt in ['short', 'medium']:
-            function_name = self.spec['function_to_short'].get(self.name, self.spec['modifier_to_short'].get(self.name, self.name))
+            function_name = self.name_short
+        else:
+            function_name = self.name
 
         return '{}({})'.format(function_name, arg_string)
 

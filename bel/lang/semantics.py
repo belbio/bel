@@ -48,7 +48,7 @@ def validate_functions(ast: BELAst, bo):
 
     if isinstance(ast, Function):
         log.debug(f'Validating: {ast.name}, {ast.function_type}, {ast.args}')
-        function_signatures = bo.spec['function_signatures'][ast.name]['signatures']
+        function_signatures = bo.spec['functions']['signatures'][ast.name]['signatures']
 
         function_name = ast.name
         (valid_function, messages) = check_function_args(ast.args, function_signatures, function_name)
@@ -67,6 +67,8 @@ def validate_functions(ast: BELAst, bo):
 
 def check_function_args(args, signatures, function_name):
     """Check function args - return message if function args don't match function signature
+
+    Called from validate_functions
 
     We have following types of arguments to validate:
         1. Required, position_dependent arguments, e.g. p(HGNC:AKT1), NSArg HGNC:AKT1 is required and must be first argument
@@ -185,7 +187,7 @@ def check_function_args(args, signatures, function_name):
 
 
 def validate_arg_values(ast, bo):
-    """Recursively validate arg (nsargs and strargs) values
+    """Recursively validate arg (NSArg and StrArg) values
 
     Check that NSArgs are found in BELbio API and match appropriate entity_type.
     Check that StrArgs match their value - either default namespace or regex string
@@ -201,7 +203,7 @@ def validate_arg_values(ast, bo):
 
     if not bo.endpoint:
         log.info('No API endpoint defined')
-        return self
+        return bo
 
     # Test NSArg terms
     if isinstance(ast, NSArg):
@@ -211,7 +213,7 @@ def validate_arg_values(ast, bo):
         # Default namespaces are defined in the bel_specification file
         if ast.namespace == 'DEFAULT':  # may use the DEFAULT namespace or not
             for value_type in value_types:
-                if ast.value in bo.spec['default_namespaces'][value_type]:
+                if ast.value in bo.spec['namespaces']['default'][value_type]:
                     log.debug('Default namespace valid term: {}'.format(term_id))
                     break
             else:  # if for loop doesn't hit the break, run this else
@@ -256,8 +258,8 @@ def validate_arg_values(ast, bo):
                 match = re.match(value_type, ast.value)
                 if match:
                     break
-            if value_type in bo.spec['default_namespaces']:
-                if ast.value in bo.spec['default_namespaces'][value_type]:
+            if value_type in bo.spec['namespaces']['default']:
+                if ast.value in bo.spec['namespaces']['default'][value_type]:
                     break
         else:  # If for loop doesn't hit the break, no matches found, therefore for StrArg value is bad
             bo.validation_messages.append(('WARNING', f'String value {ast.value} does not match default namespace value or regex pattern: {ast.value_types}'))

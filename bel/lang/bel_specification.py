@@ -18,26 +18,44 @@ from typing import Mapping, List, Any
 import logging
 log = logging.getLogger(__name__)
 
+# Custom Typing definitions
+BELSpec = Mapping[str, Any]
+
 '''
 Keys available in enhanced spec_dict:
 
-- 'version_underscored'
-- 'parser_path'
-- 'jinja_template'
-- 'relation_list'
-- 'relation_to_short'
-- 'relation_to_long'
-- 'relations'
-- 'function_list'
-- 'function_to_short'
-- 'function_to_long'
-- 'functions'
-- 'modifier_list'
-- 'modifier_to_short'
-- 'modifier_to_long'
-- 'modifier_functions'
-- 'function_signatures'
-- 'default_namespaces'
+- version
+- notes
+- admin
+    - 'version_underscored'
+    - 'parser_path'
+    - 'jinja_template'
+- relations
+    - 'list'
+    - 'list_short'
+    - 'list_long'
+    - 'to_short'
+    - 'to_long'
+    - 'info'
+- functions
+    - 'argument_types'
+    - 'entity_types'
+    - 'info'
+    - 'signatures'
+    - 'list'
+    - 'list_short'
+    - 'list_long'
+    - 'primary'
+        - 'list_short'
+        - 'list_long'
+    - 'modifier'
+        - 'list_short'
+        - 'list_long'
+    - 'to_short'
+    - 'to_long'
+- namespaces
+    - 'default'
+- computed_signatures
 '''
 
 
@@ -96,26 +114,23 @@ def belspec_yaml2json():
         bel_versions.append(spec_dict['version'])
 
         # admin-related keys
-        spec_dict['version_underscored'] = spec_dict['version'].replace('.', '_')
+        spec_dict['admin'] = {}
+        spec_dict['admin']['version_underscored'] = spec_dict['version'].replace('.', '_')
 
         # get the current directory name, and use that to find the version's parser file location
         cur_dir_name = os.path.basename(os.path.dirname(os.path.realpath(__file__)))
-        parser_path = 'bel.{}.versions.parser_v{}'.format(cur_dir_name, spec_dict['version_underscored'])
-        spec_dict['parser_path'] = parser_path
+        parser_path = 'bel.{}.versions.parser_v{}'.format(cur_dir_name, spec_dict['admin']['version_underscored'])
+        spec_dict['admin']['parser_path'] = parser_path
 
         # keys related to creation of EBNF file inside yaml_to_ebnf
-        spec_dict['jinja_template'] = 'bel.ebnf.j2'
+        spec_dict['admin']['jinja_template'] = 'bel.ebnf.j2'
 
-        # add relation keys relation_list, relation_to_short, relation_to_long
+        # add relation keys list, to_short, to_long
         spec_dict = add_relations(spec_dict)
-        # add function keys function_list, function_to_short, function_to_long
+        # add function keys list, to_short, to_long
         spec_dict = add_functions(spec_dict)
-        # add modifier keys modifier_list, modifier_to_short, modifier_to_long
-        spec_dict = add_modifiers(spec_dict)
 
         spec_dict = enhance_function_signatures(spec_dict)
-
-        spec_dict = enhance_default_namespaces(spec_dict)
 
         spec_dict = add_function_signature_help(spec_dict)
 
@@ -131,14 +146,14 @@ def add_function_signature_help(spec_dict: dict) -> dict:
 
     Simplify the function signatures for presentation to BEL Editor users
     """
-    for f in spec_dict['function_signatures']:
-        for argset_idx, argset in enumerate(spec_dict['function_signatures'][f]['signatures']):
+    for f in spec_dict['functions']['signatures']:
+        for argset_idx, argset in enumerate(spec_dict['functions']['signatures'][f]['signatures']):
             args_summary = ''
             args_list = []
             arg_idx = 0
-            for arg_idx, arg in enumerate(spec_dict['function_signatures'][f]['signatures'][argset_idx]['arguments']):
+            for arg_idx, arg in enumerate(spec_dict['functions']['signatures'][f]['signatures'][argset_idx]['arguments']):
                 if arg['type'] in ['Function', 'Modifier']:
-                    vals = [spec_dict['function_to_short'].get(val, spec_dict['modifier_to_short'].get(val)) for val in arg['values']]
+                    vals = [spec_dict['functions']['to_short'].get(val, spec_dict['functions']['to_short'].get(val)) for val in arg['values']]
                     args_summary += '|'.join(vals) + "()"
                     arg_idx += 1
 
@@ -181,8 +196,8 @@ def add_function_signature_help(spec_dict: dict) -> dict:
                 args_list.append(text)
 
             args_summary = re.sub(', $', '', args_summary)
-            spec_dict['function_signatures'][f]['signatures'][argset_idx]['argument_summary'] = f'{f}({args_summary})'
-            spec_dict['function_signatures'][f]['signatures'][argset_idx]['argument_help_listing'] = args_list
+            spec_dict['functions']['signatures'][f]['signatures'][argset_idx]['argument_summary'] = f'{f}({args_summary})'
+            spec_dict['functions']['signatures'][f]['signatures'][argset_idx]['argument_help_listing'] = args_list
 
             # print(f'{f}({args_summary})')
             # print(args_list)
@@ -202,20 +217,24 @@ def add_relations(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
 
     # TODO: PyCharm gives warning when instantiating the list and the two dicts below in spec_dict:
     # Class 'Mapping' does not define '__setitem__', so the '[]' operator cannot be used on its instances
-    spec_dict['relation_list'] = []
-    spec_dict['relation_to_short'] = {}
-    spec_dict['relation_to_long'] = {}
+    spec_dict['relations']['list'] = []
+    spec_dict['relations']['list_short'] = []
+    spec_dict['relations']['list_long'] = []
+    spec_dict['relations']['to_short'] = {}
+    spec_dict['relations']['to_long'] = {}
 
-    for relation_name in spec_dict['relations']:
+    for relation_name in spec_dict['relations']['info']:
 
-        abbreviated_name = spec_dict['relations'][relation_name]['abbreviation']
-        spec_dict['relation_list'].extend((relation_name, abbreviated_name))
+        abbreviated_name = spec_dict['relations']['info'][relation_name]['abbreviation']
+        spec_dict['relations']['list'].extend((relation_name, abbreviated_name))
+        spec_dict['relations']['list_long'].append(relation_name)
+        spec_dict['relations']['list_short'].append(abbreviated_name)
 
-        spec_dict['relation_to_short'][relation_name] = abbreviated_name
-        spec_dict['relation_to_short'][abbreviated_name] = abbreviated_name
+        spec_dict['relations']['to_short'][relation_name] = abbreviated_name
+        spec_dict['relations']['to_short'][abbreviated_name] = abbreviated_name
 
-        spec_dict['relation_to_long'][abbreviated_name] = relation_name
-        spec_dict['relation_to_long'][relation_name] = relation_name
+        spec_dict['relations']['to_long'][abbreviated_name] = relation_name
+        spec_dict['relations']['to_long'][relation_name] = relation_name
 
     return spec_dict
 
@@ -232,52 +251,42 @@ def add_functions(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
 
     # TODO: PyCharm gives warning when instantiating the list and the two dicts below in spec_dict:
     # Class 'Mapping' does not define '__setitem__', so the '[]' operator cannot be used on its instances
-    spec_dict['function_list'] = []
-    spec_dict['function_to_short'] = {}
-    spec_dict['function_to_long'] = {}
+    spec_dict['functions']['list'] = []
+    spec_dict['functions']['list_long'] = []
+    spec_dict['functions']['list_short'] = []
 
-    for func_name in spec_dict['functions']:
+    spec_dict['functions']['primary'] = {}
+    spec_dict['functions']['primary']['list_long'] = []
+    spec_dict['functions']['primary']['list_short'] = []
 
-        abbreviated_name = spec_dict['functions'][func_name]['abbreviation']
+    spec_dict['functions']['modifier'] = {}
+    spec_dict['functions']['modifier']['list_long'] = []
+    spec_dict['functions']['modifier']['list_short'] = []
 
-        spec_dict['function_list'].extend((func_name, abbreviated_name))
+    spec_dict['functions']['to_short'] = {}
+    spec_dict['functions']['to_long'] = {}
 
-        spec_dict['function_to_short'][abbreviated_name] = abbreviated_name
-        spec_dict['function_to_short'][func_name] = abbreviated_name
+    for func_name in spec_dict['functions']['info']:
 
-        spec_dict['function_to_long'][abbreviated_name] = func_name
-        spec_dict['function_to_long'][func_name] = func_name
+        abbreviated_name = spec_dict['functions']['info'][func_name]['abbreviation']
 
-    return spec_dict
+        spec_dict['functions']['list'].extend((func_name, abbreviated_name))
 
+        spec_dict['functions']['list_long'].append(func_name)
+        spec_dict['functions']['list_short'].append(abbreviated_name)
 
-def add_modifiers(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Add modifier keys to spec_dict
+        if spec_dict['functions']['info'][func_name]['type'] == 'primary':
+            spec_dict['functions']['primary']['list_long'].append(func_name)
+            spec_dict['functions']['primary']['list_short'].append(abbreviated_name)
+        else:
+            spec_dict['functions']['modifier']['list_long'].append(func_name)
+            spec_dict['functions']['modifier']['list_short'].append(abbreviated_name)
 
-    Args:
-        spec_dict (Mapping[str, Any]): bel specification dictionary
+        spec_dict['functions']['to_short'][abbreviated_name] = abbreviated_name
+        spec_dict['functions']['to_short'][func_name] = abbreviated_name
 
-    Returns:
-        Mapping[str, Any]: bel specification dictionary with added modifier keys
-    """
-
-    # TODO: PyCharm gives warning when instantiating the list and the two dicts below in spec_dict:
-    # Class 'Mapping' does not define '__setitem__', so the '[]' operator cannot be used on its instances
-    spec_dict['modifier_list'] = []
-    spec_dict['modifier_to_short'] = {}
-    spec_dict['modifier_to_long'] = {}
-
-    for modifier_name in spec_dict['modifier_functions']:
-
-        abbreviated_name = spec_dict['modifier_functions'][modifier_name]['abbreviation']
-
-        spec_dict['modifier_list'].extend((modifier_name, abbreviated_name))
-
-        spec_dict['modifier_to_short'][abbreviated_name] = abbreviated_name
-        spec_dict['modifier_to_short'][modifier_name] = abbreviated_name
-
-        spec_dict['modifier_to_long'][abbreviated_name] = modifier_name
-        spec_dict['modifier_to_long'][modifier_name] = modifier_name
+        spec_dict['functions']['to_long'][abbreviated_name] = func_name
+        spec_dict['functions']['to_long'][func_name] = func_name
 
     return spec_dict
 
@@ -314,74 +323,68 @@ def enhance_function_signatures(spec_dict: Mapping[str, Any]) -> Mapping[str, An
         Mapping[str, Any]: return enhanced bel specification dict
     """
 
-    for func in spec_dict['function_signatures']:
-        for i, sig in enumerate(spec_dict['function_signatures'][func]['signatures']):
+    for func in spec_dict['functions']['signatures']:
+        for i, sig in enumerate(spec_dict['functions']['signatures'][func]['signatures']):
             args = sig['arguments']
             req_args = []
             pos_args = []
             opt_args = []
             mult_args = []
             for arg in args:
+                # Multiple argument types
                 if arg.get('multiple', False):
                     if arg['type'] in ['Function', 'Modifier']:
                         mult_args.extend(arg.get('values', []))
                     elif arg['type'] in ['StrArgNSArg', 'NSArg', 'StrArg']:
                         mult_args.append(arg['type'])
+                        # Should probably never have an argument like this
+                # Optional, position dependent - will be added after req_args based on order in bel_specification
                 elif arg.get('optional', False) and arg.get('position', False):
                     if arg['type'] in ['Function', 'Modifier']:
                         pos_args.append(arg.get('values', []))
                     elif arg['type'] in ['StrArgNSArg', 'NSArg', 'StrArg']:
                         pos_args.append(arg['type'])
+                # Optional, position independent
                 elif arg.get('optional', False):
                     if arg['type'] in ['Function', 'Modifier']:
                         opt_args.extend(arg.get('values', []))
                     elif arg['type'] in ['StrArgNSArg', 'NSArg', 'StrArg']:
                         opt_args.append(arg['type'])
+                        # Should probably never have an argument like this
+                # Required arguments, position dependent
                 else:
                     if arg['type'] in ['Function', 'Modifier']:
                         req_args.append(arg.get('values', []))
-                        pos_args.append(arg.get('values', []))
                     elif arg['type'] in ['StrArgNSArg', 'NSArg', 'StrArg']:
                         req_args.append(arg['type'])
-                        pos_args.append(arg['type'])
 
-            spec_dict['function_signatures'][func]['signatures'][i]['req_args'] = copy.deepcopy(req_args)
-            spec_dict['function_signatures'][func]['signatures'][i]['pos_args'] = copy.deepcopy(pos_args)
-            spec_dict['function_signatures'][func]['signatures'][i]['opt_args'] = copy.deepcopy(opt_args)
-            spec_dict['function_signatures'][func]['signatures'][i]['mult_args'] = copy.deepcopy(mult_args)
+            spec_dict['functions']['signatures'][func]['signatures'][i]['req_args'] = copy.deepcopy(req_args)
+            spec_dict['functions']['signatures'][func]['signatures'][i]['pos_args'] = copy.deepcopy(pos_args)
+            spec_dict['functions']['signatures'][func]['signatures'][i]['opt_args'] = copy.deepcopy(opt_args)
+            spec_dict['functions']['signatures'][func]['signatures'][i]['mult_args'] = copy.deepcopy(mult_args)
 
     return spec_dict
 
 
-def enhance_default_namespaces(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
-    """Enhance the default namespaces dictionary
+def get_function_help(function: str, bel_spec: BELSpec):
+    """Get function_help given function name
 
-    Add names and abbreviations of each default_namespace type to a key of type
-    (e.g. ProteinModification or Activity) so that one can check for existence
-    of a
-
-    Args:
-        spec_dict (Mapping[str, Any]): bel specification dictionary
-
-    Returns:
-        Mapping[str, Any]: bel specification dictionary with added default namespace lists
+    This will get the function summary template (argument summary in signature)
+    and the argument help listing.
     """
 
-    new_ns = {}
+    function_long = bel_spec['functions']['to_long'].get(function)
+    function_help = []
 
-    for ns in spec_dict['default_namespaces']:
-        ns_type = spec_dict['default_namespaces'][ns]['type']
-        values = spec_dict['default_namespaces'][ns]['values']
-        new_ns[ns_type] = []
-        for val in values:
-            new_ns[ns_type].append(val['name'])
-            new_ns[ns_type].append(val['abbreviation'])
+    if function_long:
+        for signature in bel_spec['functions']['signatures'][function_long]['signatures']:
+            function_help.append({
+                "function_summary": signature['argument_summary'],
+                "argument_help": signature['argument_help_listing'],
+                "description": bel_spec['functions']['info'][function_long]['description'],
+            })
 
-    for ns_type in new_ns:
-        spec_dict['default_namespaces'][ns_type] = copy.deepcopy(new_ns[ns_type])
-
-    return spec_dict
-
+    return function_help
 
 
 def main():
