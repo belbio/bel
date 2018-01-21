@@ -388,10 +388,11 @@ def get_function_help(function: str, bel_spec: BELSpec):
 
 
 def main():
-    import timy
-    with timy.Timer() as timer:
-        belspec_yaml2json()
-        print(timer)
+    pass
+    # import timy
+    # with timy.Timer() as timer:
+    #     belspec_yaml2json()
+    #     print(timer)
 
 
 if __name__ == '__main__':

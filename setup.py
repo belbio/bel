@@ -23,12 +23,16 @@ REQUIRED = [
     'click',
     'elasticsearch',
     'fastcache',
+    'CacheControl',
     'jsonschema',
     'mmh3',
     'python-arango',
     'pyyaml',
     'requests',
     'TatSu',
+    'ulid-py',
+    'lxml',
+    'typing',
     'ulid-py',
 ]
 

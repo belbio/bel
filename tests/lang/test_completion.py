@@ -7,6 +7,39 @@ import bel.utils
 from bel.Config import config
 
 
+def test_completion_empty_start():
+
+    completions = bel.lang.completion.bel_completion('', bel_fmt='medium')
+    print('Completions:\n', json.dumps(completions, indent=4))
+    assert completions["completion_text"] == ""
+    assert ["a()"] == [c['replacement'] for c in completions["completions"] if c['replacement'] == "a()"]
+    assert completions['completions'][0]['cursor_loc'] == 2
+    assert completions['entity_spans'] == []
+    assert completions['function_help'] == []
+
+
+def test_completion_fn_start_paren():
+
+    completions = bel.lang.completion.bel_completion('p(', bel_fmt='medium')
+    print('Completions:\n', json.dumps(completions, indent=4))
+    assert completions["completion_text"] == ""
+    assert completions['completions'][0]['replacement'] == 'p(fus()'
+    assert completions['completions'][0]['cursor_loc'] == 6
+    assert completions['entity_spans'] == []
+    assert completions['function_help'] != []
+
+
+def test_completion_fn_start_paren_f():
+
+    completions = bel.lang.completion.bel_completion('p(f', bel_fmt='medium')
+    print('Completions:\n', json.dumps(completions, indent=4))
+    assert completions["completion_text"] == "f"
+    assert completions['completions'][0]['replacement'] == 'p(fus()'
+    assert completions['completions'][0]['cursor_loc'] == 6
+    assert completions['entity_spans'] == []
+    assert completions['function_help'] != []
+
+
 def test_completion_fn_name_start_long():
 
     completions = bel.lang.completion.bel_completion('pa', bel_fmt='medium')

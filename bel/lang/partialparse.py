@@ -10,17 +10,10 @@
 
 """
 
-import os
 import re
-import yaml
-import json
-import copy
-import timy
-import itertools
-from typing import Mapping, Any, List, Tuple, MutableMapping, Optional
 
-import bel.lang.bel_specification
-import bel.lang.ast
+import copy
+from typing import Mapping, Any, List, Tuple, MutableMapping, Optional
 
 import logging
 import logging.config
@@ -227,7 +220,11 @@ def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Err
         for i in range(sp - 1, 0, -1):
             if bels[i] in [' ', ',', '(']:  # function name upstream boundary chars
                 if i < sp - 1:
-                    span = (i + 1, ep)
+                    if ep == -1:
+                        span = (i + 1, len(bels) - 1)
+                    else:
+                        span = (i + 1, ep)
+
                     parsed[(i + 1, ep)] = {'name': ''.join(bels[i + 1:sp]),
                         'type': 'Function', 'span': span,
                         'name_span': (i + 1, sp - 1), 'parens_span': (sp, ep),
@@ -235,7 +232,11 @@ def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Err
                     }
                 break
         else:
-            span = (0, ep)
+            if ep == -1:
+                span = (0, len(bels) - 1)
+            else:
+                span = (0, ep)
+
             parsed[span] = {
                 'name': ''.join(bels[0:sp]), 'type': 'Function',
                 'span': span, 'name_span': (0, sp - 1), 'parens_span': (sp, ep),
@@ -294,9 +295,13 @@ def parse_args(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) 
 
             arg = ''.join(bels[start:function_end])
             end = function_end - 1
+
             # Handle a situation like p() with an empty argument
             if end < start:
                 end = start
+            elif end > function_end:
+                end = function_end
+
             args.append({'arg': arg, 'span': (start, end)})
 
         parsed[span]['args'] = args

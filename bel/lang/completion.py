@@ -15,9 +15,6 @@ import re
 import json
 import copy
 
-import timy
-import cProfile
-
 import bel.utils
 import bel.lang.partialparse as pparse
 import bel.lang.bel_specification as bel_specification
@@ -60,10 +57,13 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
         result dict
     """
 
-    # log.debug(f'SubAST: {json.dumps(ast, indent=4)}')
+    log.debug(f'SubAST: {json.dumps(ast, indent=4)}')
 
     # Recurse down through subject, object, nested to functions
     log.debug(f'Cursor keys {ast.keys()}')
+
+    if len(belstr) == 0:
+        return {'type': 'Function', 'replace_span': (0, 0), 'completion_text': ''}
 
     if 'relation' in ast and in_span(cursor_loc, ast['relation']['span']):
         log.debug('In relation')
@@ -96,7 +96,17 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
                     'completion_text': belstr[name_span[0]:cursor_loc + 1]
                 }
             for idx, arg in enumerate(ast['args']):
-                if in_span(cursor_loc, arg['span']):
+                if cursor_loc == ast['function']['parens_span'][0] and ast['function']['parens_span'][1] == -1:
+                    return {
+                        'type': 'StrArg',  # default type if unknown
+                        'arg_idx': idx,
+                        'replace_span': arg['span'],  # replace entire strarg
+                        'parent_function': ast['function']['name'],
+                        'completion_text': '',
+                    }
+
+                elif in_span(cursor_loc, arg['span']):
+                    log.debug('In argument span {arg["span"]}  Cursor_loc: {cursor_loc}')
                     if arg['type'] == 'Function':
                         if in_span(cursor_loc, arg['function']['name_span']):
                             log.debug('Found replace_span in args: Function type')
@@ -136,6 +146,7 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
                             completion_text = ''
                         else:
                             completion_text = belstr[arg['span'][0]:cursor_loc + 1]
+
                         return {
                             'type': 'StrArg',
                             'arg_idx': idx,
@@ -186,7 +197,7 @@ def nsarg_completions(completion_text: str, entity_types: list, bel_spec: BELSpe
                 ns_completions = {}
 
         for complete in ns_completions.get('completions', []):
-            replace_list.append({'replacement': complete['id'], 'label': complete['label'], 'highlight': complete['highlight'][-1]})
+            replace_list.append({'replacement': complete['id'], 'label': complete['label'], 'highlight': complete['highlight'][-1], 'type': 'NSArg'})
 
     # Check default namespaces
     for entity_type in entity_types:
@@ -194,11 +205,11 @@ def nsarg_completions(completion_text: str, entity_types: list, bel_spec: BELSpe
             if bel_fmt == 'long' and re.match(completion_text, obj['name'], re.IGNORECASE):
                 replacement = obj['name']
                 highlight = replacement.replace(completion_text, f'<em>{completion_text}</em>')
-                replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight})
+                replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight, 'type': 'NSArg'})
             elif bel_fmt in ['short', 'medium'] and re.match(completion_text, obj['abbreviation'], re.IGNORECASE):
                 replacement = obj['abbreviation']
                 highlight = replacement.replace(completion_text, f'<em>{completion_text}</em>')
-                replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight})
+                replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight, 'type': 'NSArg'})
 
     return replace_list[:size]
 
@@ -229,7 +240,7 @@ def relation_completions(completion_text: str, bel_spec: BELSpec, bel_fmt: str, 
     replace_list = []
     for match in matches:
         highlight = match.replace(completion_text, f'<em>{completion_text}</em>')
-        replace_list.append({'replacement': match, 'label': match, 'highlight': highlight})
+        replace_list.append({'replacement': match, 'label': match, 'highlight': highlight, 'type': 'Relation'})
 
     return replace_list[:size]
 
@@ -264,8 +275,12 @@ def function_completions(completion_text: str, bel_spec: BELSpec, function_list:
 
     replace_list = []
     for match in matches:
-        highlight = match.replace(completion_text, f'<em>{completion_text}</em>')
-        replace_list.append({'replacement': match, 'label': match, 'highlight': highlight})
+        if completion_text:
+            highlight = match.replace(completion_text, f'<em>{completion_text}</em>')
+        else:
+            highlight = completion_text
+
+        replace_list.append({'replacement': match, 'label': match, 'highlight': highlight, 'type': 'Function'}, )
 
     return replace_list[:size]
 
@@ -322,6 +337,9 @@ def arg_completions(completion_text: str, parent_function: str, args: list, arg_
 
     replace_list = fn_replace_list + ns_arg_replace_list
 
+    if replace_list:
+        return replace_list
+
     # Non position based argument #################################
     # Collect optional and multiple Function types
     # TODO Figure out how to handle NSArg mult_arg in complex() signature (bel_v2_0_0.json)
@@ -377,6 +395,9 @@ def add_completions(replace_list: list, belstr: str, replace_span: Span, complet
     for r in replace_list:
         if '(' not in belstr:
             replacement = f'{r["replacement"]}()'
+            cursor_loc = len(replacement) - 1  # inside parenthesis
+        elif r['type'] == 'Function' and replace_span[1] == len(belstr):
+            replacement = belstr[0:replace_span[0]] + f"{r['replacement']}()"
             cursor_loc = len(replacement) - 1  # inside parenthesis
         else:
             replacement = belstr[0:replace_span[0]] + r['replacement'] + belstr[replace_span[1] + 1:]
