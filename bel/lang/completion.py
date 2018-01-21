@@ -63,15 +63,30 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
     # log.debug(f'SubAST: {json.dumps(ast, indent=4)}')
 
     # Recurse down through subject, object, nested to functions
-    if 'span' not in ast and isinstance(ast, dict):
-        for key in ast:
-            log.debug(f'Recursing Keys {key}')
-            result = cursor(belstr, ast[key], cursor_loc, result=result)
-            if result:
-                return result
+    log.debug(f'Cursor keys {ast.keys()}')
 
-    # Process span matches (functions, nsargs, strargs)
+    if 'relation' in ast and in_span(cursor_loc, ast['relation']['span']):
+        log.debug('In relation')
+
+        completion_text = belstr[ast['relation']['span'][0]:cursor_loc + 1]
+        return {
+            'type': 'Relation',
+            'replace_span': ast['relation']['span'],
+            'completion_text': completion_text,
+        }
+
+    # Handle subject, object and nested keys in tree
+    elif 'span' not in ast and isinstance(ast, dict):
+        for key in ast:
+            if key in ['subject', 'object', 'nested']:
+                log.debug(f'Recursing Keys {key}')
+                result = cursor(belstr, ast[key], cursor_loc, result=result)
+                if result:
+                    return result
+
+    # Matches Functions, NSArgs and StrArgs/StrArgNSArg
     if 'span' in ast and in_span(cursor_loc, ast['span']):
+        log.debug('Inside subject/object subAST')
         if 'function' in ast:
             name_span = ast['function']['name_span']
             if in_span(cursor_loc, name_span):
@@ -114,7 +129,7 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
                         else:
                             result['completion_text'] = belstr[arg['nsarg']['ns_span'][0]:cursor_loc + 1]
 
-                        log.debug('Found replace_span in args: NSArg type')
+                        log.debug(f'Found replace_span in args: NSArg {result}')
                         return result
                     elif arg['type'] == 'StrArg':  # in case this is a default namespace StrArg
                         if arg['span'][0] == arg['span'][1]:  # handle case like p() cursor=2
@@ -128,8 +143,7 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
                             'parent_function': ast['function']['name'],
                             'completion_text': completion_text,
                         }
-
-    return result
+    return result  # needed to pass result back up recursive stack
 
 
 def nsarg_completions(completion_text: str, entity_types: list, bel_spec: BELSpec, namespace: str, species_id: str, bel_fmt: str, size: int):
@@ -185,6 +199,37 @@ def nsarg_completions(completion_text: str, entity_types: list, bel_spec: BELSpe
                 replacement = obj['abbreviation']
                 highlight = replacement.replace(completion_text, f'<em>{completion_text}</em>')
                 replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight})
+
+    return replace_list[:size]
+
+
+def relation_completions(completion_text: str, bel_spec: BELSpec, bel_fmt: str, size: int) -> list:
+    """Filter BEL relations by prefix
+
+    Args:
+        prefix: completion string
+        bel_fmt: short, medium, long BEL formats
+        spec: BEL specification
+
+    Returns:
+        list: list of BEL relations that match prefix
+    """
+
+    if bel_fmt == 'short':
+        relation_list = bel_spec['relations']['list_short']
+    else:
+        relation_list = bel_spec['relations']['list_long']
+
+    matches = []
+    for r in relation_list:
+        print('R', r, 'C', completion_text)
+        if re.match(completion_text, r):
+            matches.append(r)
+
+    replace_list = []
+    for match in matches:
+        highlight = match.replace(completion_text, f'<em>{completion_text}</em>')
+        replace_list.append({'replacement': match, 'label': match, 'highlight': highlight})
 
     return replace_list[:size]
 
@@ -358,6 +403,8 @@ def get_completions(belstr: str, cursor_loc: int, bel_spec: BELSpec, bel_comp: s
 
     ast, errors = pparse.get_ast_dict(belstr)
 
+    # print('AST:\n', json.dumps(ast, indent=4))
+
     # TODO - update collect_spans to use AST
     spans = []
     # spans = pparse.collect_span(ast)
@@ -367,6 +414,8 @@ def get_completions(belstr: str, cursor_loc: int, bel_spec: BELSpec, bel_comp: s
 
     log.debug(f'Cursor location BELstr: {belstr}  Cursor idx: {cursor_loc}')
     cursor_results = cursor(belstr, ast, cursor_loc)
+    log.debug(f'Cursor results: {cursor_results}')
+
     if not cursor_results:
         log.debug('Cursor results is empty')
         return ([], [], [], [])
@@ -384,9 +433,11 @@ def get_completions(belstr: str, cursor_loc: int, bel_spec: BELSpec, bel_comp: s
         arg_idx = cursor_results.get('arg_idx')
 
         replace_list = arg_completions(completion_text, parent_function, args, arg_idx, bel_spec, bel_fmt, species_id, namespace, size)
-    else:
+    elif cursor_results['type'] == 'Function':
         function_list = None
         replace_list = function_completions(completion_text, bel_spec, function_list, bel_fmt, size)
+    elif cursor_results['type'] == 'Relation':
+        replace_list = relation_completions(completion_text, bel_spec, bel_fmt, size)
 
     completions.extend(add_completions(replace_list, belstr, replace_span, completion_text))
 
@@ -441,8 +492,10 @@ def bel_completion(belstr: str, cursor_loc: int = -1, bel_version: str = default
     elif cursor_loc >= belstrlen:
         cursor_loc = belstrlen - 1
 
-    with timy.Timer() as timer:
-        (completion_text, completions, function_help, spans) = get_completions(belstr, cursor_loc, bel_spec, bel_comp, bel_fmt, species_id, size)
+    # with timy.Timer() as timer:
+    #     (completion_text, completions, function_help, spans) = get_completions(belstr, cursor_loc, bel_spec, bel_comp, bel_fmt, species_id, size)
+
+    (completion_text, completions, function_help, spans) = get_completions(belstr, cursor_loc, bel_spec, bel_comp, bel_fmt, species_id, size)
 
     return {'completion_text': completion_text, 'completions': completions, 'function_help': function_help, 'entity_spans': spans}
 

@@ -59,7 +59,7 @@ def test_valid_statements():
 # VALID STATEMENT TEST CASES #
 ##############################
 @pytest.mark.skip(reason="Skip for now - have Github Issue to fix it")
-def test_arg_values():
+def test_complex_nsarg():
     stmts = [
         'activity(complexAbundance(SCOMP:"TORC2 Complex"), molecularActivity(DEFAULT:kin))'
     ]

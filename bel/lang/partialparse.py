@@ -33,7 +33,8 @@ log = logging.getLogger(__name__)
 start_arg_chars = ['(', ',']
 end_arg_chars = [')', ',']
 
-relations_pattern = re.compile('\)\s+([a-zA-Z=->\|:]+)\s+([\w(]+)')
+relations_pattern_middle = re.compile('\)\s+([a-zA-Z\=\-\>\|\:]+)\s+[\w\(]+')
+relations_pattern_end = re.compile('\)\s+([a-zA-Z\=\-\>\|\:]+)\s*$')
 
 Errors = List[Tuple[str, str, Optional[Tuple[int, int]]]]  # (<"Error"|"Warning">, "message", (start_span, end_span))
 Parsed = MutableMapping[str, Any]
@@ -176,8 +177,8 @@ def parse_chars(bels: list, errors: Errors) -> Tuple[CharLocs, Errors]:
             parens[pstack.pop()] = (-1, 'top')
 
     while len(nested_pstack):
-        errors.append(('ERROR', f'Missing right parenthesis for nested object left parenthesis at location {pstack[-1]}', (pstack[-1], pstack[-1])))
-        parens[pstack.pop()] = (-1, 'top')
+        errors.append(('ERROR', f'Missing right parenthesis for nested object left parenthesis at location {nested_pstack[-1]}', (nested_pstack[-1], nested_pstack[-1])))
+        nested_parens[nested_pstack.pop()] = (-1, 'top')
 
     if len(qstack):
         missing_quote = qstack.pop()
@@ -356,8 +357,25 @@ def parse_relations(belstr: str, char_locs: CharLocs, parsed: Parsed, errors: Er
     quotes = char_locs['quotes']
     quoted_range = set([i for start, end in quotes.items() for i in range(start, end)])
 
-    for match in relations_pattern.finditer(belstr):
+    for match in relations_pattern_middle.finditer(belstr):
         (start, end) = match.span(1)
+        log.debug(f'Relation-middle {match}')
+        end = end - 1  # adjust end to match actual end character index
+        if start != end:
+            test_range = set(range(start, end))
+        else:
+            test_range = set(start)
+
+        # Skip if relation overlaps with quoted string
+        if test_range.intersection(quoted_range):
+            continue
+
+        span_key = (start, end)
+        parsed[span_key] = {'type': 'Relation', 'name': match.group(1), 'span': (start, end)}
+
+    for match in relations_pattern_end.finditer(belstr):
+        (start, end) = match.span(1)
+        log.debug(f'Relation-end {match}')
         end = end - 1  # adjust end to match actual end character index
         if start != end:
             test_range = set(range(start, end))
@@ -379,6 +397,8 @@ def parse_nested(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors
 
     for sp in char_locs['nested_parens']:  # sp = start parenthesis, ep = end parenthesis
         ep, level = char_locs['nested_parens'][sp]
+        if ep == -1:
+            ep = len(bels) + 1
         parsed[(sp, ep)] = {'type': 'Nested', 'span': (sp, ep)}
 
     return parsed, errors
@@ -467,8 +487,7 @@ def print_spans(spans, max_idx: int) -> None:
 def parsed_function_to_ast(parsed: Parsed, parsed_key):
     """Create AST for top-level functions
     """
-    # dump_json(parsed)
-    # quit()
+
     sub = parsed[parsed_key]
 
     subtree = {
@@ -578,6 +597,9 @@ def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ''):
             are parsing the subject or object field input
     """
 
+    # dump_json(parsed)
+    # quit()
+
     ast = {}
     sorted_keys = sorted(parsed.keys())
 
@@ -612,7 +634,7 @@ def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ''):
                     ast['nested']['relation'] = {
                         'name': parsed[nested_key]['name'],
                         'type': 'Relation',
-                        'span': key,
+                        'span': parsed[nested_key]['span'],
                     }
 
             return ast, errors
