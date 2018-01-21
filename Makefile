@@ -65,11 +65,13 @@ $(VDIR)/parser%.py: $(VDIR)/bel%.ebnf
 	@echo Turning $< into $@
 	python bin/ebnf_to_parsers.py --ebnf_fn "$<"
 
+# Travis CI environment
 ci_tests:
-	py.test -rs --cov=./bel -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
+	BELTEST='Travis' py.test -rs --cov=./bel -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
 
+# Local virtualenv test runner with BEL.bio test environment
 tests: clean_pyc
-	py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
+	BELTEST='Local' py.test -x -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
 
 clean_pyc:
 	find . -name '*.pyc' -exec rm -r -- {} +
