@@ -75,8 +75,8 @@ def get_pubtator(pmid):
         log.info(anno)
         if anno['obj'] not in annotations:
             annotations[anno['obj']] = {'spans': [anno['span']]}
-            annotations[anno['obj']]['entity_types'] = [anno['entity_type']]
-            annotations[anno['obj']]['annotation_types'] = [anno['annotation_type']]
+            annotations[anno['obj']]['entity_types'] = [anno.get('entity_type', [])]
+            annotations[anno['obj']]['annotation_types'] = [anno.get('annotation_type', [])]
 
         else:
             annotations[anno['obj']]['spans'].append(anno['span'])
