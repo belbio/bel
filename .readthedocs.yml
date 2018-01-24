@@ -5,11 +5,9 @@ formats:
 
 requirements_file: requirements-docs.txt
 
-python:
-   setup_py_install: true
-
 build:
     image: latest
 
 python:
     version: 3.6
+    setup_py_install: true
