@@ -11,6 +11,7 @@ import yaml
 import re
 import copy
 import sys
+import click
 from typing import Mapping, Any, List, Iterable, Tuple
 import gzip
 
@@ -34,7 +35,9 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
     """
 
     jsonl_flag, json_flag, yaml_flag = False, False, False
-    if 'jsonl' in fn:
+    if fn == '-':
+        jsonl_flag = True
+    elif 'jsonl' in fn:
         jsonl_flag = True
     elif 'json' in fn:
         json_flag = True
@@ -48,45 +51,29 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
         if re.search('gz$', fn):
             f = gzip.open(fn, 'rt')
         else:
-            f = open(fn, 'rt')
+            f = click.open_file(fn, mode='rt')
 
         if jsonl_flag:
             for line in f:
-                nanopub = json.loads(line)
-                if 'nanopub' in nanopub:
-                    yield nanopub
+                yield json.loads(line)
         elif json_flag:
             nanopubs = json.load(f)
             for nanopub in nanopubs:
-                if 'nanopub' in nanopub:
-                    yield nanopub
+                yield nanopub
         elif yaml_flag:
             nanopubs = yaml.load(f)
             for nanopub in nanopubs:
-                if 'nanopub' in nanopub:
-                    yield nanopub
+                yield nanopub
 
     except Exception as e:
         log.error(f'Could not open file: {fn}')
-
-
-def write_nanopubs(nanopubs: Mapping[str, Any], filename: str, jsonlines: bool = False, gzipflag: bool = False, yaml: bool =False):
-    """Write nanopubs to file
-
-    Args:
-        nanopubs (Mapping[str, Any]): in nanopubs_bel JSON Schema format
-        filename (str): filename to write
-        jsonlines (bool): output in JSONLines format?
-        gzipflag (bool): create gzipped file?
-        yaml (bool): create yaml file?
-    """
-    pass
 
 
 def create_nanopubs_fh(output_fn: str):
     """Create Nanopubs output filehandle
 
     \b
+    If output fn is '-' will write JSONlines to STDOUT
     If output fn has *.gz, will written as a gzip file
     If output fn has *.jsonl*, will written as a JSONLines file
     IF output fn has *.json*, will be written as a JSON file
@@ -106,11 +93,11 @@ def create_nanopubs_fh(output_fn: str):
         if re.search('gz$', output_fn):
             out_fh = gzip.open(output_fn, 'wt')
         else:
-            out_fh = open(output_fn, 'wt')
+            out_fh = click.open_file(output_fn, mode='wt')
 
         if re.search('ya?ml', output_fn):
             yaml_flag = True
-        elif 'jsonl' in output_fn:
+        elif 'jsonl' in output_fn or '-' == output_fn:
             jsonl_flag = True
         elif 'json' in output_fn:
             json_flag = True

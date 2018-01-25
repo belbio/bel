@@ -31,6 +31,7 @@ relations_pattern_end = re.compile('\)\s+([a-zA-Z\=\-\>\|\:]+)\s*$')
 
 Errors = List[Tuple[str, str, Optional[Tuple[int, int]]]]  # (<"Error"|"Warning">, "message", (start_span, end_span))
 Parsed = MutableMapping[str, Any]
+AST = MutableMapping[str, Any]
 CharLocs = Mapping[str, Any]
 
 """Parsed data structure example
@@ -423,44 +424,78 @@ def dump_json(d: dict) -> None:
 
 
 # TODO - update to use dictionary AST
-def collect_spans(parsed: Parsed) -> Tuple:
-    """Collect flattened list of spans of parsed types
+def collect_spans(ast: AST) -> List[Tuple[str, Tuple[int, int]]]:
+    """Collect flattened list of spans of BEL syntax types
 
-    Provide simple list of
+    Provide simple list of BEL syntax type spans for highlighting.
+    Function names, NSargs, NS prefix, NS value and StrArgs will be
+    tagged.
 
     Args:
-        parsed: dictionary of functions, relations and nested
+        ast: AST of BEL assertion
 
     Returns:
-        Tuple[List[Tuple[str, List[int]]]]: list of spans and max rightmost span value
-
+        List[Tuple[str, Tuple[int, int]]]: list of span objects (<type>, (<start>, <end>))
     """
+
     spans = []
-    max_idx = 0
-    for key in parsed:
-        if parsed[key]['type'] == 'Function':
-            spans.append(('Function', parsed[key]['name_span']))
-            if parsed[key]['name_span'][1] > max_idx:
-                max_idx = parsed[key]['name_span'][1]
 
-            for arg in parsed[key]['args']:
-                if arg['type'] == 'NSArg':
-                    spans.append(('NSArg', arg['span']))
-                    spans.append(('Prefix', arg['ns_span']))
-                    spans.append(('Value', arg['ns_val_span']))
-                    if arg['ns_val_span'][1] > max_idx:
-                        max_idx = arg['ns_val_span'][1]
-                if arg['type'] == 'StrArg':
-                    spans.append(('StrArg', arg['span']))
-                    if arg['span'][1] > max_idx:
-                        max_idx = arg['span'][1]
-        elif parsed[key]['type'] == 'Relation':
-            spans.append(('Relation', parsed[key]['span']))
+    if ast.get('subject', False):
+        spans.extend(collect_spans(ast['subject']))
 
-        elif parsed[key]['type'] == 'Nested':
-            spans.append(('Nested', parsed[key]['span']))
+    if ast.get('object', False):
+        spans.extend(collect_spans(ast['object']))
 
-    return spans, max_idx
+    if ast.get('nested', False):
+        spans.extend(collect_spans(ast['nested']))
+
+    if ast.get('function', False):
+        log.info(f'Processing function')
+        spans.append(('Function', ast['function']['name_span']))
+        log.info(f'Spans: {spans}')
+
+    if ast.get('args', False):
+        for idx, arg in enumerate(ast['args']):
+            log.info(f'Arg  {arg}')
+
+            if arg.get('function', False):
+                log.info(f'Recursing on arg function')
+                results = collect_spans(arg)
+                log.info(f'Results {results}')
+                spans.extend(results)  # Recurse arg function
+            elif arg.get('nsarg', False):
+                log.info(f'Processing NSArg   Arg {arg}')
+                spans.append(('NSArg', arg['span']))
+                spans.append(('NSPrefix', arg['nsarg']['ns_span']))
+                spans.append(('NSVal', arg['nsarg']['ns_val_span']))
+            elif arg['type'] == 'StrArg':
+                spans.append(('StrArg', arg['span']))
+
+    return spans
+
+    # max_idx = 0
+    # for key in parsed:
+    #     if parsed[key]['type'] == 'Function':
+    #         spans.append(('Function', parsed[key]['name_span']))
+    #         if parsed[key]['name_span'][1] > max_idx:
+    #             max_idx = parsed[key]['name_span'][1]
+
+    #         for arg in parsed[key]['args']:
+    #             if arg['type'] == 'NSArg':
+    #                 spans.append(('NSArg', arg['span']))
+    #                 spans.append(('Prefix', arg['ns_span']))
+    #                 spans.append(('Value', arg['ns_val_span']))
+    #                 if arg['ns_val_span'][1] > max_idx:
+    #                     max_idx = arg['ns_val_span'][1]
+    #             if arg['type'] == 'StrArg':
+    #                 spans.append(('StrArg', arg['span']))
+    #                 if arg['span'][1] > max_idx:
+    #                     max_idx = arg['span'][1]
+    #     elif parsed[key]['type'] == 'Relation':
+    #         spans.append(('Relation', parsed[key]['span']))
+
+    #     elif parsed[key]['type'] == 'Nested':
+    #         spans.append(('Nested', parsed[key]['span']))
 
 
 def print_spans(spans, max_idx: int) -> None:
@@ -675,6 +710,8 @@ def get_ast_dict(belstr, component_type: str = ''):
 
 def main():
 
+    import json
+
     belstr = 'activity(proteinAbundance(SFAM:"GSK3 \"Family"), molecularActivity(DEFAULT:kin))'
     belstr = 'proteinAbundance(HGNC:VHL) increases (proteinAbundance(HGNC:TNF) increases biologicalProcess(GOBP:"cell death"))'
     belstr = 'complexAbundance(proteinAbundance(HGNC:VHL), proteinAbundance(HGNC:PRKCZ))'
@@ -682,9 +719,17 @@ def main():
     belstr = 'proteinAbundance(HGNC:VEGFA) increases (compositeAbundance(proteinAbundance(HGNC:ITGB1), proteinAbundance(HGNC:PRKCA, ma(kin))) increases biologicalProcess(GO:\"cell-matrix adhesion\"))'
     belstr = 'complex(p(HGNC:AKT1))'
     # belstr = 'p(fus(HGNC:EGF, 20, '
-    belstr = 'pa'
+    # belstr = 'pa'
+
     ast, errors = get_ast_dict(belstr)
     print('AST:\n', json.dumps(ast, indent=4))
+
+    spans = collect_spans(ast)
+
+    print('\n\nBELStr', belstr)
+    print('Spans:\n', json.dumps(spans, indent=4))
+
+    # print('AST:\n', json.dumps(ast, indent=4))
 
 
 if __name__ == '__main__':

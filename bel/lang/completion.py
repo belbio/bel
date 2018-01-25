@@ -465,7 +465,7 @@ def get_completions(belstr: str, cursor_loc: int, bel_spec: BELSpec, bel_comp: s
     return completion_text, completions, function_help, spans
 
 
-def bel_completion(belstr: str, cursor_loc: int = -1, bel_version: str = default_bel, bel_comp: str = None, bel_fmt: str = 'medium', species_id: str = None, size: int = 10) -> Mapping[str, Any]:
+def bel_completion(belstr: str, cursor_loc: int = -1, bel_version: str = default_bel, bel_comp: str = None, bel_fmt: str = 'medium', species_id: str = None, size: int = 20) -> Mapping[str, Any]:
     """BEL Completion
 
     Args:
@@ -475,7 +475,7 @@ def bel_completion(belstr: str, cursor_loc: int = -1, bel_version: str = default
         bel_comp (str): ['subject', 'object', 'full', None] - a nested statement has to be found in object or full statement
         bel_fmt (str): ['short', 'medium', 'long'] BEL function/relation format
         species_id (str): optional, species id is used to filter namespace values if applicable (e.g. Gene, RNA, ... entity_types)
-        size: how many completions to return, defaults to 10
+        size: how many completions to return, defaults to 20
 
     Returns:
         Mapping[str, Any]:
