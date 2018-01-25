@@ -240,7 +240,8 @@ def main():
 
 if __name__ == '__main__':
 
-    logging.config.dictConfig(config['logging'])
+    if config.get('logging', False):
+        logging.config.dictConfig(config.get('logging'))
     log = logging.getLogger(__name__)
 
     main()

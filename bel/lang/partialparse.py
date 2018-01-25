@@ -20,7 +20,8 @@ import logging.config
 
 from bel.Config import config
 
-logging.config.dictConfig(config['logging'])
+if config.get('logging', False):
+    logging.config.dictConfig(config.get('logging'))
 log = logging.getLogger(__name__)
 
 start_arg_chars = ['(', ',']

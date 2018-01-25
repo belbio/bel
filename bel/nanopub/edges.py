@@ -9,7 +9,6 @@ Usage:  program.py <customer>
 from typing import Mapping, Any, List
 import copy
 import itertools
-import yaml
 import os
 
 import bel.lang.belobj
@@ -18,6 +17,8 @@ import bel.lang.bel_utils as bel_utils
 import bel.db.arangodb as arangodb
 import bel.utils as utils
 import bel.nanopub.files as files
+
+from bel.Config import config
 
 import logging
 log = logging.getLogger(__name__)
@@ -276,11 +277,10 @@ if __name__ == '__main__':
     module_fn = os.path.basename(__file__)
     module_fn = module_fn.replace('.py', '')
 
-    logging_conf_fn = "./logging-conf.yaml"
+    if config.get('logging', False):
+        logging.config.dictConfig(config.get('logging'))
 
-    with open(logging_conf_fn, mode='r') as f:
-        logging.config.dictConfig(yaml.load(f))
-        log = logging.getLogger(f'{module_fn}')
+    log = logging.getLogger(f'{module_fn}')
 
     main()
 

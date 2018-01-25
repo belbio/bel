@@ -20,7 +20,8 @@ import bel.nanopub.belscripts
 import logging
 import logging.config
 
-logging.config.dictConfig(config.get('logging', {}))
+if config.get('logging', False):
+    logging.config.dictConfig(config.get('logging'))
 log = logging.getLogger(__name__)
 
 

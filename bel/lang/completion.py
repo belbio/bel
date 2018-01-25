@@ -24,7 +24,6 @@ import logging.config
 
 from bel.Config import config
 
-# logging.config.dictConfig(config['logging'])
 log = logging.getLogger(__name__)
 
 default_bel = config['bel']['lang']['default_bel_version']
