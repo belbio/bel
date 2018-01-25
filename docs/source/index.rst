@@ -63,7 +63,6 @@ Informational badges
    link_contributing
    link_conduct
    devops
-   changelog
    authors
 
 
