@@ -1,7 +1,11 @@
 import bel.lang.belobj
 
 from bel.Config import config
+import bel.Config
 
+print(bel.Config.get_belbio_conf_files())
+
+print('Config', config)
 bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 # TODO Add test for specified canonical_targets - need to make sure BEL.bio API endpoint is updated to handle this querystring arg

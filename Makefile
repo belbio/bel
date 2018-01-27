@@ -70,6 +70,7 @@ ci_tests:
 	BELTEST='Travis' py.test -rs --cov=./bel -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
 
 # Local virtualenv test runner with BEL.bio test environment
+# add --pdb to get dropped into a debugging env
 tests: clean_pyc
 	BELTEST='Local' py.test -x -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
 

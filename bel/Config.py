@@ -207,11 +207,12 @@ if __name__ == '__main__':
     main()
 
 else:
-    if not os.getenv('READTHEDOCS', False):
-        config = load_configuration()
-    else:
-        log.info('READTHEDOCS environment')
+    # If building documents in readthedocs - provide empty config
+    if os.getenv('READTHEDOCS', False):
         config = {}
+        log.info('READTHEDOCS environment')
+    else:
+        config = load_configuration()
 
 
 # Ideas for providing hierarchical settings

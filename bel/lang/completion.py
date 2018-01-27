@@ -105,7 +105,7 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
                     }
 
                 elif in_span(cursor_loc, arg['span']):
-                    log.debug('In argument span {arg["span"]}  Cursor_loc: {cursor_loc}')
+                    log.debug(f'In argument span {arg["span"]}  Cursor_loc: {cursor_loc}')
                     if arg['type'] == 'Function':
                         if in_span(cursor_loc, arg['function']['name_span']):
                             log.debug('Found replace_span in args: Function type')
@@ -142,7 +142,7 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
                         return result
                     elif arg['type'] == 'StrArg':  # in case this is a default namespace StrArg
                         if arg['span'][0] == arg['span'][1]:  # handle case like p() cursor=2
-                            completion_text = ''
+                            completion_text = belstr[arg['span'][0]:arg['span'][1] + 1]
                         else:
                             completion_text = belstr[arg['span'][0]:cursor_loc + 1]
 
@@ -232,7 +232,6 @@ def relation_completions(completion_text: str, bel_spec: BELSpec, bel_fmt: str, 
 
     matches = []
     for r in relation_list:
-        print('R', r, 'C', completion_text)
         if re.match(completion_text, r):
             matches.append(r)
 
@@ -392,12 +391,23 @@ def add_completions(replace_list: list, belstr: str, replace_span: Span, complet
     completions = []
 
     for r in replace_list:
-        if '(' not in belstr:
-            replacement = f'{r["replacement"]}()'
-            cursor_loc = len(replacement) - 1  # inside parenthesis
-        elif r['type'] == 'Function' and replace_span[1] == len(belstr):
+
+        # if '(' not in belstr:
+        #     replacement = f'{r["replacement"]}()'
+        #     cursor_loc = len(replacement) - 1  # inside parenthesis
+        # elif r['type'] == 'Function' and replace_span[1] == len(belstr) - 1:
+
+        if len(belstr) > 0:
+            belstr_end = len(belstr) - 1
+        else:
+            belstr_end = 0
+
+        log.debug(f'Replace list {r}  Replace_span {replace_span}  BELstr: {belstr} Len: {belstr_end} Test1 {r["type"] == "Function"}  Test2 {replace_span[1] + 1 == len(belstr)}')
+
+        if r['type'] == 'Function' and replace_span[1] >= belstr_end:
             replacement = belstr[0:replace_span[0]] + f"{r['replacement']}()"
             cursor_loc = len(replacement) - 1  # inside parenthesis
+            log.debug(f'Replacement: {replacement}')
         else:
             replacement = belstr[0:replace_span[0]] + r['replacement'] + belstr[replace_span[1] + 1:]
             cursor_loc = len(belstr[0:replace_span[0]] + r['replacement'])  # move cursor just past replacement

@@ -268,7 +268,7 @@ def parse_args(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) 
             continue
         sp, ep = parsed[span]['parens_span']
         if ep == -1:  # supports bel completion
-            function_end = len(bels) + 1
+            function_end = len(bels)
         else:
             function_end = ep
 
