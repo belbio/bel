@@ -3,7 +3,7 @@ click
 releases==1.4.0
 Sphinx==1.6.5
 sphinx-autobuild==0.7.1
-sphinx-autodoc-typehints==1.2.3
+sphinx-autodoc-typehints==1.2.4
 sphinx-click==1.0.4
 sphinx-rtd-theme==0.2.4
 sphinxcontrib-gravatar==0.1.2
