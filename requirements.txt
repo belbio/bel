@@ -1,5 +1,5 @@
 click==6.7
-coverage==4.4.2
+coverage==4.5.1
 Jinja2==2.10
 jsonschema==2.6.0
 mypy==0.560
