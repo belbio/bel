@@ -9,7 +9,7 @@ pytest-cov==2.5.1
 pytest-flakes==2.0.0
 pytest-mypy==0.3.0
 pytest-pep8==1.0.6
-pytest-sugar==0.9.0
+pytest-sugar==0.9.1
 python_arango==3.12.1
 timy==0.4.0
 twine==1.9.1
