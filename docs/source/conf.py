@@ -41,19 +41,12 @@ extensions = [
     'sphinx_autodoc_typehints',
     'sphinx.ext.extlinks',
     'releases',
-    'sphinxcontrib.gravatar',
 ]
 
 extlinks = {
     'issuenum': ('https://github.com/belbio/bel/issues/%s', 'issue '),
     'project': ('https://github.com/belbio/bel/blob/master/%s', 'project file '),
 }
-
-# define gravatar users
-gravatar_users = (
-    ('wshayes', {'email': 'william.s.hayes@gmail.com'}),
-    ('davidchen', {'email': 'chendavid96@gmail.com'}),
-)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

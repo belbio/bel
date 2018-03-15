@@ -6,4 +6,3 @@ sphinx-autobuild==0.7.1
 sphinx-autodoc-typehints==1.2.3
 sphinx-click==1.0.4
 sphinx-rtd-theme==0.2.4
-sphinxcontrib-gravatar==0.1.2
