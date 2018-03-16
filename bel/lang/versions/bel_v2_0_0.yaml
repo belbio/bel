@@ -273,7 +273,6 @@ functions:
           type: Modifier
           values:
           - location
-          - molecularActivity
     activity:
       func_type: primary
       name: activity
@@ -366,11 +365,17 @@ functions:
           type: Function
           values:
           - abundance
+          - activity
           - proteinAbundance
           - geneAbundance
           - microRNAAbundance
           - rnaAbundance
           - complexAbundance
+        - multiple: true
+          optional: true
+          type: NSArg
+          values:
+          - Complex
     degradation:
       func_type: primary
       name: degradation
@@ -1035,21 +1040,24 @@ computed_signatures:
   #  object.  This will allow one to query for any components of a subject
   #  or object in the graph database that is the EdgeStore. Modifier functions
   #  will NOT be exposed as a componentOf.
-  component_of:
-    subject: trigger_value
-    relation: componentOf
-    object: parent_function
-    trigger_type:
-      - Function
-      - NSArg
-    examples:
-      - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-        computed:
-          - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
-          - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-      - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-        computed:
-          - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+  # component_of:
+  #   subject: trigger_value
+  #   relation: componentOf
+  #   object: parent_function
+  #   trigger_type:
+  #     - Function
+  #     - NSArg
+  #   examples:
+  #     - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+  #       computed:
+  #         - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
+  #         - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+  #     - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+  #       computed:
+  #         - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
+
+  # Extract nested object as a separate edge
+  nested: true
 
   degradation:
     subject: trigger_value
