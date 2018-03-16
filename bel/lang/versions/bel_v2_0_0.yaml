@@ -343,7 +343,6 @@ functions:
           - geneAbundance
           - microRNAAbundance
           - rnaAbundance
-          - complexAbundance
         - multiple: true
           optional: true
           type: NSArg
