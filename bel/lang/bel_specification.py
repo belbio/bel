@@ -336,21 +336,23 @@ def enhance_function_signatures(spec_dict: Mapping[str, Any]) -> Mapping[str, An
                     if arg['type'] in ['Function', 'Modifier']:
                         mult_args.extend(arg.get('values', []))
                     elif arg['type'] in ['StrArgNSArg', 'NSArg', 'StrArg']:
+                        # Complex signature has this
                         mult_args.append(arg['type'])
-                        # Should probably never have an argument like this
+
                 # Optional, position dependent - will be added after req_args based on order in bel_specification
                 elif arg.get('optional', False) and arg.get('position', False):
                     if arg['type'] in ['Function', 'Modifier']:
                         pos_args.append(arg.get('values', []))
                     elif arg['type'] in ['StrArgNSArg', 'NSArg', 'StrArg']:
                         pos_args.append(arg['type'])
+
                 # Optional, position independent
                 elif arg.get('optional', False):
                     if arg['type'] in ['Function', 'Modifier']:
                         opt_args.extend(arg.get('values', []))
                     elif arg['type'] in ['StrArgNSArg', 'NSArg', 'StrArg']:
                         opt_args.append(arg['type'])
-                        # Should probably never have an argument like this
+
                 # Required arguments, position dependent
                 else:
                     if arg['type'] in ['Function', 'Modifier']:

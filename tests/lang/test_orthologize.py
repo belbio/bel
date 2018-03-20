@@ -28,6 +28,8 @@ def test_ortho_one():
     bo.parse(statement)
     bo.orthologize('TAX:10090')
 
+    print(bo.ast.to_string(fmt='long'))
+
     assert bo.ast.to_string(fmt='long') == expected
 
 

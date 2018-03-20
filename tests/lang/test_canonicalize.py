@@ -1,4 +1,5 @@
 import bel.lang.belobj
+import bel.lang.bel_utils
 
 from bel.Config import config
 import bel.Config
@@ -9,6 +10,18 @@ print('Config', config)
 bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 # TODO Add test for specified canonical_targets - need to make sure BEL.bio API endpoint is updated to handle this querystring arg
+
+
+def test_convert_nsarg():
+    """Test embedded forward slash"""
+
+    nsarg = 'SCOMP:"p85/p110 PI3Kinase Complex"'
+
+    expected_nsarg = 'SCOMP:"p85/p110 PI3Kinase Complex"'
+
+    canon_nsarg = bel.lang.bel_utils.convert_nsarg(nsarg)
+
+    assert canon_nsarg == expected_nsarg
 
 
 def test_canon_one():

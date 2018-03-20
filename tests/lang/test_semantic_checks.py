@@ -1,4 +1,3 @@
-import pytest
 import bel.lang.belobj
 from bel.Config import config
 
@@ -58,15 +57,17 @@ def test_valid_statements():
 ##############################
 # VALID STATEMENT TEST CASES #
 ##############################
-@pytest.mark.skip(reason="Skip for now - have Github Issue to fix it")
 def test_complex_nsarg():
     stmts = [
-        'activity(complexAbundance(SCOMP:"TORC2 Complex"), molecularActivity(DEFAULT:kin))'
+        'activity(complexAbundance(SCOMP:"TORC2 Complex", p(HGNC:AKT1)), molecularActivity(DEFAULT:kin))'
     ]
-
-    # TODO - Invalid Term - statement term SCOMP:"TORC2 Complex" allowable entity types: [] do not match API term entity types: ['Complex']
 
     for s in stmts:
         bo.parse(s)
-        assert False
+        print(bo.validation_messages)
+        error_msgs = [msg for msg_level, msg in bo.validation_messages if msg_level == 'ERROR']
+        warning_msgs = [msg for msg_level, msg in bo.validation_messages if msg_level == 'WARNING']
+        assert error_msgs == []
+        assert warning_msgs == []
+
 

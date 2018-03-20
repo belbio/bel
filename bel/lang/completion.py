@@ -6,8 +6,6 @@
    it will break completions
 2. terms upstream of a '(' are functions/modifiers
 3. commas separate arguments of upstream function
-
-
 """
 
 from typing import Mapping, Any, List, Tuple, Optional
@@ -15,7 +13,8 @@ import re
 import json
 import copy
 
-import bel.utils
+from bel.utils import get_url, url_path_param_quoting
+
 import bel.lang.partialparse as pparse
 import bel.lang.bel_specification as bel_specification
 
@@ -26,7 +25,7 @@ from bel.Config import config
 
 log = logging.getLogger(__name__)
 
-default_bel = config['bel']['lang']['default_bel_version']
+default_bel_version = config['bel']['lang']['default_bel_version']
 
 # Custom Typing definitions
 Span = Tuple[int, int]
@@ -59,7 +58,7 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
     log.debug(f'SubAST: {json.dumps(ast, indent=4)}')
 
     # Recurse down through subject, object, nested to functions
-    log.debug(f'Cursor keys {ast.keys()}')
+    log.debug(f'Cursor keys {ast.keys()}, BELStr: {belstr}')
 
     if len(belstr) == 0:
         return {'type': 'Function', 'replace_span': (0, 0), 'completion_text': ''}
@@ -142,7 +141,7 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
                         return result
                     elif arg['type'] == 'StrArg':  # in case this is a default namespace StrArg
                         if arg['span'][0] == arg['span'][1]:  # handle case like p() cursor=2
-                            completion_text = belstr[arg['span'][0]:arg['span'][1] + 1]
+                            completion_text = arg['arg']
                         else:
                             completion_text = belstr[arg['span'][0]:cursor_loc + 1]
 
@@ -151,7 +150,7 @@ def cursor(belstr: str, ast: AST, cursor_loc: int, result: Mapping[str, Any] = N
                             'arg_idx': idx,
                             'replace_span': arg['span'],  # replace entire strarg
                             'parent_function': ast['function']['name'],
-                            'completion_text': completion_text,
+                            'completion_text': completion_text.lstrip(),
                         }
     return result  # needed to pass result back up recursive stack
 
@@ -172,41 +171,38 @@ def nsarg_completions(completion_text: str, entity_types: list, bel_spec: BELSpe
         list of replacement text objects
     """
 
-    minimal_nsarg_completion_len = 2
+    minimal_nsarg_completion_len = 1
 
     species = [species_id]
     namespaces = [namespace]
     replace_list = []
 
     if len(completion_text) >= minimal_nsarg_completion_len:
-        try:
-            import services.terms
-            annotation_types = []
-            namespaces = []
-            results = services.terms.get_term_completions(completion_text, size, entity_types, annotation_types, species, namespaces)
-            ns_completions = {'completion_text': completion_text, 'completions': results}
+        # Use BEL.bio API module if running bel module in BEL.bio API, otherwise call BEL.bio API endpoint
+        #   is there a better way to  handle this?
 
-        except ModuleNotFoundError as e:
-            url = f'{config["bel_api"]["servers"]["api_url"]}/terms/completions/{completion_text}'
-            params = {'size': size, 'entity_types': entity_types, 'namespaces': namespaces, 'species': species}
-            r = bel.utils.get_url(url, params=params)
-            if r.status_code == 200:
-                ns_completions = r.json()
-            else:
-                ns_completions = {}
+        url = f'{config["bel_api"]["servers"]["api_url"]}/terms/completions/{url_path_param_quoting(completion_text)}'
+        params = {'size': size, 'entity_types': entity_types, 'namespaces': namespaces, 'species': species}
+        r = get_url(url, params=params)
+        if r.status_code == 200:
+            ns_completions = r.json()
+        else:
+            log.error(f'Status code of {r.status_code} for {url}')
+            ns_completions = {}
 
         for complete in ns_completions.get('completions', []):
-            replace_list.append({'replacement': complete['id'], 'label': complete['label'], 'highlight': complete['highlight'][-1], 'type': 'NSArg'})
+            replace_list.append({'replacement': complete['id'], 'label': f"{complete['id']} ({complete['label']})", 'highlight': complete['highlight'][-1], 'type': 'NSArg'})
 
     # Check default namespaces
     for entity_type in entity_types:
         for obj in bel_spec['namespaces']['default'].get(entity_type, []):
+            replacement = None
             if bel_fmt == 'long' and re.match(completion_text, obj['name'], re.IGNORECASE):
                 replacement = obj['name']
-                highlight = replacement.replace(completion_text, f'<em>{completion_text}</em>')
-                replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight, 'type': 'NSArg'})
             elif bel_fmt in ['short', 'medium'] and re.match(completion_text, obj['abbreviation'], re.IGNORECASE):
                 replacement = obj['abbreviation']
+
+            if replacement:
                 highlight = replacement.replace(completion_text, f'<em>{completion_text}</em>')
                 replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight, 'type': 'NSArg'})
 
@@ -256,7 +252,7 @@ def function_completions(completion_text: str, bel_spec: BELSpec, function_list:
     """
 
     # Convert provided function list to correct bel_fmt
-    if function_list:
+    if isinstance(function_list, list):
         if bel_fmt in ['short', 'medium']:
             function_list = [bel_spec['functions']['to_short'][fn] for fn in function_list]
         else:
@@ -268,7 +264,9 @@ def function_completions(completion_text: str, bel_spec: BELSpec, function_list:
 
     matches = []
     for f in function_list:
-        if re.match(completion_text, f):
+        escaped_completion_text = completion_text.replace('(', '\(').replace(')', '\)')
+        log.debug(f'Completion match: {escaped_completion_text}  F: {f}')
+        if re.match(escaped_completion_text, f):
             matches.append(f)
 
     replace_list = []
@@ -278,7 +276,7 @@ def function_completions(completion_text: str, bel_spec: BELSpec, function_list:
         else:
             highlight = completion_text
 
-        replace_list.append({'replacement': match, 'label': match, 'highlight': highlight, 'type': 'Function'}, )
+        replace_list.append({'replacement': match, 'label': f'{match}()', 'highlight': highlight, 'type': 'Function'}, )
 
     return replace_list[:size]
 
@@ -314,16 +312,63 @@ def arg_completions(completion_text: str, parent_function: str, args: list, arg_
     function_list = []
     entity_types = []
     fn_replace_list, ns_arg_replace_list = [], []
+    position_flag = False  # Signature matches position-based argument
 
+    # Check for position based argument
     for signature in signatures:
         sig_arg = signature['arguments'][arg_idx]
         sig_type = sig_arg['type']
 
-        if sig_arg.get('position', False):
+        if sig_arg.get('position', False) and arg_idx == sig_arg['position'] - 1:
+            position_flag = True
             if sig_type in ['Function', 'Modifier']:
                 function_list.extend(sig_arg['values'])
             elif sig_type in ['NSArg', 'StrArgNSArg']:
                 entity_types.extend(sig_arg['values'])
+
+    if not position_flag:
+        # Collect optional and multiple signature arguments for completion
+        opt_fn_sig_args = []
+        opt_nsarg_sig_args = []
+        mult_fn_sig_args = []
+        mult_nsarg_sig_args = []
+        for signature in signatures:
+            signature_opt_fn_sig_args = []
+            signature_opt_nsarg_sig_args = []
+            signature_mult_fn_sig_args = []
+            signature_mult_nsarg_sig_args = []
+            max_position = -1
+            for sig_arg in signature['arguments']:
+                if 'position' in sig_arg:
+                    max_position = sig_arg['position']
+                    continue  # Skip position based signature arguments
+
+                if sig_arg.get('optional', False) is True and sig_arg.get('multiple', False) is False:
+                    if sig_arg['type'] in ['Function', 'Modifier']:
+                        signature_opt_fn_sig_args.extend(sig_arg['values'])
+                    elif sig_arg['type'] in ['NSArg', 'StrArgNSArg']:
+                        signature_opt_nsarg_sig_args.extend(sig_arg['values'])
+                elif sig_arg.get('multiple', False) is True:
+                    if sig_arg['type'] in ['Function', 'Modifier']:
+                        signature_mult_fn_sig_args.extend(sig_arg['values'])
+                    elif sig_arg['type'] in ['NSArg', 'StrArgNSArg']:
+                        signature_mult_nsarg_sig_args.extend(sig_arg['values'])
+
+            # Remove signature non-multiple, optional arguments that are already in args list
+            for idx, arg in enumerate(args):
+                if idx <= max_position - 1:  # Skip positional arguments
+                    continue
+                if idx == arg_idx:  # Skip argument to be completed
+                    continue
+                log.debug(f'Remove Optional Args {arg}  {signature_opt_fn_sig_args}')
+
+            opt_fn_sig_args.extend(signature_opt_fn_sig_args)
+            opt_nsarg_sig_args.extend(signature_opt_nsarg_sig_args)
+            mult_fn_sig_args.extend(signature_mult_fn_sig_args)
+            mult_nsarg_sig_args.extend(signature_mult_nsarg_sig_args)
+
+        function_list.extend(list(set(opt_fn_sig_args + mult_fn_sig_args)))
+        entity_types.extend(list(set(opt_nsarg_sig_args + mult_nsarg_sig_args)))
 
     if function_list:
         log.info(f'ArgComp - position-based Function list: {function_list}')
@@ -334,39 +379,6 @@ def arg_completions(completion_text: str, parent_function: str, args: list, arg_
         ns_arg_replace_list = nsarg_completions(completion_text, entity_types, bel_spec, namespace, species_id, bel_fmt, size)
 
     replace_list = fn_replace_list + ns_arg_replace_list
-
-    if replace_list:
-        return replace_list
-
-    # Non position based argument #################################
-    # Collect optional and multiple Function types
-    # TODO Figure out how to handle NSArg mult_arg in complex() signature (bel_v2_0_0.json)
-    #      can't filter for Complex entity_types at this point
-
-    opt, mult = set(), set()
-    for signature in signatures:
-        for val in signature['opt_args']:
-            opt.add(val)
-        for val in signature['mult_args']:
-            mult.add(val)
-
-    for idx, arg in enumerate(args):
-        # Skip argument we are completing on for removing optional Functions from function_list
-        if arg_idx == idx:
-            continue
-
-        # Remove optional argument functions if they've been used already so we don't suggest them again
-        if arg['type'] == 'Function':
-            opt.discard(bel_spec['functions']['to_long'][arg['function']['name']])
-
-    function_list = list(opt) + list(mult)
-    if 'NSArg' in function_list:
-        log.info('ArgCompletion - removed NSArg from opt/mult list')
-        function_list.remove('NSArg')
-
-    log.info(f'ArgComp - opt/multi Function list: {function_list}')
-
-    replace_list.extend(function_completions(completion_text, bel_spec, function_list, bel_fmt, size))
 
     return replace_list
 
@@ -404,10 +416,22 @@ def add_completions(replace_list: list, belstr: str, replace_span: Span, complet
 
         log.debug(f'Replace list {r}  Replace_span {replace_span}  BELstr: {belstr} Len: {belstr_end} Test1 {r["type"] == "Function"}  Test2 {replace_span[1] + 1 == len(belstr)}')
 
-        if r['type'] == 'Function' and replace_span[1] >= belstr_end:
+        # Put a space between comma and following function arg
+        if r['type'] == 'Function' and replace_span[0] > 0 and belstr[replace_span[0] - 1] == ',':
+            log.debug('prior char is a comma')
+            replacement = belstr[0:replace_span[0]] + ' ' + f"{r['replacement']}()" + belstr[replace_span[1] + 1:]
+            cursor_loc = len(belstr[0:replace_span[0]] + ' ' + f"{r['replacement']}()")
+        # Put a space between comman and following NSArg or StrArg
+        elif replace_span[0] > 0 and belstr[replace_span[0] - 1] == ',':
+            log.debug('prior char is a comma')
+            replacement = belstr[0:replace_span[0]] + ' ' + r['replacement'] + belstr[replace_span[1] + 1:]
+            cursor_loc = len(belstr[0:replace_span[0]] + ' ' + r['replacement'])
+        # Add function to end of belstr
+        elif r['type'] == 'Function' and replace_span[1] >= belstr_end:
             replacement = belstr[0:replace_span[0]] + f"{r['replacement']}()"
             cursor_loc = len(replacement) - 1  # inside parenthesis
             log.debug(f'Replacement: {replacement}')
+        # Insert replacement in beginning or middle of belstr
         else:
             replacement = belstr[0:replace_span[0]] + r['replacement'] + belstr[replace_span[1] + 1:]
             cursor_loc = len(belstr[0:replace_span[0]] + r['replacement'])  # move cursor just past replacement
@@ -433,12 +457,9 @@ def get_completions(belstr: str, cursor_loc: int, bel_spec: BELSpec, bel_comp: s
 
     ast, errors = pparse.get_ast_dict(belstr)
 
-    # print('AST:\n', json.dumps(ast, indent=4))
+    spans = pparse.collect_spans(ast)
 
-    # TODO - update collect_spans to use AST
-    spans = []
-    # spans = pparse.collect_span(ast)
-
+    completion_text = ''
     completions = []
     function_help = []
 
@@ -448,7 +469,7 @@ def get_completions(belstr: str, cursor_loc: int, bel_spec: BELSpec, bel_comp: s
 
     if not cursor_results:
         log.debug('Cursor results is empty')
-        return ([], [], [], [])
+        return (completion_text, completions, function_help, spans)
 
     completion_text = cursor_results.get('completion_text', '')
 
@@ -457,7 +478,7 @@ def get_completions(belstr: str, cursor_loc: int, bel_spec: BELSpec, bel_comp: s
 
     if 'parent_function' in cursor_results:
         parent_function = cursor_results['parent_function']
-        function_help = bel.lang.bel_specification.get_function_help(cursor_results['parent_function'], bel_spec)
+        function_help = bel_specification.get_function_help(cursor_results['parent_function'], bel_spec)
 
         args = cursor_results.get('args', [])
         arg_idx = cursor_results.get('arg_idx')
@@ -474,7 +495,7 @@ def get_completions(belstr: str, cursor_loc: int, bel_spec: BELSpec, bel_comp: s
     return completion_text, completions, function_help, spans
 
 
-def bel_completion(belstr: str, cursor_loc: int = -1, bel_version: str = default_bel, bel_comp: str = None, bel_fmt: str = 'medium', species_id: str = None, size: int = 20) -> Mapping[str, Any]:
+def bel_completion(belstr: str, cursor_loc: int = -1, bel_version: str = default_bel_version, bel_comp: str = None, bel_fmt: str = 'medium', species_id: str = None, size: int = 20) -> Mapping[str, Any]:
     """BEL Completion
 
     Args:

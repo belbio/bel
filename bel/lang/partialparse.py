@@ -9,6 +9,7 @@
 
 
 """
+import pdb
 
 import re
 
@@ -227,7 +228,7 @@ def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Err
                     else:
                         span = (i + 1, ep)
 
-                    parsed[(i + 1, ep)] = {'name': ''.join(bels[i + 1:sp]),
+                    parsed[span] = {'name': ''.join(bels[i + 1:sp]),
                         'type': 'Function', 'span': span,
                         'name_span': (i + 1, sp - 1), 'parens_span': (sp, ep),
                         'function_level': function_level,
@@ -254,7 +255,7 @@ def parse_args(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) 
     Args:
         bels: BEL string as list of chars
         char_locs: char locations for parens, commas and quotes
-        functions: function locations
+        parsed: function locations
         errors: error messages
 
     Returns:
@@ -263,48 +264,42 @@ def parse_args(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) 
 
     commas = char_locs['commas']
 
+    # Process each span key in parsed from beginning
     for span in parsed:
         if parsed[span]['type'] != 'Function' or 'parens_span' not in parsed[span]:
-            continue
+            continue  # Skip if not argument-less
         sp, ep = parsed[span]['parens_span']
+
+        # calculate args_end position
         if ep == -1:  # supports bel completion
-            function_end = len(bels)
+            args_end = len(bels) - 1  # 1
         else:
-            function_end = ep
+            args_end = ep - 1  # 1
 
+        # Parse arguments
         args = []
-        if sp in commas and commas[sp]:
-            start = sp + 1
-            for comma in commas[sp]:
-                while start < function_end - 1 and bels[start] == ' ':
-                    start += 1
+        arg_start = sp + 1
+        each_arg_end_list = sorted([end - 1 for end in commas.get(sp, [])] + [args_end])
+        for arg_end in each_arg_end_list:
+            # log.debug(f'Arg_start: {arg_start}  Arg_end: {arg_end}')
 
-                if start > comma:
-                    break
-                arg = ''.join(bels[start:comma])
-                args.append({'arg': arg, 'span': (start, comma - 1)})
-                start = comma + 1
+            # Skip blanks at beginning of argument
+            while arg_start < args_end and bels[arg_start] == ' ':
+                arg_start += 1
 
-            while start < function_end - 1 and bels[start] == ' ':
-                start += 1
+            # Trim arg_end (e.g. HGNC:AKT1  , HGNC:EGF) - if there are spaces before comma
+            trimmed_arg_end = arg_end
+            while trimmed_arg_end > arg_start and bels[trimmed_arg_end] == ' ':
+                trimmed_arg_end -= 1
 
-            arg = ''.join(bels[start:function_end])
-            args.append({'arg': arg, 'span': (start, function_end - 1)})
-        else:
-            start = sp + 1
-            while start < function_end - 1 and bels[start] == ' ':
-                start += 1
+            if trimmed_arg_end < arg_start:
+                trimmed_arg_end = arg_start
 
-            arg = ''.join(bels[start:function_end])
-            end = function_end - 1
+            arg = ''.join(bels[arg_start:trimmed_arg_end + 1])
 
-            # Handle a situation like p() with an empty argument
-            if end < start:
-                end = start
-            elif end > function_end:
-                end = function_end
-
-            args.append({'arg': arg, 'span': (start, end)})
+            # log.debug(f'Adding arg to args: {arg_start} {trimmed_arg_end}')
+            args.append({'arg': arg, 'span': (arg_start, trimmed_arg_end)})
+            arg_start = arg_end + 2
 
         parsed[span]['args'] = args
 
@@ -424,7 +419,6 @@ def dump_json(d: dict) -> None:
     print(json.dumps(dict(zip(*[k1, v])), indent=4))
 
 
-# TODO - update to use dictionary AST
 def collect_spans(ast: AST) -> List[Tuple[str, Tuple[int, int]]]:
     """Collect flattened list of spans of BEL syntax types
 
@@ -472,6 +466,7 @@ def collect_spans(ast: AST) -> List[Tuple[str, Tuple[int, int]]]:
             elif arg['type'] == 'StrArg':
                 spans.append(('StrArg', arg['span']))
 
+    log.debug(f'Spans: {spans}')
     return spans
 
     # max_idx = 0
@@ -526,8 +521,7 @@ def print_spans(spans, max_idx: int) -> None:
 
 
 def parsed_function_to_ast(parsed: Parsed, parsed_key):
-    """Create AST for top-level functions
-    """
+    """Create AST for top-level functions"""
 
     sub = parsed[parsed_key]
 
@@ -543,6 +537,9 @@ def parsed_function_to_ast(parsed: Parsed, parsed_key):
 
     args = []
     for arg in parsed[parsed_key].get('args', []):
+
+        # pdb.set_trace()
+
         if arg['type'] == 'Function':
             args.append(parsed_function_to_ast(parsed, arg['span']))
         elif arg['type'] == 'NSArg':
@@ -638,11 +635,10 @@ def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ''):
             are parsing the subject or object field input
     """
 
-    # dump_json(parsed)
-    # quit()
-
     ast = {}
     sorted_keys = sorted(parsed.keys())
+
+    log.debug(f'To AST {dump_json(parsed)}')
 
     # Setup top-level tree
     for key in sorted_keys:
@@ -696,7 +692,6 @@ def get_ast_dict(belstr, component_type: str = ''):
     parsed = {}
     bels = list(belstr)
     char_locs, errors = parse_chars(bels, errors)
-
     parsed, errors = parse_functions(belstr, char_locs, parsed, errors)
     parsed, errors = parse_args(bels, char_locs, parsed, errors)
     parsed, errors = arg_types(parsed, errors)
