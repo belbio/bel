@@ -10,8 +10,15 @@ settings:
         type: custom
         tokenizer: standard
         filter:
-        - lowercase
-        - autocomplete_filter
+          - lowercase
+          - autocomplete_filter
+    normalizer:
+      lowercase:
+        type: custom
+        char_filter: []
+        filter:
+          - lowercase
+
 mappings:
   term:
     properties:
@@ -25,10 +32,12 @@ mappings:
         copy_to: autocomplete
       namespace:
         type: keyword
+      namespace_value:
+        type: keyword
+        normalizer: lowercase
       id:
         type: keyword
         copy_to: autocomplete
-        boost: 4
       alt_ids:
         type: keyword
         copy_to: autocomplete
@@ -38,7 +47,6 @@ mappings:
       name:
         type: text
         copy_to: autocomplete
-        boost: 2
       description:
         type: text
       entity_types:
