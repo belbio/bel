@@ -9,6 +9,7 @@ log = logging.getLogger(__name__)
 
 edgestore_db_name = 'edgestore'
 belns_db_name = 'belns'
+belapi_db_name = 'belapi'
 
 edgestore_nodes_name = 'nodes'  # edgestore node collection name
 edgestore_edges_name = 'edges'  # edgestore edge collection name
@@ -18,6 +19,8 @@ equiv_edges_name = 'equivalence_edges'  # equivalence edge collection name
 ortholog_nodes_name = 'ortholog_nodes'  # ortholog node collection name
 ortholog_edges_name = 'ortholog_edges'  # ortholog edge collection name
 belns_definitions_name = 'belns_definitions'  # BEL Namespace metadata
+
+belapi_settings_name = 'settings'  # BEL API settings and configuration
 
 
 def get_client(host=None, port=None, username=None, password=None, enable_logging=True):
@@ -40,11 +43,18 @@ def get_client(host=None, port=None, username=None, password=None, enable_loggin
     return client
 
 
+def aql_query(db, query):
+    """Run AQL query"""
+
+    result = db.aql.execute(query)
+    return result
+
+
 def get_edgestore_handle(client, username=None, password=None):
     """Get Edgestore arangodb database handle"""
 
     username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
-    password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password'), '')])
+    password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password', ''))])
 
     # Create a new database named "edgestore"
     try:
@@ -103,6 +113,31 @@ def get_belns_handle(client, username=None, password=None):
         return belns_db
     except Exception as e:
         log.error(f'Error creating database {belns_db_name}', e)
+        return None
+
+
+def get_belapi_handle(client, username=None, password=None):
+    """Get BEL API arango db handle"""
+
+    username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
+    password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password')), ''])
+
+    # Create a new database named "belapi"
+    try:
+        belapi_db = client.create_database(belapi_db_name)
+        if username and password:
+            client.create_user(username, password)
+            client.grant_user_access(username, belns_db_name)
+
+        belapi_db.create_collection(belapi_settings_name)
+
+        return belapi_db
+
+    except ArangoError as ae:
+        belapi_db = client.db(belapi_db_name)
+        return belapi_db
+    except Exception as e:
+        log.error(f'Error creating database {belapi_db_name}', e)
         return None
 
 
