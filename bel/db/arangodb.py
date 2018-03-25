@@ -57,6 +57,7 @@ def get_edgestore_handle(client, username=None, password=None):
     password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password', ''))])
 
     # Create a new database named "edgestore"
+    edgestore_db = None
     try:
         edgestore_db = client.create_database(edgestore_db_name)
         if username and password:
@@ -74,6 +75,7 @@ def get_edgestore_handle(client, username=None, password=None):
         edges.add_hash_index(fields=['context[*].id'], unique=False)
 
         # TODO - add a skiplist index for _from? or _key? to be able to do paging?
+        log.info('Creating new ArangoDB Edgestore database')
 
     except ArangoError as ae:
         edgestore_db = client.db(edgestore_db_name)
