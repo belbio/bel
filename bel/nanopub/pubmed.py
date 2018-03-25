@@ -20,15 +20,16 @@ import logging
 import logging.config
 
 from bel.Config import config
-import bel.utils
+import bel.lang.bel_utils as bel_utils
+from bel.utils import get_url, url_path_param_quoting
 
 # Replace pmid
 PUBMED_TMPL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID'
 PUBTATOR_TMPL = 'https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/RESTful/tmTool.cgi/BioConcept/PMID/JSON'
 
 pubtator_ns_convert = {'CHEBI': 'CHEBI', 'Species': 'TAX', 'Gene': 'EG', 'Chemical': 'MESH', 'Disease': 'MESH'}
-pubtator_entity_convert = {'Chemical': 'Abundance', 'Gene': 'Gene', 'Disease': 'Pathology', 'Species': 'Organism', }
-pubtator_annotation_convert = {'Disease': 'Pathology', 'Species': 'Organism', }
+pubtator_entity_convert = {'Chemical': 'Abundance', 'Gene': 'Gene', 'Disease': 'Pathology', }
+pubtator_annotation_convert = {'Disease': 'Pathology', }
 pubtator_known_types = [key for key in pubtator_ns_convert.keys()]
 
 
@@ -38,10 +39,11 @@ def get_pubtator(pmid):
     Re-configure the denotations into an annotation dictionary format
     and collapse duplicate terms so that their spans are in a list.
     """
-    r = bel.utils.get_url(PUBTATOR_TMPL.replace('PMID', pmid), timeout=10)
+    r = get_url(PUBTATOR_TMPL.replace('PMID', pmid), timeout=10)
     if r and r.status_code == 200:
         pubtator = r.json()
     else:
+        log.error(f"Cannot access Pubtator, status: {r.status_code} url: {PUBTATOR_TMPL.replace('PMID', pmid)}")
         return None
 
     known_types = ['CHEBI', 'Chemical', 'Disease', 'Gene', 'Species', ]
@@ -114,48 +116,52 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
     Returns:
         pubmed json
     """
-    r = bel.utils.get_url(PUBMED_TMPL.replace('PMID', pmid))
+    r = get_url(PUBMED_TMPL.replace('PMID', pmid))
 
-    root = etree.fromstring(r.content)
-    doc = {}
-    doc['pmid'] = root.xpath("//PMID/text()")[0]
-    doc['title'] = next(iter(root.xpath("//ArticleTitle/text()")), '')
-    doc['abstract'] = next(iter(root.xpath('//Abstract/AbstractText/text()')), '')
+    if r.status_code == 200:
+        root = etree.fromstring(r.content)
+        doc = {}
+        doc['pmid'] = root.xpath("//PMID/text()")[0]
+        doc['title'] = next(iter(root.xpath("//ArticleTitle/text()")), '')
+        doc['abstract'] = next(iter(root.xpath('//Abstract/AbstractText/text()')), '')
 
-    doc['authors'] = []
-    for author in root.xpath('//Author'):
-        last_name = next(iter(author.xpath('LastName/text()')), '')
-        first_name = next(iter(author.xpath('ForeName/text()')), '')
-        initials = next(iter(author.xpath('Initials/text()')), '')
-        if not first_name and initials:
-            first_name = initials
-        doc['authors'].append(f'{last_name}, {first_name}')
+        doc['authors'] = []
+        for author in root.xpath('//Author'):
+            last_name = next(iter(author.xpath('LastName/text()')), '')
+            first_name = next(iter(author.xpath('ForeName/text()')), '')
+            initials = next(iter(author.xpath('Initials/text()')), '')
+            if not first_name and initials:
+                first_name = initials
+            doc['authors'].append(f'{last_name}, {first_name}')
 
-    pub_year = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Year/text()")), None)
-    pub_mon = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Month/text()")), 'Jan')
-    pub_day = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Day/text()")), '01')
+        pub_year = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Year/text()")), None)
+        pub_mon = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Month/text()")), 'Jan')
+        pub_day = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Day/text()")), '01')
 
-    pub_date = process_pub_date(pub_year, pub_mon, pub_day)
+        pub_date = process_pub_date(pub_year, pub_mon, pub_day)
 
-    doc['pub_date'] = pub_date
-    doc['journal_title'] = next(iter(root.xpath('//Journal/Title/text()')), '')
-    doc['joural_iso_title'] = next(iter(root.xpath('//Journal/ISOAbbreviation/text()')), '')
-    doc['doi'] = next(iter(root.xpath('//ArticleId[@IdType="doi"]/text()')), None)
+        doc['pub_date'] = pub_date
+        doc['journal_title'] = next(iter(root.xpath('//Journal/Title/text()')), '')
+        doc['joural_iso_title'] = next(iter(root.xpath('//Journal/ISOAbbreviation/text()')), '')
+        doc['doi'] = next(iter(root.xpath('//ArticleId[@IdType="doi"]/text()')), None)
 
-    doc['compounds'] = []
-    for chem in root.xpath("//ChemicalList/Chemical/NameOfSubstance"):
-        chem_id = chem.get('UI')
-        doc['compounds'].append({'id': f"MESH:{chem_id}", 'name': chem.text})
+        doc['compounds'] = []
+        for chem in root.xpath("//ChemicalList/Chemical/NameOfSubstance"):
+            chem_id = chem.get('UI')
+            doc['compounds'].append({'id': f"MESH:{chem_id}", 'name': chem.text})
 
-    compounds = [cmpd['id'] for cmpd in doc['compounds']]
-    doc['mesh'] = []
-    for mesh in root.xpath("//MeshHeading/DescriptorName"):
-        mesh_id = f"MESH:{mesh.get('UI')}"
-        if mesh_id in compounds:
-            continue
-        doc['mesh'].append({'id': mesh_id, 'name': mesh.text})
+        compounds = [cmpd['id'] for cmpd in doc['compounds']]
+        doc['mesh'] = []
+        for mesh in root.xpath("//MeshHeading/DescriptorName"):
+            mesh_id = f"MESH:{mesh.get('UI')}"
+            if mesh_id in compounds:
+                continue
+            doc['mesh'].append({'id': mesh_id, 'name': mesh.text})
 
-    return doc
+        return doc
+    else:
+        log.error(f"Bad Pubmed request, status: {r.status_code}  url: {PUBMED_TMPL.replace('PMID', pmid)}")
+        return {}
 
 
 def enhance_pubmed_annotations(pubmed: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -179,14 +185,14 @@ def enhance_pubmed_annotations(pubmed: Mapping[str, Any]) -> Mapping[str, Any]:
     annotations = {}
 
     for nsarg in pubmed['annotations']:
-        url = f'{config["bel_api"]["servers"]["api_url"]}/terms/{nsarg}'
+        url = f'{config["bel_api"]["servers"]["api_url"]}/terms/{url_path_param_quoting(nsarg)}'
         log.info(f'URL: {url}')
-        r = bel.utils.get_url(url)
+        r = get_url(url)
         log.info(f'Result: {r}')
         new_nsarg = ''
         if r and r.status_code == 200:
             term = r.json()
-            new_nsarg = bel.lang.bel_utils.convert_nsarg(term['id'], decanonicalize=True)
+            new_nsarg = bel_utils.convert_nsarg(term['id'], decanonicalize=True)
 
             pubmed['annotations'][nsarg]['name'] = term['name']
             pubmed['annotations'][nsarg]['label'] = term['label']

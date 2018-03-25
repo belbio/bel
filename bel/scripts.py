@@ -4,9 +4,11 @@ import yaml
 import gzip
 import re
 import sys
+import timy
 
 import bel.db.arangodb
 import bel.db.elasticsearch
+import bel.edge.edges
 import bel.utils as utils
 import bel.Config
 from bel.Config import config
@@ -55,15 +57,17 @@ def nanopub():
 
 @belc.command()
 @click.argument('input_fn')
+@click.option('--db_save', help="Save Edges direct to EdgeStore")
+@click.option('--db_delete', help="Delete EdgeStore prior to saving new Edges")
 @click.option('--output_fn', default='-', help="BEL Edges output filename - defaults to STDOUT")
 @click.option('--rules', help='Select specific rules to create BEL Edges, comma-delimited, e.g. "component_of,degradation", default is to run all rules. Special rule: "skip" does not compute edges at all - just processes primary edge')
-@click.option('--species_id', help='Species ID format TAX:<tax_id_number>')
+@click.option('--species', help='Orthologize to species (Format TAX:<NCBI tax_id_number>)')
 @click.option('--namespace_targets', help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}')
 @click.option('--version', help='BEL language version')
 @click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
+@click.option('--config_fn', help="BEL configuration file - overrides default configuration files")
 @pass_context
-def pipeline(ctx, input_fn, output_fn, rules, species_id, namespace_targets, version, api, config_fn):
+def pipeline(ctx, input_fn, db_save, db_delete, output_fn, rules, species, namespace_targets, version, api, config_fn):
     """BEL Pipeline - BEL Nanopubs into BEL Edges
 
     This will process BEL Nanopubs into BEL Edges by validating, orthologizing (if requested),
@@ -106,7 +110,18 @@ def pipeline(ctx, input_fn, output_fn, rules, species_id, namespace_targets, ver
     try:
         json_flag, jsonl_flag, yaml_flag, jgf_flag = False, False, False, False
         all_bel_edges = []
-        if re.search('ya?ml', output_fn):
+        fout = None
+
+        if db_save or db_delete:
+            if db_delete:
+                arango_client = bel.db.arangodb.get_client()
+                bel.db.arangodb.delete_database(arango_client, "edgestore")
+            else:
+                arango_client = bel.db.arangodb.get_client()
+
+            edgestore_handle = bel.db.arangodb.get_edgestore_handle(arango_client)
+
+        elif re.search('ya?ml', output_fn):
             yaml_flag = True
         elif 'jsonl' in output_fn:
             jsonl_flag = True
@@ -115,29 +130,34 @@ def pipeline(ctx, input_fn, output_fn, rules, species_id, namespace_targets, ver
         elif 'jgf' in output_fn:
             jgf_flag = True
 
-        if 'gz' in output_fn:
+        if db_save:
+            pass
+        elif 'gz' in output_fn:
             fout = gzip.open(output_fn, 'wt')
         else:
             fout = open(output_fn, 'wt')
 
-        for np in bnf.read_nanopubs(input_fn):
-            # print('Nanopub:\n', json.dumps(np, indent=4))
+        nanopub_cnt = 0
+        with timy.Timer() as timer:
+            for np in bnf.read_nanopubs(input_fn):
+                # print('Nanopub:\n', json.dumps(np, indent=4))
 
-            (bel_edges, validation_messages) = n.bel_edges(np, namespace_targets=namespace_targets, orthologize_target=species_id, rules=rules)
+                nanopub_cnt += 1
+                if nanopub_cnt % 100 == 0:
+                    timer.track(f'{nanopub_cnt} Nanopubs processed into Edges')
 
-            # Skip if there was a validation error
-            if [error for error in validation_messages if error[0] == 'ERROR']:
-                continue
+                bel_edges = n.bel_edges(np, namespace_targets=namespace_targets, orthologize_target=species, rules=rules)
 
-            if jsonl_flag:
-                fout.write("{}\n".format(json.dumps(bel_edges)))
-            else:
-                all_bel_edges.extend(bel_edges)
+                if db_save:
+                    bel.edge.edges.load_edges_into_db(edgestore_handle, edges=bel_edges)
+                elif jsonl_flag:
+                    fout.write("{}\n".format(json.dumps(bel_edges)))
+                else:
+                    all_bel_edges.extend(bel_edges)
 
-            if validation_messages:
-                log.warn(validation_messages)
-
-        if yaml_flag:
+        if db_save:
+            pass
+        elif yaml_flag:
             fout.write("{}\n".format(yaml.dumps(all_bel_edges)))
         elif json_flag:
             fout.write("{}\n".format(json.dumps(all_bel_edges)))
@@ -145,7 +165,8 @@ def pipeline(ctx, input_fn, output_fn, rules, species_id, namespace_targets, ver
             bnf.edges_to_jgf(output_fn, all_bel_edges)
 
     finally:
-        fout.close()
+        if fout:
+            fout.close()
 
 
 @nanopub.command(name="validate")
@@ -370,17 +391,17 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
 
 
 @stmt.command()
-@click.option('--species_id', help='Species ID format TAX:<tax_id_number>')
+@click.option('--species', help='species ID format TAX:<tax_id_number>')
 @click.option('--version', help='BEL language version')
 @click.option('--api', help='API Endpoint to use for BEL Entity validation')
 @click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
 @click.argument('statement')
 @pass_context
-def orthologize(ctx, statement, species_id, version, api, config_fn):
+def orthologize(ctx, statement, species, version, api, config_fn):
     """Orthologize statement
 
-    Species ID needs to be the NCBI Taxonomy ID in this format: TAX:<tax_id_number>
-    You can use the following common names for species_id: human, mouse, rat
+    species ID needs to be the NCBI Taxonomy ID in this format: TAX:<tax_id_number>
+    You can use the following common names for species id: human, mouse, rat
       (basically whatever is supported at the api orthologs endpoint)
     """
 
@@ -399,7 +420,7 @@ def orthologize(ctx, statement, species_id, version, api, config_fn):
     print('------------------------------')
 
     bo = BEL(version=version, endpoint=api_url)
-    bo.parse(statement).orthologize(species_id)
+    bo.parse(statement).orthologize(species)
 
     if bo.ast is None:
         print(bo.original_bel_stmt)
@@ -417,14 +438,14 @@ def orthologize(ctx, statement, species_id, version, api, config_fn):
 
 @stmt.command()
 @click.option('--rules', help='Select specific rules to create BEL Edges, comma-delimited, e.g. "component_of,degradation", default is to run all rules')
-@click.option('--species_id', help='Species ID format TAX:<tax_id_number>')
+@click.option('--species', help='Species ID format TAX:<tax_id_number>')
 @click.option('--namespace_targets', help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}')
 @click.option('--version', help='BEL language version')
 @click.option('--api', help='API Endpoint to use for BEL Entity validation')
 @click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
 @click.argument('statement')
 @pass_context
-def edges(ctx, statement, rules, species_id, namespace_targets, version, api, config_fn):
+def edges(ctx, statement, rules, species, namespace_targets, version, api, config_fn):
     """Create BEL Edges from BEL Statement"""
 
     if config_fn:
@@ -448,8 +469,8 @@ def edges(ctx, statement, rules, species_id, namespace_targets, version, api, co
     print('------------------------------')
 
     bo = BEL(version=version, endpoint=api_url)
-    if species_id:
-        edges = bo.parse(statement).orthologize(species_id).canonicalize(namespace_targets=namespace_targets).compute_edges(rules=rules)
+    if species:
+        edges = bo.parse(statement).orthologize(species).canonicalize(namespace_targets=namespace_targets).compute_edges(rules=rules)
     else:
         edges = bo.parse(statement).canonicalize(namespace_targets=namespace_targets).compute_edges(rules=rules)
 
@@ -486,9 +507,9 @@ def elasticsearch(delete, index_name):
     The index_name should be aliased to the index 'terms' when it's ready"""
 
     if delete:
-        es = bel.db.elasticsearch.get_client(delete=True)
+        bel.db.elasticsearch.get_client(delete=True)
     else:
-        es = bel.db.elasticsearch.get_client()
+        bel.db.elasticsearch.get_client()
 
 
 @db.command()

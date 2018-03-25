@@ -4,7 +4,7 @@ import bel.lang.belobj
 import jsonschema
 import requests
 
-import bel.nanopub.edges
+import bel.edge.edges
 from bel.Config import config
 
 import logging
@@ -104,7 +104,8 @@ class Nanopub(object):
             List[Mapping[str, Any]]: edge list with edge attributes (e.g. context)
         """
 
-        edges = bel.nanopub.edges.create_edges(nanopub, self.endpoint, namespace_targets=namespace_targets, rules=rules, orthologize_target=orthologize_target)
+        edges = bel.edge.edges.create_edges(nanopub, self.endpoint, namespace_targets=namespace_targets, rules=rules, orthologize_target=orthologize_target)
+
         return edges
 
 

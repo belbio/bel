@@ -110,6 +110,8 @@ def create_nanopubs_fh(output_fn: str):
 
 def read_edges(fn):
 
+    if not fn:
+        return []
     jsonl_flag, json_flag, yaml_flag = False, False, False
     if 'jsonl' in fn:
         jsonl_flag = True
@@ -118,8 +120,8 @@ def read_edges(fn):
     elif re.search('ya?ml', fn):
         yaml_flag = True
     else:
-        log.error('Do not recognize nanopub file format - neither json nor jsonl format.')
-        return {}
+        log.error('Do not recognize edge file format - neither json nor jsonl format.')
+        return []
 
     try:
         if re.search('gz$', fn):
