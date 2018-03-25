@@ -12,9 +12,10 @@ Get first belbio_conf.{yml|yaml} and belbio_secrets.{yml|yaml} files in:
 
 import os
 import os.path
+import re
 import yaml
 import copy
-from typing import Mapping, Any
+from typing import Mapping, Any, MutableMapping
 import functools
 import collections
 
@@ -122,6 +123,40 @@ def get_versions(config) -> dict:
     return config
 
 
+def add_environment_vars(config: MutableMapping[str, Any]):
+    """Override config with environment variables
+
+    Environment variables have to be prefixed with BELBIO_
+    which will be stripped before splitting on '__' and lower-casing
+    the environment variable name that is left into keys for the
+    config dictionary.
+
+    Example:
+        BELBIO_BEL_API__SERVERS__API_URL=http://api.bel.bio
+        1. BELBIO_BEL_API__SERVERS__API_URL ==> BEL_API__SERVERS__API_URL
+        2. BEL_API__SERVERS__API_URL ==> bel_api__servers__api_url
+        3. bel_api__servers__api_url ==> [bel_api, servers, api_url]
+        4. [bel_api, servers, api_url] ==> config['bel_api']['servers']['api_url'] = http://api.bel.bio
+
+    """
+
+    for e in os.environ:
+        if re.match('BELBIO_', e):
+            val = os.environ.get(e)
+            if val:
+                e.replace('BELBIO_', '')
+                env_keys = e.lower().split('__')
+                if len(env_keys) > 1:
+                    joined = '"]["'.join(env_keys)
+                    eval_config = f'config["{joined}"] = val'
+                    try:
+                        eval(eval_config)
+                    except Exception as exc:
+                        log.warn('Cannot process {e} into config')
+                else:
+                    config[env_keys[0]] = val
+
+
 def load_configuration():
     """Load the configuration"""
 
@@ -147,6 +182,8 @@ def load_configuration():
                 config['source_files']['secrets'] = belbio_conf_fp
 
     config = get_versions(config)
+
+    add_environment_vars(config)
 
     return config
 
