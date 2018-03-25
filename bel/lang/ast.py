@@ -128,6 +128,7 @@ class Function(object):
         self.name = spec['functions']['to_long'][name]
         self.name_short = spec['functions']['to_short'][name]
         self.function_type = spec['functions']['info'][self.name]['type']
+        self.type = 'Function'
 
         self.parent_function = parent_function
         self.spec = spec
@@ -192,6 +193,30 @@ class Function(object):
             else:
                 print('\t' * (indent + 1) + str(arg))
 
+    def subcomponents(self, subcomponents):
+        """Generate subcomponents of the BEL subject or object
+
+        These subcomponents are used for matching parts of a BEL
+        subject or Object in the Edgestore.
+
+        Args:
+            AST
+            subcomponents:  Pass an empty list to start a new subcomponents request
+
+        Returns:
+            List[str]: subcomponents of BEL subject or object
+        """
+
+        for arg in self.args:
+            if arg.__class__.__name__ == 'Function':
+                subcomponents.append(arg.to_string())
+                if arg.function_type == 'primary':
+                    arg.subcomponents(subcomponents)
+            else:
+                subcomponents.append(arg.to_string())
+
+        return subcomponents
+
 
 #####################
 # Argument objects #
@@ -202,6 +227,7 @@ class Arg(object):
         self.parent_function = parent_function
         self.siblings = []
         self.optional = False
+        self.type = 'Arg'
 
     def add_sibling(self, sibling):
         self.siblings.append(sibling)
@@ -214,6 +240,7 @@ class NSArg(Arg):
         self.namespace = namespace
         self.value = self.normalize_nsarg_value(value)
         self.value_types = value_types
+        self.type = 'NSArg'
 
         # What entity types can this be from the function signatures?
         #    this is used for statement autocompletion and entity validation
@@ -278,7 +305,7 @@ class StrArg(Arg):
         Arg.__init__(self, parent_function)
         self.value = value
         self.value_types = value_types
-
+        self.type = 'StrArg'
     def add_value_types(self, value_types):
         self.value_types = value_types
 

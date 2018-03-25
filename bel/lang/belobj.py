@@ -222,9 +222,7 @@ class BEL(object):
 
         # TODO Need to order position independent args
 
-        canonicalize_endpoint = self.endpoint + '/terms/{}/canonicalized'
-
-        self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize_endpoint, namespace_targets=namespace_targets)
+        self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize=True, namespace_targets=namespace_targets)
         return self
 
     def decanonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
@@ -239,9 +237,7 @@ class BEL(object):
             BEL: returns self
         """
 
-        decanonicalize_endpoint = self.endpoint + '/terms/{}/decanonicalized'
-
-        self.ast = bel_utils.convert_namespaces_ast(self.ast, decanonicalize_endpoint, namespace_targets=namespace_targets)
+        self.ast = bel_utils.convert_namespaces_ast(self.ast, decanonicalize=True, namespace_targets=namespace_targets)
         return self
 
     def orthologize(self, species_id: str) -> 'BEL':
@@ -260,7 +256,7 @@ class BEL(object):
 
         return self
 
-    def compute_edges(self, rules: List[str] = None, fmt="medium") -> List[Mapping[str, Any]]:
+    def compute_edges(self, rules: List[str] = None, ast_result=False, fmt="medium") -> List[Mapping[str, Any]]:
         """Computed edges from primary BEL statement
 
         Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
@@ -279,6 +275,9 @@ class BEL(object):
             compute_rules = [rule for rule in compute_rules if rule in rules]
 
         edges_ast = computed_edges.compute_edges(self.ast, self.spec, compute_rules)
+
+        if ast_result:
+            return edges_ast
 
         edges = []
         for es, er, eo in edges_ast:

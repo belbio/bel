@@ -8,10 +8,11 @@ import sys
 from typing import Mapping, List
 import functools
 import fastcache
+import urllib.parse
 
 from bel.lang.ast import BELAst, NSArg, Function
 from bel.Config import config
-from bel.utils import get_url
+from bel.utils import get_url, url_path_param_quoting
 
 import logging
 log = logging.getLogger(__name__)
@@ -54,11 +55,13 @@ def convert_nsarg(nsarg: str, api_url: str = None, namespace_targets: Mapping[st
 
         api_url = api_url + '/terms/{}/canonicalized'  # overriding with namespace_targets
 
-    request_url = api_url.format(nsarg)
+    request_url = api_url.format(url_path_param_quoting(nsarg))
 
     r = get_url(request_url, params=params)
     if r.status_code == 200:
         nsarg = r.json().get('term_id', nsarg)
+    elif r.status_code == 404:
+        log.error(f'[de]Canonicalization endpoint missing: {request_url}')
 
     return nsarg
 
@@ -95,8 +98,7 @@ def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets:
     return bel_str
 
 
-# TODO - cleanup convert_namespaces_ast - use convert_nsarg and convert_namespaces_str parameters
-def convert_namespaces_ast(ast, endpoint: str, namespace_targets: Mapping[str, List[str]] = None):
+def convert_namespaces_ast(ast, api_url: str = None, namespace_targets: Mapping[str, List[str]] = None, canonicalize: bool = False, decanonicalize: bool = False):
     """Convert namespaces of BEL Entities in BEL AST using API endpoint
 
     Canonicalization and decanonicalization is determined by endpoint used and namespace_targets.
@@ -113,25 +115,14 @@ def convert_namespaces_ast(ast, endpoint: str, namespace_targets: Mapping[str, L
     if isinstance(ast, NSArg):
         given_term_id = '{}:{}'.format(ast.namespace, ast.value)
 
-        try:
-            request_url = endpoint.format(given_term_id)
-            if namespace_targets:
-                namespace_targets_str = json.dumps(namespace_targets)
-                params = {'namespace_targets': namespace_targets_str}
-                r = get_url(request_url, params=params)
-            else:
-                r = get_url(request_url)
-            if r.status_code == 200:
-                updated_id = r.json().get('term_id', given_term_id)
-                ns, value = updated_id.split(':')
-                ast.change_nsvalue(ns, value)
-        except requests.exceptions.Timeout:
-            log.error(f'Request timeout occurred for {request_url} in bel_utils.convert_namespaces_ast')
+        updated_nsarg = convert_nsarg(given_term_id, api_url=api_url, namespace_targets=namespace_targets, canonicalize=canonicalize, decanonicalize=decanonicalize)
+        ns, value = updated_nsarg.split(':')
+        ast.change_nsvalue(ns, value)
 
     # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
-            convert_namespaces_ast(arg, endpoint, namespace_targets)
+            convert_namespaces_ast(arg, namespace_targets=namespace_targets, canonicalize=canonicalize, decanonicalize=decanonicalize)
 
     return ast
 
@@ -155,8 +146,10 @@ def orthologize(ast, bo, species_id: str):
 
     if isinstance(ast, NSArg):
         given_term_id = '{}:{}'.format(ast.namespace, ast.value)
-        orthologize_req_url = f'{bo.endpoint}/orthologs/{given_term_id}/{species_id}'
 
+        # Quote given_term_id
+        orthologize_req_url = f'{bo.endpoint}/orthologs/{url_path_param_quoting(given_term_id)}/{species_id}'
+        log.debug(f'Orthologize url {orthologize_req_url}')
         r = get_url(orthologize_req_url)
 
         if r.status_code == 200:

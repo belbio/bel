@@ -9,8 +9,6 @@
 
 
 """
-import pdb
-
 import re
 
 import copy
@@ -18,12 +16,15 @@ from typing import Mapping, Any, List, Tuple, MutableMapping, Optional
 
 import logging
 import logging.config
+import structlog
 
 from bel.Config import config
 
-if config.get('logging', False):
-    logging.config.dictConfig(config.get('logging'))
-log = logging.getLogger(__name__)
+# if config.get('logging', False):
+#     logging.config.dictConfig(config.get('logging'))
+# log = logging.getLogger(__name__)
+
+log = structlog.getLogger(__name__)
 
 start_arg_chars = ['(', ',']
 end_arg_chars = [')', ',']
@@ -228,7 +229,8 @@ def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Err
                     else:
                         span = (i + 1, ep)
 
-                    parsed[span] = {'name': ''.join(bels[i + 1:sp]),
+                    parsed[span] = {
+                        'name': ''.join(bels[i + 1:sp]),
                         'type': 'Function', 'span': span,
                         'name_span': (i + 1, sp - 1), 'parens_span': (sp, ep),
                         'function_level': function_level,
@@ -416,7 +418,8 @@ def dump_json(d: dict) -> None:
     k = d.keys()
     v = d.values()
     k1 = [str(i) for i in k]
-    print(json.dumps(dict(zip(*[k1, v])), indent=4))
+
+    return json.dumps(dict(zip(*[k1, v])), indent=4)
 
 
 def collect_spans(ast: AST) -> List[Tuple[str, Tuple[int, int]]]:
@@ -445,21 +448,21 @@ def collect_spans(ast: AST) -> List[Tuple[str, Tuple[int, int]]]:
         spans.extend(collect_spans(ast['nested']))
 
     if ast.get('function', False):
-        log.info(f'Processing function')
+        log.debug(f'Processing function')
         spans.append(('Function', ast['function']['name_span']))
-        log.info(f'Spans: {spans}')
+        log.debug(f'Spans: {spans}')
 
     if ast.get('args', False):
         for idx, arg in enumerate(ast['args']):
-            log.info(f'Arg  {arg}')
+            log.debug(f'Arg  {arg}')
 
             if arg.get('function', False):
-                log.info(f'Recursing on arg function')
+                log.debug(f'Recursing on arg function')
                 results = collect_spans(arg)
-                log.info(f'Results {results}')
+                log.debug(f'Results {results}')
                 spans.extend(results)  # Recurse arg function
             elif arg.get('nsarg', False):
-                log.info(f'Processing NSArg   Arg {arg}')
+                log.debug(f'Processing NSArg   Arg {arg}')
                 spans.append(('NSArg', arg['span']))
                 spans.append(('NSPrefix', arg['nsarg']['ns_span']))
                 spans.append(('NSVal', arg['nsarg']['ns_val_span']))
@@ -637,8 +640,6 @@ def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ''):
 
     ast = {}
     sorted_keys = sorted(parsed.keys())
-
-    log.debug(f'To AST {dump_json(parsed)}')
 
     # Setup top-level tree
     for key in sorted_keys:

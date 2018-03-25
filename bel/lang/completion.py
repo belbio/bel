@@ -371,11 +371,11 @@ def arg_completions(completion_text: str, parent_function: str, args: list, arg_
         entity_types.extend(list(set(opt_nsarg_sig_args + mult_nsarg_sig_args)))
 
     if function_list:
-        log.info(f'ArgComp - position-based Function list: {function_list}')
+        log.debug(f'ArgComp - position-based Function list: {function_list}')
         fn_replace_list = function_completions(completion_text, bel_spec, function_list, bel_fmt, size)
 
     if entity_types:
-        log.info(f'ArgComp - position-based Entity types: {entity_types}')
+        log.debug(f'ArgComp - position-based Entity types: {entity_types}')
         ns_arg_replace_list = nsarg_completions(completion_text, entity_types, bel_spec, namespace, species_id, bel_fmt, size)
 
     replace_list = fn_replace_list + ns_arg_replace_list
