@@ -35,7 +35,7 @@ def test_first_true():
 def test_create_hash():
 
     h = utils._create_hash('test')
-    assert h == 204797213367049729698754624420042367389
+    assert h == '204797213367049729698754624420042367389'
 
 
 def test_generate_id():

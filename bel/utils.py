@@ -11,8 +11,10 @@ import ulid
 import mmh3
 import json
 from typing import Mapping, Any
-import fastcache
+import datetime
+import dateutil
 import requests
+# import fastcache
 
 from cachecontrol import CacheControl
 from cachecontrol.heuristics import ExpiresAfter
@@ -55,6 +57,16 @@ def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = T
         return None
 
 
+def url_path_param_quoting(param):
+    """Quote URL path parameters
+
+    Convert '/' to _FORWARDSLASH_ - otherwise is interpreted as additional path parameter
+        gunicorn processes the path prior to Falcon and interprets the
+        correct quoting of %2F into a slash
+    """
+    return param.replace('/', '_FORWARDSLASH_')
+
+
 def first_true(iterable, default=False, pred=None):
     """Returns the first true value in the iterable.
 
@@ -93,7 +105,7 @@ def _create_hash(string: str) -> str:
         str: Murmur3 128 bit hash
     """
 
-    return mmh3.hash128(string)
+    return str(mmh3.hash128(string))
 
 
 def _generate_id() -> str:
@@ -107,6 +119,20 @@ def _generate_id() -> str:
 
     # return str(uuid1())
     return ulid.new()
+
+
+def dt_utc_formatted():
+    """Create UTC ISODate formatted datetime string
+
+    Format: YYYY-MM-DDThh:mm:ss.sssZ
+    """
+    return f"{datetime.datetime.utcnow().isoformat(timespec='milliseconds')}Z"
+
+
+def parse_dt(dt: str):
+    """Get datetime object from datetime strings"""
+
+    return dateutil.parse(dt)
 
 
 # TODO - doesn't this replicate functionality of timy package?
