@@ -1,0 +1,56 @@
+{
+    "nanopub": {
+        "type": {
+            "name": "BEL",
+            "version": "2.0.0"
+        },
+        "schema_uri": "http://json.schemastore.org/nanopub_bel-1.0.0.json",
+        "assertions": [
+            {
+                "object": "bp(GO:\"lipid oxidation\")",
+                "relation": "positiveCorrelation",
+                "subject": "path(MESH:Atherosclerosis)"
+            }
+        ],
+        "evidence": "Oxidation and nitration of macromolecules, such as proteins, DNA and lipids, are prominent in atherosclerotic arteries.",
+        "annotations": [
+            {
+                "type": "Anatomy",
+                "id": "MESH:artery",
+                "label": "artery"
+            },
+            {
+                "type": "Disease",
+                "id": "DO:atherosclerosis",
+                "label": "atherosclerosis"
+            },
+            {
+                "type": "TextLocation",
+                "id": "Review"
+            }
+        ],
+        "citation": {
+            "authors": [
+                "de Nigris F",
+                "Lerman A",
+                "Ignarro LJ",
+                "Williams-Ignarro S",
+                "Sica V",
+                "Baker AH",
+                "Lerman LO",
+                "Geng YJ",
+                "Napoli C"
+            ],
+            "comments": "",
+            "date_published": "",
+            "source_name": "Trends in molecular medicine",
+            "database": {
+                "name": "PubMed",
+                "id": "12928037"
+            }
+        },
+        "metadata": {
+            "stmt_group": "Group 1"
+        }
+    }
+}

@@ -1,0 +1,68 @@
+{
+    "nanopub": {
+        "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.0.0.yaml",
+        "type": {
+            "name": "BEL",
+            "version": "2.0.0"
+        },
+        "annotations": [
+            {
+                "type": "Disease",
+                "label": "Carcinoma, Renal Cell"
+            },
+            {
+                "type": "Anatomy",
+                "label": "cardiovascular system endothelium"
+            },
+            {
+                "type": "TextLocation",
+                "label": "Review"
+            },
+            {
+                "type": "Cell",
+                "label": "fibroblast"
+            },
+            {
+                "type": "Anatomy",
+                "label": "Muscle, Smooth, Vascular"
+            },
+            {
+                "type": "CellLine",
+                "label": "U-937 cell"
+            },
+            {
+                "type": "CellStructure",
+                "label": "Cell Membrane"
+            },
+            {
+                "type": "Species",
+                "label": "9606"
+            }
+        ],
+        "citation": {
+            "authors": [
+                "Barry, Robert E",
+                "Krek, Wilhelm"
+            ],
+            "database": {
+                "name": "PubMed",
+                "id": "15350900"
+            },
+            "reference": "Trends in molecular medicine",
+            "title": "The von Hippel-Lindau tumour suppressor: a multi-faceted inhibitor of tumourigenesis.",
+            "source_name": "Trends in molecular medicine",
+            "date_published": "2004-09-01"
+        },
+        "assertions": [
+            {
+                "subject": "proteinAbundance(HGNC:VHL)",
+                "relation": "directlyIncreases",
+                "object": "degradation(proteinAbundance(HGNC:PRKCI))"
+            }
+        ],
+        "evidence": "pVHL has been shown to bind directly to various aPKC isoforms and to target aPKCl for ubiquitin-mediated degradation [39,40].",
+        "metadata": {
+            "statement_group": "Group 3"
+        }
+    }
+}

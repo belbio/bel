@@ -1,0 +1,162 @@
+[
+    {
+        "edge": {
+            "subject": {
+                "name": "a(CHEBI:\"hydrogen peroxide\")",
+                "label": "a(CHEBI:\"hydrogen peroxide\")",
+                "components": [
+                    "CHEBI:\"hydrogen peroxide\""
+                ]
+            },
+            "relation": {
+                "name": "increases",
+                "nanopub_id": null,
+                "edge_type": "primary",
+                "subject_name": "a(CHEBI:\"hydrogen peroxide\")",
+                "subject_lbl": "a(CHEBI:\"hydrogen peroxide\")",
+                "object_name": "bp(GO:\"apoptotic process\")",
+                "object_lbl": "bp(GO:\"apoptotic process\")",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "atherosclerosis"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "cardiovascular system endothelium"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "endothelial cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    },
+                    {
+                        "type": "CellLine",
+                        "label": "U-937 cell"
+                    }
+                ]
+            },
+            "object": {
+                "name": "bp(GO:\"apoptotic process\")",
+                "label": "bp(GO:\"apoptotic process\")",
+                "components": [
+                    "GO:\"apoptotic process\""
+                ]
+            }
+        }
+    },
+    {
+        "edge": {
+            "subject": {
+                "name": "p(EG:847)",
+                "label": "p(HGNC:CAT)",
+                "components": [
+                    "EG:847"
+                ]
+            },
+            "relation": {
+                "name": "decreases",
+                "nanopub_id": null,
+                "edge_type": "primary",
+                "subject_name": "p(EG:847)",
+                "subject_lbl": "p(HGNC:CAT)",
+                "object_name": "a(CHEBI:\"hydrogen peroxide\") increases bp(GO:\"apoptotic process\")",
+                "object_lbl": "a(CHEBI:\"hydrogen peroxide\") increases bp(GO:\"apoptotic process\")",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "atherosclerosis"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "cardiovascular system endothelium"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "endothelial cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    },
+                    {
+                        "type": "CellLine",
+                        "label": "U-937 cell"
+                    }
+                ]
+            },
+            "object": {
+                "name": "a(CHEBI:\"hydrogen peroxide\") increases bp(GO:\"apoptotic process\")",
+                "label": "a(CHEBI:\"hydrogen peroxide\") increases bp(GO:\"apoptotic process\")",
+                "components": [
+                    "CHEBI:\"hydrogen peroxide\"",
+                    "GO:\"apoptotic process\""
+                ]
+            }
+        }
+    },
+    {
+        "edge": {
+            "subject": {
+                "name": "a(CHEBI:\"hydrogen peroxide\")",
+                "label": "a(CHEBI:\"hydrogen peroxide\")",
+                "components": [
+                    "CHEBI:\"hydrogen peroxide\""
+                ]
+            },
+            "relation": {
+                "name": "increases",
+                "nanopub_id": null,
+                "edge_type": "computed",
+                "subject_name": "a(CHEBI:\"hydrogen peroxide\")",
+                "subject_lbl": "a(CHEBI:\"hydrogen peroxide\")",
+                "object_name": "bp(GO:\"apoptotic process\")",
+                "object_lbl": "bp(GO:\"apoptotic process\")",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "atherosclerosis"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "cardiovascular system endothelium"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "endothelial cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    },
+                    {
+                        "type": "CellLine",
+                        "label": "U-937 cell"
+                    }
+                ]
+            },
+            "object": {
+                "name": "bp(GO:\"apoptotic process\")",
+                "label": "bp(GO:\"apoptotic process\")",
+                "components": [
+                    "GO:\"apoptotic process\""
+                ]
+            }
+        }
+    }
+]

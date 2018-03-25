@@ -1,0 +1,126 @@
+[
+    {
+        "edge": {
+            "subject": {
+                "name": "p(EG:7428)",
+                "label": "p(HGNC:VHL)",
+                "components": [
+                    "EG:7428"
+                ]
+            },
+            "relation": {
+                "name": "directlyIncreases",
+                "nanopub_id": null,
+                "edge_type": "primary",
+                "subject_name": "p(EG:7428)",
+                "subject_lbl": "p(HGNC:VHL)",
+                "object_name": "deg(p(EG:5584))",
+                "object_lbl": "deg(p(HGNC:PRKCI))",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "Carcinoma, Renal Cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "cardiovascular system endothelium"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "fibroblast"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    },
+                    {
+                        "type": "CellLine",
+                        "label": "U-937 cell"
+                    },
+                    {
+                        "type": "CellStructure",
+                        "label": "Cell Membrane"
+                    },
+                    {
+                        "type": "Species",
+                        "label": "9606"
+                    }
+                ]
+            },
+            "object": {
+                "name": "deg(p(EG:5584))",
+                "label": "deg(p(HGNC:PRKCI))",
+                "components": [
+                    "p(EG:5584)",
+                    "EG:5584"
+                ]
+            }
+        }
+    },
+    {
+        "edge": {
+            "subject": {
+                "name": "deg(p(EG:5584))",
+                "label": "deg(p(HGNC:PRKCI))",
+                "components": [
+                    "p(EG:5584)",
+                    "EG:5584"
+                ]
+            },
+            "relation": {
+                "name": "decreases",
+                "nanopub_id": null,
+                "edge_type": "computed",
+                "subject_name": "deg(p(EG:5584))",
+                "subject_lbl": "deg(p(HGNC:PRKCI))",
+                "object_name": "p(EG:5584)",
+                "object_lbl": "p(HGNC:PRKCI)",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "Carcinoma, Renal Cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "cardiovascular system endothelium"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "fibroblast"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    },
+                    {
+                        "type": "CellLine",
+                        "label": "U-937 cell"
+                    },
+                    {
+                        "type": "CellStructure",
+                        "label": "Cell Membrane"
+                    },
+                    {
+                        "type": "Species",
+                        "label": "9606"
+                    }
+                ]
+            },
+            "object": {
+                "name": "p(EG:5584)",
+                "label": "p(HGNC:PRKCI)",
+                "components": [
+                    "EG:5584"
+                ]
+            }
+        }
+    }
+]

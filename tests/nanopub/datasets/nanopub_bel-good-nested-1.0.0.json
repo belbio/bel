@@ -1,0 +1,72 @@
+{
+    "nanopub": {
+        "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.0.0.yaml",
+        "type": {
+            "name": "BEL",
+            "version": "2.0.0"
+        },
+        "annotations": [
+            {
+                "type": "Disease",
+                "label": "atherosclerosis"
+            },
+            {
+                "type": "Anatomy",
+                "label": "cardiovascular system endothelium"
+            },
+            {
+                "type": "TextLocation",
+                "label": "Review"
+            },
+            {
+                "type": "Cell",
+                "label": "endothelial cell"
+            },
+            {
+                "type": "Anatomy",
+                "label": "Muscle, Smooth, Vascular"
+            },
+            {
+                "type": "CellLine",
+                "label": "U-937 cell"
+            }
+        ],
+        "citation": {
+            "authors": [
+                "de Nigris, Filomena",
+                "Lerman, Amir",
+                "Ignarro, Louis J",
+                "Williams-Ignarro, Sharon",
+                "Sica, Vincenzo",
+                "Baker, Andrew H",
+                "Lerman, Lilach O",
+                "Geng, Yong J",
+                "Napoli, Claudio"
+            ],
+            "database": {
+                "name": "PubMed",
+                "id": "12928037"
+            },
+            "reference": "Trends in molecular medicine",
+            "title": "Oxidation-sensitive mechanisms, vascular apoptosis and atherosclerosis.",
+            "source_name": "Trends in molecular medicine",
+            "date_published": "2003-08-01"
+        },
+        "assertions": [
+            {
+                "subject": "abundance(CHEBI:\"hydrogen peroxide\")",
+                "relation": "increases",
+                "object": "biologicalProcess(GO:\"apoptotic process\")"
+            },
+            {
+                "subject": "proteinAbundance(HGNC:CAT)",
+                "relation": "decreases",
+                "object": "(abundance(CHEBI:\"hydrogen peroxide\") increases biologicalProcess(GO:\"apoptotic process\"))"
+            }
+        ],
+        "evidence": "In addition, another oxygen-radical scavenger enzyme, catalase, can prevent VSMC apoptosis triggered by hydrogen peroxide [27,65].",
+        "metadata": {
+            "statement_group": "Group 1"
+        }
+    }
+}

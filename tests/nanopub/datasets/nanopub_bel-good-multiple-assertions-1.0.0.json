@@ -1,0 +1,78 @@
+{
+    "nanopub": {
+        "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.0.0.yaml",
+        "type": {
+            "name": "BEL",
+            "version": "2.0.0"
+        },
+        "annotations": [
+            {
+                "type": "Disease",
+                "label": "atherosclerosis"
+            },
+            {
+                "type": "Anatomy",
+                "label": "artery"
+            },
+            {
+                "type": "TextLocation",
+                "label": "Review"
+            },
+            {
+                "type": "Cell",
+                "label": "endothelial cell"
+            },
+            {
+                "type": "Anatomy",
+                "label": "Muscle, Smooth, Vascular"
+            }
+        ],
+        "citation": {
+            "authors": [
+                "de Nigris, Filomena",
+                "Lerman, Amir",
+                "Ignarro, Louis J",
+                "Williams-Ignarro, Sharon",
+                "Sica, Vincenzo",
+                "Baker, Andrew H",
+                "Lerman, Lilach O",
+                "Geng, Yong J",
+                "Napoli, Claudio"
+            ],
+            "database": {
+                "name": "PubMed",
+                "id": "12928037"
+            },
+            "reference": "Trends in molecular medicine",
+            "title": "Oxidation-sensitive mechanisms, vascular apoptosis and atherosclerosis.",
+            "source_name": "Trends in molecular medicine",
+            "date_published": "2003-08-01"
+        },
+        "assertions": [
+            {
+                "subject": "biologicalProcess(GO:\"response to fluid shear stress\")",
+                "relation": "increases",
+                "object": "rnaAbundance(HGNC:NOS3)"
+            },
+            {
+                "subject": "biologicalProcess(GO:\"response to fluid shear stress\")",
+                "relation": "increases",
+                "object": "activity(proteinAbundance(HGNC:NOS3), molecularActivity(default:cat))"
+            },
+            {
+                "subject": "activity(proteinAbundance(HGNC:NOS3), molecularActivity(default:cat))",
+                "relation": "directlyIncreases",
+                "object": "abundance(CHEBI:\"nitric oxide\")"
+            },
+            {
+                "subject": "abundance(CHEBI:\"nitric oxide\")",
+                "relation": "decreases",
+                "object": "biologicalProcess(GO:\"apoptotic process\")"
+            }
+        ],
+        "evidence": "Shear stress enhances expression of the gene encoding the endothelial nitric oxide synthase (eNOS) and further stimulates its enzymatic activity, leading to physiologic low concentrations of nitric oxide (NO) within endothelial cells [44\u201346]. This continuous generation of NO prevents the apoptosis of endothelial cells, thereby protecting the endothelial monolayer from injury [47,48].",
+        "metadata": {
+            "statement_group": "Group 1"
+        }
+    }
+}

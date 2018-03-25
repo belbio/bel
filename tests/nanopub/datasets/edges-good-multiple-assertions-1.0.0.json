@@ -1,0 +1,202 @@
+[
+    {
+        "edge": {
+            "subject": {
+                "name": "bp(GO:\"response to fluid shear stress\")",
+                "label": "bp(GO:\"response to fluid shear stress\")",
+                "components": [
+                    "GO:\"response to fluid shear stress\""
+                ]
+            },
+            "relation": {
+                "name": "increases",
+                "nanopub_id": null,
+                "edge_type": "primary",
+                "subject_name": "bp(GO:\"response to fluid shear stress\")",
+                "subject_lbl": "bp(GO:\"response to fluid shear stress\")",
+                "object_name": "r(EG:4846)",
+                "object_lbl": "r(HGNC:NOS3)",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "atherosclerosis"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "artery"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "endothelial cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    }
+                ]
+            },
+            "object": {
+                "name": "r(EG:4846)",
+                "label": "r(HGNC:NOS3)",
+                "components": [
+                    "EG:4846"
+                ]
+            }
+        }
+    },
+    {
+        "edge": {
+            "subject": {
+                "name": "bp(GO:\"response to fluid shear stress\")",
+                "label": "bp(GO:\"response to fluid shear stress\")",
+                "components": [
+                    "GO:\"response to fluid shear stress\""
+                ]
+            },
+            "relation": {
+                "name": "increases",
+                "nanopub_id": null,
+                "edge_type": "primary",
+                "subject_name": "bp(GO:\"response to fluid shear stress\")",
+                "subject_lbl": "bp(GO:\"response to fluid shear stress\")",
+                "object_name": "act(p(EG:4846), ma(default:cat))",
+                "object_lbl": "act(p(HGNC:NOS3), ma(default:cat))",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "atherosclerosis"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "artery"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "endothelial cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    }
+                ]
+            },
+            "object": {
+                "name": "act(p(EG:4846), ma(default:cat))",
+                "label": "act(p(HGNC:NOS3), ma(default:cat))",
+                "components": [
+                    "p(EG:4846)",
+                    "EG:4846",
+                    "ma(default:cat)"
+                ]
+            }
+        }
+    },
+    {
+        "edge": {
+            "subject": {
+                "name": "act(p(EG:4846), ma(default:cat))",
+                "label": "act(p(HGNC:NOS3), ma(default:cat))",
+                "components": [
+                    "p(EG:4846)",
+                    "EG:4846",
+                    "ma(default:cat)"
+                ]
+            },
+            "relation": {
+                "name": "directlyIncreases",
+                "nanopub_id": null,
+                "edge_type": "primary",
+                "subject_name": "act(p(EG:4846), ma(default:cat))",
+                "subject_lbl": "act(p(HGNC:NOS3), ma(default:cat))",
+                "object_name": "a(CHEBI:\"nitric oxide\")",
+                "object_lbl": "a(CHEBI:\"nitric oxide\")",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "atherosclerosis"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "artery"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "endothelial cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    }
+                ]
+            },
+            "object": {
+                "name": "a(CHEBI:\"nitric oxide\")",
+                "label": "a(CHEBI:\"nitric oxide\")",
+                "components": [
+                    "CHEBI:\"nitric oxide\""
+                ]
+            }
+        }
+    },
+    {
+        "edge": {
+            "subject": {
+                "name": "a(CHEBI:\"nitric oxide\")",
+                "label": "a(CHEBI:\"nitric oxide\")",
+                "components": [
+                    "CHEBI:\"nitric oxide\""
+                ]
+            },
+            "relation": {
+                "name": "decreases",
+                "nanopub_id": null,
+                "edge_type": "primary",
+                "subject_name": "a(CHEBI:\"nitric oxide\")",
+                "subject_lbl": "a(CHEBI:\"nitric oxide\")",
+                "object_name": "bp(GO:\"apoptotic process\")",
+                "object_lbl": "bp(GO:\"apoptotic process\")",
+                "annotations": [
+                    {
+                        "type": "Disease",
+                        "label": "atherosclerosis"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "artery"
+                    },
+                    {
+                        "type": "TextLocation",
+                        "label": "Review"
+                    },
+                    {
+                        "type": "Cell",
+                        "label": "endothelial cell"
+                    },
+                    {
+                        "type": "Anatomy",
+                        "label": "Muscle, Smooth, Vascular"
+                    }
+                ]
+            },
+            "object": {
+                "name": "bp(GO:\"apoptotic process\")",
+                "label": "bp(GO:\"apoptotic process\")",
+                "components": [
+                    "GO:\"apoptotic process\""
+                ]
+            }
+        }
+    }
+]
