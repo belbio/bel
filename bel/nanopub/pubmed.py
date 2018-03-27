@@ -116,9 +116,11 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
     Returns:
         pubmed json
     """
-    r = get_url(PUBMED_TMPL.replace('PMID', pmid))
+    pubmed_url = PUBMED_TMPL.replace('PMID', pmid)
+    r = get_url(pubmed_url)
+    log.info(f'Getting Pubmed URL {pubmed_url}')
 
-    if r.status_code == 200:
+    try:
         root = etree.fromstring(r.content)
         doc = {}
         doc['pmid'] = root.xpath("//PMID/text()")[0]
@@ -159,9 +161,9 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
             doc['mesh'].append({'id': mesh_id, 'name': mesh.text})
 
         return doc
-    else:
+    except Exception as e:
         log.error(f"Bad Pubmed request, status: {r.status_code}  url: {PUBMED_TMPL.replace('PMID', pmid)}")
-        return {}
+        return {'message': f"Cannot get PMID: {pubmed_url}"}
 
 
 def enhance_pubmed_annotations(pubmed: Mapping[str, Any]) -> Mapping[str, Any]:
