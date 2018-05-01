@@ -3,7 +3,7 @@ coverage==4.5.1
 Jinja2==2.10
 jsonschema==2.6.0
 mypy==0.560
-pytest==3.4.1
+pytest==3.5.1
 pytest-cache==1.0
 pytest-cov==2.5.1
 pytest-flakes==2.0.0
