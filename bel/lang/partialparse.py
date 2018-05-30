@@ -10,13 +10,15 @@
 
 """
 import re
-
 import copy
 from typing import Mapping, Any, List, Tuple, MutableMapping, Optional
 
 import logging
 import logging.config
 import structlog
+
+import bel.lang.bel_specification as bel_specification
+from bel.lang.ast import BELAst, Function, NSArg, StrArg
 
 from bel.Config import config
 
@@ -415,6 +417,7 @@ def dump_json(d: dict) -> None:
     """
 
     import json
+
     k = d.keys()
     v = d.values()
     k1 = [str(i) for i in k]
@@ -705,6 +708,63 @@ def get_ast_dict(belstr, component_type: str = ''):
     return ast, errors
 
 
+def get_ast_obj(belstr, bel_version, component_type: str = ''):
+    """Convert AST partialparse dict to BELAst"""
+
+    ast_dict, errors = get_ast_dict(belstr, component_type)
+
+    spec = bel_specification.get_specification(bel_version)
+
+    subj = ast_dict['subject']
+    subj_ast = add_ast_fn(subj, spec)
+
+    relation = None
+    obj = None
+
+    if 'relation' in ast_dict:
+        relation = ast_dict['relation']['name']
+
+    if 'object' in ast_dict:
+        obj = ast_dict['object']
+        obj_ast = add_ast_fn(obj, spec)
+
+        return BELAst(subj_ast, relation, obj_ast, spec)
+    elif 'nested' in ast_dict:
+        nested_subj = ast_dict['nested']['subject']
+        nested_subj_ast = add_ast_fn(nested_subj, spec)
+        nested_relation = ast_dict['nested']['relation']['name']
+        nested_obj = ast_dict['nested']['object']
+        nested_obj_ast = add_ast_fn(nested_obj, spec)
+
+        return BELAst(subj_ast, relation, BELAst(nested_subj_ast, nested_relation, nested_obj_ast, spec), spec)
+
+    return BELAst(subj_ast, None, None, spec)
+
+
+def add_ast_fn(d, spec, parent_function=None):
+    """Convert dict AST to object AST Function
+
+    Args:
+        ast_fn: AST object Function
+        d: AST as dictionary
+        spec: BEL Specification
+
+    Return:
+        ast_fn
+    """
+
+    if d['type'] == 'Function':
+        ast_fn = Function(d['function']['name'], spec, parent_function=parent_function)
+        for arg in d['args']:
+            if arg['type'] == 'Function':
+                ast_fn.add_argument(add_ast_fn(arg, spec, parent_function=ast_fn))
+            elif arg['type'] == 'NSArg':
+                ast_fn.add_argument(NSArg(arg['nsarg']['ns'], arg['nsarg']['ns_val'], ast_fn))
+            elif arg['type'] == 'StrArg':
+                ast_fn.add_argument(StrArg(arg['arg'], ast_fn))
+    return ast_fn
+
+
 def main():
 
     import json
@@ -712,14 +772,14 @@ def main():
     belstr = 'activity(proteinAbundance(SFAM:"GSK3 \"Family"), molecularActivity(DEFAULT:kin))'
     belstr = 'proteinAbundance(HGNC:VHL) increases (proteinAbundance(HGNC:TNF) increases biologicalProcess(GOBP:"cell death"))'
     belstr = 'complexAbundance(proteinAbundance(HGNC:VHL), proteinAbundance(HGNC:PRKCZ))'
-    belstr = 'activity(proteinAbundance(SFAM:"PRKA Family"), molecularActivity(DEF:kin)) directlyIncreases proteinAbundance(SFAM:"PDE4 Long Family", proteinModification(Ph, S, 20))'  # made up (added the 20 in the pmod)
+    # made up (added the 20 in the pmod)
+    belstr = 'activity(proteinAbundance(SFAM:"PRKA Family"), molecularActivity(DEF:kin)) directlyIncreases proteinAbundance(SFAM:"PDE4 Long Family", proteinModification(Ph, S, 20))'
     belstr = 'proteinAbundance(HGNC:VEGFA) increases (compositeAbundance(proteinAbundance(HGNC:ITGB1), proteinAbundance(HGNC:PRKCA, ma(kin))) increases biologicalProcess(GO:\"cell-matrix adhesion\"))'
     belstr = 'complex(p(HGNC:AKT1))'
     # belstr = 'p(fus(HGNC:EGF, 20, '
     # belstr = 'pa'
 
     ast, errors = get_ast_dict(belstr)
-    print('AST:\n', json.dumps(ast, indent=4))
 
     spans = collect_spans(ast)
 
@@ -731,25 +791,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-def walk_ast(ast):
-    pass
-    # https://stackoverflow.com/questions/12507206/python-recommended-way-to-walk-complex-dictionary-structures-imported-from-json
-    # Recursively process tree - add parents as list passed in recursive function
-    #     (first item in list is root, second one-level down, etc)
-    #  https://ruslanspivak.com/lsbasi-part7/
-    # https://stackoverflow.com/questions/37772704/how-to-walk-this-tree-consisting-of-lists-tuples-and-strings
-
-    # https://stackoverflow.com/questions/6340351/python-iterating-through-list-of-list
-    # def traverse(o, tree_types=(list, tuple)):
-    #     if isinstance(o, tree_types):
-    #         for value in o:
-    #             for subvalue in traverse(value, tree_types):
-    #                 yield subvalue
-    #     else:
-    #         yield o
-
-    # https://www.andreas-dewes.de/articles/abstract-syntax-trees-in-python.html
-
-

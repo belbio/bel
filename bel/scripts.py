@@ -195,8 +195,8 @@ def nanopub_validate(ctx, input_fn, output_fn, api, config_fn):
 
 
 @nanopub.command(name="belscript")
-@click.argument('input_fn')
-@click.argument('output_fn')
+@click.option('--input_fn', '-i', default='-')
+@click.option('--output_fn', '-o', default='-')
 @pass_context
 def convert_belscript(ctx, input_fn, output_fn):
     """Convert belscript to nanopubs_bel format
@@ -217,25 +217,10 @@ def convert_belscript(ctx, input_fn, output_fn):
     """
 
     try:
-        # output file
-        # set output flags
-        json_flag, jsonl_flag, yaml_flag = False, False, False
-        if output_fn:
-            if re.search('gz$', output_fn):
-                fout = gzip.open(output_fn, 'wt')
-            else:
-                fout = open(output_fn, 'wt')
 
-            if re.search('ya?ml', output_fn):
-                yaml_flag = True
-                docs = []
-            elif 'jsonl' in output_fn:
-                jsonl_flag = True
-            elif 'json' in output_fn:
-                json_flag = True
-                docs = []
-        else:
-            fout = sys.stdout
+        (out_fh, yaml_flag, jsonl_flag, json_flag) = bel.nanopub.files.create_nanopubs_fh(output_fn)
+        if yaml_flag or json_flag:
+            docs = []
 
         # input file
         if re.search('gz$', input_fn):
@@ -248,16 +233,65 @@ def convert_belscript(ctx, input_fn, output_fn):
             if yaml_flag or json_flag:
                 docs.append(doc)
             elif jsonl_flag:
-                fout.write("{}\n".format(json.dumps(doc)))
+                out_fh.write("{}\n".format(json.dumps(doc)))
 
         if yaml_flag:
-            fout.write("{}\n".format(yaml.dumps(docs)))
+            yaml.dump(docs, out_fh)
+
         elif json_flag:
-            fout.write("{}\n".format(json.dumps(docs)))
+            json.dump(docs, out_fh, indent=4)
 
     finally:
         f.close()
-        fout.close()
+        out_fh.close()
+
+
+@nanopub.command(name="reformat")
+@click.option('--input_fn', '-i')
+@click.option('--output_fn', '-o')
+@pass_context
+def reformat(ctx, input_fn, output_fn):
+    """Reformat between JSON, YAML, JSONLines formats
+
+    \b
+    input_fn:
+        If input fn has *.gz, will read as a gzip file
+
+    \b
+    output_fn:
+        If output fn has *.gz, will written as a gzip file
+        If output fn has *.jsonl*, will written as a JSONLines file
+        IF output fn has *.json*, will be written as a JSON file
+        If output fn has *.yaml* or *.yml*,  will be written as a YAML file
+    """
+
+    try:
+
+        (out_fh, yaml_flag, jsonl_flag, json_flag) = bel.nanopub.files.create_nanopubs_fh(output_fn)
+        if yaml_flag or json_flag:
+            docs = []
+
+        # input file
+        if re.search('gz$', input_fn):
+            f = gzip.open(input_fn, 'rt')
+        else:
+            f = open(input_fn, 'rt')
+
+        for np in bnf.read_nanopubs(input_fn):
+            if yaml_flag or json_flag:
+                docs.append(np)
+            elif jsonl_flag:
+                out_fh.write("{}\n".format(json.dumps(np)))
+
+        if yaml_flag:
+            yaml.dump(docs, out_fh)
+
+        elif json_flag:
+            json.dump(docs, out_fh, indent=4)
+
+    finally:
+        f.close()
+        out_fh.close()
 
 
 @nanopub.command(name="stats")

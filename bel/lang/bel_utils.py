@@ -58,9 +58,10 @@ def convert_nsarg(nsarg: str, api_url: str = None, namespace_targets: Mapping[st
     request_url = api_url.format(url_path_param_quoting(nsarg))
 
     r = get_url(request_url, params=params)
-    if r.status_code == 200:
+
+    if r and r.status_code == 200:
         nsarg = r.json().get('term_id', nsarg)
-    elif r.status_code == 404:
+    elif not r or r.status_code == 404:
         log.error(f'[de]Canonicalization endpoint missing: {request_url}')
 
     return nsarg
@@ -105,7 +106,7 @@ def convert_namespaces_ast(ast, api_url: str = None, namespace_targets: Mapping[
 
     Args:
         ast (BEL): BEL AST
-        endpoint (str): endpoint url with a placeholder for the term_id (either /terms/<term_id>/canonicalized or /terms/<term_id>/decanonicalized)
+        api_url (str): endpoint url with a placeholder for the term_id (either /terms/<term_id>/canonicalized or /terms/<term_id>/decanonicalized)
         namespace_targets (Mapping[str, List[str]]): (de)canonical targets for converting BEL Entities
 
     Returns:
@@ -122,7 +123,7 @@ def convert_namespaces_ast(ast, api_url: str = None, namespace_targets: Mapping[
     # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
-            convert_namespaces_ast(arg, namespace_targets=namespace_targets, canonicalize=canonicalize, decanonicalize=decanonicalize)
+            convert_namespaces_ast(arg, api_url=api_url, namespace_targets=namespace_targets, canonicalize=canonicalize, decanonicalize=decanonicalize)
 
     return ast
 
@@ -148,7 +149,7 @@ def orthologize(ast, bo, species_id: str):
         given_term_id = '{}:{}'.format(ast.namespace, ast.value)
 
         # Quote given_term_id
-        orthologize_req_url = f'{bo.endpoint}/orthologs/{url_path_param_quoting(given_term_id)}/{species_id}'
+        orthologize_req_url = f'{bo.api_url}/orthologs/{url_path_param_quoting(given_term_id)}/{species_id}'
         log.debug(f'Orthologize url {orthologize_req_url}')
         r = get_url(orthologize_req_url)
 

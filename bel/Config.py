@@ -120,8 +120,6 @@ def get_versions(config) -> dict:
     except ModuleNotFoundError:
         pass
 
-    return config
-
 
 def add_environment_vars(config: MutableMapping[str, Any]):
     """Override config with environment variables
@@ -139,6 +137,9 @@ def add_environment_vars(config: MutableMapping[str, Any]):
         4. [bel_api, servers, api_url] ==> config['bel_api']['servers']['api_url'] = http://api.bel.bio
 
     """
+
+    # TODO need to redo config - can't add value to dictionary without recursively building up the dict
+    #         check into config libraries again
 
     for e in os.environ:
         if re.match('BELBIO_', e):
@@ -181,9 +182,11 @@ def load_configuration():
                 config['source_files'] = {}
                 config['source_files']['secrets'] = belbio_conf_fp
 
-    config = get_versions(config)
+    get_versions(config)
 
-    add_environment_vars(config)
+    # FIXME
+
+    # add_environment_vars(config)
 
     return config
 

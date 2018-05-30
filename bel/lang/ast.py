@@ -24,6 +24,7 @@ class BELAst(object):
         self.bel_object = bel_object
         self.spec = spec  # bel specification dictionary
         self.args = [bel_subject, bel_relation, bel_object]
+        self.type = 'BELAst'
 
     def to_string(self, ast_obj=None, fmt: str = 'medium') -> str:
         """Convert AST object to string
@@ -113,8 +114,10 @@ class BELAst(object):
         if not ast_obj:
             ast_obj = self
         self.bel_subject.print_tree(ast_obj, indent=0)
-        print(self.bel_relation)
-        self.bel_object.print_tree(ast_obj, indent=0)
+
+        if hasattr(self, 'relation'):
+            print(self.bel_relation)
+            self.bel_object.print_tree(ast_obj, indent=0)
 
 
 ###################
@@ -125,9 +128,13 @@ class Function(object):
 
     def __init__(self, name, spec, parent_function=None):
 
-        self.name = spec['functions']['to_long'][name]
-        self.name_short = spec['functions']['to_short'][name]
-        self.function_type = spec['functions']['info'][self.name]['type']
+        self.name = spec['functions']['to_long'].get(name, name)
+        self.name_short = spec['functions']['to_short'].get(name, name)
+        if self.name in spec['functions']['info']:
+            self.function_type = spec['functions']['info'][self.name]['type']
+        else:
+            self.function_type = ''
+
         self.type = 'Function'
 
         self.parent_function = parent_function
@@ -151,6 +158,9 @@ class Function(object):
 
     def add_sibling(self, sibling):
         self.siblings.append(sibling)
+
+    def change_parent_fn(self, parent_function):
+        self.parent_function = parent_function
 
     def change_function_type(self, function_type):
         self.function_type = function_type
@@ -306,6 +316,7 @@ class StrArg(Arg):
         self.value = value
         self.value_types = value_types
         self.type = 'StrArg'
+
     def add_value_types(self, value_types):
         self.value_types = value_types
 

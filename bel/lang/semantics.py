@@ -6,24 +6,29 @@ import re
 from bel.lang.ast import BELAst, Function, NSArg, StrArg
 from bel.utils import get_url, url_path_param_quoting
 
-import logging
-log = logging.getLogger(__name__)
+import structlog
+log = structlog.getLogger()
 
 
-def validate(bo) -> Tuple[bool, List[Tuple[str, str]]]:
+def validate(bo, error_level: str = "WARNING") -> Tuple[bool, List[Tuple[str, str]]]:
     """Semantically validate BEL AST
 
     Add errors and warnings to bel_obj.validation_messages
 
+    Error Levels are similar to log levels - selecting WARNING includes both
+    WARNING and ERROR, selecting ERROR just includes ERROR
+
     Args:
         bo: main BEL language object
+        error_level: return ERRORs only or also WARNINGs
 
     Returns:
         Tuple[bool, List[Tuple[str, str]]]: (is_valid, messages)
     """
 
-    bo = validate_functions(bo.ast, bo)
-    bo = validate_arg_values(bo.ast, bo)  # validates NSArg and StrArg values
+    bo = validate_functions(bo.ast, bo)  # No WARNINGs generated in this function
+    if error_level == 'WARNING':
+        bo = validate_arg_values(bo.ast, bo)  # validates NSArg and StrArg values
 
     return bo
 
@@ -208,7 +213,7 @@ def validate_arg_values(ast, bo):
         bel object
     """
 
-    if not bo.endpoint:
+    if not bo.api_url:
         log.info('No API endpoint defined')
         return bo
 
@@ -222,7 +227,7 @@ def validate_arg_values(ast, bo):
         # Default namespaces are defined in the bel_specification file
         if ast.namespace == 'DEFAULT':  # may use the DEFAULT namespace or not
             for value_type in value_types:
-                default_namespace = [ns['name'] for ns in bo.spec['namespaces']['default'][value_type]] + [ns['abbreviation'] for ns in bo.spec['namespaces']['default'][value_type]]
+                default_namespace = [ns['name'] for ns in bo.spec['namespaces'][value_type]['info']] + [ns['abbreviation'] for ns in bo.spec['namespaces'][value_type]['info']]
 
                 if ast.value in default_namespace:
                     log.debug('Default namespace valid term: {}'.format(term_id))
@@ -233,7 +238,8 @@ def validate_arg_values(ast, bo):
 
         # Process normal, non-default-namespace terms
         else:
-            request_url = bo.endpoint + '/terms/{}'.format(url_path_param_quoting(term_id))
+            request_url = bo.api_url + '/terms/{}'.format(url_path_param_quoting(term_id))
+            log.info(f'Validate Arg Values url {request_url}')
             r = get_url(request_url)
 
             if r and r.status_code == 200:
@@ -269,8 +275,8 @@ def validate_arg_values(ast, bo):
                 match = re.match(value_type, ast.value)
                 if match:
                     break
-            if value_type in bo.spec['namespaces']['default']:
-                default_namespace = [ns['name'] for ns in bo.spec['namespaces']['default'][value_type]] + [ns['abbreviation'] for ns in bo.spec['namespaces']['default'][value_type]]
+            if value_type in bo.spec['namespaces']:
+                default_namespace = [ns['name'] for ns in bo.spec['namespaces'][value_type]['info']] + [ns['abbreviation'] for ns in bo.spec['namespaces'][value_type]['info']]
                 if ast.value in default_namespace:
                     break
         else:  # If for loop doesn't hit the break, no matches found, therefore for StrArg value is bad

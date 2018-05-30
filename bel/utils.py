@@ -7,7 +7,10 @@ NOTE: reqsess allows caching external (including ElasticSearch and ArangoDB) RES
       changes in the Pubtator results, etc.
 """
 
+import os
+import urllib
 import ulid
+import tempfile
 import mmh3
 import json
 from typing import Mapping, Any
@@ -45,16 +48,36 @@ def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = T
     else:
         req_obj = reqsess_nocache
 
+    log.info(f'get_url: cache {cache}  url {url} params {params}')
+
     try:
+
         if params:
             params = {k: params[k] for k in sorted(params)}
             r = req_obj.get(url, params=params, timeout=timeout)
-
         else:
             r = req_obj.get(url, timeout=timeout)
+
+        log.info('Successful get_url')
+
         return r
+
     except requests.exceptions.Timeout:
+        log.info(f'Timed out getting url in get_url: {url}')
         return None
+
+
+def download_file(url):
+    """Download file"""
+
+    response = requests.get(url, stream=True)
+    fp = tempfile.NamedTemporaryFile()
+    for chunk in response.iter_content(chunk_size=1024):
+        if chunk:  # filter out keep-alive new chunks
+            fp.write(chunk)
+
+    log.info(f'Download file - tmp file: {fp.name}  size: {fp.tell()}')
+    return fp
 
 
 def url_path_param_quoting(param):

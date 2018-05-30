@@ -844,8 +844,8 @@ relations:
       name: translatedTo
 
 namespaces:
-  default:
-    ProteinModification:
+  ProteinModification:
+    info:
       - name: acetylation
         abbreviation: Ac
       - name: ADP-ribosylation
@@ -897,89 +897,71 @@ namespaces:
       - name: poly-ubiquitination
         abbreviation: UbPoly
 
-    AminoAcid:
+  AminoAcid:
+    info:
       - name: Alanine
-        abbreviation: A
-      - name: Alanine
+        abbrev1: A
         abbreviation: Ala
       - name: Arginine
-        abbreviation: R
-      - name: Arginine
+        abbrev1: R
         abbreviation: Arg
       - name: Asparagine
-        abbreviation: N
-      - name: Asparagine
+        abbrev1: N
         abbreviation: Asn
       - name: Aspartic Acid
-        abbreviation: D
-      - name: Aspartic Acid
+        abbrev1: D
         abbreviation: Asp
       - name: Cysteine
-        abbreviation: C
-      - name: Cysteine
+        abbrev1: C
         abbreviation: Cys
       - name: Glutamic Acid
-        abbreviation: E
-      - name: Glutamic Acid
+        abbrev1: E
         abbreviation: Glu
       - name: Glutamine
-        abbreviation: Q
-      - name: Glutamine
+        abbrev1: Q
         abbreviation: Gln
       - name: Glycine
-        abbreviation: G
-      - name: Glycine
+        abbrev1: G
         abbreviation: Gly
       - name: Histidine
-        abbreviation: H
-      - name: Histidine
+        abbrev1: H
         abbreviation: His
       - name: Isoleucine
-        abbreviation: I
-      - name: Isoleucine
+        abbrev1: I
         abbreviation: Ile
       - name: Leucine
-        abbreviation: L
-      - name: Leucine
+        abbrev1: L
         abbreviation: Leu
       - name: Lysine
-        abbreviation: K
-      - name: Lysine
+        abbrev1: K
         abbreviation: Lys
       - name: Methionine
-        abbreviation: M
-      - name: Methionine
+        abbrev1: M
         abbreviation: Met
       - name: Phenylalanine
-        abbreviation: F
-      - name: Phenylalanine
+        abbrev1: F
         abbreviation: Phe
       - name: Proline
-        abbreviation: P
-      - name: Proline
+        abbrev1: P
         abbreviation: Pro
       - name: Serine
-        abbreviation: S
-      - name: Serine
+        abbrev1: S
         abbreviation: Ser
       - name: Threonine
-        abbreviation: T
-      - name: Threonine
+        abbrev1: T
         abbreviation: Thr
       - name: Tryptophan
-        abbreviation: W
-      - name: Tryptophan
+        abbrev1: W
         abbreviation: Trp
       - name: Tyrosine
-        abbreviation: Y
-      - name: Tyrosine
+        abbrev1: Y
         abbreviation: Tyr
       - name: Valine
-        abbreviation: V
-      - name: Valine
+        abbrev1: V
         abbreviation: Val
 
-    Activity:
+  Activity:
+    info:
       - name: catalyticActivity
         abbreviation: cat
       - name: chaperoneActivity
@@ -1002,25 +984,16 @@ namespaces:
         abbreviation: tport
 
 bel1_migration:
-  amino_acids:
-    - bel1: P
-      bel2: Ph
-    - bel1: A
-      bel2: Ac
-    - bel1: F
-      bel2: Farn
-    - bel1: G
-      bel2: Glyco
-    - bel1: H
-      bel2: Hy
-    - bel1: M
-      bel2: Me
-    - bel1: R
-      bel2: ADPRib
-    - bel1: S
-      bel2: Sumo
-    - bel1: U
-      bel2: Ub
+  protein_modifications:
+    P: Ph
+    A: Ac
+    F: Farn
+    G: Glyco
+    H: Hy
+    M: Me
+    R: ADPRib
+    S: Sumo
+    U: Ub
 
 # Computed signatures define the computed edges created from the given BEL
 # Statement found in the BEL Nanopub.

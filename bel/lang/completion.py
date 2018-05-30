@@ -195,16 +195,18 @@ def nsarg_completions(completion_text: str, entity_types: list, bel_spec: BELSpe
 
     # Check default namespaces
     for entity_type in entity_types:
-        for obj in bel_spec['namespaces']['default'].get(entity_type, []):
-            replacement = None
-            if bel_fmt == 'long' and re.match(completion_text, obj['name'], re.IGNORECASE):
-                replacement = obj['name']
-            elif bel_fmt in ['short', 'medium'] and re.match(completion_text, obj['abbreviation'], re.IGNORECASE):
-                replacement = obj['abbreviation']
+        default_namespace = bel_spec['namespaces'].get(entity_type, [])
+        if default_namespace:
+            for obj in default_namespace['info']:
+                replacement = None
+                if bel_fmt == 'long' and re.match(completion_text, obj['name'], re.IGNORECASE):
+                    replacement = obj['name']
+                elif bel_fmt in ['short', 'medium'] and re.match(completion_text, obj['abbreviation'], re.IGNORECASE):
+                    replacement = obj['abbreviation']
 
-            if replacement:
-                highlight = replacement.replace(completion_text, f'<em>{completion_text}</em>')
-                replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight, 'type': 'NSArg'})
+                if replacement:
+                    highlight = replacement.replace(completion_text, f'<em>{completion_text}</em>')
+                    replace_list.insert(0, {'replacement': replacement, 'label': replacement, 'highlight': highlight, 'type': 'NSArg'})
 
     return replace_list[:size]
 

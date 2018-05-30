@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-This file contains functions to retrieve and return BEL object specifications.
+This file contains functions to enhance, retrieve and return BEL object specifications.
+
+NOTE !!!!  Have to BEL Spec JSON files if the BEL Spec JSON format is changed here !!!
+           Run `make belspec_json`
+
 """
 
 import glob
@@ -20,6 +24,7 @@ log = logging.getLogger(__name__)
 
 # Custom Typing definitions
 BELSpec = Mapping[str, Any]
+
 
 '''
 Keys available in enhanced spec_dict:
@@ -54,7 +59,29 @@ Keys available in enhanced spec_dict:
     - 'to_short'
     - 'to_long'
 - namespaces
-    - 'default'
+    - 'Activity'
+        - info
+        - list
+        - list_short
+        - list_long
+        - to_short
+        - to_long
+    - 'ProteinModification'
+        - info
+        - list
+        - list_short
+        - list_long
+        - to_short
+        - to_long
+    - 'AminoAcid'
+        - info
+        - list
+        - list_short
+        - list_long
+        - to_short
+        - to_long
+
+
 - computed_signatures
 '''
 
@@ -126,13 +153,15 @@ def belspec_yaml2json():
         spec_dict['admin']['jinja_template'] = 'bel.ebnf.j2'
 
         # add relation keys list, to_short, to_long
-        spec_dict = add_relations(spec_dict)
+        add_relations(spec_dict)
         # add function keys list, to_short, to_long
-        spec_dict = add_functions(spec_dict)
+        add_functions(spec_dict)
+        # add namespace keys list, list_short, list_long, to_short, to_long
+        add_namespaces(spec_dict)
 
-        spec_dict = enhance_function_signatures(spec_dict)
+        enhance_function_signatures(spec_dict)
 
-        spec_dict = add_function_signature_help(spec_dict)
+        add_function_signature_help(spec_dict)
 
         with open(json_fn, 'w') as f:
             json.dump(spec_dict, f)
@@ -289,6 +318,34 @@ def add_functions(spec_dict: Mapping[str, Any]) -> Mapping[str, Any]:
         spec_dict['functions']['to_long'][func_name] = func_name
 
     return spec_dict
+
+
+def add_namespaces(spec_dict):
+    """Add namespace convenience keys, list, list_{short|long}, to_{short|long}"""
+
+    for ns in spec_dict['namespaces']:
+        spec_dict['namespaces'][ns]['list'] = []
+        spec_dict['namespaces'][ns]['list_long'] = []
+        spec_dict['namespaces'][ns]['list_short'] = []
+
+        spec_dict['namespaces'][ns]['to_short'] = {}
+        spec_dict['namespaces'][ns]['to_long'] = {}
+
+        for obj in spec_dict['namespaces'][ns]['info']:
+            spec_dict['namespaces'][ns]['list'].extend([obj['name'], obj['abbreviation']])
+            spec_dict['namespaces'][ns]['list_short'].append(obj['abbreviation'])
+            spec_dict['namespaces'][ns]['list_long'].append(obj['name'])
+
+            spec_dict['namespaces'][ns]['to_short'][obj['abbreviation']] = obj['abbreviation']
+            spec_dict['namespaces'][ns]['to_short'][obj['name']] = obj['abbreviation']
+
+            spec_dict['namespaces'][ns]['to_long'][obj['abbreviation']] = obj['name']
+            spec_dict['namespaces'][ns]['to_long'][obj['name']] = obj['name']
+
+            # For AminoAcid namespace
+            if 'abbrev1' in obj:
+                spec_dict['namespaces'][ns]['to_short'][obj['abbrev1']] = obj['abbreviation']
+                spec_dict['namespaces'][ns]['to_long'][obj['abbrev1']] = obj['name']
 
 
 def get_bel_versions() -> List[str]:

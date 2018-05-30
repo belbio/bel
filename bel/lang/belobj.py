@@ -27,7 +27,7 @@ class BEL(object):
     To convert BEL Statement to BEL Edges:
 
         statement = "p(HGNC:AKT1) increases p(HGNC:EGF)"
-        bel_obj = bel.lang.belobj.BEL('2.0.0', 'https://api.bel.bio/v1')  # can get default version and endpoint from belbio_conf.yml file as well
+        bel_obj = bel.lang.belobj.BEL('2.0.0', 'https://api.bel.bio/v1')  # can get default version and api_url from belbio_conf.yml file as well
         bel_obj.parse(statement)  # Adds ast to bel_obj
         bel_obj.orthologize('TAX:10090')  # Run orthologize before canonicalize if needed, updates bel_obj.ast and returns self
         bel_obj.canonicalize()  # updates bel_obj.ast and returns self
@@ -38,12 +38,12 @@ class BEL(object):
 
     """
 
-    def __init__(self, version: str = None, endpoint: str = None) -> None:
+    def __init__(self, version: str = None, api_url: str = None) -> None:
         """Initialize BEL object used for validating/processing/etc BEL statements
 
         Args:
             version (str): BEL Version, defaults to config['bel']['lang']['default_bel_version']
-            endpoint (str): BEL API endpoint,  defaults to config['bel_api']['servers']['api_url']
+            api_url (str): BEL API endpoint,  defaults to config['bel_api']['servers']['api_url']
         """
 
         bel_versions = bel_specification.get_bel_versions()
@@ -54,17 +54,16 @@ class BEL(object):
         else:
             self.version = version
 
-        # TODO WSH - need to review version matching before deploying -- see tests
-        # self.version = bel_utils._default_to_version(version, bel_versions)
+        self.version = bel_utils._default_to_version(self.version, bel_versions)
 
         if self.version not in bel_versions:
             log.error('Cannot continue with invalid version. Exiting.')
             sys.exit()
 
-        if not endpoint:
-            self.endpoint = config['bel_api']['servers']['api_url']
+        if not api_url:
+            self.api_url = config['bel_api']['servers']['api_url']
         else:
-            self.endpoint = endpoint
+            self.api_url = api_url
 
         # Validation error/warning messages
         # List[Tuple[str, str]], e.g. [('ERROR', 'this is an error msg'), ('WARNING', 'this is a warning'), ]
@@ -85,7 +84,7 @@ class BEL(object):
             # if not found, we raise the NoParserFound exception which can be found in bel.lang.exceptions
             raise bel_ex.NoParserFound(self.version)
 
-    def parse(self, statement: str, strict: bool = False, parseinfo: bool = False, rule_name: str = 'start') -> 'BEL':
+    def parse(self, statement: str, strict: bool = False, parseinfo: bool = False, rule_name: str = 'start', error_level: str = 'WARNING') -> 'BEL':
         """Parse and semantically validate BEL statement
 
         Parses a BEL statement given as a string and returns an AST, Abstract Syntax Tree (defined in ast.py)
@@ -93,10 +92,15 @@ class BEL(object):
         in self.validation_messages.  self.validation_messages will contain WARNINGS if
         warranted even if the statement parses correctly.
 
+        Error Levels are similar to log levels - selecting WARNING includes both
+        WARNING and ERROR, selecting ERROR just includes ERROR
+
         Args:
-            statement (str): BEL statement
-            strict (bool): specify to use strict or loose parsing; defaults to loose
-            parseinfo (bool): specify whether or not to include Tatsu parse information in AST
+            statement: BEL statement
+            strict: specify to use strict or loose parsing; defaults to loose
+            parseinfo: specify whether or not to include Tatsu parse information in AST
+            rule_name: starting point in parser - defaults to 'start'
+            error_level: return ERRORs only or also WARNINGs
 
         Returns:
             ParseObject: The ParseObject which contain either an AST or error messages.
@@ -143,68 +147,7 @@ class BEL(object):
             self.validation_messages.append(('ERROR', 'Error {}, error type: {}'.format(e, type(e))))
 
         # Run semantics validation - and decorate AST with nsarg entity_type and arg optionality
-        semantics.validate(self)
-
-        return self
-
-    def syntax_parse(self, statement: str, strict: bool = False, parseinfo: bool = False) -> 'BEL':
-        """Syntax parse - does not semantically validate
-
-        Parses a BEL statement given as a string and returns a AST object.  self.parse_valid
-        is True if a valid syntax parse.  self.validation_messages will show
-        any ERRORS or WARNINGS.
-
-        This method can be used for BEL Edge parsing in order to alter the statement
-        format (short, medium, long).
-
-        Args:
-            statement (str): BEL statement
-            strict (bool): specify to use strict or loose parsing; defaults to loose
-            parseinfo (bool): specify whether or not to include Tatsu parse information in AST
-
-        Returns:
-            ParseObject: The ParseObject which contain either an AST or error messages.
-        """
-
-        self.ast = None
-        self.parse_valid = False
-        self.parse_visualize_error = ''
-        self.validation_messages = []  # Reset messages when parsing a new BEL Statement
-
-        self.original_bel_stmt = statement
-
-        # pre-process to remove extra white space, add space after commas, etc.
-        self.bel_stmt = bel_utils.preprocess_bel_stmt(statement)
-
-        # TODO - double check these tests before enabling
-        # is_valid, messages = bel_utils.simple_checks(self.bel_stmt)
-        # if not is_valid:
-        #     self.validation_messages.extend(messages)
-        #     return self
-
-        # Check to see if empty string for bel statement
-        if len(self.bel_stmt) == 0:
-            self.validation_messages.append(('ERROR', 'Please include a valid BEL statement.'))
-            return self
-
-        try:
-            # see if an AST is returned without any parsing errors
-            ast_dict = self.parser.parse(self.bel_stmt, rule_name='start', trace=False, parseinfo=parseinfo)
-
-            self.ast = lang_ast.ast_dict_to_objects(ast_dict, self)
-
-            self.parse_valid = True
-
-        except FailedParse as e:
-            # if an error is returned, send to handle_syntax, error
-            error, visualize_error = bel_utils.handle_parser_syntax_error(e)
-            self.parse_visualize_error = visualize_error
-            self.validation_messages.append(('ERROR', error + " BEL: " + self.original_bel_stmt))
-            self.ast = None
-
-        except Exception as e:
-            log.error('Error {}, error type: {}'.format(e, type(e)))
-            self.validation_messages.append(('ERROR', 'Error {}, error type: {}'.format(e, type(e))))
+        semantics.validate(self, error_level)
 
         return self
 
@@ -214,7 +157,7 @@ class BEL(object):
 
         Args:
             namespace_targets (Mapping[str, List[str]]): override default canonicalization
-                settings of BEL.bio API endpoint - see {endpoint}/status to get default canonicalization settings
+                settings of BEL.bio API api_url - see {api_url}/status to get default canonicalization settings
 
         Returns:
             BEL: returns self
@@ -222,7 +165,8 @@ class BEL(object):
 
         # TODO Need to order position independent args
 
-        self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize=True, namespace_targets=namespace_targets)
+        self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize=True, api_url=self.api_url, namespace_targets=namespace_targets)
+
         return self
 
     def decanonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
@@ -291,60 +235,6 @@ class BEL(object):
             edges.append({'subject': es, 'relation': er, 'object': eo})
 
         return edges
-
-    def completion(self, partial: str, component_type: str, value_type: str, fmt='medium') -> List[Tuple[str, str, str]]:
-        """Suggest bel statement completions
-
-        Takes a partially completed function, modifier function, or a relation and suggest a fuzzy match out of
-        all available options filtering by context, e.g.:
-
-           - functions if in function context
-           - nsarg filtered by entity_type based on surrounding function, etc
-
-        Args:
-            partial (str): the partial string
-            component_type (str): ['subject', 'relation', 'object']
-            value_type (str): value type (function, modifier function, or relation; makes sure we match right list)
-            fmt (str): short, medium or long form of function/relationship names to be returned
-
-        Returns:
-            List[Tuple[str, str, str]]: A list of suggested values as tuples
-        """
-
-        # (
-        #     'matched string - highlighted',
-        #     'canonical_match_value',
-        #     'full field replacement with match',
-        #     'cursor_location'
-        # )
-
-        # matched string - synonym, short/long name, etc that is matched, matched string wrapped
-        #     in <em></em>
-        # canonical_match_value - name/value to insert
-        # full field replacement - the full string to replace in the text field being completed
-        # cursor location - updated location of the cursor - placed in appropriate spot
-        #     of suggested string (e.g. just inside new function, at beginning
-        #     of object text field if completing relation, after , or ')' if
-        #     completing a function argument)
-
-        # TODO - issue #51
-
-        suggestions = []
-        # # TODO: get the following list of things - initialize YAML into this library so we can grab all funcs,
-        # # mfuncs, and r.
-        # if value_type == 'function':
-        #     suggestions = []
-        #
-        # elif value_type == 'mfunction':
-        #     suggestions = []
-        #
-        # elif value_type == 'relation':
-        #     suggestions = []
-        #
-        # else:
-        #     suggestions = []
-
-        return suggestions
 
     def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string
