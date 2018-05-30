@@ -12,7 +12,9 @@ pytest-pep8==1.0.6
 pytest-sugar==0.9.1
 python_arango==3.12.1
 python-dateutil==2.6.1
+python-json-logger==0.1.8
 structlog==18.1.0
 timy==0.4.0
 twine==1.9.1
 wheel==0.30.0
+

@@ -115,3 +115,4 @@ venv*
 # mypy
 .mypy_cache/
 bel_lang/versions/*.json
+belbio_conf.yml
