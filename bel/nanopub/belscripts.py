@@ -95,7 +95,7 @@ def split_bel_stmt(stmt: str, line_num) -> tuple:
     if m:
         return(m.group(1), m.group(2), m.group(3))
     else:
-        log.warn(f'Could not parse bel statement into components at line number: {line_num} assertion: {stmt}')
+        log.info(f'Could not parse bel statement into components at line number: {line_num} assertion: {stmt}')
         return(stmt, None, None)
 
 
@@ -234,8 +234,33 @@ def process_set(line, annotations):
     return annotations
 
 
+def preprocess_belscript(lines):
+    """ Convert any multi-line SET statements into single line SET statements"""
+
+    set_flag = False
+    for line in lines:
+        if set_flag is False and re.match('SET', line):
+            set_flag = True
+            set_line = [line.rstrip()]
+        # SET following SET
+        elif set_flag and re.match('SET', line):
+            yield f"{' '.join(set_line)}\n"
+            set_line = [line.rstrip()]
+        # Blank line following SET yields single line SET
+        elif set_flag and re.match('\s+$', line):
+            yield f"{' '.join(set_line)}\n"
+            yield line
+            set_flag = False
+
+        # Append second, third, ... lines to SET
+        elif set_flag:
+            set_line.append(line.rstrip())
+        else:
+            yield line
+
+
 def parse_belscript(lines):
-    """Lines from the BELScript - can be an interator or list
+    """Lines from the BELScript - can be an iterator or list
 
     yields Nanopubs in nanopubs_bel-1.0.0 format
     """
@@ -244,15 +269,15 @@ def parse_belscript(lines):
     annotations = {}
     assertions = []
 
-    # Turn a list into an iterator
-    if not isinstance(lines, collections.Iterator):
-        lines = iter(lines)
+    # # Turn a list into an iterator
+    # if not isinstance(lines, collections.Iterator):
+    #     lines = iter(lines)
 
     line_num = 0
-    for line in lines:
+    for line in preprocess_belscript(lines):
         line_num += 1
         # Get rid of trailing comments
-        line = re.sub('//.*?', '', line)
+        line = re.sub('\/\/.*?$', '', line)
 
         line = line.rstrip()
 

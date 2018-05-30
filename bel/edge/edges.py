@@ -17,6 +17,7 @@ import bel.lang.bel_utils as bel_utils
 import bel.db.arangodb as arangodb
 import bel.utils as utils
 import bel.nanopub.files as files
+import bel.nanopub.nanopubstore as nanopubstore
 
 from bel.Config import config
 
@@ -26,8 +27,122 @@ log = logging.getLogger(__name__)
 Edges = MutableSequence[Mapping[str, Any]]
 
 
-def add_edge(edges: Edges, edge_ast, nanopub_id, edge_type, annotations):
-    """Add edge to edges"""
+def process_nanopub(nanopub_url: str, rules: List[str] = [], orthologize_targets: list = []):
+    """Process nanopub into edges and load into EdgeStore
+
+    """
+
+    if orthologize_targets == []:
+        if config['bel_api'].get('edges', None):
+            if config['bel_api']['edges'].get('orthologize_targets', None):
+                orthologize_targets = config['bel_api']['edges']['orthologize_targets']
+
+    api_url = config['bel_api']['servers']['api_url']
+
+    nanopub = nanopubstore.get_nanopub(nanopub_url)
+
+    edges = create_edges(nanopub, api_url, nanopub_url)
+    for orthologize_target in orthologize_targets:
+        edges.extend(create_edges(nanopub, api_url, nanopub_url, orthologize_target=orthologize_target))
+
+    arango_client = arangodb.get_client()
+    edgestore_db = arangodb.get_edgestore_handle(arango_client)
+
+    load_edges_into_db(edgestore_db, edges)
+
+
+def create_edges(nanopub: Mapping[str, Any], api_url: str, nanopub_url: str, namespace_targets: Mapping[str, List[str]] = None, rules: List[str] = [], orthologize_target: str = None) -> Edges:
+    """Create edges from nanopub
+
+    Args:
+        nanopub (Mapping[str, Any]): nanopub in nanopub_bel schema format
+        api_url (str): BEL.bio API endpoint to use
+        nanopub_url: url for nanopub
+        rules (List[str]): which computed edge rules to process, default is all,
+           look at BEL Specification yaml file for computed edge signature keys,
+           e.g. degradation, if any rule in list is 'skip', then skip computing edges
+           just return primary_edge
+        namespace_targets (Mapping[str, List[str]]): what namespaces to canonicalize
+        orthologize_target: list of species to convert BEL into, e.g. TAX:10090 for mouse, default option does not orthologize
+
+    Returns:
+        Tuple[List[Mapping[str, Any]], List[Tuple[str, List[str]]]]: (edge list, validation messages) - edge list with edge attributes (e.g. context) and parse validation messages
+    """
+
+    # Extract BEL Version and make sure we can process this
+    if nanopub['nanopub']['type']['name'].upper() == "BEL":
+        bel_version = nanopub['nanopub']['type']['version']
+        versions = bel.lang.bel_specification.get_bel_versions()
+        if bel_version not in versions:
+            log.error(f'Do not know this BEL Version: {bel_version}, these are the ones I can process: {versions}')
+            return []
+    else:
+        log.error(f"Not a BEL Nanopub according to nanopub.type.name: {nanopub['nanopub']['type']['name']}")
+        return []
+
+    annotations = copy.deepcopy(nanopub['nanopub']['annotations'])
+    if orthologize_target:
+        annotations = orthologize_context(orthologize_target, annotations)
+
+    edges = []
+    bo = bel.lang.belobj.BEL(bel_version, api_url)
+
+    for assertion in nanopub['nanopub']['assertions']:
+        if assertion['relation']:
+            bel_statement = f"{assertion['subject']} {assertion['relation']} {assertion['object']}"
+        else:
+            bel_statement = assertion['subject']
+
+        bo.parse(bel_statement)
+        if not bo.parse_valid:  # Continue processing BEL Nanopub assertions
+            log.error(f'Invalid BEL Statement: {bo.validation_messages}')
+            continue
+
+        if orthologize_target:
+            orig_bel_str = bo.to_string()
+            bo.orthologize(orthologize_target)
+
+            # log.info(f'Unorthologized: {orig_bel_str}  New: {bo.to_string()}   TEMP')
+
+            if bo.to_string() == orig_bel_str:
+                log.info(f'Skipping unorthologized BEL stmt')
+                continue
+            edge_types = ['primary', 'orthologized']
+        else:
+            edge_types = ['primary']
+
+        # Canonicalize
+        bo.canonicalize(namespace_targets=namespace_targets)
+
+        # Primary edge
+        if bo.ast.bel_relation:  # Skip subject-only Assertion?
+            add_edge(edges, bo.ast, nanopub_url, edge_types, annotations)
+
+        # Computed edges
+        computed_edges_ast = []
+        if not rules or 'skip' not in rules:
+            computed_edges_ast.extend(bo.compute_edges(rules=rules, ast_result=True))
+
+        if orthologize_target:
+            edge_types = ['computed', 'orthologized']
+        else:
+            edge_types = ['computed']
+        for edge_ast in computed_edges_ast:
+            add_edge(edges, edge_ast, nanopub_url, edge_types, annotations)
+
+    return edges
+
+
+def add_edge(edges: Edges, edge_ast, nanopub_url: str, edge_types: List[str], annotations: List[any]):
+    """Add edge to edges
+
+    Args:
+        edges: list of edges
+        edge_ast: Edge AST to add to edges list
+        nanopub_url: URL of nanopub in NanopubStore
+        edge_types: list of edge types (e.g. primary, orthologized, computed)
+        annotations: list of annotations pulled from nanopub
+    """
 
     # TODO Update convert_namespaces_ast to use it instead of convert_namespaces_str -- need lots of changes to that function
 
@@ -45,6 +160,10 @@ def add_edge(edges: Edges, edge_ast, nanopub_id, edge_type, annotations):
     else:  # Normal BEL Assertion
         obj_components = edge_ast.bel_object.subcomponents(subcomponents=[])
 
+    # Add BEL causal edge type
+    if edge_ast.bel_relation and 'causal' in edge_ast.spec['relations']['info'][edge_ast.bel_relation]['categories']:
+        edge_types.append('causal')
+
     edge_hash = utils._create_hash(f'{subj_canon} {edge_ast.bel_relation} {obj_canon}')
 
     # Add edge_dt after creating hash id in edge_iterator
@@ -58,8 +177,8 @@ def add_edge(edges: Edges, edge_ast, nanopub_id, edge_type, annotations):
             "relation": {
                 "relation": edge_ast.bel_relation,
                 "edge_hash": edge_hash,
-                "nanopub_id": nanopub_id,
-                "edge_type": edge_type,
+                "nanopub_url": nanopub_url,
+                "edge_types": edge_types,
                 "subject_canon": subj_canon,
                 "subject": subj_lbl,
                 "object_canon": obj_canon,
@@ -78,109 +197,29 @@ def add_edge(edges: Edges, edge_ast, nanopub_id, edge_type, annotations):
     return edges
 
 
-# TODO - remove or fix - this stripped out correctly formatted annotations
-def enhance_annotations(annotations):
-    """Make sure annotations have type and both id and label or delete them"""
-    new = []
-    for anno in annotations:
-        if not anno.get('type', False):
-            continue
-        elif anno.get('id', False) and anno.get('label', False):
-            continue
-        elif anno.get('label', False) and not anno.get('id', False):
-            anno['id'] = anno['label']
-        elif anno.get('id', False) and not anno.get('label', False):
-            anno['label'] = anno['id']
-        new.append(anno)
-
-    return new
-
-
-def create_edges(nanopub: Mapping[str, Any], endpoint: str, namespace_targets: Mapping[str, List[str]], rules: List[str] = [], orthologize_target: str = None) -> Edges:
-    """Create edges for Nanopub
-
-    Args:
-        nanopub (Mapping[str, Any]): nanopub in nanopub_bel schema format
-        endpoint (str): BEL.bio API endpoint to use
-        rules (List[str]): which computed edge rules to process, default is all,
-           look at BEL Specification yaml file for computed edge signature keys,
-           e.g. degradation, if any rule in list is 'skip', then skip computing edges
-           just return primary_edge
-        namespace_targets (Mapping[str, List[str]]): what namespaces to canonicalize
-        orthologize_target (str): species to convert BEL into, e.g. TAX:10090 for mouse, default option does not orthologize
-
-    Returns:
-        Tuple[List[Mapping[str, Any]], List[Tuple[str, List[str]]]]: (edge list, validation messages) - edge list with edge attributes (e.g. context) and parse validation messages
-    """
-
-    # Extract BEL Version and make sure we can process this
-    if nanopub['nanopub']['type']['name'].upper() == "BEL":
-        bel_version = nanopub['nanopub']['type']['version']
-        versions = bel.lang.bel_specification.get_bel_versions()
-        if bel_version not in versions:
-            log.error(f'Do not know this BEL Version: {bel_version}, these are the ones I can process: {versions}')
-            return []
-    else:
-        log.error(f"Not a BEL Nanopub according to nanopub.type.name: {nanopub['nanopub']['type']['name']}")
-        return []
-
-    nanopub_id = nanopub['nanopub'].get('id', None)
-    annotations = copy.deepcopy(nanopub['nanopub']['annotations'])
-    if orthologize_target:
-        annotations = orthologize_context(orthologize_target, annotations)
-
-    # TODO - fix or remove
-    # annotations = enhance_annotations(annotations)
-
-    edges = []
-    bo = bel.lang.belobj.BEL(bel_version, endpoint)
-
-    for assertion in nanopub['nanopub']['assertions']:
-        if assertion['relation']:
-            bel_statement = f"{assertion['subject']} {assertion['relation']} {assertion['object']}"
-        else:
-            bel_statement = assertion['subject']
-
-        bo.parse(bel_statement)
-        if not bo.parse_valid:  # Continue processing BEL Nanopub assertions
-            log.error(f'Invalid BEL Statement: {bo.validation_messages}')
-            continue
-
-        # TODO - canonicalize or orthologize first - does orthologize also canonicalize?
-        bo.canonicalize(namespace_targets=namespace_targets)
-
-        if orthologize_target:
-            bo.orthologize(orthologize_target)
-
-        edge_type = 'primary'
-        if bo.ast.bel_relation:  # Is this a subject only Assertion?
-            add_edge(edges, bo.ast, nanopub_id, edge_type, annotations)
-
-        # Computed edges
-        computed_edges_ast = []
-        if not rules or 'skip' not in rules:
-            computed_edges_ast.extend(bo.compute_edges(rules=rules, ast_result=True))
-
-        edge_type = 'computed'
-        for edge_ast in computed_edges_ast:
-            add_edge(edges, edge_ast, nanopub_id, edge_type, annotations)
-
-    return edges
-
-
 def orthologize_context(orthologize_target: str, annotations: Mapping[str, Any]) -> Mapping[str, Any]:
     """Orthologize context
 
     Replace Species context with new orthologize target and add a annotation type of OrthologizedFrom
     """
-    pass  # TODO
+
+    url = f'{config["bel_api"]["servers"]["api_url"]}/terms/{orthologize_target}'
+    r = utils.get_url(url)
+    species_label = r.json().get("label", "unlabeled")
+
+    for idx, annotation in enumerate(annotations):
+        if annotation['type'] == 'Species':
+            annotations[idx]['type'] = 'OrthologizedFrom'
+
+    annotations.append({'type': 'Species', 'id': orthologize_target, 'label': species_label})
+
+    return annotations
 
 
 def edge_iterator(edges=[], edges_fn=None):
     """Yield documents from edge for loading into ArangoDB"""
 
     for edge in itertools.chain(edges, files.read_edges(edges_fn)):
-
         subj = copy.deepcopy(edge['edge']['subject'])
         subj_id = str(utils._create_hash_from_doc(subj))
         subj['_key'] = subj_id

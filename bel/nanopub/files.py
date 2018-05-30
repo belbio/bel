@@ -35,9 +35,7 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
     """
 
     jsonl_flag, json_flag, yaml_flag = False, False, False
-    if fn == '-':
-        jsonl_flag = True
-    elif 'jsonl' in fn:
+    if fn == '-' or 'jsonl' in fn:
         jsonl_flag = True
     elif 'json' in fn:
         json_flag = True
@@ -51,7 +49,11 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
         if re.search('gz$', fn):
             f = gzip.open(fn, 'rt')
         else:
-            f = click.open_file(fn, mode='rt')
+            try:
+                f = click.open_file(fn, mode='rt')
+            except Exception as e:
+                log.info(f'Can not open file {fn}  Error: {e}')
+                quit()
 
         if jsonl_flag:
             for line in f:
