@@ -62,6 +62,7 @@ mappings:
         type: keyword
       obsolete_ids:
         type: keyword
+        copy_to: autocomplete
       taxonomy_rank:
         type: keyword
       taxonomy_tree:

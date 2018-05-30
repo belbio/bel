@@ -18,9 +18,10 @@ equiv_nodes_name = 'equivalence_nodes'  # equivalence node collection name
 equiv_edges_name = 'equivalence_edges'  # equivalence edge collection name
 ortholog_nodes_name = 'ortholog_nodes'  # ortholog node collection name
 ortholog_edges_name = 'ortholog_edges'  # ortholog edge collection name
-belns_definitions_name = 'belns_definitions'  # BEL Namespace metadata
+belns_metadata_name = 'resources_metadata'  # BEL Resources metadata
 
 belapi_settings_name = 'settings'  # BEL API settings and configuration
+belapi_statemgmt_name = 'state_mgmt'  # BEL API state mgmt
 
 
 def get_client(host=None, port=None, username=None, password=None, enable_logging=True):
@@ -98,7 +99,7 @@ def get_belns_handle(client, username=None, password=None):
             client.create_user(username, password)
             client.grant_user_access(username, belns_db_name)
 
-        belns_definitions = belns_db.create_collection(belns_definitions_name)
+        resource_metadata = belns_db.create_collection(belns_metadata_name)
         equiv_nodes = belns_db.create_collection(equiv_nodes_name, index_bucket_count=64)
         ortholog_nodes = belns_db.create_collection(ortholog_nodes_name, index_bucket_count=64)
         equiv_edges = belns_db.create_collection(equiv_edges_name, edge=True, index_bucket_count=64)
@@ -113,6 +114,7 @@ def get_belns_handle(client, username=None, password=None):
     except ArangoError as ae:
         belns_db = client.db(belns_db_name)
         return belns_db
+
     except Exception as e:
         log.error(f'Error creating database {belns_db_name}', e)
         return None
@@ -132,6 +134,7 @@ def get_belapi_handle(client, username=None, password=None):
             client.grant_user_access(username, belns_db_name)
 
         belapi_db.create_collection(belapi_settings_name)
+        belapi_db.create_collection(belapi_statemgmt_name)
 
         return belapi_db
 
@@ -155,6 +158,10 @@ def delete_database(client, db_name):
         log.error(f"Could not delete Arango database: {db_name}")
 
 
+# TODO  Convert ArangoDB loading to use bulk_import - this will be a significant refactor
+#          since we can push any document via the generator but bulk_import only works with
+#          a single collection at a time
+# http://python-driver-for-arangodb.readthedocs.io/en/master/classes.html?highlight=bulk#arango.collections.Collection.import_bulk
 def batch_load_docs(db, doc_iterator):
     """Batch load documents
 
@@ -174,12 +181,15 @@ def batch_load_docs(db, doc_iterator):
         # log.info(f'Cnt: {counter} Collection {collection_name} Doc {doc}')
         results.append(batch.collection(collection_name).insert(doc))
         if counter % batch_size == 0:
-            log.info(f'Commit batch  Count: {counter}')
+            log.debug(f'Commit batch  Count: {counter}')
             batch.commit()
+
+            # TODO Add better error reporting
 
             # for result in results:
             #     if result:
             #         print(f'R: {result.result()}')
+
             results = []
 
             batch = db.batch(return_result=False)
