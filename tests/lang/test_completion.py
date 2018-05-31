@@ -11,7 +11,7 @@ from bel.Config import config
 def test_completion_complex():
     completions = bel.lang.completion.bel_completion('complex(m', bel_fmt='medium')
     print('Completions:\n', json.dumps(completions, indent=4))
-    assert len(completions["completions"]) == 11
+    assert len(completions["completions"]) == 21
 
 
 # @pytest.mark.skip(reason="Not finished with this test")
@@ -160,7 +160,7 @@ def test_completion_arg_ns_val():
     completions = bel.lang.completion.bel_completion('complex(p(HGNC:EGFR))', cursor_loc=12, bel_fmt='medium')
     print('Completions:\n', json.dumps(completions, indent=4))
     assert completions["completion_text"] == "HGN"
-    assert ["complex(p(HGNC:IDNK))"] == [c["replacement"] for c in completions["completions"] if c['replacement'] == "complex(p(HGNC:IDNK))"]
+    assert "complex(p(" in completions['completions'][0]['replacement']
     assert completions['entity_spans'] != []
     assert completions['function_help'] != []
 

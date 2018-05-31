@@ -5,7 +5,7 @@ def test_migrate():
 
     # No migration examples
     bel1 = 'sec(a(CHEBI:"3-hydroxybutyrate"))'
-    bel2 = 'sec(a(CHEBI:"3-hydroxybutyrate"))'
+    bel2 = 'sec(a(CHEBI:3-hydroxybutyrate))'
 
     assert bel.lang.migrate_1_2.migrate(bel1) == bel2
 

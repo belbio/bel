@@ -9,4 +9,5 @@ def test_parse():
 
     print(ast.to_string())
 
-    assert False
+    assert ast.to_string() == 'sec(a(CHEBI:3-hydroxybutyrate))'
+

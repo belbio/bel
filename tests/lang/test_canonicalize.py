@@ -31,6 +31,8 @@ def test_canon_one():
 
     bo.canonicalize()
 
+    print(f"Result {bo.ast.to_string(fmt='long')}")
+
     assert bo.ast.to_string(fmt='long') == expected
 
 
