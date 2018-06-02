@@ -10,7 +10,7 @@ pytest-flakes==3.0.2
 pytest-mypy==0.3.1
 pytest-pep8==1.0.6
 pytest-sugar==0.9.1
-python_arango==3.12.1
+python_arango==4.1.0
 python-dateutil==2.7.3
 python-json-logger==0.1.8
 structlog==18.1.0
