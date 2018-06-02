@@ -16,5 +16,5 @@ python-json-logger==0.1.8
 structlog==18.1.0
 timy==0.4.0
 twine==1.11.0
-wheel==0.30.0
+wheel==0.31.1
 
