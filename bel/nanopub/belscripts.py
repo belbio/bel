@@ -91,7 +91,7 @@ def yield_metadata(nanopubs_metadata):
 def split_bel_stmt(stmt: str, line_num) -> tuple:
     """Split bel statement into subject, relation, object tuple"""
 
-    m = re.match(f'^(.*?\))\s+([a-zA-Z=->\|:]+)\s+([\w(]+.*?)$', stmt, flags=0)
+    m = re.match(f'^(.*?\))\s+([a-zA-Z=\->\|:]+)\s+([\w(]+.*?)$', stmt, flags=0)
     if m:
         return(m.group(1), m.group(2), m.group(3))
     else:
@@ -214,7 +214,9 @@ def process_unset(line, annotations):
 def process_set(line, annotations):
     """Convert annotations into nanopub_bel annotations format"""
 
-    matches = re.match('SET\s+(\w+)\s+=\s+"?(.*?)"?\s*$', line)
+    matches = re.match('SET\s+(\w+)\s*=\s*"?(.*?)"?\s*$', line)
+
+    key = None
     if matches:
         key = matches.group(1)
         val = matches.group(2)
@@ -232,6 +234,31 @@ def process_set(line, annotations):
         annotations[key] = val
 
     return annotations
+
+
+def set_single_line(lines):
+
+    flag = False
+    hold = ''
+
+    for line in lines:
+        if flag and re.match('.*"', line):
+            line = hold + ' ' + line
+            flag = False
+            line = re.sub('\s+', ' ', line)
+            yield line
+        elif flag:
+            hold += ' ' + line.rstrip()
+
+        elif re.match('SET\s*\w+\s*=\s*".*"', line):
+            line = re.sub('\s+', ' ', line)
+            yield line
+        elif re.match('SET\s*\w+\s*=\s*".*', line):
+            hold = line.rstrip()
+            flag = True
+        else:
+            line = re.sub('\s+', ' ', line)
+            yield line
 
 
 def preprocess_belscript(lines):
@@ -274,7 +301,10 @@ def parse_belscript(lines):
     #     lines = iter(lines)
 
     line_num = 0
-    for line in preprocess_belscript(lines):
+
+    # for line in preprocess_belscript(lines):
+    for line in set_single_line(lines):
+
         line_num += 1
         # Get rid of trailing comments
         line = re.sub('\/\/.*?$', '', line)
