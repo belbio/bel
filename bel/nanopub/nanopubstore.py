@@ -11,7 +11,9 @@ from structlog import get_logger
 log = get_logger()
 
 arango_client = arangodb.get_client()
+
 belapi_db = arangodb.get_belapi_handle(arango_client)
+
 state_mgmt = belapi_db.collection(arangodb.belapi_statemgmt_name)
 start_dates_doc_key = 'nanopubstore_start_dates'
 
@@ -87,7 +89,7 @@ def get_new_nanopub_urls(ns_root_url: str = None, start_dt: str = None) -> list:
 def get_nanopub(url):
     """Get Nanopub from nanopubstore given url"""
 
-    r = bel.utils.get_url(url)
+    r = bel.utils.get_url(url, cache=False)
     if r and r.json():
         return r.json()
     else:
