@@ -36,9 +36,6 @@ def get_client(host=None, port=None, username=None, password=None, enable_loggin
         protocol=config['bel_api']['servers']['arangodb_protocol'],
         host=host,
         port=port,
-        username=username,
-        password=password,
-        enable_logging=enable_logging,
     )
 
     return client
@@ -57,13 +54,20 @@ def get_edgestore_handle(client, username=None, password=None):
     username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
     password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password', ''))])
 
+    sys_db = client.db('_system', username=username, password=password)
+
     # Create a new database named "edgestore"
-    edgestore_db = None
-    try:
-        edgestore_db = client.create_database(edgestore_db_name)
+    if not sys_db.has_database(edgestore_db_name):
         if username and password:
-            client.create_user(username, password)
-            client.grant_user_access(username, edgestore_db_name)
+            edgestore_db = client.create_database(
+                name=edgestore_db_name,
+                users=[{'username': username, 'password': password, 'active': True}],
+            )
+        else:
+            edgestore_db = client.create_database(
+                name=edgestore_db_name
+            )
+
         nodes = edgestore_db.create_collection(edgestore_nodes_name, index_bucket_count=64)
         edges = edgestore_db.create_collection(edgestore_edges_name, edge=True, index_bucket_count=64)
 
@@ -76,12 +80,13 @@ def get_edgestore_handle(client, username=None, password=None):
         edges.add_hash_index(fields=['context[*].id'], unique=False)
 
         # TODO - add a skiplist index for _from? or _key? to be able to do paging?
-        log.info('Creating new ArangoDB Edgestore database')
 
-    except ArangoError as ae:
+        return edgestore_db
+
+    if username and password:
+        edgestore_db = client.db(edgestore_db_name, username=username, password=password)
+    else:
         edgestore_db = client.db(edgestore_db_name)
-    except Exception as e:
-        log.error(f'Error creating database {edgestore_db_name}', e)
 
     return edgestore_db
 
@@ -92,12 +97,19 @@ def get_belns_handle(client, username=None, password=None):
     username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
     password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password')), ''])
 
+    sys_db = client.db('_system', username=username, password=password)
+
     # Create a new database named "belns"
-    try:
-        belns_db = client.create_database(belns_db_name)
+    if not sys_db.has_database(belns_db_name):
         if username and password:
-            client.create_user(username, password)
-            client.grant_user_access(username, belns_db_name)
+            belns_db = client.create_database(
+                name=belns_db_name,
+                users=[{'username': username, 'password': password, 'active': True}],
+            )
+        else:
+            belns_db = client.create_database(
+                name=belns_db_name
+            )
 
         resource_metadata = belns_db.create_collection(belns_metadata_name)
         equiv_nodes = belns_db.create_collection(equiv_nodes_name, index_bucket_count=64)
@@ -111,13 +123,12 @@ def get_belns_handle(client, username=None, password=None):
 
         return belns_db
 
-    except ArangoError as ae:
+    if username and password:
+        belns_db = client.db(belns_db_name, username=username, password=password)
+    else:
         belns_db = client.db(belns_db_name)
-        return belns_db
 
-    except Exception as e:
-        log.error(f'Error creating database {belns_db_name}', e)
-        return None
+    return belns_db
 
 
 def get_belapi_handle(client, username=None, password=None):
@@ -126,36 +137,47 @@ def get_belapi_handle(client, username=None, password=None):
     username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
     password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password')), ''])
 
+    sys_db = client.db('_system', username=username, password=password)
+
     # Create a new database named "belapi"
-    try:
-        belapi_db = client.create_database(belapi_db_name)
+    if not sys_db.has_database(belapi_db_name):
         if username and password:
-            client.create_user(username, password)
-            client.grant_user_access(username, belns_db_name)
+            belapi_db = sys_db.create_database(
+                name=belapi_db_name,
+                users=[{'username': username, 'password': password, 'active': True}],
+            )
+        else:
+            belapi_db = sys_db.create_database(
+                name=belapi_db_name
+            )
 
         belapi_db.create_collection(belapi_settings_name)
         belapi_db.create_collection(belapi_statemgmt_name)
 
         return belapi_db
 
-    except ArangoError as ae:
+    if username and password:
+        belapi_db = client.db(belapi_db_name, username=username, password=password)
+    else:
         belapi_db = client.db(belapi_db_name)
-        return belapi_db
-    except Exception as e:
-        log.error(f'Error creating database {belapi_db_name}', e)
-        return None
+
+    return belapi_db
 
 
-def delete_database(client, db_name):
+def delete_database(client, db_name, username=None, password=None):
     """Delete Arangodb database
 
     """
-    if not db_name:
-        log.warn('No arango database name given to delete')
-    try:
-        return client.delete_database(db_name)
-    except ArangoError as e:
-        log.error(f"Could not delete Arango database: {db_name}")
+
+    username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
+    password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password')), ''])
+
+    sys_db = client.db('_system', username=username, password=password)
+
+    if sys_db.has_database(db_name):
+        return sys_db.delete_database(db_name)
+    else:
+        log.warn('No arango database {db_name} to delete, does not exist')
 
 
 # TODO  Convert ArangoDB loading to use bulk_import - this will be a significant refactor
