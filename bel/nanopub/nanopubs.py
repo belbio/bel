@@ -3,12 +3,16 @@ import gzip
 import bel.lang.belobj
 import jsonschema
 import requests
+import mmh3
 
 import bel.edge.edges
 from bel.Config import config
 
 import logging
 log = logging.getLogger(__name__)
+
+
+# TODO is this code being used?  We also have bel.nanopub.validate.validate(nanopub, error_level) for validation
 
 
 class Nanopub(object):
@@ -136,3 +140,42 @@ def validate_to_schema(nanopub, schema) -> Tuple[bool, List[Tuple[str, str]]]:
         is_valid = False
 
     return (is_valid, messages)
+
+
+# Following is used in nanopub-tools codebase
+def hash_nanopub(nanopub: Mapping[str, Any]) -> str:
+    """Create hash from nanopub for duplicate check"""
+
+    hash_list = []
+
+    # Type
+    hash_list.append(nanopub['nanopub']['type']['name'].strip())
+    hash_list.append(nanopub['nanopub']['type']['version'].strip())
+
+    # Citation
+    if nanopub['nanopub']['citation'].get('database', False):
+        hash_list.append(nanopub['nanopub']['citation']['database'].get('name').strip())
+        hash_list.append(nanopub['nanopub']['citation']['database'].get('id').strip())
+    elif nanopub['nanopub']['citation'].get('uri', False):
+        hash_list.append(nanopub['nanopub']['citation']['uri'].strip())
+    elif nanopub['nanopub']['citation'].get('reference', False):
+        hash_list.append(nanopub['nanopub']['citation']['reference'].strip())
+
+    # Assertions
+    assertions = []
+    for assertion in nanopub['nanopub']['assertions']:
+        print(assertion)
+        assertions.append(' '.join((assertion['subject'], assertion.get('relation', ''), assertion.get('object', ''))))
+    assertions = sorted(assertions)
+    hash_list.extend(assertions)
+
+    # Annotations
+    annotations = []
+
+    for anno in nanopub['nanopub']['annotations']:
+        annotations.append(' '.join((anno['type'], anno['id'])))
+
+    annotations = sorted(annotations)
+    hash_list.extend(annotations)
+
+    return str(mmh3.hash128(' '.join(hash_list)))
