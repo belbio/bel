@@ -23,11 +23,13 @@ def validate(nanopub: dict, error_level: str = 'WARNING') -> Tuple[str, str, str
     Args:
         nanopub: nanopub record starting with nanopub...
         level: return WARNING or just ERROR?  defaults to warnings and errors
-
     Returns:
         list(tuples): [("ERROR|WARNING", "STRUCTURE|ASSERTION|ANNOTATION", <msg>]
 
     """
+
+    if 'nanopub' in nanopub:
+        nanopub = nanopub['nanopub']
 
     # Validation results
     v = {
@@ -79,7 +81,7 @@ def validate(nanopub: dict, error_level: str = 'WARNING') -> Tuple[str, str, str
 
     # Annotation checks
     if error_level == 'WARNING':
-        for annotation in nanopub['annotations']:
+        for annotation in nanopub.get('annotations', []):
             term_type = annotation['type']
             term_id = annotation['id']
             # term_label = annotation['label']
