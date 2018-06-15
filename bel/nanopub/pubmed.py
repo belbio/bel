@@ -23,8 +23,12 @@ from bel.Config import config
 import bel.lang.bel_utils as bel_utils
 from bel.utils import get_url, url_path_param_quoting
 
-# Replace pmid
-PUBMED_TMPL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID'
+# Replace PMID
+if config['bel_api']['servers'].get('pubmed_api_key', False):
+    PUBMED_TMPL = f'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&api_key={config["bel_api"]["servers"]["pubmed_api_key"]}&id=PMID'
+else:
+    PUBMED_TMPL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID'
+
 PUBTATOR_TMPL = 'https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/RESTful/tmTool.cgi/BioConcept/PMID/JSON'
 
 pubtator_ns_convert = {'CHEBI': 'CHEBI', 'Species': 'TAX', 'Gene': 'EG', 'Chemical': 'MESH', 'Disease': 'MESH'}
@@ -116,7 +120,7 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
     Returns:
         pubmed json
     """
-    pubmed_url = PUBMED_TMPL.replace('PMID', pmid)
+    pubmed_url = PUBMED_TMPL.replace('PMID', str(pmid))
     r = get_url(pubmed_url)
     log.info(f'Getting Pubmed URL {pubmed_url}')
 
