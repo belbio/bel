@@ -1,0 +1,36 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+cityhash = "*"
+click = "*"
+coverage = "*"
+jsonschema = "*"
+python-arango = "*"
+python-dateutil = "*"
+python-json-logger = "*"
+structlog = "*"
+timy = "*"
+Jinja2 = "*"
+
+[dev-packages]
+mypy = "*"
+pytest = "*"
+pytest-cache = "*"
+pytest-cov = "*"
+pytest-flakes = "*"
+pytest-mypy = "*"
+pytest-pep8 = "*"
+pytest-sugar = "*"
+releases = "*"
+Sphinx = "*"
+sphinx-autobuild = "*"
+sphinx-autodoc-typehints = "*"
+sphinx-click = "*"
+sphinx-rtd-theme = "*"
+twine = "*"
+
+[requires]
+python_version = "3.6"

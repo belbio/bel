@@ -3,7 +3,7 @@ import gzip
 import bel.lang.belobj
 import jsonschema
 import requests
-import mmh3
+from cityhash import CityHash64
 
 import bel.edge.edges
 from bel.Config import config
@@ -144,28 +144,62 @@ def validate_to_schema(nanopub, schema) -> Tuple[bool, List[Tuple[str, str]]]:
 
 # Following is used in nanopub-tools codebase
 def hash_nanopub(nanopub: Mapping[str, Any]) -> str:
-    """Create hash from nanopub for duplicate check"""
+    """Create CityHash64 from nanopub for duplicate check
+
+    TODO - check that this hash value is consistent between C# and Python running on
+    laptop and server
+
+    Build string to hash
+
+    Collect flat array of (all values.strip()):
+        nanopub.type.name
+        nanopub.type.version
+
+        One of:
+            nanopub.citation.database.name
+            nanopub.citation.database.id
+
+            OR
+
+            nanopub.citation.database.uri
+
+            OR
+
+            nanopub.citation.database.reference
+
+        Extend with sorted list of assertions (SRO as single string with space between S, R and O)
+
+        Extend with sorted list of annotations (nanopub.annotations.type + ' ' + nanopub.annotations.id)
+
+    Convert array to string by joining array elements separated by a space
+
+    Create CityHash64(str) and return
+
+    """
 
     hash_list = []
 
     # Type
-    hash_list.append(nanopub['nanopub']['type']['name'].strip())
-    hash_list.append(nanopub['nanopub']['type']['version'].strip())
+    hash_list.append(nanopub['nanopub']['type'].get('name', '').strip())
+    hash_list.append(nanopub['nanopub']['type'].get('version', '').strip())
 
     # Citation
     if nanopub['nanopub']['citation'].get('database', False):
-        hash_list.append(nanopub['nanopub']['citation']['database'].get('name').strip())
-        hash_list.append(nanopub['nanopub']['citation']['database'].get('id').strip())
+        hash_list.append(nanopub['nanopub']['citation']['database'].get('name', '').strip())
+        hash_list.append(nanopub['nanopub']['citation']['database'].get('id', '').strip())
     elif nanopub['nanopub']['citation'].get('uri', False):
-        hash_list.append(nanopub['nanopub']['citation']['uri'].strip())
+        hash_list.append(nanopub['nanopub']['citation'].get('uri', '').strip())
     elif nanopub['nanopub']['citation'].get('reference', False):
-        hash_list.append(nanopub['nanopub']['citation']['reference'].strip())
+        hash_list.append(nanopub['nanopub']['citation'].get('reference', '').strip())
 
     # Assertions
     assertions = []
     for assertion in nanopub['nanopub']['assertions']:
-        print(assertion)
-        assertions.append(' '.join((assertion['subject'], assertion.get('relation', ''), assertion.get('object', ''))))
+        if assertion.get('relation') is None:
+            assertion['relation'] = ''
+        if assertion.get('object') is None:
+            assertion['object'] = ''
+        assertions.append(' '.join((assertion['subject'].strip(), assertion.get('relation', '').strip(), assertion.get('object', '').strip())).strip())
     assertions = sorted(assertions)
     hash_list.extend(assertions)
 
@@ -173,9 +207,9 @@ def hash_nanopub(nanopub: Mapping[str, Any]) -> str:
     annotations = []
 
     for anno in nanopub['nanopub']['annotations']:
-        annotations.append(' '.join((anno['type'], anno['id'])))
+        annotations.append(' '.join((anno.get('type', '').strip(), anno.get('id', '').strip())).strip())
 
     annotations = sorted(annotations)
     hash_list.extend(annotations)
 
-    return str(mmh3.hash128(' '.join(hash_list)))
+    return str(CityHash64(' '.join(hash_list)))

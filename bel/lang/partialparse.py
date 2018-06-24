@@ -365,7 +365,7 @@ def parse_relations(belstr: str, char_locs: CharLocs, parsed: Parsed, errors: Er
 
     for match in relations_pattern_middle.finditer(belstr):
         (start, end) = match.span(1)
-        log.debug(f'Relation-middle {match}')
+        # log.debug(f'Relation-middle {match}')
         end = end - 1  # adjust end to match actual end character index
         if start != end:
             test_range = set(range(start, end))
@@ -513,7 +513,7 @@ def print_spans(spans, max_idx: int) -> None:
         for i in range(span[0], span[1] + 1):
             bel_spans[i] = val[0]
 
-    print(''.join(bel_spans))
+    # print(''.join(bel_spans))
 
     # Add second layer for Nested Objects if available
     bel_spans = [' '] * (max_idx + 3)
@@ -523,7 +523,7 @@ def print_spans(spans, max_idx: int) -> None:
         for i in range(span[0], span[1] + 1):
             bel_spans[i] = val[0]
 
-    print(''.join(bel_spans))
+    # print(''.join(bel_spans))
 
 
 def parsed_function_to_ast(parsed: Parsed, parsed_key):

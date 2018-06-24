@@ -20,18 +20,20 @@ AUTHOR = 'William Hayes'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
+    'cityhash',
     'click',
     'elasticsearch',
     'fastcache',
     'CacheControl',
     'jsonschema',
-    'mmh3',
     'python-arango',
+    'python-dateutil',
     'pyyaml',
     'requests',
     'TatSu',
     'ulid-py',
     'lxml',
+    'structlog',
     'typing',
     'ulid-py',
 ]

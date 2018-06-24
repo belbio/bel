@@ -124,7 +124,7 @@ class BEL(object):
 
         # Check to see if empty string for bel statement
         if len(self.bel_stmt) == 0:
-            self.validation_messages.append(('ERROR', 'Please include a valid BEL statement.'))
+            self.validation_messages.append(('ERROR', 'Please include a valid BEL statement - found empty string.'))
             return self
 
         try:
@@ -139,7 +139,7 @@ class BEL(object):
             # if an error is returned, send to handle_syntax, error
             error, visualize_error = bel_utils.handle_parser_syntax_error(e)
             self.parse_visualize_error = visualize_error
-            self.validation_messages.append(('ERROR', error + " BEL: " + self.original_bel_stmt))
+            self.validation_messages.append(('ERROR', f'{error} BEL: {self.original_bel_stmt}\n{visualize_error}'))
             self.ast = None
 
         except Exception as e:

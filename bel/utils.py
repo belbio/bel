@@ -11,7 +11,7 @@ import os
 import urllib
 import ulid
 import tempfile
-import mmh3
+from cityhash import CityHash64
 import json
 from typing import Mapping, Any
 import datetime
@@ -119,16 +119,16 @@ def _create_hash_from_doc(doc: Mapping[str, Any]) -> str:
 
 
 def _create_hash(string: str) -> str:
-    """Create Murmur3 128 bit hash of string
+    """Create CityHash64 bit hash of string
 
     Args:
-        string (str): string to create Murmur3 128bit hash from
+        string (str): string to create CityHash64 from
 
     Returns:
-        str: Murmur3 128 bit hash
+        str: CityHash64
     """
 
-    return str(mmh3.hash128(string))
+    return str(CityHash64(string))
 
 
 def _generate_id() -> str:

@@ -10,7 +10,7 @@ def test_empty_string():
     bo.parse(statement)
 
     assert bo.ast is None
-    assert 'Please include a valid BEL statement.' in bo.validation_messages[0][1]
+    assert 'Please include a valid BEL statement - found empty string.' in bo.validation_messages[0][1]
 
 
 def test_bad_string_start():

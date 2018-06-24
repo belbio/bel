@@ -16,15 +16,20 @@ def validate(nanopub: dict, error_level: str = 'WARNING') -> Tuple[str, str, str
     Error Levels are similar to log levels - selecting WARNING includes both
     WARNING and ERROR, selecting ERROR just includes ERROR
 
-    The validation result is a list of tuples containing what level of validation
-    issue this is, followed by what aspect of the nanopub "STRUCTURE" or
-    "ASSERTION" or "ANNOTATION", followed by the validation warning or error message.
+    The validation result is a list of objects containing
+        {
+            'level': 'Warning|Error',
+            'section': 'Assertion|Annotation|Structure',
+            'label': '{Error|Warning}-{Assertion|Annotation|Structure}',  # to be used for faceting in Elasticsearch
+            'index': idx,  # Index of Assertion or Annotation in Nanopub - starts at 0
+            'msg': msg,  # Error or Warning message
+        }
 
     Args:
         nanopub: nanopub record starting with nanopub...
         level: return WARNING or just ERROR?  defaults to warnings and errors
     Returns:
-        list(tuples): [("ERROR|WARNING", "STRUCTURE|ASSERTION|ANNOTATION", <msg>]
+        list(tuples): [{'level': 'Warning', 'section': 'Assertion', 'label': 'Warning-Assertion', 'index': 0, 'msg': <msg>}]
 
     """
 
@@ -32,18 +37,16 @@ def validate(nanopub: dict, error_level: str = 'WARNING') -> Tuple[str, str, str
         nanopub = nanopub['nanopub']
 
     # Validation results
-    v = {
-        'ERROR': {"STRUCTURE": [], 'ASSERTION': [], 'ANNOTATION': []},
-        'WARNING': {"STRUCTURE": [], 'ASSERTION': [], 'ANNOTATION': []},
-    }
+    v = []
 
     bel_version = config['bel']['lang']['default_bel_version']
+
     # Structural checks
     try:
         if not isinstance(nanopub['assertions'], list):
-            v['ERROR']['STRUCTURE'].append("Assertions must be a list/array")
+            v.append({'level': 'Error', 'section': 'Structure', 'label': 'Error-Structure', 'msg': "Assertions must be a list/array"})
     except Exception as e:
-        v['ERROR']['STRUCTURE'].append('Missing nanopub["assertions"]')
+        v.append({'level': 'Error', 'section': 'Structure', 'label': 'Error-Structure', 'msg': 'Missing nanopub["assertions"]'})
 
     try:
         if 'name' in nanopub['type'] and 'version' in nanopub['type']:
@@ -52,21 +55,20 @@ def validate(nanopub: dict, error_level: str = 'WARNING') -> Tuple[str, str, str
             bel_version = nanopub['type']['version']
 
     except Exception as e:
-        v['ERROR']['STRUCTURE'].append('Missing or badly formed type - must have nanopub["type"] = {"name": <name>, "version": <version}')
+        v.append({'level': 'Error', 'section': 'Structure', 'label': 'Error-Structure', 'msg': 'Missing or badly formed type - must have nanopub["type"] = {"name": <name>, "version": <version}'})
 
     try:
         for key in ['uri', 'database', 'reference']:
             if key in nanopub['citation']:
                 break
         else:
-            v['ERROR']['STRUCTURE'].append('nanopub["citation"] must have either a uri, database or reference key.')
+            v.append({'level': 'Error', 'section': 'Structure', 'label': 'Error-Structure', 'msg': 'nanopub["citation"] must have either a uri, database or reference key.'})
     except Exception as e:
-        v['ERROR']['STRUCTURE'].append('nanopub must have a "citation" key with either a uri, database or reference key.')
+        v.append({'level': 'Error', 'section': 'Structure', 'label': 'Error-Structure', 'msg': 'nanopub must have a "citation" key with either a uri, database or reference key.'})
 
     # Assertion checks
-
     if 'assertions' in nanopub:
-        for assertion in nanopub['assertions']:
+        for idx, assertion in enumerate(nanopub['assertions']):
             bo = bel.lang.belobj.BEL(bel_version, config['bel_api']['servers']['api_url'])
             belstr = f'{assertion.get("subject")} {assertion.get("relation", "")} {assertion.get("object", "")}'
             belstr = belstr.replace('None', '')
@@ -74,14 +76,19 @@ def validate(nanopub: dict, error_level: str = 'WARNING') -> Tuple[str, str, str
                 messages = bo.parse(belstr, error_level=error_level).validation_messages
                 for message in messages:
                     (level, msg) = message
-                    v[level]['ASSERTION'].append(msg)
+                    if error_level == 'ERROR':
+                        if level == 'ERROR':
+                            v.append({'level': f'{level.title()}', 'section': 'Assertion', 'label': f'{level.title()}-Assertion', 'index': idx, 'msg': msg})
+                    else:
+                        v.append({'level': f'{level.title()}', 'section': 'Assertion', 'label': f'{level.title()}-Assertion', 'index': idx, 'msg': msg})
+
             except Exception as e:
-                v['ERROR']['ASSERTION'].append(f'Could not parse: {belstr}')
+                v.append({'level': 'Error', 'section': 'Assertion', 'label': 'Error-Assertion', 'index': idx, 'msg': f'Could not parse: {belstr}'})
                 log.exception(f'Could not parse: {belstr}')
 
     # Annotation checks
     if error_level == 'WARNING':
-        for annotation in nanopub.get('annotations', []):
+        for idx, annotation in enumerate(nanopub.get('annotations', [])):
             term_type = annotation['type']
             term_id = annotation['id']
             # term_label = annotation['label']
@@ -96,8 +103,8 @@ def validate(nanopub: dict, error_level: str = 'WARNING') -> Tuple[str, str, str
             if len(results['hits']['hits']) > 0:
                 result = results['hits']['hits'][0]['_source']
                 if term_type not in result['annotation_types']:
-                    v['WARNING']['ANNOTATION'].append(f'Annotation type: {term_type} for {term_id} does not match annotation types in database: {result["annotation_types"]}')
+                    v.append({'level': 'Warning', 'section': 'Annotation', 'index': idx, 'label': 'Warning-Annotation', 'msg': f'Annotation type: {term_type} for {term_id} does not match annotation types in database: {result["annotation_types"]}'})
             else:
-                v['WARNING']['ANNOTATION'].append(f'Annotation term: {term_id} not found in database')
+                v.append({'level': 'Warning', 'section': 'Annotation', 'index': idx, 'label': 'Warning-Annotation', 'msg': f'Annotation term: {term_id} not found in database'})
 
     return v
