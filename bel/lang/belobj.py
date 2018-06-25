@@ -139,8 +139,12 @@ class BEL(object):
             # if an error is returned, send to handle_syntax, error
             error, visualize_error = bel_utils.handle_parser_syntax_error(e)
             self.parse_visualize_error = visualize_error
-            self.validation_messages.append(('ERROR', f'{error} BEL: {self.original_bel_stmt}\n{visualize_error}'))
-            self.ast = None
+            if visualize_error:
+                self.validation_messages.append(('ERROR', f'{error}\n{visualize_error}'))
+            else:
+                self.validation_messages.append(('ERROR', f'{error}\nBEL: {self.bel_stmt}'))
+
+          self.ast = None
 
         except Exception as e:
             log.error('Error {}, error type: {}'.format(e, type(e)))

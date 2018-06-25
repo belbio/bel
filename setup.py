@@ -15,7 +15,7 @@ from setuptools import find_packages, setup, Command
 NAME = 'bel'
 DESCRIPTION = 'BEL related functionality'
 URL = 'https://github.com/belbio/bel'
-EMAIL = 'whayes@adsworks.com'
+EMAIL = 'whayes@biodati.com'
 AUTHOR = 'William Hayes'
 
 # What packages are required for this module to be executed?
@@ -98,7 +98,7 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     url=URL,
-    packages=find_packages(exclude=('tests',)),
+    packages=find_packages(include=['bel', 'bel.edge', 'bel.resources'], exclude=['tests',]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
