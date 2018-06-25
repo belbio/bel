@@ -144,7 +144,7 @@ class BEL(object):
             else:
                 self.validation_messages.append(('ERROR', f'{error}\nBEL: {self.bel_stmt}'))
 
-          self.ast = None
+            self.ast = None
 
         except Exception as e:
             log.error('Error {}, error type: {}'.format(e, type(e)))
