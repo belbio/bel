@@ -86,7 +86,7 @@ def validate(nanopub: dict, error_level: str = 'WARNING') -> Tuple[str, str, str
             belstr = f'{assertion.get("subject")} {assertion.get("relation", "")} {assertion.get("object", "")}'
             belstr = belstr.replace('None', '')
             try:
-                messages = bo.parse(belstr, error_level=error_level).validation_messages
+                messages = bo.parse(belstr).semantic_validation(error_level=error_level).validation_messages
                 for message in messages:
                     (level, msg) = message
                     if error_level == 'ERROR':

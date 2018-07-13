@@ -212,4 +212,7 @@ def hash_nanopub(nanopub: Mapping[str, Any]) -> str:
     annotations = sorted(annotations)
     hash_list.extend(annotations)
 
-    return str(CityHash64(' '.join(hash_list)))
+    np_string = ' '.join([l.lower() for l in hash_list])
+    print(f'NP string for hash:{np_string}')
+
+    return '{:x}'.format(CityHash64(np_string))
