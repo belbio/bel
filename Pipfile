@@ -4,19 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-cityhash = "*"
-click = "*"
-coverage = "*"
-jsonschema = "*"
-python-arango = "*"
-python-dateutil = "*"
-python-json-logger = "*"
-structlog = "*"
-timy = "*"
-Jinja2 = "*"
+"e1839a8" = {path = ".", editable = true}
 
 [dev-packages]
+coverage = "*"
 mypy = "*"
+ptpython = "*"
 pytest = "*"
 pytest-cache = "*"
 pytest-cov = "*"

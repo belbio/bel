@@ -18,6 +18,11 @@ def test_migrate():
 
     assert bel.lang.migrate_1_2.migrate(bel1) == bel2
 
+    bel1 = "kin(MGI:Lck)"
+    bel2 = "act(p(MGI:Lck), ma(DEFAULT:kin))"
+
+    assert bel.lang.migrate_1_2.migrate(bel1) == bel2
+
     # cat() -> act()
     bel1 = 'cat(p(RGD:Sod1))'
     bel2 = 'act(p(RGD:Sod1), ma(cat))'
@@ -63,4 +68,8 @@ def test_migrate():
     bel1 = 'tloc(p(HGNC:EGFR), MESHCL:Cytoplasm, MESHCL:"Cell Nucleus")'
     bel2 = 'tloc(p(HGNC:EGFR), fromLoc(MESHCL:Cytoplasm), toLoc(MESHCL:"Cell Nucleus"))'
 
+    assert bel.lang.migrate_1_2.migrate(bel1) == bel2
+
+    bel1 = 'tloc(HGNC:CTNNB1)'
+    bel2 = 'tloc(p(HGNC:CTNNB1))'
     assert bel.lang.migrate_1_2.migrate(bel1) == bel2

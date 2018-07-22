@@ -61,11 +61,13 @@ def create_terms_index(es, index_name: str):
         log.error(f'Could not create elasticsearch terms index: {e}')
 
 
-def delete_terms_indexes(index_name: str = 'terms'):
-    """Delete all indexes aliases to index_name"""
+def delete_terms_indexes(es, index_name: str = 'terms_*'):
+    """Delete all terms indexes"""
 
-    # TODO
-    pass
+    try:
+        es.indices.delete(index=index_name)
+    except Exception as e:
+        log.error(f'Could not delete all terms indices: {e}')
 
 
 def get_client():

@@ -1008,26 +1008,6 @@ bel1_migration:
 #   args - process each arg of trigger function to create a separate edge
 computed_signatures:
 
-  #  Every function or entity will be exposed as a componentOf the BEL subject or
-  #  object.  This will allow one to query for any components of a subject
-  #  or object in the graph database that is the EdgeStore. Modifier functions
-  #  will NOT be exposed as a componentOf.
-  # component_of:
-  #   subject: trigger_value
-  #   relation: componentOf
-  #   object: parent_function
-  #   trigger_type:
-  #     - Function
-  #     - NSArg
-  #   examples:
-  #     - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-  #       computed:
-  #         - "SCOMP:\"PP2A Complex\" componentOf complex(SCOMP:\"PP2A Complex\")"
-  #         - "GO:\"phosphatase activity\" componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-  #     - given_statement: "act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-  #       computed:
-  #         - "complex(SCOMP:\"PP2A Complex\") componentOf act(complex(SCOMP:\"PP2A Complex\"), ma(GO:\"phosphatase activity\"))"
-
   # Extract nested object as a separate edge
   nested: true
 
@@ -1042,56 +1022,57 @@ computed_signatures:
         computed:
           - "deg(r(HGNC:MYC)) decreases r(HGNC:MYC)"
 
-#  activity:
-#    trigger: [activity]
-#    subject: "{{ arguments[f] }}"
-#    relation: hasActivity
-#    object: "{{ full }}"
-#
-#  variant:
-#    trigger: [variant]
-#    subject: "{{ p_name(p_arguments[n]) }}"
-#    relation: hasVariant
-#    object: "{{ p_full }}"
-#
-#  fusion:
-#    trigger: [fusion]
-#    subject: "{{ p_name(arguments[n]) }}"
-#    relation: hasFusion
-#    object: "{{ p_full }}"
-#
-#  proteinModification:
-#    trigger: [proteinModification]
-#    subject: "{{ p_name(p_arguments[n]) }}"
-#    relation: hasModification
-#    object: "{{ p_full }}"
-#
-#  reactants:
-#    trigger: [reactants]
-#    subject: "{{ p_full }}"
-#    relation: hasReactant
-#    object: "{{ arguments }}"
-#
-#  products:
-#    trigger: [products]
-#    subject: "{{ p_full }}"
-#    relation: hasProduct
-#    object: "{{ arguments }}"
-#
-#  list:
-#    trigger: [list]
-#    subject: "{{ full }}"
-#    relation: hasMember
-#    object: "{{ arguments }}"
-#
-#  composite:
-#    trigger: [composite]
-#    subject: "{{ full }}"
-#    relation: hasMember
-#    object: "{{ arguments }}"
-#
-#  complex:
-#    trigger: [complex]
-#    subject: "{{ full }}"
-#    relation: hasComponent
-#    object: "{{ arguments }}"
+  activity:
+   trigger: [activity]
+   subject: "{{ arguments[f] }}"
+   relation: hasActivity
+   object: "{{ full }}"
+
+  variant:
+   trigger: [variant]
+   subject: "{{ p_name(p_arguments[n]) }}"
+   relation: hasVariant
+   object: "{{ p_full }}"
+
+  fusion:
+   trigger: [fusion]
+   subject: "{{ p_name(arguments[n]) }}"
+   relation: hasFusion
+   object: "{{ p_full }}"
+
+  proteinModification:
+   trigger: [proteinModification]
+   subject: "{{ p_name(p_arguments[n]) }}"
+   relation: hasModification
+   object: "{{ p_full }}"
+
+  reactants:
+   trigger: [reactants]
+   subject: "{{ p_full }}"
+   relation: hasReactant
+   object: "{{ arguments }}"
+
+  products:
+   trigger: [products]
+   subject: "{{ p_full }}"
+   relation: hasProduct
+   object: "{{ arguments }}"
+
+  composite:
+   trigger: [composite]
+   subject: "{{ full }}"
+   relation: hasMember
+   object: "{{ arguments }}"
+
+  complex:
+   trigger: [complex]
+   subject: "{{ full }}"
+   relation: hasComponent
+   object: "{{ arguments }}"
+
+  # Need to expand list out as primary statements
+  # list:
+  #  trigger: [list]
+  #  subject: "{{ full }}"
+  #  relation: hasMember
+  #  object: "{{ arguments }}"

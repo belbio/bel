@@ -7,9 +7,10 @@ Location
 ------------
 
 Get first belbio_conf.{yml|yaml} and belbio_secrets.{yml|yaml} files in:
-    1. current dir or parent directories starting with immediate parent of current dir
-    2. OR
-    3. ~/.belbio_{conf|secrets}   (dotfiles in home directory)
+
+    1. <current dir>/belbio_{conf|secrets}.{yaml|yml}
+    2. ENV['BELBIO_CONF']/belbio_{conf|secrets}.{yaml|yml}
+    3. ~/.belbio/{conf|secrets}   (dotfiles in home directory)
 
 Download example files from:
 

@@ -1,5 +1,6 @@
 import importlib
 import sys
+import os
 from typing import Mapping, Any, List, Tuple
 from tatsu.exceptions import FailedParse
 
@@ -35,7 +36,6 @@ class BEL(object):
         computed_edges = bel_obj.computed()
 
         primary_edge = bel_obj.ast.to_components()
-
     """
 
     def __init__(self, version: str = None, api_url: str = None) -> None:
@@ -76,13 +76,16 @@ class BEL(object):
 
         # Import Tatsu parser
         # use importlib to import our parser (a .py file) and set the BELParse object as an instance variable
-
         try:
-            imported_parser_file = importlib.import_module(self.spec['admin']['parser_path'])
-            self.parser = imported_parser_file.BELParser()
+            parser_fn = self.spec['admin']['parser_fn']
+            parser_name = os.path.basename(parser_fn).replace('.py', '')
+            module_spec = importlib.util.spec_from_file_location(parser_name, parser_fn)
+            imported_parser = importlib.util.module_from_spec(module_spec)
+            module_spec.loader.exec_module(imported_parser)
+            self.parser = imported_parser.BELParser()
         except Exception as e:
             # if not found, we raise the NoParserFound exception which can be found in bel.lang.exceptions
-            raise bel_ex.NoParserFound(self.version)
+            raise bel_ex.NoParserFound(f'Version: {self.version} Msg: {e}')
 
     def parse(self, statement: str, strict: bool = False, parseinfo: bool = False, rule_name: str = 'start', error_level: str = 'WARNING') -> 'BEL':
         """Parse and semantically validate BEL statement
@@ -150,9 +153,24 @@ class BEL(object):
             log.error('Error {}, error type: {}'.format(e, type(e)))
             self.validation_messages.append(('ERROR', 'Error {}, error type: {}'.format(e, type(e))))
 
-        # Run semantics validation - and decorate AST with nsarg entity_type and arg optionality
-        semantics.validate(self, error_level)
+        return self
 
+    def semantic_validation(self, error_level: str = 'WARNING') -> 'BEL':
+        """Semantically validate parsed BEL statement
+
+        Run semantics validation - and decorate AST with nsarg entity_type and arg optionality
+
+        Args:
+            error_level:  WARNING or ERROR
+
+        Returns:
+            BEL: return self
+        """
+
+        if not self.ast:
+            log.error('Cannot semantically validate BEL object with missing ast property')
+            return None
+        semantics.validate(self, error_level)
         return self
 
     def canonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':

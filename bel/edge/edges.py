@@ -74,7 +74,7 @@ def create_edges(nanopub: Mapping[str, Any], api_url: str, nanopub_url: str, nam
         bel_version = nanopub['nanopub']['type']['version']
         versions = bel.lang.bel_specification.get_bel_versions()
         if bel_version not in versions:
-            log.error(f'Do not know this BEL Version: {bel_version}, these are the ones I can process: {versions}')
+            log.error(f'Do not know this BEL Version: {bel_version}, these are the ones I can process: {versions.keys()}')
             return []
     else:
         log.error(f"Not a BEL Nanopub according to nanopub.type.name: {nanopub['nanopub']['type']['name']}")

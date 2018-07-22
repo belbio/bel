@@ -27,6 +27,10 @@ if config.get('logging', False):
 log = logging.getLogger(__name__)
 
 
+# Add -h to help options for commands
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+
 class Context(object):
     def __init__(self):
         self.config = config
@@ -35,7 +39,7 @@ class Context(object):
 pass_context = click.make_pass_decorator(Context, ensure=True)
 
 
-@click.group()
+@click.group(context_settings=CONTEXT_SETTINGS)
 def belc():
     """ BEL commands
 
@@ -55,7 +59,7 @@ def nanopub():
     pass
 
 
-@belc.command()
+@belc.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('input_fn')
 @click.option('--db_save', help="Save Edges direct to EdgeStore")
 @click.option('--db_delete', help="Delete EdgeStore prior to saving new Edges")
@@ -169,7 +173,7 @@ def pipeline(ctx, input_fn, db_save, db_delete, output_fn, rules, species, names
             fout.close()
 
 
-@nanopub.command(name="validate")
+@nanopub.command(name="validate", context_settings=CONTEXT_SETTINGS)
 @click.option('--output_fn', type=click.File('wt'), default='-', help="BEL Edges JSON output filename - defaults to STDOUT")
 @click.option('--api', help='BEL.bio API endpoint')
 @click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
@@ -194,7 +198,7 @@ def nanopub_validate(ctx, input_fn, output_fn, api, config_fn):
     #     sys.stdout.write(content)
 
 
-@nanopub.command(name="belscript")
+@nanopub.command(name="belscript", context_settings=CONTEXT_SETTINGS)
 @click.option('--input_fn', '-i', default='-')
 @click.option('--output_fn', '-o', default='-')
 @pass_context
@@ -246,7 +250,7 @@ def convert_belscript(ctx, input_fn, output_fn):
         out_fh.close()
 
 
-@nanopub.command(name="reformat")
+@nanopub.command(name="reformat", context_settings=CONTEXT_SETTINGS)
 @click.option('--input_fn', '-i')
 @click.option('--output_fn', '-o')
 @pass_context
@@ -294,7 +298,7 @@ def reformat(ctx, input_fn, output_fn):
         out_fh.close()
 
 
-@nanopub.command(name="stats")
+@nanopub.command(name="stats", context_settings=CONTEXT_SETTINGS)
 @click.argument('input_fn')
 @pass_context
 def nanopub_stats(ctx, input_fn):
@@ -333,7 +337,7 @@ def stmt():
     pass
 
 
-@stmt.command(name='validate')
+@stmt.command(name='validate', context_settings=CONTEXT_SETTINGS)
 @click.option('--version', help='BEL language version')
 @click.option('--api', help='API Endpoint to use for BEL Entity validation')
 @click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")

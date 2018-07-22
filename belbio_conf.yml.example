@@ -12,6 +12,12 @@ bel:
   lang:
     default_bel_version: 2.0.0
 
+    # Location of BEL Language Specification yaml files for different versions
+    specifications: <dir_name>
+
+    # Collect necessary files from belbio/bel_specifications repo if True
+    specification_github_repo: True
+
     # Term Canonicalization and decanonicalization
     # Note that we don't decanonicalize CHEBI (this is not necessarily a symmetric process)
     canonical:

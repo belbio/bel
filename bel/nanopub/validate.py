@@ -14,7 +14,7 @@ es = bel.db.elasticsearch.get_client()
 def convert_msg_to_html(msg):
     """Convert \n into a <BR> for an HTML formatted message"""
 
-    msg = re.sub('\n', '<BR>', msg, flags=re.MULTILINE)
+    msg = re.sub('\n', '<br />', msg, flags=re.MULTILINE)
     return msg
 
 

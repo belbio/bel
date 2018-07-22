@@ -11,7 +11,6 @@ Get first belbio_conf.{yml|yaml} and belbio_secrets.{yml|yaml} files in:
 """
 
 import os
-import os.path
 import re
 import yaml
 import copy
@@ -30,62 +29,66 @@ def get_belbio_conf_files():
     home = os.path.expanduser('~')
     cwd = os.getcwd()
 
-    home_conf_fn = '.belbio_conf'
-    home_secrets_fn = '.belbio_secrets'
-
-    conf_fns = ['belbio_conf.yml', 'belbio_conf.yaml']
-    secret_fns = ['belbio_secrets.yml', 'belbio_secrets.yaml']
-
     belbio_conf_fp, belbio_secrets_fp = '', ''
 
-    # Look for belbio_conf file
-    test_path = cwd
-    break_flag = False
-    while test_path:
-        for fn in conf_fns:
-            if test_path == '/':
-                check_fn = fn
-            else:
-                check_fn = f'{test_path}/{fn}'
-            if os.path.exists(check_fn):
-                belbio_conf_fp = check_fn
-                break_flag = True
-                break
-        if break_flag or test_path == '/':
+    env_conf_dir = os.getenv('BELBIO_CONF', '').rstrip('/')
+
+    conf_paths = [
+        f'{cwd}/belbio_conf.yaml',
+        f'{cwd}/belbio_conf.yml',
+        f'{env_conf_dir}/belbio_conf.yaml',
+        f'{env_conf_dir}/belbio_conf.yml',
+        f'{home}/.belbio/conf',
+    ]
+    secret_paths = [
+        f'{cwd}/belbio_secrets.yaml',
+        f'{cwd}/belbio_secrets.yml',
+        f'{env_conf_dir}/belbio_secrets.yaml',
+        f'{env_conf_dir}/belbio_secrets.yml',
+        f'{home}/.belbio/secrets',
+    ]
+
+    for fn in conf_paths:
+        if os.path.exists(fn):
+            belbio_conf_fp = fn
             break
-        test_path = os.path.dirname(test_path)
+    else:
+        log.error('No BELBio configuration file found - please add one (see http://bel.readthedocs.io/en/latest/configuration.html)')
 
-    if not belbio_conf_fp and os.path.exists(f'{home}/{home_conf_fn}'):
-        belbio_conf_fp = f'{home}/{home_conf_fn}'
-
-    # Look for belbio_secrets file
-    test_path = cwd
-    break_flag = False
-    while test_path:
-        for fn in secret_fns:
-            if test_path == '/':
-                check_fn = fn
-            else:
-                check_fn = f'{test_path}/{fn}'
-            if os.path.exists(check_fn):
-                belbio_secrets_fp = check_fn
-                break_flag = True
-                break
-        if break_flag or test_path == '/':
+    for fn in secret_paths:
+        if os.path.exists(fn):
+            belbio_secrets_fp = fn
             break
-        test_path = os.path.dirname(test_path)
-
-    if not belbio_secrets_fp and os.path.exists(f'{home}/{home_secrets_fn}'):
-        belbio_secrets_fp = f'{home}/{home_secrets_fn}'
-
-    if not belbio_conf_fp:
-        log.error('No belbio_conf file found.  Cannot continue')
-        quit()
-
-    if not belbio_secrets_fp:
-        log.warn('No belbio_secrets file found.')
-
+    print(belbio_conf_fp, belbio_secrets_fp)
     return (belbio_conf_fp, belbio_secrets_fp)
+
+
+def load_configuration():
+    """Load the configuration"""
+
+    (belbio_conf_fp, belbio_secrets_fp) = get_belbio_conf_files()
+    log.info(f'Using conf: {belbio_conf_fp} and secrets files: {belbio_secrets_fp} ')
+
+    config = {}
+    if belbio_conf_fp:
+        with open(belbio_conf_fp, 'r') as f:
+            config = yaml.load(f)
+            config['source_files'] = {}
+            config['source_files']['conf'] = belbio_conf_fp
+
+    if belbio_secrets_fp:
+        with open(belbio_secrets_fp, 'r') as f:
+            secrets = yaml.load(f)
+            config['secrets'] = copy.deepcopy(secrets)
+            if 'source_files' in config:
+                config['source_files']['secrets'] = belbio_secrets_fp
+
+    get_versions(config)
+
+    # TODO - needs to be completed
+    # add_environment_vars(config)
+
+    return config
 
 
 def get_versions(config) -> dict:
@@ -121,6 +124,7 @@ def get_versions(config) -> dict:
         pass
 
 
+# TODO - still needs to be completed
 def add_environment_vars(config: MutableMapping[str, Any]):
     """Override config with environment variables
 
@@ -158,37 +162,25 @@ def add_environment_vars(config: MutableMapping[str, Any]):
                     config[env_keys[0]] = val
 
 
-def load_configuration():
-    """Load the configuration"""
+def merge_config(config: Mapping[str, Any], override_config: Mapping[str, Any] = None, override_config_fn: str = None) -> Mapping[str, Any]:
+    """Override config with additional configuration in override_config or override_config_fn
 
-    (belbio_conf_fp, belbio_secrets_fp) = get_belbio_conf_files()
-    log.info(f'Using conf file: {belbio_conf_fp}')
-    log.info(f'Using secrets file: {belbio_secrets_fp}')
+    Used in script to merge CLI options with Config
 
-    config = {}
-    if belbio_conf_fp:
-        with open(belbio_conf_fp, 'r') as f:
-            config = yaml.load(f)
-            config['source_files'] = {}
-            config['source_files']['conf'] = belbio_conf_fp
+    Args:
+        config: original configuration
+        override_config: new configuration to override/extend current config
+        override_config_fn: new configuration filename as YAML file
+    """
 
-    if belbio_secrets_fp:
-        with open(belbio_secrets_fp, 'r') as f:
-            secrets = yaml.load(f)
-            config['secrets'] = copy.deepcopy(secrets)
-            if 'source_files' in config:
-                config['source_files']['secrets'] = belbio_secrets_fp
-            else:
-                config['source_files'] = {}
-                config['source_files']['secrets'] = belbio_conf_fp
+    if override_config_fn:
+        with open(override_config_fn, 'r') as f:
+            override_config = yaml.load(f)
 
-    get_versions(config)
+    if not override_config:
+        log.info('Missing override_config')
 
-    # FIXME
-
-    # add_environment_vars(config)
-
-    return config
+    return functools.reduce(rec_merge, (config, override_config))
 
 
 # https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge
@@ -214,25 +206,6 @@ def rec_merge(d1, d2):
     d3 = d1.copy()
     d3.update(d2)
     return d3
-
-
-def merge_config(config: Mapping[str, Any], override_config: Mapping[str, Any] = None, override_config_fn: str = None) -> Mapping[str, Any]:
-    """Override config with additional configuration in override_config or override_config_fn
-
-    Args:
-        config: original configuration
-        override_config: new configuration to override/extend current config
-        override_config_fn: new configuration filename as YAML file
-    """
-
-    if override_config_fn:
-        with open(override_config_fn, 'r') as f:
-            override_config = yaml.load(f)
-
-    if not override_config:
-        log.info('Missing override_config')
-
-    return functools.reduce(rec_merge, (config, override_config))
 
 
 def main():
