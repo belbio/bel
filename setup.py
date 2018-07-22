@@ -25,6 +25,7 @@ REQUIRED = [
     'click',
     'elasticsearch',
     'fastcache',
+    'Jinja2',
     'jsonschema',
     'lxml',
     'python-arango',
