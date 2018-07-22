@@ -20,17 +20,17 @@ define deploy_commands
 endef
 
 
-deploy_major: update_parsers
+deploy_major:
 	@echo Deploying major update
 	bumpversion major
 	@${deploy_commands}
 
-deploy_minor: update_parsers
+deploy_minor:
 	@echo Deploying minor update
 	bumpversion minor
 	@${deploy_commands}
 
-deploy_patch: update_parsers
+deploy_patch:
 	@echo Deploying patch update
 	bumpversion --allow-dirty patch
 	${deploy_commands}
@@ -45,25 +45,6 @@ clean_generated:
 	rm bel/lang/versions/*.json
 	rm bel/lang/versions/parser*
 	rm bel/lang/versions/*.ebnf
-
-# set update_ebnf as command dependent on all EBNFs to be made from YAMLs
-#    and create enhanced specification file as JSON
-update_ebnf: belspec_json $(EBNFS)
-	@echo Updating all EBNF files and enhanced BEL Spec JSON files
-
-# each EBNF is dependent upon the corresponding YAML
-$(VDIR)/%.ebnf: $(VDIR)/%.yaml
-	@echo Turning $< into $@
-	python bin/yaml_to_ebnf.py --belspec_fn "$<"
-
-# set update_parsers as command dependent on all PARSER.py files to be made from EBNFs
-update_parsers: $(PARSERS)
-	@echo Updating all parser files
-
-# each parser file is dependent upon the corresponding EBNF
-$(VDIR)/parser%.py: $(VDIR)/bel%.ebnf
-	@echo Turning $< into $@
-	python bin/ebnf_to_parsers.py --ebnf_fn "$<"
 
 # Travis CI environment
 ci_tests:
