@@ -59,7 +59,7 @@ def get_belbio_conf_files():
         if os.path.exists(fn):
             belbio_secrets_fp = fn
             break
-    print(belbio_conf_fp, belbio_secrets_fp)
+
     return (belbio_conf_fp, belbio_secrets_fp)
 
 
