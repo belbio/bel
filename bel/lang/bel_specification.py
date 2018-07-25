@@ -153,9 +153,12 @@ def update_specifications():
     Process all BEL Specifications in YAML into an enhanced JSON version
     and capture all BEL versions in a separate file for quick access.
     """
+
     spec_dir = config['bel']['lang']['specifications']
     if not os.path.isdir(spec_dir):
         os.mkdir(spec_dir)
+
+    log.info(f'Updating BEL Specifications - stored in {spec_dir}')
 
     # Collect new specifications from Git repository
     if config['bel']['lang']['specification_github_repo']:
