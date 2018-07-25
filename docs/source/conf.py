@@ -22,8 +22,8 @@ import os
 import sys
 import sphinx_rtd_theme
 
-# path = os.path.abspath('..')
-# sys.path.insert(0, path)
+path = os.path.abspath('..')
+sys.path.insert(0, path)
 
 # -- General configuration ------------------------------------------------
 

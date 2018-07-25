@@ -170,14 +170,14 @@ def orthologize(ast, bo, species_id: str):
     return ast
 
 
-def preprocess_bel_stmt(stmt):
+def preprocess_bel_stmt(stmt: str) -> str:
     """Clean up basic formatting of BEL statement
 
     Args:
-        stmt (str): BEL statement as single string
+        stmt: BEL statement as single string
 
     Returns:
-        (str): cleaned BEL statement
+        cleaned BEL statement
     """
 
     stmt = stmt.strip()  # remove newline at end of stmt
@@ -188,42 +188,42 @@ def preprocess_bel_stmt(stmt):
     return stmt
 
 
-# See TODO in bel.py for this function - not currently enabled
-def simple_checks(stmt):
-    """Simple typo checks for BEL statement
+# # See TODO in bel.py for this function - not currently enabled
+# def simple_checks(stmt):
+#     """Simple typo checks for BEL statement
 
-    Args:
-        stmt (str): BEL statement as single string
+#     Args:
+#         stmt (str): BEL statement as single string
 
-    Returns:
-        Tuple[bool, List[Tuple[str, str]]]: is valid? and list o f
-    """
-    messages = []
-    is_valid = True
+#     Returns:
+#         Tuple[bool, List[Tuple[str, str]]]: is valid? and list of ...
+#     """
+#     messages = []
+#     is_valid = True
 
-    # check for even number of parenthesis
-    left_p_ct = stmt.count('(')
-    right_p_ct = stmt.count(')')
+#     # check for even number of parenthesis
+#     left_p_ct = stmt.count('(')
+#     right_p_ct = stmt.count(')')
 
-    if left_p_ct < right_p_ct:
-        messages.append(('ERROR', 'Unbalanced parenthesis: Missing left parenthesis somewhere!'))
-    elif right_p_ct < left_p_ct:
-        messages.append(('ERROR', 'Unbalanced parenthesis: Missing right parenthesis somewhere!'))
+#     if left_p_ct < right_p_ct:
+#         messages.append(('ERROR', 'Unbalanced parenthesis: Missing left parenthesis somewhere!'))
+#     elif right_p_ct < left_p_ct:
+#         messages.append(('ERROR', 'Unbalanced parenthesis: Missing right parenthesis somewhere!'))
 
-    # check for even number of quotation marks
-    single_quote_ct = stmt.count('\'')
-    double_quote_ct = stmt.count('"')
+#     # check for even number of quotation marks
+#     single_quote_ct = stmt.count('\'')
+#     double_quote_ct = stmt.count('"')
 
-    if single_quote_ct > 0:  # single quotes not allowed
-        messages.append(('ERROR', 'Single quotes are not allowed! Please use double quotes.'))
+#     if single_quote_ct > 0:  # single quotes not allowed
+#         messages.append(('ERROR', 'Single quotes are not allowed! Please use double quotes.'))
 
-    if double_quote_ct % 2 != 0:  # odd number of quotations
-        messages.append(('ERROR', 'Unbalanced quotations: Missing quotation mark somewhere!'))
+#     if double_quote_ct % 2 != 0:  # odd number of quotations
+#         messages.append(('ERROR', 'Unbalanced quotations: Missing quotation mark somewhere!'))
 
-    if messages:
-        is_valid = False
+#     if messages:
+#         is_valid = False
 
-    (is_valid, messages)
+#     (is_valid, messages)
 
 
 def handle_parser_syntax_error(e):
