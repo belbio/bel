@@ -22,8 +22,9 @@ import os
 import sys
 import sphinx_rtd_theme
 
-path = os.path.abspath('..')
-sys.path.insert(0, path)
+# To get ReadTheDocs working - autodoc missing modules error
+sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../'))
 
 # -- General configuration ------------------------------------------------
 
