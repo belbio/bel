@@ -1,5 +1,6 @@
 import requests
 import json
+import urllib.parse
 
 from arango import ArangoError
 
@@ -25,27 +26,32 @@ def update_nanopubstore_start_dt(url: str, start_dt: str):
         url: url of nanopubstore
         start_dt: datetime of last query against nanopubstore for new ID's
     """
-    start_dates = state_mgmt.get(start_dates_doc_key)
-    if not start_dates:
-        start_dates = {'_key': start_dates_doc_key, 'start_dates': [{'url': url, 'start_dt': start_dt}]}
-        state_mgmt.insert(start_dates)
+
+    hostname = urllib.parse.urlsplit(url)[1]
+
+    start_dates_doc = state_mgmt.get(start_dates_doc_key)
+    if not start_dates_doc:
+        start_dates_doc = {'_key': start_dates_doc_key, 'start_dates': [{'nanopubstore': hostname, 'start_dt': start_dt}]}
+        state_mgmt.insert(start_dates_doc)
     else:
-        for idx, start_date in enumerate(start_dates['start_dates']):
-            if start_date['url'] == url:
-                start_dates['start_dates'][idx]['start_dt'] = start_dt
+        for idx, start_date in enumerate(start_dates_doc['start_dates']):
+            if start_date['nanopubstore'] == hostname:
+                start_dates_doc['start_dates'][idx]['start_dt'] = start_dt
                 break
         else:
-            start_dates.append({'url': url, 'start_dt': start_dt})
+            start_dates_doc['start_dates'].append({'nanopubstore': hostname, 'start_dt': start_dt})
 
-        state_mgmt.replace(start_dates)
+        state_mgmt.replace(start_dates_doc)
 
 
 def get_nanopubstore_start_dt(url: str):
     """Get last start_dt recorded for getting new nanopub ID's"""
 
-    start_dates = state_mgmt.get(start_dates_doc_key)
-    if start_dates and start_dates.get('start_dates'):
-        date = [dt['start_dt'] for dt in start_dates['start_dates'] if dt['url'] == url]
+    hostname = urllib.parse.urlsplit(url)[1]
+
+    start_dates_doc = state_mgmt.get(start_dates_doc_key)
+    if start_dates_doc and start_dates_doc.get('start_dates'):
+        date = [dt['start_dt'] for dt in start_dates_doc['start_dates'] if dt['nanopubstore'] == hostname]
         log.info(f'Selected start_dt: {date}  len: {len(date)}')
         if len(date) == 1:
             return date[0]
@@ -65,15 +71,15 @@ def get_new_nanopub_urls(ns_root_url: str = None, start_dt: str = None) -> list:
         ns_root_url = config['bel_api']['servers']['nanopubstore']
 
     url = f'{ns_root_url}/nanopubs/timed'
-
     if not start_dt:
         start_dt = get_nanopubstore_start_dt(ns_root_url)
-
     params = {'startTime': start_dt, 'published': True}
 
     r = bel.utils.get_url(url, params=params, cache=False)
+
     if r.status_code == 200:
         data = r.json()
+
         new_start_dt = data['queryTime']
         update_nanopubstore_start_dt(ns_root_url, new_start_dt)
         urls = []

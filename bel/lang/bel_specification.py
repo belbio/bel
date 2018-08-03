@@ -240,28 +240,29 @@ def belspec_yaml2json(yaml_fn: str, json_fn: str) -> str:
 
     try:
         spec_dict = yaml.load(open(yaml_fn, 'r').read())
+
+        # admin-related keys
+        spec_dict['admin'] = {}
+        spec_dict['admin']['version_underscored'] = spec_dict['version'].replace('.', '_')
+        spec_dict['admin']['parser_fn'] = yaml_fn.replace('.yaml', '_parser.py')
+
+        # add relation keys list, to_short, to_long
+        add_relations(spec_dict)
+        # add function keys list, to_short, to_long
+        add_functions(spec_dict)
+        # add namespace keys list, list_short, list_long, to_short, to_long
+        add_namespaces(spec_dict)
+
+        enhance_function_signatures(spec_dict)
+
+        add_function_signature_help(spec_dict)
+
+        with open(json_fn, 'w') as f:
+                json.dump(spec_dict, f)
+
     except Exception as e:
         log.error('Warning: BEL Specification {yaml_fn} could not be read. Cannot proceed.'.format(yaml_fn))
         sys.exit()
-
-    # admin-related keys
-    spec_dict['admin'] = {}
-    spec_dict['admin']['version_underscored'] = spec_dict['version'].replace('.', '_')
-    spec_dict['admin']['parser_fn'] = yaml_fn.replace('.yaml', '_parser.py')
-
-    # add relation keys list, to_short, to_long
-    add_relations(spec_dict)
-    # add function keys list, to_short, to_long
-    add_functions(spec_dict)
-    # add namespace keys list, list_short, list_long, to_short, to_long
-    add_namespaces(spec_dict)
-
-    enhance_function_signatures(spec_dict)
-
-    add_function_signature_help(spec_dict)
-
-    with open(json_fn, 'w') as f:
-            json.dump(spec_dict, f)
 
     return spec_dict['version']
 
@@ -503,28 +504,41 @@ def enhance_function_signatures(spec_dict: Mapping[str, Any]) -> Mapping[str, An
 def get_ebnf_template():
     """Get EBNF template from Github belbio/bel_specifications repo"""
 
-    repo_url = 'https://api.github.com/repos/belbio/bel_specifications/contents/resources/bel.ebnf.j2'
     spec_dir = config['bel']['lang']['specifications']
+    local_fp = f'{spec_dir}/bel.ebnf.j2'
+
+    repo_url = 'https://api.github.com/repos/belbio/bel_specifications/contents/resources/bel.ebnf.j2'
 
     params = {}
     github_access_token = os.getenv('GITHUB_ACCESS_TOKEN', '')
     if github_access_token:
         params = {"access_token": github_access_token}
 
-    r = requests.get(repo_url, params=params)
-    if r.status_code == 200:
-        template_url = r.json()['download_url']
-    else:
-        sys.exit('Could not get EBNF file download url from Github')
+    try:
+        # Get download url for template file
+        r = requests.get(repo_url, params=params)
 
-    filename = os.path.basename(template_url)
-    local_fp = f'{spec_dir}/{filename}'
+        if r.status_code == 200:
+            template_url = r.json()['download_url']
+        else:
+            log.warning('Could not get EBNF file download url from Github')
 
-    r = requests.get(template_url, params=params, allow_redirects=True)
-    if r.status_code == 200:
-        open(f'{spec_dir}/{filename}', 'wb').write(r.content)
-    else:
-        sys.exit('Could not download EBNF file from Github -- Status: {r.status_code}  Msg: {r.content}')
+        # Get template file
+        try:
+            r = requests.get(template_url, params=params, allow_redirects=True)
+            if r.status_code == 200:
+                open(local_fp, 'wt').write(r.text)
+            else:
+                log.warning(f'Could not download EBNF file from Github -- Status: {r.status_code}  Msg: {r.text}')
+
+        except Exception as e:
+            log.warning(f'Could not download EBNF file from Github -- Status: {r.status_code}  Msg: {e}')
+
+
+    except Exception as e:
+        log.warning('Could not download BEL EBNF template file')
+        if not os.path.exists(f'{spec_dir}/local_fp'):
+            log.error('No BEL EBNF template file available')
 
     return local_fp
 

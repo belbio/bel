@@ -4,8 +4,8 @@ from arango import ArangoClient, ArangoError
 import bel.utils as utils
 from bel.Config import config
 
-import logging
-log = logging.getLogger(__name__)
+from structlog import get_logger
+log = get_logger()
 
 edgestore_db_name = 'edgestore'
 belns_db_name = 'belns'

@@ -12,8 +12,8 @@ import bel.resources.ortholog
 
 from bel.Config import config
 
-import logging
-log = logging.getLogger(__name__)
+from structlog import get_logger
+log = get_logger()
 
 # Set timy to track in logging mode (INFO level)
 timy.timy_config.tracking_mode = timy.TrackingMode.LOGGING

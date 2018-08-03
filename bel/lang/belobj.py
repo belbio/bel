@@ -13,8 +13,8 @@ import bel.lang.computed_edges as computed_edges
 
 from bel.Config import config
 
-import logging
-log = logging.getLogger(__name__)
+from structlog import get_logger
+log = get_logger()
 
 sys.path.append('../')
 
