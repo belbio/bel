@@ -141,13 +141,6 @@ def terms_iterator_for_elasticsearch(fo: IO, index_name: str):
             if species_list and species_id and species_id not in species_list:
                 continue
 
-            all_term_ids = set()
-            for term_id in [term['id']] + term.get('alt_ids', []):
-                all_term_ids.add(term_id)
-                all_term_ids.add(lowercase_term_id(term_id))
-
-            term['alt_ids'] = copy.copy(list(all_term_ids))
-
             yield {
                 '_op_type': 'index',
                 '_index': index_name,
@@ -166,7 +159,9 @@ def lowercase_term_id(term_id: str) -> str:
     Returns:
         str: lowercased, e.g. MESH:atherosclerosis
     """
-    (ns, val) = term_id.split(':', maxsplit=1)
-    term_id = f'{ns}:{val.lower()}'
-
-    return term_id
+    try:
+        (ns, val) = term_id.split(':', maxsplit=1)
+        term_id = f'{ns}:{val.lower()}'
+        return term_id
+    except Exception:
+        return term_id
