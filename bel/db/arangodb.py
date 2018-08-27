@@ -177,16 +177,15 @@ def delete_database(client, db_name, username=None, password=None):
         log.warn('No arango database {db_name} to delete, does not exist')
 
 
-# TODO  Convert ArangoDB loading to use bulk_import - this will be a significant refactor
-#          since we can push any document via the generator but bulk_import only works with
-#          a single collection at a time
-# http://python-driver-for-arangodb.readthedocs.io/en/master/classes.html?highlight=bulk#arango.collections.Collection.import_bulk
-def batch_load_docs(db, doc_iterator):
+def batch_load_docs(db, doc_iterator, on_duplicate='replace'):
     """Batch load documents
 
     Args:
         db: ArangoDB client database handle
         doc_iterator:  function that yields (collection_name, doc_key, doc)
+        on_duplicate: defaults to replace, but can be error, update, replace or ignore
+
+        https://python-driver-for-arangodb.readthedocs.io/en/master/specs.html?highlight=import_bulk#arango.collection.StandardCollection.import_bulk
     """
 
     batch_size = 10000
@@ -194,6 +193,10 @@ def batch_load_docs(db, doc_iterator):
     counter = 0
     collections = {}
     docs = {}
+
+    if on_duplicate not in ['error', 'update', 'replace', 'ignore']:
+        log.error(f'Bad parameter for on_duplicate: {on_duplicate}')
+        return
 
     for (collection_name, doc) in doc_iterator:
         if collection_name not in collections:
@@ -207,12 +210,12 @@ def batch_load_docs(db, doc_iterator):
         if counter % batch_size == 0:
             log.debug(f'Bulk import arangodb: {counter}')
             for cname in docs:
-                collections[cname].import_bulk(docs[cname], on_duplicate='replace')
+                collections[cname].import_bulk(docs[cname], on_duplicate=on_duplicate)
                 docs[cname] = []
 
     log.debug(f'Bulk import arangodb: {counter}')
     for cname in docs:
-        collections[cname].import_bulk(docs[cname], on_duplicate='replace')
+        collections[cname].import_bulk(docs[cname], on_duplicate=on_duplicate)
         docs[cname] = []
 
 
@@ -229,5 +232,8 @@ def arango_id_to_key(_id):
     key = re.sub("[^a-zA-Z0-9\_\-\:\.\@\(\)\+\,\=\;\$\!\*\'\%]+", '_', _id)
     if len(key) > 254:
         log.error(f'Arango _key cannot be longer than 254 chars: Len={len(key)}  Key: {key}')
+    elif len(key) < 1:
+        log.error(f'Arango _key cannot be an empty string: Len={len(key)}  Key: {key}')
+
     return key
 

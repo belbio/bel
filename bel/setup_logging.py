@@ -21,26 +21,29 @@ logging.config.dictConfig({
     'loggers': {
         '': {
             'handlers': ['json'],
-            'level': "INFO"
+            'level': "INFO",
         },
         "bel": {
-            "level": "INFO"
+            "level": "INFO",
+        },
+        "belapi": {
+            "level": "INFO",
         },
         "requests": {
             "level": "DEBUG",
         },
         "elasticsearch": {
-            "level": "WARNING"
+            "level": "WARNING",
         },
         "falcon_cors": {
             "level": "WARNING",
             'formatter': 'json',
         },
         "urllib3": {
-            "level": "CRITICAL"
+            "level": "CRITICAL",
         },
         "timy": {
-            "level": "ERROR"
+            "level": "ERROR",
         },
     }
 })

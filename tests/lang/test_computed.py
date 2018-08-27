@@ -5,6 +5,29 @@ bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['b
 
 # TODO Update these tests
 
+
+def test_activity():
+
+    statement = 'act(complex(NCH:"ENaC Complex"), ma(GOMF:"transporter activity"))'
+    expected_edges = ['NCH:"ENaC Complex" componentOf complex(NCH:"ENaC Complex")',
+                      'GOMF:"transporter activity" componentOf ma(GOMF:"transporter activity")',
+                      'complex(NCH:"ENaC Complex") componentOf {}'.format(statement),
+                      'ma(GOMF:"transporter activity") componentOf {}'.format(statement)
+                      ]
+
+    actual_edges = bo.parse(statement).compute_edges()
+    actual_edges = []
+
+    for each in actual_edges_partials:
+        s = each.get('subject', '')
+        r = each.get('relation', '')
+        o = each.get('object', '')
+
+        actual_edges.append('{} {} {}'.format(s, r, o))
+
+    assert set(expected_edges) == set(actual_edges)
+
+
 # def test_abundance():
 
 #     statement = 'abundance(CHEBI:corticosteroid) decreases bp(MESHD:Inflammation)'
@@ -186,28 +209,6 @@ bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['b
 #     statement = 'pathology(MESH:Psoriasis) isA pathology(MESH:"Skin Diseases")'
 #     expected_edges = ['MESH:Psoriasis componentOf path(MESH:Psoriasis)',
 #                       'MESH:"Skin Diseases" componentOf path(MESH:"Skin Diseases")'
-#                       ]
-
-#     actual_edges_partials = bo.parse(statement).compute_edges()
-#     actual_edges = []
-
-#     for each in actual_edges_partials:
-#         s = each.get('subject', '')
-#         r = each.get('relation', '')
-#         o = each.get('object', '')
-
-#         actual_edges.append('{} {} {}'.format(s, r, o))
-
-#     assert set(expected_edges) == set(actual_edges)
-
-
-# def test_act():
-
-#     statement = 'act(complex(NCH:"ENaC Complex"), ma(GOMF:"transporter activity"))'
-#     expected_edges = ['NCH:"ENaC Complex" componentOf complex(NCH:"ENaC Complex")',
-#                       'GOMF:"transporter activity" componentOf ma(GOMF:"transporter activity")',
-#                       'complex(NCH:"ENaC Complex") componentOf {}'.format(statement),
-#                       'ma(GOMF:"transporter activity") componentOf {}'.format(statement)
 #                       ]
 
 #     actual_edges_partials = bo.parse(statement).compute_edges()

@@ -59,37 +59,44 @@ def get_nanopubstore_start_dt(url: str):
     return '1900-01-01T00:00:00.000Z'
 
 
-def get_new_nanopub_urls(ns_root_url: str = None, start_dt: str = None) -> list:
-    """Get new nanopub urls
+def get_nanopub_urls(ns_root_url: str = None, start_dt: str = None) -> dict:
+    """Get modified and deleted nanopub urls
 
-    Limited by last datetime retrieved (start_dt)
+    Limited by last datetime retrieved (start_dt).  Modified includes new and updated nanopubs
 
     Returns:
-        list: list of nanopub urls
+        dict: {'modified': [], 'deleted': []}
     """
     if not ns_root_url:
         ns_root_url = config['bel_api']['servers']['nanopubstore']
 
     url = f'{ns_root_url}/nanopubs/timed'
+
     if not start_dt:
         start_dt = get_nanopubstore_start_dt(ns_root_url)
+
     params = {'startTime': start_dt, 'published': True}
 
     r = bel.utils.get_url(url, params=params, cache=False)
-
     if r.status_code == 200:
         data = r.json()
-
         new_start_dt = data['queryTime']
         update_nanopubstore_start_dt(ns_root_url, new_start_dt)
-        urls = []
+        nanopub_urls = {'modified': [], 'deleted': []}
+
+        # Deleted nanopubs
+        for nid in data['deleteddata']:
+            nanopub_urls['deleted'].append(f'{ns_root_url}/nanopubs/{nid}')
+
+        # Modified nanopubs
         for nid in data['data']:
-            urls.append(f'{ns_root_url}/nanopubs/{nid}')
-        return urls
+            nanopub_urls['modified'].append(f'{ns_root_url}/nanopubs/{nid}')
+
+        return nanopub_urls
 
     else:
         log.error(f'Bad request to Nanopubstore', url=url, status=r.status_code, type='api_request')
-        return []
+        return {}
 
 
 def get_nanopub(url):

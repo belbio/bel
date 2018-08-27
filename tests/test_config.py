@@ -4,7 +4,7 @@ import bel.Config as Config
 def test_config():
 
     config = Config.load_configuration()
-    assert config['bel']['version'] >= '0.5.0'
+    assert config['bel']['version'] >= '0.10.0'
 
 
 def test_merge_config():
