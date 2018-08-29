@@ -144,7 +144,7 @@ def get_bel_versions() -> List[str]:
     return versions
 
 
-def update_specifications():
+def update_specifications(force: bool = False):
     """Update BEL specifications
 
     Collect BEL specifications from Github BELBio BEL Specification folder
@@ -162,7 +162,7 @@ def update_specifications():
 
     # Collect new specifications from Git repository
     if config['bel']['lang']['specification_github_repo']:
-        github_belspec_files(spec_dir)
+        github_belspec_files(spec_dir, force=force)
 
     # Ensure that files use 'yaml' extension
     files = glob.glob(f'{spec_dir}/*.yml')
@@ -193,12 +193,26 @@ def update_specifications():
     create_ebnf_parser(files)
 
 
-def github_belspec_files(spec_dir):
+def github_belspec_files(spec_dir, force: bool = False):
     """Get belspec files from Github repo
 
         Repo:  https://github.com/belbio/bel_specifications/tree/master/specifications
 
+    Args:
+        spec_dir: directory to store the BEL Specification and derived files
+        force: force update of BEL Specifications from Github - skipped if local files less than 1 day old
     """
+
+    if not force:
+        dtnow = datetime.datetime.utcnow()
+        delta = datetime.timedelta(1)
+        yesterday = dtnow - delta
+
+        for fn in glob.glob(f'{spec_dir}/bel*yaml'):
+            if datetime.datetime.fromtimestamp(os.path.getmtime(fn)) > yesterday:
+                log.info('Skipping BEL Specification update - specs less than 1 day old')
+                return
+
     repo_url = 'https://api.github.com/repos/belbio/bel_specifications/contents/specifications'
     params = {}
     github_access_token = os.getenv('GITHUB_ACCESS_TOKEN', '')
