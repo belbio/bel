@@ -42,8 +42,14 @@ def load_terms(fo: IO, metadata: dict):
         index_name = f"terms_{index_prefix}_{es_version}"
 
         # Create index with mapping
-        if not elasticsearch.index_exists(es, index_name):
-            elasticsearch.create_terms_index(es, index_name)
+        for idx in range(0, 10):
+            if not elasticsearch.index_exists(es, f'{index_name}_{idx}'):
+                index_name = f'{index_name}_{idx}'
+                break
+
+        log.info(f'Creating Elasticsearch index {index_name}')
+
+        elasticsearch.create_terms_index(es, index_name)
 
         terms_iterator = terms_iterator_for_elasticsearch(fo, index_name)
         elasticsearch.bulk_load_docs(es, terms_iterator)
