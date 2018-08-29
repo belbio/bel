@@ -18,12 +18,10 @@ from bel.utils import get_url, url_path_param_quoting
 import bel.lang.partialparse as pparse
 import bel.lang.bel_specification as bel_specification
 
-import logging
-import logging.config
-
 from bel.Config import config
 
-log = logging.getLogger(__name__)
+from structlog import get_logger
+log = get_logger()
 
 default_bel_version = config['bel']['lang']['default_bel_version']
 
