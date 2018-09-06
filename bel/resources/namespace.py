@@ -23,12 +23,17 @@ log = get_logger()
 terms_alias = 'terms'
 
 
-def load_terms(fo: IO, metadata: dict):
+def load_terms(fo: IO, metadata: dict, forceupdate: bool):
     """Load terms into Elasticsearch and ArangoDB
+
+    Forceupdate will create a new index in Elasticsearch regardless of whether
+    an index with the resource version already exists.
 
     Args:
         fo: file obj - terminology file
         metadata: dict containing the metadata for terminology
+        forceupdate: force full update - e.g. don't leave Elasticsearch indexes
+            alone if their version ID matches
     """
 
     version = metadata['metadata']['version']
@@ -38,18 +43,17 @@ def load_terms(fo: IO, metadata: dict):
         es = bel.db.elasticsearch.get_client()
 
         es_version = version.replace('T', '').replace('-', '').replace(':', '')
-        index_prefix = metadata['metadata']['namespace'].lower()
-        index_name = f"terms_{index_prefix}_{es_version}"
+        index_prefix = f"terms_{metadata['metadata']['namespace'].lower()}"
+        index_name = f"{index_prefix}_{es_version}"
 
         # Create index with mapping
-        for idx in range(0, 10):
-            if not elasticsearch.index_exists(es, f'{index_name}_{idx}'):
-                index_name = f'{index_name}_{idx}'
-                break
-
-        log.info(f'Creating Elasticsearch index {index_name}')
-
-        elasticsearch.create_terms_index(es, index_name)
+        if not elasticsearch.index_exists(es, index_name):
+            elasticsearch.create_terms_index(es, index_name)
+        elif forceupdate:  # force an update to the index
+            index_name += '_alt'
+            elasticsearch.create_terms_index(es, index_name)
+        else:
+            return  # Skip loading if not forced and not a new namespace
 
         terms_iterator = terms_iterator_for_elasticsearch(fo, index_name)
         elasticsearch.bulk_load_docs(es, terms_iterator)
@@ -69,10 +73,7 @@ def load_terms(fo: IO, metadata: dict):
     with timy.Timer('Load Term Equivalences') as timer:
         arango_client = arangodb.get_client()
         belns_db = arangodb.get_belns_handle(arango_client)
-        try:
-            arangodb.batch_load_docs(belns_db, terms_iterator_for_arangodb(fo, version), on_duplicate='update')
-        except Exception as e:
-            log.error(e, exc_info=True)
+        arangodb.batch_load_docs(belns_db, terms_iterator_for_arangodb(fo, version))
 
         # TODO - delete old equivalences based on namespace and version
         # delete resources matching namespace and NOT current version
@@ -105,21 +106,19 @@ def terms_iterator_for_arangodb(fo, version):
             if species_list and species_id and species_id not in species_list:
                 continue
 
-            source = term['namespace']
-            term_id = term['id']
-            term_key = arangodb.arango_id_to_key(term_id)
-
-            (ns, val) = term_id.split(':', maxsplit=1)
-
             if 'equivalences' in term:
+                source = term['namespace']
+                term_id = term['id']
+                term_key = arangodb.arango_id_to_key(term_id)
 
-                yield (arangodb.equiv_nodes_name, {'_key': term_key, 'name': term_id, 'namespace': ns, 'source': source, 'primary': True, 'version': version})
+                (ns, val) = term_id.split(':', maxsplit=1)
+
+                yield (arangodb.equiv_nodes_name, {'_key': term_key, 'name': term_id, 'namespace': ns, 'source': source, 'version': version})
 
                 for eqv in term['equivalences']:
                     (ns, val) = eqv.split(':', maxsplit=1)
                     eqv_key = arangodb.arango_id_to_key(eqv)
 
-                    # Primary indicates the source
                     yield (arangodb.equiv_nodes_name, {'_key': eqv_key, 'name': eqv, 'namespace': ns, 'source': source, 'version': version})
 
                     arango_edge = {
@@ -131,25 +130,6 @@ def terms_iterator_for_arangodb(fo, version):
                         'version': version,
                     }
                     yield (arangodb.equiv_edges_name, arango_edge)
-
-                for eqv in term['alt_ids']:
-                    (ns, val) = eqv.split(':', maxsplit=1)
-                    eqv_key = arangodb.arango_id_to_key(eqv)
-
-                    yield (arangodb.equiv_nodes_name, {'_key': eqv_key, 'name': eqv, 'namespace': ns, 'source': source, 'version': version})
-
-                    arango_edge = {
-                        '_from': f"{arangodb.equiv_nodes_name}/{term_key}",
-                        '_to': f"{arangodb.equiv_nodes_name}/{eqv_key}",
-                        '_key': bel.utils._create_hash(f'{term_key}>>{eqv_key}'),
-                        'type': 'equivalent_to',
-                        'source': source,
-                        'version': version,
-                    }
-                    yield (arangodb.equiv_edges_name, arango_edge)
-
-            else:  # Add primary ID to nodes in equivalents - otherwise it won't have a primary: true (EG has no equivalents)
-                yield (arangodb.equiv_nodes_name, {'_key': term_key, 'name': term_id, 'namespace': ns, 'source': source, 'primary': True, 'version': version})
 
 
 def terms_iterator_for_elasticsearch(fo: IO, index_name: str):
@@ -171,6 +151,13 @@ def terms_iterator_for_elasticsearch(fo: IO, index_name: str):
             if species_list and species_id and species_id not in species_list:
                 continue
 
+            all_term_ids = set()
+            for term_id in [term['id']] + term.get('alt_ids', []):
+                all_term_ids.add(term_id)
+                all_term_ids.add(lowercase_term_id(term_id))
+
+            term['alt_ids'] = copy.copy(list(all_term_ids))
+
             yield {
                 '_op_type': 'index',
                 '_index': index_name,
@@ -189,9 +176,7 @@ def lowercase_term_id(term_id: str) -> str:
     Returns:
         str: lowercased, e.g. MESH:atherosclerosis
     """
-    try:
-        (ns, val) = term_id.split(':', maxsplit=1)
-        term_id = f'{ns}:{val.lower()}'
-        return term_id
-    except Exception:
-        return term_id
+    (ns, val) = term_id.split(':', maxsplit=1)
+    term_id = f'{ns}:{val.lower()}'
+
+    return term_id
