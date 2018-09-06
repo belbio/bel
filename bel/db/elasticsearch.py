@@ -9,8 +9,8 @@ import logging
 log = logging.getLogger(__name__)
 
 cur_dir_name = os.path.dirname(os.path.realpath(__file__))
-mapping_terms_fn = f'{cur_dir_name}/es_mapping_terms.yml'
-
+mappings_terms_fn = f'{cur_dir_name}/es_mappings_terms.yml'
+settings_terms_fn = f'{cur_dir_name}/es_settings_terms.yml'
 terms_alias = 'terms'
 
 
@@ -51,11 +51,19 @@ def delete_index(es, index_name: str):
 def create_terms_index(es, index_name: str):
     """Create terms index"""
 
-    with open(mapping_terms_fn, 'r') as f:
-        mapping_terms = yaml.load(f)
+    with open(mappings_terms_fn, 'r') as f:
+        mappings_terms = yaml.load(f)
+
+    with open(settings_terms_fn, 'r') as f:
+        settings_terms = yaml.load(f)
 
     try:
-        es.indices.create(index=index_name, body=mapping_terms)
+        es.indices.create(index=index_name, body=mappings_terms)
+
+        # Update settings - have to close before and then open after
+        es.indices.close(index=index_name)
+        es.indices.put_settings(index=index_name, body=settings_terms)
+        es.indices.open(index=index_name)
 
     except Exception as e:
         log.error(f'Could not create elasticsearch terms index: {e}')

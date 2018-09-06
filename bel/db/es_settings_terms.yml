@@ -1,0 +1,33 @@
+settings:
+  analysis:
+    filter:
+      autocomplete_filter:
+          type: edge_ngram
+          min_gram: 1
+          max_gram: 20
+    analyzer:
+      autocomplete:
+        type: custom
+        tokenizer: autocomplete_tokenizer
+        filter:
+          - lowercase
+          - autocomplete_filter
+      autocomplete_search:
+        type: custom
+        tokenizer: autocomplete_tokenizer
+        filter:
+          - lowercase
+
+    # Added simple pattern split to allow SP:H4_HUMAN in alt_ids to be matched
+    # This will also allow IL-6 to be completed against.  The standard tokenizer/analyzer
+    # broke it into IL and 6
+    tokenizer:
+      autocomplete_tokenizer:
+        type: simple_pattern_split
+        pattern: " |:"
+    normalizer:
+      lowercase:
+        type: custom
+        char_filter: []
+        filter:
+          - lowercase
