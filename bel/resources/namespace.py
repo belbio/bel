@@ -75,10 +75,21 @@ def load_terms(fo: IO, metadata: dict, forceupdate: bool):
         belns_db = arangodb.get_belns_handle(arango_client)
         arangodb.batch_load_docs(belns_db, terms_iterator_for_arangodb(fo, version))
 
-        # TODO - delete old equivalences based on namespace and version
-        # delete resources matching namespace and NOT current version
+        log.info('Loaded namespace equivalences', elapsed=timer.elapsed, namespace=metadata['metadata']['namespace'])
 
-        log.info('Load namespace equivalences', elapsed=timer.elapsed, namespace=metadata['metadata']['namespace'])
+        # Clean up old entries
+        remove_old_equivalence_edges = f'''
+            FOR edge in equivalence_edges
+                FILTER edge.source == "{metadata["metadata"]["namespace"]}" AND edge.version != "{version}"
+                REMOVE edge IN equivalence_edges
+        '''
+        remove_old_equivalence_nodes = f'''
+            FOR node in equivalence_nodes
+                FILTER node.source == "{metadata["metadata"]["namespace"]}" AND node.version != "{version}"
+                REMOVE node IN equivalence_nodes
+        '''
+        arangodb.aql_query(belns_db, remove_old_equivalence_edges)
+        arangodb.aql_query(belns_db, remove_old_equivalence_nodes)
 
     # Add metadata to resource metadata collection
     metadata['_key'] = f"Namespace_{metadata['metadata']['namespace']}"
@@ -113,8 +124,23 @@ def terms_iterator_for_arangodb(fo, version):
 
                 (ns, val) = term_id.split(':', maxsplit=1)
 
-                yield (arangodb.equiv_nodes_name, {'_key': term_key, 'name': term_id, 'namespace': ns, 'source': source, 'version': version})
+                yield (arangodb.equiv_nodes_name, {'_key': term_key, 'name': term_id, 'primary': True, 'namespace': ns, 'source': source, 'version': version})
 
+                # Create Alt ID equivalences (to support other database equivalences using non-preferred Namespace IDs)
+                for alt_id in term['alt_ids']:
+                    alt_id_key = arangodb.arango_id_to_key(alt_id)
+                    yield (arangodb.equiv_nodes_name, {'_key': alt_id_key, 'name': alt_id, 'namespace': ns, 'source': source, 'version': version})
+
+                    arango_edge = {
+                        '_from': f"{arangodb.equiv_nodes_name}/{term_key}",
+                        '_to': f"{arangodb.equiv_nodes_name}/{alt_id_key}",
+                        '_key': bel.utils._create_hash(f'{term_id}>>{alt_id}'),
+                        'type': 'equivalent_to',
+                        'source': source,
+                        'version': version,
+                    }
+
+                # Cross-DB equivalences
                 for eqv in term['equivalences']:
                     (ns, val) = eqv.split(':', maxsplit=1)
                     eqv_key = arangodb.arango_id_to_key(eqv)
@@ -124,7 +150,7 @@ def terms_iterator_for_arangodb(fo, version):
                     arango_edge = {
                         '_from': f"{arangodb.equiv_nodes_name}/{term_key}",
                         '_to': f"{arangodb.equiv_nodes_name}/{eqv_key}",
-                        '_key': bel.utils._create_hash(f'{term_key}>>{eqv_key}'),
+                        '_key': bel.utils._create_hash(f'{term_id}>>{eqv}'),
                         'type': 'equivalent_to',
                         'source': source,
                         'version': version,

@@ -31,9 +31,21 @@ def load_orthologs(fo: IO, metadata: dict):
         belns_db = arangodb.get_belns_handle(arango_client)
         arangodb.batch_load_docs(belns_db, orthologs_iterator(fo, version))
 
-        # TODO - delete old orthologs based on source and version
-
         log.info('Load orthologs', elapsed=timer.elapsed, source=metadata['metadata']['source'])
+
+        # Clean up old entries
+        remove_old_ortholog_edges = f'''
+            FOR edge in ortholog_edges
+                FILTER edge.source == "{metadata["metadata"]["source"]}" AND edge.version != "{version}"
+                REMOVE edge IN ortholog_edges
+        '''
+        remove_old_ortholog_nodes = f'''
+            FOR node in ortholog_nodes
+                FILTER node.source == "{metadata["metadata"]["source"]}" AND node.version != "{version}"
+                REMOVE node IN ortholog_nodes
+        '''
+        arangodb.aql_query(belns_db, remove_old_ortholog_edges)
+        arangodb.aql_query(belns_db, remove_old_ortholog_nodes)
 
     # Add metadata to resource metadata collection
     metadata['_key'] = f"Orthologs_{metadata['metadata']['source']}"
@@ -83,7 +95,7 @@ def orthologs_iterator(fo, version):
                 arango_edge = {
                     '_from': f"{arangodb.ortholog_nodes_name}/{subj_key}",
                     '_to': f"{arangodb.ortholog_nodes_name}/{obj_key}",
-                    '_key': bel.utils._create_hash(f'{subj_key}>>{obj_key}'),
+                    '_key': bel.utils._create_hash(f'{subj_id}>>{obj_id}'),
                     'type': 'ortholog_to',
                     'source': source,
                     'version': version,
