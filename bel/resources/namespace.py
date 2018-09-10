@@ -117,45 +117,45 @@ def terms_iterator_for_arangodb(fo, version):
             if species_list and species_id and species_id not in species_list:
                 continue
 
-            if 'equivalences' in term:
-                source = term['namespace']
-                term_id = term['id']
-                term_key = arangodb.arango_id_to_key(term_id)
+            source = term['namespace']
+            term_id = term['id']
+            term_key = arangodb.arango_id_to_key(term_id)
 
-                (ns, val) = term_id.split(':', maxsplit=1)
+            (ns, val) = term_id.split(':', maxsplit=1)
 
-                yield (arangodb.equiv_nodes_name, {'_key': term_key, 'name': term_id, 'primary': True, 'namespace': ns, 'source': source, 'version': version})
+            # Add primary ID node
+            yield (arangodb.equiv_nodes_name, {'_key': term_key, 'name': term_id, 'primary': True, 'namespace': ns, 'source': source, 'version': version})
 
-                # Create Alt ID equivalences (to support other database equivalences using non-preferred Namespace IDs)
-                for alt_id in term['alt_ids']:
-                    alt_id_key = arangodb.arango_id_to_key(alt_id)
-                    yield (arangodb.equiv_nodes_name, {'_key': alt_id_key, 'name': alt_id, 'namespace': ns, 'source': source, 'version': version})
+            # Create Alt ID nodes/equivalences (to support other database equivalences using non-preferred Namespace IDs)
+            for alt_id in term['alt_ids']:
+                alt_id_key = arangodb.arango_id_to_key(alt_id)
+                yield (arangodb.equiv_nodes_name, {'_key': alt_id_key, 'name': alt_id, 'namespace': ns, 'source': source, 'version': version})
 
-                    arango_edge = {
-                        '_from': f"{arangodb.equiv_nodes_name}/{term_key}",
-                        '_to': f"{arangodb.equiv_nodes_name}/{alt_id_key}",
-                        '_key': bel.utils._create_hash(f'{term_id}>>{alt_id}'),
-                        'type': 'equivalent_to',
-                        'source': source,
-                        'version': version,
-                    }
+                arango_edge = {
+                    '_from': f"{arangodb.equiv_nodes_name}/{term_key}",
+                    '_to': f"{arangodb.equiv_nodes_name}/{alt_id_key}",
+                    '_key': bel.utils._create_hash(f'{term_id}>>{alt_id}'),
+                    'type': 'equivalent_to',
+                    'source': source,
+                    'version': version,
+                }
 
-                # Cross-DB equivalences
-                for eqv in term['equivalences']:
-                    (ns, val) = eqv.split(':', maxsplit=1)
-                    eqv_key = arangodb.arango_id_to_key(eqv)
+            # Cross-DB equivalences
+            for eqv in term['equivalences']:
+                (ns, val) = eqv.split(':', maxsplit=1)
+                eqv_key = arangodb.arango_id_to_key(eqv)
 
-                    yield (arangodb.equiv_nodes_name, {'_key': eqv_key, 'name': eqv, 'namespace': ns, 'source': source, 'version': version})
+                yield (arangodb.equiv_nodes_name, {'_key': eqv_key, 'name': eqv, 'namespace': ns, 'source': source, 'version': version})
 
-                    arango_edge = {
-                        '_from': f"{arangodb.equiv_nodes_name}/{term_key}",
-                        '_to': f"{arangodb.equiv_nodes_name}/{eqv_key}",
-                        '_key': bel.utils._create_hash(f'{term_id}>>{eqv}'),
-                        'type': 'equivalent_to',
-                        'source': source,
-                        'version': version,
-                    }
-                    yield (arangodb.equiv_edges_name, arango_edge)
+                arango_edge = {
+                    '_from': f"{arangodb.equiv_nodes_name}/{term_key}",
+                    '_to': f"{arangodb.equiv_nodes_name}/{eqv_key}",
+                    '_key': bel.utils._create_hash(f'{term_id}>>{eqv}'),
+                    'type': 'equivalent_to',
+                    'source': source,
+                    'version': version,
+                }
+                yield (arangodb.equiv_edges_name, arango_edge)
 
 
 def terms_iterator_for_elasticsearch(fo: IO, index_name: str):
