@@ -29,19 +29,21 @@ def load_orthologs(fo: IO, metadata: dict):
     with timy.Timer('Load Orthologs') as timer:
         arango_client = arangodb.get_client()
         belns_db = arangodb.get_belns_handle(arango_client)
-        arangodb.batch_load_docs(belns_db, orthologs_iterator(fo, version))
+        arangodb.batch_load_docs(belns_db, orthologs_iterator(fo, version), on_duplicate='update')
 
         log.info('Load orthologs', elapsed=timer.elapsed, source=metadata['metadata']['source'])
 
         # Clean up old entries
         remove_old_ortholog_edges = f'''
             FOR edge in ortholog_edges
-                FILTER edge.source == "{metadata["metadata"]["source"]}" AND edge.version != "{version}"
+                FILTER edge.source != "{metadata["metadata"]["source"]}"
+                FILTER edge.version == "{version}"
                 REMOVE edge IN ortholog_edges
         '''
         remove_old_ortholog_nodes = f'''
             FOR node in ortholog_nodes
-                FILTER node.source == "{metadata["metadata"]["source"]}" AND node.version != "{version}"
+                FILTER node.source != "{metadata["metadata"]["source"]}"
+                FILTER node.version == "{version}"
                 REMOVE node IN ortholog_nodes
         '''
         arangodb.aql_query(belns_db, remove_old_ortholog_edges)

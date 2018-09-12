@@ -208,12 +208,12 @@ def batch_load_docs(db, doc_iterator, on_duplicate='replace'):
         docs[collection_name].append(doc)
 
         if counter % batch_size == 0:
-            log.debug(f'Bulk import arangodb: {counter}')
+            log.info(f'Bulk import arangodb: {counter}')
             for cname in docs:
                 collections[cname].import_bulk(docs[cname], on_duplicate=on_duplicate, halt_on_error=False)
                 docs[cname] = []
 
-    log.debug(f'Bulk import arangodb: {counter}')
+    log.info(f'Bulk import arangodb: {counter}')
     for cname in docs:
         collections[cname].import_bulk(docs[cname], on_duplicate=on_duplicate, halt_on_error=False)
         docs[cname] = []
