@@ -80,14 +80,14 @@ def load_terms(fo: IO, metadata: dict, forceupdate: bool):
         # Clean up old entries
         remove_old_equivalence_edges = f'''
             FOR edge in equivalence_edges
-                FILTER edge.source != "{metadata["metadata"]["namespace"]}"
-                FILTER edge.version == "{version}"
+                FILTER edge.source == "{metadata["metadata"]["namespace"]}"
+                FILTER edge.version != "{version}"
                 REMOVE edge IN equivalence_edges
         '''
         remove_old_equivalence_nodes = f'''
             FOR node in equivalence_nodes
-                FILTER node.source != "{metadata["metadata"]["namespace"]}"
-                FILTER node.version == "{version}"
+                FILTER node.source == "{metadata["metadata"]["namespace"]}"
+                FILTER node.version != "{version}"
                 REMOVE node IN equivalence_nodes
         '''
         arangodb.aql_query(belns_db, remove_old_equivalence_edges)

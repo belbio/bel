@@ -36,14 +36,14 @@ def load_orthologs(fo: IO, metadata: dict):
         # Clean up old entries
         remove_old_ortholog_edges = f'''
             FOR edge in ortholog_edges
-                FILTER edge.source != "{metadata["metadata"]["source"]}"
-                FILTER edge.version == "{version}"
+                FILTER edge.source == "{metadata["metadata"]["source"]}"
+                FILTER edge.version != "{version}"
                 REMOVE edge IN ortholog_edges
         '''
         remove_old_ortholog_nodes = f'''
             FOR node in ortholog_nodes
-                FILTER node.source != "{metadata["metadata"]["source"]}"
-                FILTER node.version == "{version}"
+                FILTER node.source == "{metadata["metadata"]["source"]}"
+                FILTER node.version != "{version}"
                 REMOVE node IN ortholog_nodes
         '''
         arangodb.aql_query(belns_db, remove_old_ortholog_edges)
