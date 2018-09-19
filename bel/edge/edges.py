@@ -51,7 +51,7 @@ def save_nanopub_to_edgestore(nanopub_url: str, nanopub: dict = {}, rules: List[
             return {"msg": "Could not process nanopub into edge", "success": False}
 
     except Exception as e:
-        return {"msg": f"Could not process nanopub: {nanopub_url}", "success": False}
+        return {"msg": f"Could not process nanopub: {nanopub_url}", "success": False, "error": e}
 
 
 def process_nanopub(nanopub_url: str = '', nanopub: dict = {}, rules: List[str] = [], orthologize_targets: list = []):
