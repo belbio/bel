@@ -33,22 +33,25 @@ arango_client = arangodb.get_client()
 edgestore_db = arangodb.get_edgestore_handle(arango_client)
 
 
-def save_nanopub_to_edgestore(nanopub_url: str, rules: List[str] = [], orthologize_targets: list = []):
+def save_nanopub_to_edgestore(nanopub_url: str, nanopub: dict = {}, rules: List[str] = [], orthologize_targets: list = []):
     """Save nanopub created edges into edgestore"""
 
     try:
-        edges = process_nanopub(nanopub_url=nanopub_url, rules=rules, orthologize_targets=orthologize_targets)
+        results = process_nanopub(nanopub_url=nanopub_url, nanopub=nanopub, rules=rules, orthologize_targets=orthologize_targets)
 
         # start_time = datetime.datetime.now()
         # arango_client = arangodb.get_client()
         # edgestore_db = arangodb.get_edgestore_handle(arango_client)
         # conn_time = utils.timespan(start_time)
         # log.info('Time to get db connection', delta_get_db_conn=conn_time)
-        load_edges_into_db(edgestore_db, edges)
+        if results['success']:
+            load_edges_into_db(edgestore_db, results['edges'])
+            return {"msg": f"Loaded {len(results['edges'])} edges into edgestore", "success": True}
+        else:
+            return {"msg": "Could not process nanopub into edge", "success": False}
 
     except Exception as e:
-        pass
-        # TODO load failures into Database for later review
+        return {"msg": f"Could not process nanopub: {nanopub_url}", "success": False}
 
 
 def process_nanopub(nanopub_url: str = '', nanopub: dict = {}, rules: List[str] = [], orthologize_targets: list = []):
@@ -57,12 +60,10 @@ def process_nanopub(nanopub_url: str = '', nanopub: dict = {}, rules: List[str] 
     """
 
     if not nanopub_url and not nanopub:
-        return []
-    elif nanopub_url:
+        return {'edges': [], "success": False}
+    elif nanopub_url and not nanopub:
         nanopub = nanopubstore.get_nanopub(nanopub_url)
         nanopub['source_url'] = nanopub_url
-    elif nanopub:
-        nanopub['source_url'] = ''
 
     try:
         start_time = datetime.datetime.now()
@@ -91,11 +92,11 @@ def process_nanopub(nanopub_url: str = '', nanopub: dict = {}, rules: List[str] 
 
         log.info('Timings', delta_get_np=f'{delta_get_np.total_seconds() * 1000}ms', delta_get_edges=f'{delta_get_edges.total_seconds() * 1000}ms')
 
-        return edges
+        return {"edges": edges, "nanopub_url": nanopub_url, "success": True}
 
     except Exception as e:
         log.error(f'Failed converting nanopub into edges NanopubUrl: {nanopub["source_url"]}', exc_info=True)
-        # TODO load failures into Database for later review
+        return {"edges": edges, "nanopub_url": nanopub_url, "success": False}
 
 
 def create_edges(nanopub: Mapping[str, Any], api_url: str, citation: str, rules: List[str] = [], orthologize_target: str = []) -> Edges:
