@@ -57,12 +57,15 @@ def save_nanopub_to_edgestore(nanopub_url: str, nanopub: dict = {}, rules: List[
 def process_nanopub(nanopub_url: str = '', nanopub: dict = {}, rules: List[str] = [], orthologize_targets: list = []):
     """Process nanopub into edges and load into EdgeStore
 
+    Preferentially use nanopub for processing if provided over nanopub_url
     """
 
     if not nanopub_url and not nanopub:
         return {'edges': [], "success": False}
     elif nanopub_url and not nanopub:
         nanopub = nanopubstore.get_nanopub(nanopub_url)
+        nanopub['source_url'] = nanopub_url
+    else:
         nanopub['source_url'] = nanopub_url
 
     try:
@@ -96,7 +99,7 @@ def process_nanopub(nanopub_url: str = '', nanopub: dict = {}, rules: List[str] 
 
     except Exception as e:
         log.error(f'Failed converting nanopub into edges NanopubUrl: {nanopub["source_url"]}', exc_info=True)
-        return {"edges": edges, "nanopub_url": nanopub_url, "success": False}
+        return {"edges": edges, "nanopub_url": nanopub_url, "success": False, "error": e}
 
 
 def create_edges(nanopub: Mapping[str, Any], api_url: str, citation: str, rules: List[str] = [], orthologize_target: str = []) -> Edges:
