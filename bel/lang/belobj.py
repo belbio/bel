@@ -78,6 +78,7 @@ class BEL(object):
         # use importlib to import our parser (a .py file) and set the BELParse object as an instance variable
         try:
             parser_fn = self.spec['admin']['parser_fn']
+
             parser_name = os.path.basename(parser_fn).replace('.py', '')
             module_spec = importlib.util.spec_from_file_location(parser_name, parser_fn)
             imported_parser = importlib.util.module_from_spec(module_spec)

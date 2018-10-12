@@ -59,7 +59,7 @@ def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = T
 
         timespan = datetime.datetime.now() - start
         timespan_ms = timespan.total_seconds() * 1000  # converted to milliseconds
-        log.info(f'GET url success', cache_allowed=cache, timespan_ms=timespan_ms, url=url, params=params)
+        # log.debug(f'GET url success', cache_allowed=cache, timespan_ms=timespan_ms, url=url, params=params)
 
         return r
 
@@ -87,7 +87,7 @@ def download_file(url):
         if chunk:  # filter out keep-alive new chunks
             fp.write(chunk)
 
-    log.info(f'Download file - tmp file: {fp.name}  size: {fp.tell()}')
+    # log.info(f'Download file - tmp file: {fp.name}  size: {fp.tell()}')
     return fp
 
 
