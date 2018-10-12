@@ -22,8 +22,8 @@ import requests
 from cachecontrol import CacheControl
 from cachecontrol.heuristics import ExpiresAfter
 
-import logging
-log = logging.getLogger(__name__)
+from structlog import get_logger
+log = get_logger()
 
 # Caches Requests Library GET requests -
 reqsess = CacheControl(requests.Session(), heuristic=ExpiresAfter(days=1))
@@ -43,6 +43,8 @@ def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = T
         Requests Result obj or None if timed out
     """
 
+    start = datetime.datetime.now()
+
     if cache:
         req_obj = reqsess
     else:
@@ -58,13 +60,25 @@ def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = T
         else:
             r = req_obj.get(url, timeout=timeout)
 
-        log.info('Successful get_url')
+        timespan = datetime.datetime.now() - start
+        timespan_ms = timespan.total_seconds() * 1000  # converted to milliseconds
+        # log.debug(f'GET url success', cache_allowed=cache, timespan_ms=timespan_ms, url=url, params=params)
 
         return r
 
     except requests.exceptions.Timeout:
-        log.info(f'Timed out getting url in get_url: {url}')
+        log.warn(f'Timed out getting url in get_url: {url}')
         return None
+    except Exception as e:
+        log.warn(f'Error getting url: {url}  error: {e}')
+
+
+def timespan(start_time):
+    """Return time in milliseconds from start_time"""
+
+    timespan = datetime.datetime.now() - start_time
+    timespan_ms = timespan.total_seconds() * 1000
+    return timespan_ms
 
 
 def download_file(url):
@@ -76,7 +90,7 @@ def download_file(url):
         if chunk:  # filter out keep-alive new chunks
             fp.write(chunk)
 
-    log.info(f'Download file - tmp file: {fp.name}  size: {fp.tell()}')
+    # log.info(f'Download file - tmp file: {fp.name}  size: {fp.tell()}')
     return fp
 
 

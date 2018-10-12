@@ -241,7 +241,6 @@ def validate_arg_values(ast, bo):
             request_url = bo.api_url + '/terms/{}'.format(url_path_param_quoting(term_id))
             log.info(f'Validate Arg Values url {request_url}')
             r = get_url(request_url)
-
             if r and r.status_code == 200:
                 result = r.json()
                 # function signature term value_types doesn't match up with API term entity_types
@@ -254,13 +253,8 @@ def validate_arg_values(ast, bo):
                 # Term is valid
                 else:
                     log.debug('Valid Term: {}'.format(term_id))
-            elif r and r.status_code == 404:
-                msg = r.json()
-                if msg.get('title', None) == 'No Term':
-                    log.debug(f"No term found for /terms/{term_id}")
-                    bo.validation_messages.append(('WARNING', f'Term: {term_id} not found'))
-                else:
-                    log.error(f'Status 404 - Bad URL: {request_url}')
+            elif r.status_code == 404:
+                bo.validation_messages.append(('WARNING', f'Term: {term_id} not found in namespace'))
             else:
                 log.error(f'Status {r.status_code} - Bad URL: {request_url}')
 

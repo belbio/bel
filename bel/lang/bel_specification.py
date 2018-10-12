@@ -104,7 +104,6 @@ def get_specification(version: str) -> Mapping[str, Any]:
     """
 
     spec_dir = config['bel']['lang']['specifications']
-
     spec_dict = {}
 
     bel_versions = get_bel_versions()
@@ -196,7 +195,6 @@ def update_specifications():
 def github_belspec_files(spec_dir):
     """Get belspec files from Github repo
 
-        Repo:  https://github.com/belbio/bel_specifications/tree/master/specifications
 
     """
     repo_url = 'https://api.github.com/repos/belbio/bel_specifications/contents/specifications'
