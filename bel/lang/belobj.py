@@ -9,7 +9,7 @@ import bel.lang.bel_utils as bel_utils
 import bel.lang.ast as lang_ast
 import bel.lang.exceptions as bel_ex
 import bel.lang.semantics as semantics
-import bel.lang.computed_edges as computed_edges
+import bel.edge.computed as computed
 
 from bel.Config import config
 
@@ -241,7 +241,7 @@ class BEL(object):
         if rules:
             compute_rules = [rule for rule in compute_rules if rule in rules]
 
-        edges_ast = computed_edges.compute_edges(self.ast, self.spec, compute_rules)
+        edges_ast = computed.compute_edges(self.ast, self.spec)
 
         if ast_result:
             return edges_ast

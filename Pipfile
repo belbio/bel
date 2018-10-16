@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 "e1839a8" = {path = ".", editable = true}
+bel = {editable = true, path = "."}
 
 [dev-packages]
 coverage = "*"
@@ -17,7 +18,6 @@ pytest-flakes = "*"
 pytest-mypy = "*"
 pytest-pep8 = "*"
 pytest-sugar = "*"
-releases = "*"
 Sphinx = "*"
 sphinx-autobuild = "*"
 sphinx-autodoc-typehints = "*"

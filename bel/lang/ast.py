@@ -76,7 +76,9 @@ class BELAst(object):
             ast_obj = self
 
         if self.bel_subject and self.bel_relation and self.bel_object:
-            if fmt == 'short':
+            if self.bel_relation.startswith('has'):
+                bel_relation = self.bel_relation
+            elif fmt == 'short':
                 bel_relation = self.spec['relations']['to_short'].get(self.bel_relation, None)
             else:
                 bel_relation = self.spec['relations']['to_long'].get(self.bel_relation, None)
@@ -245,7 +247,7 @@ class Arg(object):
 
 class NSArg(Arg):
 
-    def __init__(self, namespace, value, parent_function, value_types=[]):
+    def __init__(self, namespace, value, parent_function=None, value_types=[]):
         Arg.__init__(self, parent_function)
         self.namespace = namespace
         self.value = self.normalize_nsarg_value(value)

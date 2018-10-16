@@ -1,5 +1,5 @@
 import re
-from arango import ArangoClient, ArangoError
+import arango
 
 import bel.utils as utils
 from bel.Config import config
@@ -13,6 +13,8 @@ belapi_db_name = 'belapi'
 
 edgestore_nodes_name = 'nodes'  # edgestore node collection name
 edgestore_edges_name = 'edges'  # edgestore edge collection name
+edgestore_pipeline_name = 'pipeline'  # edgestore pipeline state collection name
+edgestore_pipeline_errors_name = 'pipeline_errors'  # edgestore pipeline errors collection name
 
 equiv_nodes_name = 'equivalence_nodes'  # equivalence node collection name
 equiv_edges_name = 'equivalence_edges'  # equivalence edge collection name
@@ -32,7 +34,7 @@ def get_client(host=None, port=None, username=None, password=None, enable_loggin
     username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
     password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password')), ''])
 
-    client = ArangoClient(
+    client = arango.client.ArangoClient(
         protocol=config['bel_api']['servers']['arangodb_protocol'],
         host=host,
         port=port,
@@ -48,8 +50,26 @@ def aql_query(db, query):
     return result
 
 
-def get_edgestore_handle(client, username=None, password=None):
-    """Get Edgestore arangodb database handle"""
+def get_edgestore_handle(client: arango.client.ArangoClient,
+                         username=None, password=None,
+                         edgestore_db_name: str = edgestore_db_name,
+                         edgestore_edges_name: str = edgestore_edges_name,
+                         edgestore_nodes_name: str = edgestore_nodes_name,
+                         edgestore_pipeline_name: str = edgestore_pipeline_name,
+                         edgestore_pipeline_errors_name: str = edgestore_pipeline_errors_name) -> arango.database.StandardDatabase:
+    """Get Edgestore arangodb database handle
+
+    Args:
+        client (arango.client.ArangoClient): Description
+        username (None, optional): Description
+        password (None, optional): Description
+        edgestore_db_name (str, optional): Description
+        edgestore_edges_name (str, optional): Description
+        edgestore_nodes_name (str, optional): Description
+
+    Returns:
+        arango.database.StandardDatabase: Description
+    """
 
     username = utils.first_true([username, config['bel_api']['servers']['arangodb_username'], ''])
     password = utils.first_true([password, config.get('secrets', config['secrets']['bel_api']['servers'].get('arangodb_password', ''))])
@@ -80,9 +100,16 @@ def get_edgestore_handle(client, username=None, password=None):
 
     if not edgestore_db.has_collection(edgestore_edges_name):
         edges = edgestore_db.create_collection(edgestore_edges_name, edge=True, index_bucket_count=64)
-        edges.add_hash_index(fields=['name'], unique=False)
+        edges.add_hash_index(fields=['relation'], unique=False)
         edges.add_hash_index(fields=['metadata.nanopub_id'], unique=False)
+        edges.add_hash_index(fields=['metadata.project'], unique=False)
         edges.add_hash_index(fields=['context[*].id'], unique=False)
+
+    if not edgestore_db.has_collection(edgestore_pipeline_name):
+        edgestore_db.create_collection(edgestore_pipeline_name)
+
+    if not edgestore_db.has_collection(edgestore_pipeline_errors_name):
+        edgestore_db.create_collection(edgestore_pipeline_errors_name)
 
     return edgestore_db
 
@@ -188,7 +215,7 @@ def batch_load_docs(db, doc_iterator, on_duplicate='replace'):
         https://python-driver-for-arangodb.readthedocs.io/en/master/specs.html?highlight=import_bulk#arango.collection.StandardCollection.import_bulk
     """
 
-    batch_size = 10000
+    batch_size = 100
 
     counter = 0
     collections = {}
