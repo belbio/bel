@@ -31,8 +31,8 @@ log = structlog.getLogger(__name__)
 start_arg_chars = ['(', ',']
 end_arg_chars = [')', ',']
 
-relations_pattern_middle = re.compile('\)\s+([a-zA-Z\=\-\>\|\:]+)\s+[\w\(]+')
-relations_pattern_end = re.compile('\)\s+([a-zA-Z\=\-\>\|\:]+)\s*$')
+relations_pattern_middle = re.compile(r'\)\s+([a-zA-Z\=\-\>\|\:]+)\s+[\w\(]+')
+relations_pattern_end = re.compile(r'\)\s+([a-zA-Z\=\-\>\|\:]+)\s*$')
 
 Errors = List[Tuple[str, str, Optional[Tuple[int, int]]]]  # (<"Error"|"Warning">, "message", (start_span, end_span))
 Parsed = MutableMapping[str, Any]
@@ -321,8 +321,8 @@ def arg_types(parsed: Parsed, errors: Errors) -> Tuple[Parsed, Errors]:
         (parsed, errors): parsed, arguments with arg types plus error messages
     """
 
-    func_pattern = re.compile('\s*[a-zA-Z]+\(')
-    nsarg_pattern = re.compile('^\s*([A-Z]+):(.*?)\s*$')
+    func_pattern = re.compile(r'\s*[a-zA-Z]+\(')
+    nsarg_pattern = re.compile(r'^\s*([A-Z]+):(.*?)\s*$')
 
     for span in parsed:
         if parsed[span]['type'] != 'Function' or 'parens_span' not in parsed[span]:
