@@ -256,7 +256,7 @@ def arango_id_to_key(_id):
         (str): _key value with illegal chars removed
     """
 
-    key = re.sub("[^a-zA-Z0-9\_\-\:\.\@\(\)\+\,\=\;\$\!\*\'\%]+", '_', _id)
+    key = re.sub(r"[^a-zA-Z0-9\_\-\:\.\@\(\)\+\,\=\;\$\!\*\'\%]+", r'_', _id)
     if len(key) > 254:
         log.error(f'Arango _key cannot be longer than 254 chars: Len={len(key)}  Key: {key}')
     elif len(key) < 1:

@@ -278,9 +278,9 @@ class NSArg(Arg):
             str:
 
         """
-        quoted = re.findall('^"(.*)"$', nsarg_value)
+        quoted = re.findall(r'^"(.*)"$', nsarg_value)
 
-        if re.search('[),\s]', nsarg_value):  # quote only if it contains whitespace, comma or ')'
+        if re.search(r'[),\s]', nsarg_value):  # quote only if it contains whitespace, comma or ')'
             if quoted:
                 return nsarg_value
             else:
