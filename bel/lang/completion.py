@@ -18,12 +18,10 @@ from bel.utils import get_url, url_path_param_quoting
 import bel.lang.partialparse as pparse
 import bel.lang.bel_specification as bel_specification
 
-import logging
-import logging.config
-
 from bel.Config import config
 
-log = logging.getLogger(__name__)
+from structlog import get_logger
+log = get_logger()
 
 default_bel_version = config['bel']['lang']['default_bel_version']
 
@@ -266,7 +264,7 @@ def function_completions(completion_text: str, bel_spec: BELSpec, function_list:
 
     matches = []
     for f in function_list:
-        escaped_completion_text = completion_text.replace('(', '\(').replace(')', '\)')
+        escaped_completion_text = completion_text.replace(r'(', r'\(').replace(r')', r'\)')
         log.debug(f'Completion match: {escaped_completion_text}  F: {f}')
         if re.match(escaped_completion_text, f):
             matches.append(f)

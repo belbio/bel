@@ -10,6 +10,9 @@ from typing import Mapping, Any, List, MutableSequence
 import copy
 import itertools
 import os
+import json
+import datetime
+import urllib
 
 import bel.lang.belobj
 import bel.lang.bel_specification
@@ -21,53 +24,110 @@ import bel.nanopub.nanopubstore as nanopubstore
 
 from bel.Config import config
 
-import logging
-log = logging.getLogger(__name__)
+import structlog
+log = structlog.getLogger(__name__)
 
 Edges = MutableSequence[Mapping[str, Any]]
 
+arango_client = arangodb.get_client()
+edgestore_db = arangodb.get_edgestore_handle(arango_client)
 
-def process_nanopub(nanopub_url: str, rules: List[str] = [], orthologize_targets: list = []):
+
+def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targets: list = []):
     """Process nanopub into edges and load into EdgeStore
 
     """
 
-    if orthologize_targets == []:
-        if config['bel_api'].get('edges', None):
-            if config['bel_api']['edges'].get('orthologize_targets', None):
-                orthologize_targets = config['bel_api']['edges']['orthologize_targets']
+    nanopub_url = nanopub.get('source_url', '')
 
-    api_url = config['bel_api']['servers']['api_url']
+    try:
+        if orthologize_targets == []:
+            if config['bel_api'].get('edges', None):
+                orthologize_targets = config['bel_api']['edges'].get('orthologize_targets', [])
 
-    nanopub = nanopubstore.get_nanopub(nanopub_url)
+        api_url = config['bel_api']['servers']['api_url']
 
-    edges = create_edges(nanopub, api_url, nanopub_url)
-    for orthologize_target in orthologize_targets:
-        edges.extend(create_edges(nanopub, api_url, nanopub_url, orthologize_target=orthologize_target))
+        citation_string = normalize_nanopub_citation(nanopub)
 
-    arango_client = arangodb.get_client()
-    edgestore_db = arangodb.get_edgestore_handle(arango_client)
+        start_time = datetime.datetime.now()
 
-    load_edges_into_db(edgestore_db, edges)
+        # Add unorthologized edges
+        edges = create_edges(nanopub, api_url, citation_string)
+        end_time1 = datetime.datetime.now()
+        delta_ms = f'{(end_time1 - start_time).total_seconds() * 1000:.1f}'
+        log.info('Timing - Get unorthologized edges from nanopub', delta_ms=delta_ms)
+
+        # Add orthologized edges
+        for orthologize_target in orthologize_targets:
+            edges.extend(create_edges(nanopub, api_url, citation_string, orthologize_target=orthologize_target))
+
+        end_time2 = datetime.datetime.now()
+        delta_ms = f'{(end_time2 - end_time1).total_seconds() * 1000:.1f}'
+        log.info('Timing - Get orthologized edges from nanopub', delta_ms=delta_ms)
+
+        return {"edges": edges, "nanopub_id": nanopub['nanopub']['id'], "nanopub_url": nanopub_url, "success": True}
+
+    except Exception as e:
+        log.error(f'Failed converting nanopub into edges NanopubUrl: {nanopub_url}', exc_info=True)
+        return {"nanopub_id": nanopub['nanopub']['id'], "nanopub_url": nanopub_url, "success": False, "error": str(e)}
 
 
-def create_edges(nanopub: Mapping[str, Any], api_url: str, nanopub_url: str, namespace_targets: Mapping[str, List[str]] = None, rules: List[str] = [], orthologize_target: str = None) -> Edges:
-    """Create edges from nanopub
+def create_edges(nanopub: Mapping[str, Any], api_url: str, citation: str, rules: List[str] = [], orthologize_target: str = []) -> Edges:
+    """Create edges from assertions
 
     Args:
         nanopub (Mapping[str, Any]): nanopub in nanopub_bel schema format
         api_url (str): BEL.bio API endpoint to use
-        nanopub_url: url for nanopub
+        citation (str): citation string normalized from Nanopub citation object
         rules (List[str]): which computed edge rules to process, default is all,
            look at BEL Specification yaml file for computed edge signature keys,
            e.g. degradation, if any rule in list is 'skip', then skip computing edges
            just return primary_edge
-        namespace_targets (Mapping[str, List[str]]): what namespaces to canonicalize
-        orthologize_target: list of species to convert BEL into, e.g. TAX:10090 for mouse, default option does not orthologize
+        orthologize_target: species to convert BEL into, e.g. TAX:10090 for mouse, default option does not orthologize
 
     Returns:
         Tuple[List[Mapping[str, Any]], List[Tuple[str, List[str]]]]: (edge list, validation messages) - edge list with edge attributes (e.g. context) and parse validation messages
+
+    Edge object:
+        {
+            "edge": {
+                "subject": {
+                    "name": subj_canon,
+                    "name_lc": subj_canon.lower(),
+                    "label": subj_lbl,
+                    "label_lc": subj_lbl.lower(),
+                    "components": subj_components,
+                },
+                "relation": {  # relation _key is based on a hash
+                    "relation": edge_ast.bel_relation,
+                    "edge_hash": edge_hash,
+                    "edge_dt": edge_dt,
+                    "nanopub_dt": gd:updateTS,
+                    "nanopub_url": nanopub_url,
+                    "nanopub_id": nanopub_id,
+                    "citation": citation,
+                    "subject_canon": subj_canon,
+                    "subject": subj_lbl,
+                    "object_canon": obj_canon,
+                    "object": obj_lbl,
+                    "annotations": nanopub['annotations'],
+                    "metadata": nanopub['metadata'],
+                    "public_flag": nanopub['isPublished'],
+                    "edge_types": edge_types,
+                },
+                'object': {
+                    "name": obj_canon,
+                    "name_lc": obj_canon.lower(),
+                    "label": obj_lbl,
+                    "label_lc": obj_lbl.lower(),
+                    "components": obj_components,
+                }
+            }
+        }
+
     """
+
+    edge_dt = utils.dt_utc_formatted()  # don't want this in relation_id
 
     # Extract BEL Version and make sure we can process this
     if nanopub['nanopub']['type']['name'].upper() == "BEL":
@@ -81,6 +141,9 @@ def create_edges(nanopub: Mapping[str, Any], api_url: str, nanopub_url: str, nam
         return []
 
     annotations = copy.deepcopy(nanopub['nanopub']['annotations'])
+    metadata = copy.deepcopy(nanopub['nanopub']['metadata'])
+    metadata.pop('gd:abstract', None)
+
     if orthologize_target:
         annotations = orthologize_context(orthologize_target, annotations)
 
@@ -88,6 +151,29 @@ def create_edges(nanopub: Mapping[str, Any], api_url: str, nanopub_url: str, nam
     bo = bel.lang.belobj.BEL(bel_version, api_url)
 
     for assertion in nanopub['nanopub']['assertions']:
+
+        start_time = datetime.datetime.now()
+
+        if not assertion['relation']:
+            continue  # Skip any subject only statements
+
+        edge = {
+            'edge': {
+                'subject': {},
+                'relation': {
+                    'relation': assertion['relation'],
+                    'edge_dt': edge_dt,
+                    'nanopub_url': nanopub['source_url'],
+                    'nanopub_id': nanopub['nanopub']['id'],
+                    'citation': citation,
+                    'annotations': copy.deepcopy(annotations),
+                    'metadata': copy.deepcopy(metadata),
+                    'public_flag': nanopub['isPublished'],
+                },
+                'object': {},
+            }
+        }
+
         if assertion['relation']:
             bel_statement = f"{assertion['subject']} {assertion['relation']} {assertion['object']}"
         else:
@@ -98,103 +184,117 @@ def create_edges(nanopub: Mapping[str, Any], api_url: str, nanopub_url: str, nam
             log.error(f'Invalid BEL Statement: {bo.validation_messages}')
             continue
 
+        end_time1 = datetime.datetime.now()
+        delta_ms = f'{(end_time1 - start_time).total_seconds() * 1000:.1f}'
+        log.info('Timing - Parse bel statement', delta_ms=delta_ms)
+
+        if 'backbone' in nanopub['source_url']:
+            edge['edge']['relation']['edge_types'] = ['backbone']
+        else:
+            edge['edge']['relation']['edge_types'] = ['primary']
+
+        # Orthologize #####################################################
         if orthologize_target:
             orig_bel_str = bo.to_string()
             bo.orthologize(orthologize_target)
 
-            # log.info(f'Unorthologized: {orig_bel_str}  New: {bo.to_string()}   TEMP')
-
             if bo.to_string() == orig_bel_str:
-                log.info(f'Skipping unorthologized BEL stmt')
+                log.info(f'Cannot orthologize BEL stmt to {orthologize_target}')
                 continue
-            edge_types = ['primary', 'orthologized']
-        else:
-            edge_types = ['primary']
 
-        # Canonicalize
-        bo.canonicalize(namespace_targets=namespace_targets)
+            edge['edge']['relation']['edge_types'].append('orthologized')
 
-        # Primary edge
-        if bo.ast.bel_relation:  # Skip subject-only Assertion?
-            add_edge(edges, bo.ast, nanopub_url, edge_types, annotations)
+        # Add BEL causal edge type
+        if bo.ast.bel_relation and 'causal' in bo.ast.spec['relations']['info'][bo.ast.bel_relation]['categories']:
+            edge['edge']['relation']['edge_types'].append('causal')
 
-        # Computed edges
-        computed_edges_ast = []
-        if not rules or 'skip' not in rules:
-            computed_edges_ast.extend(bo.compute_edges(rules=rules, ast_result=True))
+        end_time2 = datetime.datetime.now()
+        # Primary Edge
+        process_belobj_into_triples(bo, edge)
+        end_time3 = datetime.datetime.now()
+        delta_ms = f'{(end_time3 - end_time2).total_seconds() * 1000:.1f}'
+        log.info('Timing - Canonicalize into triples', delta_ms=delta_ms)
+
+        # log.debug(f'Edge: {edge}')
+        edge_hash = utils._create_hash(f'{edge["edge"]["subject"]["name"]} {edge["edge"]["relation"]["relation"]} {edge["edge"]["object"]["name"]}')
+        edge['edge']['relation']['edge_hash'] = edge_hash
+        edges.append(edge)
+
+        # Computed edges ##################################################
+        computed_edges_ast = bo.compute_edges(rules=rules, ast_result=True)
 
         if orthologize_target:
             edge_types = ['computed', 'orthologized']
         else:
             edge_types = ['computed']
+
         for edge_ast in computed_edges_ast:
-            add_edge(edges, edge_ast, nanopub_url, edge_types, annotations)
+            edge = {
+                'edge': {
+                    'subject': {},
+                    'relation': {
+                        'relation': assertion['relation'],
+                        'edge_dt': edge_dt,
+                        'public_flag': True,
+                        'edge_types': edge_types,
+                    },
+                    'object': {},
+                }
+            }
+
+            bo.ast = edge_ast
+            process_belobj_into_triples(bo, edge)
+
+            edge_hash = utils._create_hash(f'{edge["edge"]["subject"]["name"]} {edge["edge"]["relation"]["relation"]} {edge["edge"]["object"]["name"]}')
+            edge['edge']['relation']['edge_hash'] = edge_hash
+            edges.append(edge)
+
+    end_time1 = datetime.datetime.now()
+    delta_ms = f'{(end_time1 - start_time).total_seconds() * 1000:.1f}'
+    log.info('Timing - Assertion to edges', delta_ms=delta_ms)
 
     return edges
 
 
-def add_edge(edges: Edges, edge_ast, nanopub_url: str, edge_types: List[str], annotations: List[any]):
-    """Add edge to edges
+def process_belobj_into_triples(bo, edge):
+    """Create triples (canonicalized and decanonicalized)
 
-    Args:
-        edges: list of edges
-        edge_ast: Edge AST to add to edges list
-        nanopub_url: URL of nanopub in NanopubStore
-        edge_types: list of edge types (e.g. primary, orthologized, computed)
-        annotations: list of annotations pulled from nanopub
+    Create SRO strings and components canonicalized and decanonicalized
+    as well as the Subject and Object triples
     """
 
-    # TODO Update convert_namespaces_ast to use it instead of convert_namespaces_str -- need lots of changes to that function
+    bo.canonicalize()
+    sro = bo.to_triple()
+    edge['edge']['subject']['name'] = sro['subject']
+    edge['edge']['subject']['name_lc'] = sro['subject'].lower()
+    edge['edge']['relation']['subject_canon'] = sro['subject']
 
-    subj_canon = edge_ast.bel_subject.to_string()
-    subj_lbl = bel_utils.convert_namespaces_str(subj_canon, decanonicalize=True)
+    edge['edge']['relation']['relation'] = sro['relation']
+    edge['edge']['object']['name'] = sro['object']
+    edge['edge']['object']['name_lc'] = sro['object'].lower()
+    edge['edge']['relation']['object_canon'] = sro['object']
 
-    subj_components = edge_ast.bel_subject.subcomponents(subcomponents=[])
+    edge['edge']['subject']['components'] = bo.ast.bel_subject.subcomponents(subcomponents=[])
 
-    obj_canon = edge_ast.bel_object.to_string()
-    obj_lbl = bel_utils.convert_namespaces_str(obj_canon, decanonicalize=True)
-
-    if edge_ast.bel_object.__class__.__name__ == 'BELAst':  # Nested BEL Assertion
-        obj_components = edge_ast.bel_object.bel_subject.subcomponents(subcomponents=[])
-        obj_components = edge_ast.bel_object.bel_object.subcomponents(subcomponents=obj_components)
+    if bo.ast.bel_object.__class__.__name__ == 'BELAst':  # Nested BEL Assertion
+        obj_components = bo.ast.bel_object.bel_subject.subcomponents(subcomponents=[])
+        obj_components = bo.ast.bel_object.bel_object.subcomponents(subcomponents=obj_components)
     else:  # Normal BEL Assertion
-        obj_components = edge_ast.bel_object.subcomponents(subcomponents=[])
+        obj_components = bo.ast.bel_object.subcomponents(subcomponents=[])
 
-    # Add BEL causal edge type
-    if edge_ast.bel_relation and 'causal' in edge_ast.spec['relations']['info'][edge_ast.bel_relation]['categories']:
-        edge_types.append('causal')
+    edge['edge']['object']['components'] = obj_components
 
-    edge_hash = utils._create_hash(f'{subj_canon} {edge_ast.bel_relation} {obj_canon}')
+    bo.decanonicalize()
+    sro = bo.to_triple()
 
-    # Add edge_dt after creating hash id in edge_iterator
-    edge = {
-        "edge": {
-            "subject": {
-                "name": subj_canon,
-                "label": subj_lbl,
-                "components": subj_components,
-            },
-            "relation": {
-                "relation": edge_ast.bel_relation,
-                "edge_hash": edge_hash,
-                "nanopub_url": nanopub_url,
-                "edge_types": edge_types,
-                "subject_canon": subj_canon,
-                "subject": subj_lbl,
-                "object_canon": obj_canon,
-                "object": obj_lbl,
-                "annotations": annotations,
-            },
-            'object': {
-                "name": obj_canon,
-                "label": obj_lbl,
-                "components": obj_components,
-            }
-        }
-    }
+    log.info(f'BO {bo}')
 
-    edges.append(copy.deepcopy(edge))
-    return edges
+    edge['edge']['subject']['label'] = sro['subject']
+    edge['edge']['subject']['label_lc'] = sro['subject'].lower()
+    edge['edge']['relation']['subject'] = sro['subject']
+    edge['edge']['object']['label'] = sro['object']
+    edge['edge']['object']['label_lc'] = sro['object'].lower()
+    edge['edge']['relation']['object'] = sro['object']
 
 
 def orthologize_context(orthologize_target: str, annotations: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -216,49 +316,24 @@ def orthologize_context(orthologize_target: str, annotations: Mapping[str, Any])
     return annotations
 
 
-def edge_iterator(edges=[], edges_fn=None):
-    """Yield documents from edge for loading into ArangoDB"""
+def normalize_nanopub_citation(nanopub):
 
-    for edge in itertools.chain(edges, files.read_edges(edges_fn)):
-        subj = copy.deepcopy(edge['edge']['subject'])
-        subj_id = str(utils._create_hash_from_doc(subj))
-        subj['_key'] = subj_id
-        obj = copy.deepcopy(edge['edge']['object'])
-        obj_id = str(utils._create_hash_from_doc(obj))
-        obj['_key'] = obj_id
-        relation = copy.deepcopy(edge['edge']['relation'])
+    citation_string = ''
+    if 'database' in nanopub['nanopub']['citation']:
+        if nanopub['nanopub']['citation']['database']['name'].lower() == 'pubmed':
+            citation_string = f"PMID:{nanopub['nanopub']['citation']['database']['id']}"
+        else:
+            citation_string = f"{nanopub['nanopub']['citation']['database']['name']}:{nanopub['nanopub']['citation']['database']['id']}"
+    elif 'reference' in nanopub['nanopub']['citation'] and isinstance(nanopub['nanopub']['citation']['reference'], str):
+        citation_string = nanopub['nanopub']['citation']['reference']
+    elif 'uri' in nanopub['nanopub']['citation']:
+        citation_string = nanopub['nanopub']['citation']['uri']
 
-        relation['_from'] = f'nodes/{subj_id}'
-        relation['_to'] = f'nodes/{obj_id}'
-
-        relation_id = str(utils._create_hash_from_doc(relation))
-        relation['_key'] = relation_id
-
-        relation['edge_dt'] = utils.dt_utc_formatted()  # don't want this in relation_id
-
-        if edge.get('nanopub_id', None):
-            if 'metadata' not in relation:
-                relation['metadata'] = {}
-            relation['metadata']['nanopub_id'] = edge['nanopub_id']
-
-        yield('nodes', subj)
-        yield('nodes', obj)
-        yield('edges', relation)
-
-
-def load_edges_into_db(db, edges=[], edges_fn=None, username: str = None, password: str = None):
-    """Load edges into ArangoDB"""
-    doc_iterator = edge_iterator(edges=edges, edges_fn=edges_fn)
-
-    arangodb.batch_load_docs(db, doc_iterator)
+    return citation_string
 
 
 def main():
-
-    (arango_client, edgestore_db) = arangodb.get_client()
-    arangodb.delete_edgestore(arango_client)
-    (arango_client, edgestore_db) = arangodb.get_client()
-    load_edges_into_db(edgestore_db, edges_fn="edges.jsonl.gz")
+    pass
 
 
 if __name__ == '__main__':
@@ -273,4 +348,3 @@ if __name__ == '__main__':
     log = logging.getLogger(f'{module_fn}')
 
     main()
-

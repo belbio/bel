@@ -12,15 +12,23 @@ import bel.resources.ortholog
 
 from bel.Config import config
 
-import logging
-log = logging.getLogger(__name__)
+from structlog import get_logger
+log = get_logger()
 
 # Set timy to track in logging mode (INFO level)
 timy.timy_config.tracking_mode = timy.TrackingMode.LOGGING
 
 
-def load_resource(resource_url):
-    """Load BEL Resource file"""
+def load_resource(resource_url: str, forceupdate: bool = False):
+    """Load BEL Resource file
+
+    Forceupdate will create a new index in Elasticsearch regardless of whether
+    an index with the resource version already exists.
+
+    Args:
+        resource_url: URL from which to download the resource to load into the BEL API
+        forceupdate: force full update - e.g. don't leave Elasticsearch indexes alone if their version ID matches
+    """
 
     log.info(f'Loading resource {resource_url}')
 
@@ -43,7 +51,7 @@ def load_resource(resource_url):
 
         # Load resource files
         if metadata['metadata']['type'] == 'namespace':
-            bel.resources.namespace.load_terms(fo, metadata)
+            bel.resources.namespace.load_terms(fo, metadata, forceupdate)
 
         elif metadata['metadata']['type'] == 'ortholog':
             bel.resources.ortholog.load_orthologs(fo, metadata)

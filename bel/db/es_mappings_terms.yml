@@ -8,10 +8,23 @@ settings:
     analyzer:
       autocomplete:
         type: custom
-        tokenizer: standard
+        tokenizer: autocomplete_tokenizer
         filter:
           - lowercase
           - autocomplete_filter
+      autocomplete_search:
+        type: custom
+        tokenizer: autocomplete_tokenizer
+        filter:
+          - lowercase
+
+    # Added simple pattern split to allow SP:H4_HUMAN in alt_ids to be matched
+    # This will also allow IL-6 to be completed against.  The standard tokenizer/analyzer
+    # broke it into IL and 6
+    tokenizer:
+      autocomplete_tokenizer:
+        type: simple_pattern_split
+        pattern: " |:"
     normalizer:
       lowercase:
         type: custom
@@ -26,7 +39,7 @@ mappings:
         type: text
         store: true
         analyzer: autocomplete
-        search_analyzer: standard
+        search_analyzer: autocomplete_search
       src_id:
         type: keyword
         copy_to: autocomplete
@@ -39,6 +52,9 @@ mappings:
         type: keyword
         copy_to: autocomplete
       alt_ids:
+        type: keyword
+        copy_to: autocomplete
+      alt_src_ids:
         type: keyword
         copy_to: autocomplete
       label:

@@ -17,7 +17,6 @@ from typing import Mapping, Any
 import datetime
 import dateutil
 import requests
-# import fastcache
 
 from cachecontrol import CacheControl
 from cachecontrol.heuristics import ExpiresAfter
@@ -49,8 +48,6 @@ def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = T
         req_obj = reqsess
     else:
         req_obj = reqsess_nocache
-
-    log.info(f'get_url: cache {cache}  url {url} params {params}')
 
     try:
 

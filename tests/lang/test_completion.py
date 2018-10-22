@@ -114,7 +114,7 @@ def test_completion_arg_fn_3():
     completions = bel.lang.completion.bel_completion('act(g()', bel_fmt='medium')
     print('Completions:\n', json.dumps(completions, indent=4))
     assert completions["completion_text"] == ')'
-    assert len(completions['completions']) == 0
+    assert len(completions['completions']) > 0
 
 
 def test_completion_arg_fn_4():
@@ -122,7 +122,7 @@ def test_completion_arg_fn_4():
     completions = bel.lang.completion.bel_completion('act(r(fus()', bel_fmt='medium')
     print('Completions:\n', json.dumps(completions, indent=4))
     assert completions["completion_text"] == ")"
-    assert completions['completions'] == []
+    assert len(completions['completions']) > 0
     assert completions['entity_spans'] != []
     assert completions['function_help'] != []
 
