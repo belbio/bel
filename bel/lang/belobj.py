@@ -9,7 +9,7 @@ import bel.lang.bel_utils as bel_utils
 import bel.lang.ast as lang_ast
 import bel.lang.exceptions as bel_ex
 import bel.lang.semantics as semantics
-import bel.edge.computed as computed
+import bel.edge.computed
 
 from bel.Config import config
 
@@ -57,8 +57,7 @@ class BEL(object):
         self.version = bel_utils._default_to_version(self.version, bel_versions)
 
         if self.version not in bel_versions:
-            log.error('Cannot continue with invalid version. Exiting.')
-            sys.exit()
+            log.warning('Cannot validate with invalid version.')
 
         if not api_url:
             self.api_url = config['bel_api']['servers']['api_url']
@@ -241,7 +240,7 @@ class BEL(object):
         if rules:
             compute_rules = [rule for rule in compute_rules if rule in rules]
 
-        edges_ast = computed.compute_edges(self.ast, self.spec)
+        edges_ast = bel.edge.computed.compute_edges(self.ast, self.spec)
 
         if ast_result:
             return edges_ast
