@@ -77,8 +77,9 @@ def get_nanopub_urls(ns_root_url: str = None, start_dt: str = None) -> dict:
 
     params = {'startTime': start_dt, 'published': True}
 
+    # TODO - this is coming back without a status code in some cases - why?
     r = bel.utils.get_url(url, params=params, cache=False)
-    if r.status_code == 200:
+    if r and r.status_code == 200:
         data = r.json()
         new_start_dt = data['queryTime']
         update_nanopubstore_start_dt(ns_root_url, new_start_dt)

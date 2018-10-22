@@ -264,7 +264,7 @@ def function_completions(completion_text: str, bel_spec: BELSpec, function_list:
 
     matches = []
     for f in function_list:
-        escaped_completion_text = completion_text.replace('(', '\(').replace(')', '\)')
+        escaped_completion_text = completion_text.replace(r'(', r'\(').replace(r')', r'\)')
         log.debug(f'Completion match: {escaped_completion_text}  F: {f}')
         if re.match(escaped_completion_text, f):
             matches.append(f)
