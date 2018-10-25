@@ -54,10 +54,8 @@ class BEL(object):
         else:
             self.version = version
 
-        self.version = bel_utils._default_to_version(self.version, bel_versions)
-
         if self.version not in bel_versions:
-            log.warning('Cannot validate with invalid version.')
+            log.warning(f'Cannot validate with invalid version: {self.version} in BEL Versions: {bel_versions}')
 
         if not api_url:
             self.api_url = config['bel_api']['servers']['api_url']
@@ -146,7 +144,6 @@ class BEL(object):
                 self.validation_messages.append(('ERROR', f'{error}\n{visualize_error}'))
             else:
                 self.validation_messages.append(('ERROR', f'{error}\nBEL: {self.bel_stmt}'))
-
             self.ast = None
 
         except Exception as e:
@@ -171,6 +168,7 @@ class BEL(object):
             log.error('Cannot semantically validate BEL object with missing ast property')
             return None
         semantics.validate(self, error_level)
+
         return self
 
     def canonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':

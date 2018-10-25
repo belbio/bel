@@ -30,6 +30,11 @@ def validate(bo, error_level: str = "WARNING") -> Tuple[bool, List[Tuple[str, st
     if error_level == 'WARNING':
         bo = validate_arg_values(bo.ast, bo)  # validates NSArg and StrArg values
 
+    for msg in bo.validation_messages:
+        if msg[0] == 'ERROR':
+            bo.parse_valid = False
+            break
+
     return bo
 
 
