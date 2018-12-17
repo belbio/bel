@@ -38,6 +38,12 @@ def test_migrate():
 
     assert bel.lang.migrate_1_2.migrate(bel1) == bel2
 
+    # act() -> act()
+    bel1 = 'act(p(RGD:Sod1))'
+    bel2 = 'act(p(RGD:Sod1))'
+
+    assert bel.lang.migrate_1_2.migrate(bel1) == bel2
+
     # sub() -> var()
 
     # p(HGNC:CFTR, var(p.Gly576Ala))  # substitution using 3 or 1 letter amino acid code, *=stop codon
@@ -47,6 +53,12 @@ def test_migrate():
 
     bel1 = 'p(HGNC:PIK3CA, sub(E, 545, K))'
     bel2 = 'p(HGNC:PIK3CA, var("p.Glu545Lys"))'
+
+    assert bel.lang.migrate_1_2.migrate(bel1) == bel2
+
+    # sub()
+    bel1 = 'act(p(MGI:Hras, sub(G, 12, V)), ma(gtp)) increases act(complex(SCOMP:\"NADPH Oxidase Complex\"), ma(cat))'
+    bel2 = 'act(p(MGI:Hras, var("p.Gly12Val")), ma(gtp)) increases act(complex(SCOMP:\"NADPH Oxidase Complex\"), ma(cat))'
 
     assert bel.lang.migrate_1_2.migrate(bel1) == bel2
 

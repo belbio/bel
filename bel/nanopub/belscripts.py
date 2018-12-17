@@ -22,8 +22,8 @@ import collections
 import sys
 import csv
 
-import logging
-log = logging.getLogger(__name__)
+import structlog
+log = structlog.getLogger(__name__)
 
 # citation fields are document type, a document name, a document reference ID, and an optional publication date, authors list and comment field
 
@@ -193,8 +193,7 @@ def process_unset(line, annotations):
     matches = re.match('UNSET\s+"?(.*?)"?\s*$', line)
     if matches:
         val = matches.group(1)
-
-        if val == 'ALL':
+        if val == 'ALL' or val == 'STATEMENT_GROUP':
             annotations = {}
         elif re.match('{', val):
             vals = convert_csv_str_to_list(val)
@@ -203,8 +202,6 @@ def process_unset(line, annotations):
         else:
             annotations.pop(val, None)
 
-    elif 'UNSET STATEMENT_GROUP' in line:
-        annotations = {}
     else:
         log.warn(f'Problem with UNSET line: {line}')
 
@@ -324,11 +321,13 @@ def parse_belscript(lines):
         elif re.match('DEFINE', line):
             nanopubs_metadata = process_definition(line, nanopubs_metadata)
         elif re.match('UNSET', line):
+
             # Process any assertions prior to changing annotations
             if assertions:
                 yield yield_nanopub(assertions, annotations, line_num)
                 assertions = []
             annotations = process_unset(line, annotations)
+
         elif re.match('SET', line):
             # Create nanopubs metadata prior to starting BEL Script statements section
             if nanopubs_metadata:
@@ -341,6 +340,7 @@ def parse_belscript(lines):
                 assertions = []
 
             annotations = process_set(line, annotations)
+
         else:
             assertions.append(line)
 

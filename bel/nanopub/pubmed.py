@@ -8,20 +8,18 @@ Given PMID - collect Pubmed data and Pubtator Bioconcepts used for the BELMgr
 or enhancing BEL Nanopubs
 """
 
-import os
-import requests
 from typing import Mapping, Any
 from lxml import etree
 import re
 import copy
 import datetime
 
-import logging
-import logging.config
-
 from bel.Config import config
 import bel.lang.bel_utils as bel_utils
 from bel.utils import get_url, url_path_param_quoting
+
+import structlog
+log = structlog.getLogger(__name__)
 
 # Replace PMID
 if config['bel_api']['servers'].get('pubmed_api_key', False):
@@ -126,10 +124,21 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
 
     try:
         root = etree.fromstring(r.content)
-        doc = {}
+        doc = {'abstract': ''}
         doc['pmid'] = root.xpath("//PMID/text()")[0]
         doc['title'] = next(iter(root.xpath("//ArticleTitle/text()")), '')
-        doc['abstract'] = next(iter(root.xpath('//Abstract/AbstractText/text()')), '')
+
+        for abstracttext in root.xpath('//Abstract/AbstractText'):
+
+            abstext = abstracttext.text
+
+            label = abstracttext.get('Label', None)
+            if label:
+                doc['abstract'] += f'{label}: {abstext}\n'
+            else:
+                doc['abstract'] += f'{abstext}\n'
+
+        doc['abstract'] = doc['abstract'].rstrip()
 
         doc['authors'] = []
         for author in root.xpath('//Author'):
@@ -166,7 +175,7 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
 
         return doc
     except Exception as e:
-        log.error(f"Bad Pubmed request, status: {r.status_code}  url: {PUBMED_TMPL.replace('PMID', pmid)}")
+        log.error(f"Bad Pubmed request, status: {r.status_code} error: {e}", url=f'{PUBMED_TMPL.replace("PMID", pmid)}')
         return {'message': f"Cannot get PMID: {pubmed_url}"}
 
 
@@ -251,12 +260,5 @@ def main():
 
 
 if __name__ == '__main__':
-
-    if config.get('logging', False):
-        logging.config.dictConfig(config.get('logging'))
-    log = logging.getLogger(__name__)
-
     main()
 
-else:
-    log = logging.getLogger(__name__)

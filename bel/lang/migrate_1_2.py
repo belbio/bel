@@ -37,12 +37,12 @@ def migrate(belstr: str) -> str:
     return migrate_ast(bo.ast).to_string()
 
 
-def migrate_into_components(belstr: str) -> str:
-    """Migrate BEL1 assertion into BEL 2.0.0 SRO components"""
+def migrate_into_triple(belstr: str) -> str:
+    """Migrate BEL1 assertion into BEL 2.0.0 SRO triple"""
 
     bo.ast = bel.lang.partialparse.get_ast_obj(belstr, '2.0.0')
 
-    return migrate_ast(bo.ast).to_components()
+    return migrate_ast(bo.ast).to_triple()
 
 
 def migrate_ast(ast: BELAst) -> BELAst:
@@ -66,7 +66,8 @@ def convert(ast):
 
     if ast and ast.type == 'Function':
         # Activity function conversion
-        if ast.name in spec['namespaces']['Activity']['list']:
+        if ast.name != 'molecularActivity' and ast.name in spec['namespaces']['Activity']['list']:
+            print('name', ast.name, 'type', ast.type)
             ast = convert_activity(ast)
             return ast  # Otherwise - this will trigger on the BEL2 molecularActivity
 
@@ -122,7 +123,8 @@ def convert_activity(ast):
     if len(ast.args) > 1:
         log.error(f'Activity should not have more than 1 argument {ast.to_string()}')
 
-    p_arg = ast.args[0]
+    p_arg = ast.args[0]  # protein argument
+    print('p_arg', p_arg)
     ma_arg = Function('ma', bo.spec)
     ma_arg.add_argument(StrArg(ast.name, ma_arg))
     p_arg.change_parent_fn(ma_arg)

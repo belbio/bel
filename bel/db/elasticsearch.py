@@ -76,7 +76,6 @@ def get_client():
         es: Elasticsearch client handle
     """
 
-    log.debug(f"{config['bel_api']['servers']['elasticsearch']}")
     es = Elasticsearch([config['bel_api']['servers']['elasticsearch']], send_get_body_as='POST')
 
     return es

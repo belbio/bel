@@ -13,7 +13,6 @@ import glob
 import os
 import re
 import copy
-import glob
 import requests
 import sys
 import yaml
@@ -27,8 +26,8 @@ import importlib
 
 from bel.Config import config
 
-import logging
-log = logging.getLogger(__name__)
+import structlog
+log = structlog.getLogger(__name__)
 
 # Custom Typing definitions
 BELSpec = Mapping[str, Any]

@@ -20,7 +20,6 @@ AUTHOR = 'William Hayes'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'cachecontrol',
     'cityhash',
     'click',
     'elasticsearch',
@@ -33,6 +32,7 @@ REQUIRED = [
     'python-json-logger',
     'pyyaml',
     'requests',
+    'requests-cache',
     'structlog',
     'timy',
     'TatSu',

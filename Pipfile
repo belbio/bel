@@ -4,8 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"e1839a8" = {path = ".", editable = true}
 bel = {editable = true, path = "."}
+pip = "==18.0"
 
 [dev-packages]
 coverage = "*"
@@ -26,4 +26,4 @@ sphinx-rtd-theme = "*"
 twine = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"

@@ -16,52 +16,18 @@ ComputeRules = List[str]
 locations = {'extracellular': NSArg('GO', "extracellular space"), 'cellsurface': NSArg('GO', "cell surface")}
 
 
-def compute_edges_old(ast: BELAst, spec: BELSpec, compute_rules: ComputeRules = None) -> Edges:
-    """Compute BEL Edges from BEL AST
-
-    Args:
-        ast (BELAst): BEL ASTf
-        spec (Mapping[str, Any]): BEL specification dictionary
-        compute_rules (List[str]): only process listed compute rules or all rules if None
-
-    Returns:
-        List[Tuple[Union[Function, str], str, Function]]: edge list of (subject_ast, relation, object_ast)
-    """
-    edges = []
-
-    # Expose nested assertion as edge
-    if compute_rules and 'nested' in compute_rules and ast.bel_object.__class__.__name__ == 'BELAst':
-        edges.append(ast.bel_object)
-
-    for rule in spec['computed_signatures']:
-        if compute_rules and rule not in compute_rules:
-            continue
-        elif spec['computed_signatures'][rule] is True:
-            continue
-
-        log.debug(f'Starting rule {rule}')
-
-        process_rule(edges, ast, spec['computed_signatures'][rule], spec)
-
-    return edges
-
-
 def compute_edges(ast: BELAst, spec: BELSpec) -> Edges:
     """Compute edges"""
 
-    log.info('Here 1')
     edges = []
     if ast.bel_object.__class__.__name__ == 'BELAst':
         edges.append(ast.bel_object)
 
     process_ast(edges, ast, spec)
-
     return edges
 
 
 def process_ast(edges, ast, spec):
-
-    log.info(f'AST type {ast.__class__.__name__} -- {ast}')
 
     if isinstance(ast, BELAst):
         pass
@@ -73,13 +39,13 @@ def process_ast(edges, ast, spec):
 
         elif ast.name in ('act', 'activity'):
             subject = ast.args[0]
-            edges.append(BELAst(subject, 'hasActivity', ast, spec))
+            edge = BELAst(subject, 'hasActivity', ast, spec)
+            edges.append(edge)
 
         elif ast.name in ('pmod', 'proteinModification'):
             parent = ast.parent_function
             src_abundance = Function(parent.name, spec)
             src_abundance.add_argument(parent.args[0])
-            log.info(f'{src_abundance} hasModification {parent}')
             edges.append(BELAst(src_abundance, 'hasModification', parent, spec))
 
         elif ast.name in ('var', 'variant'):
@@ -171,6 +137,7 @@ def process_ast(edges, ast, spec):
             process_ast(edges, arg, spec)
 
 
+# TODO - not used anymore - review to see if we want to take notes on the approach
 def process_rule(edges: Edges, ast: Function, rule: Mapping[str, Any], spec: BELSpec):
     """Process computed edge rule
 
