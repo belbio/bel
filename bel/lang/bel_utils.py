@@ -221,11 +221,9 @@ def orthologize(ast, bo, species_id: str):
                 ast.canonical = ast.orthologs[species_id]['canonical']
                 ast.decanonical = ast.orthologs[species_id]['decanonical']
                 ast.orthologized = True
-                print(f'AST1: {ast} orthologs: {ast.orthologs}  SpeciesID: {species_id}')
                 bo.ast.species.add((species_id, ast.orthologs[species_id]['species_label']))
             else:
                 bo.ast.species.add((ast.species_id, ast.species_label))
-                print(f'AST2: {ast} orthologs: {ast.orthologs}  SpeciesID: {species_id}')
                 bo.validation_messages.append(('WARNING', f'No ortholog found for {ast.namespace}:{ast.value}'))
         elif ast.species_id:
             bo.ast.species.add((ast.species_id, ast.species_label))

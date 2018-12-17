@@ -299,6 +299,7 @@ def generate_assertion_edge_info(assertions: List[dict], orthologize_targets: Li
             if len(bo.ast.species) > 0:
                 # Loop through orthologs
                 for species_id in orthologize_targets:
+                    log.debug(f'Orig species: {orig_species_id}  Target species: {species_id}')
                     if species_id == orig_species_id:
                         continue
 
@@ -306,8 +307,8 @@ def generate_assertion_edge_info(assertions: List[dict], orthologize_targets: Li
 
                     (edge_species_id, edge_species_label) = extract_ast_species(bo.ast)
 
-                    if edge_species_id == 'None':
-                        log.debug(f'Skipping - species == "None"  ASTspecies: {bo.ast.species} for {bo}')
+                    if edge_species_id == 'None' or edge_species_id == orig_species_id:
+                        log.debug(f'Skipping orthologization- species == "None" or {orig_species_id}  ASTspecies: {bo.ast.species} for {bo}')
                         continue
 
                     ortho_decanon = bo.orthologize(species_id).to_triple()  # defaults to decanonicalized orthologized form

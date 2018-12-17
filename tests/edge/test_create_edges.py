@@ -17,6 +17,7 @@ def test_generate_assertion_edge_info():
         {'subject': 'complex(p(HGNC:AKT1), p(HGNC:EGF))', 'relation': 'increases', 'object': 'bp(GO:apoptosis))'},  # bad assertion - extra paren in object
         {'subject': 'act(p(MGI:Akt1))', 'relation': 'decreases', 'object': 'r(MGI:Sult2a1)'},
         {'subject': 'act(p(MGI:Rora))', 'relation': 'decreases', 'object': 'r(MGI:Egf)'},
+        {'subject': 'a(SCHEM:"Smoke, cigarette")', 'relation': 'decreases', 'object': 'p(RGD:Birc3)'},
 
     ]
 
@@ -65,7 +66,7 @@ def test_generate_assertion_edge_info():
 
     assert edge_info_list[19]["decanonical"]["subject"] == 'act(p(HGNC:RORA))'
 
-    assert len(edge_info_list) == 21
+    assert len(edge_info_list) == 22
 
 
 def test_nanopub_to_edges():
