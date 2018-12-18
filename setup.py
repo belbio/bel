@@ -99,7 +99,7 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     url=URL,
-    packages=find_packages(include=['bel', 'bel.edge', 'bel.resources'], exclude=['tests',]),
+    packages=find_packages(include=['bel', ], exclude=['tests', ]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
