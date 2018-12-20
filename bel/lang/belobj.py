@@ -196,10 +196,14 @@ class BEL(object):
 
         # TODO Need to order position independent args
 
+        if not self.ast:
+            return self
+
         # Collect canonical/decanonical NSArg values
         if not self.ast.collected_nsarg_norms:
             self = self.collect_nsarg_norms()
 
+        # TODO Need to pass namespace target overrides for canonicalization
         self.ast.canonicalize()
 
         # self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize=True, api_url=self.api_url, namespace_targets=namespace_targets)
@@ -217,6 +221,9 @@ class BEL(object):
         Returns:
             BEL: returns self
         """
+
+        if not self.ast:
+            return self
 
         # Collect canonical/decanonical NSArg values
         if not self.ast.collected_nsarg_norms:
@@ -257,6 +264,9 @@ class BEL(object):
         Returns:
             BEL: returns self
         """
+
+        if not self.ast:
+            return self
 
         # Collect canonical/decanonical NSArg values
         if not self.ast.collected_orthologs:
@@ -311,6 +321,9 @@ class BEL(object):
         Returns:
             List[Mapping[str, Any]]: BEL Edges in medium format
         """
+
+        if not self.ast:
+            return self
 
         edges_asts = bel.edge.computed.compute_edges(self.ast, self.spec)
 
