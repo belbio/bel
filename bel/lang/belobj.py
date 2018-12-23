@@ -351,8 +351,6 @@ class BEL(object):
 
         if self.ast:
             return f'{self.ast.to_string(ast_obj=self.ast, fmt=fmt)}'
-        else:
-            return f'{self.version}'
 
     def to_triple(self, fmt: str = 'medium') -> dict:
         """Convert AST object to BEL triple
