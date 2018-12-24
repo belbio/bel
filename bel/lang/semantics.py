@@ -252,12 +252,14 @@ def validate_arg_values(ast, bo):
 
                 log.debug(f'AST.value_types  {ast.value_types}  Entity types {result.get("entity_types", [])}')
 
+                # Check that entity types match
                 if len(set(ast.value_types).intersection(result.get('entity_types', []))) == 0:
                     log.debug('Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result.get('entity_types', [])))
                     bo.validation_messages.append(('WARNING', 'Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}'.format(term_id, ast.value_types, result.get('entity_types', []))))
-                # Term is valid
-                else:
-                    log.debug('Valid Term: {}'.format(term_id))
+
+                if term_id in result['obsolete_ids']:
+                    bo.validation_messages.append(('WARNING', f'Obsolete term: {term_id}  Current term: {result["id"]}'))
+
             elif r.status_code == 404:
                 bo.validation_messages.append(('WARNING', f'Term: {term_id} not found in namespace'))
             else:

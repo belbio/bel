@@ -8,95 +8,12 @@ from bel.Config import config
 bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
 
 
-def test_species():
+def test_bel_semantic_validation():
 
-    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
-    bo.parse(assertion)
-    bo.collect_nsarg_norms()
+    obsolete_NSArg = 'p(HGNC:FAM46C)'
 
-    print(f'Species should equal TAX:9606 :: {bo.ast.species}')
+    bo.parse(obsolete_NSArg).semantic_validation()
 
-    correct = set()
-    correct.add(('TAX:9606', 'human', ))
+    print('Validation messages', bo.validation_messages)
 
-    assert correct == bo.ast.species
-
-
-def test_multi_species():
-
-    assertion = 'p(MGI:Egf) increases act(p(HGNC:EGF))'
-    bo.parse(assertion)
-    bo.collect_nsarg_norms()
-
-    print(f'Species should be human and mouse:: {bo.ast.species}')
-
-    correct = set()
-    correct.add(('TAX:9606', 'human', ))
-    correct.add(('TAX:10090', 'mouse', ))
-
-    assert correct == bo.ast.species
-
-
-def test_orthologization():
-    """Test orthologization of assertion"""
-
-    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
-    correct = 'p(MGI:Akt1) increases act(p(MGI:Egf))'
-    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
-    print('Orthologized assertion', result)
-
-    assert correct == result
-
-    # Check species
-    correct = set()
-    correct.add(('TAX:10090', 'mouse', ))
-
-    assert correct == bo.ast.species
-
-
-def test_multi_orthologization():
-    """Test multiple species orthologization of assertion"""
-
-    assertion = 'p(MGI:Akt1) increases act(p(HGNC:EGF))'
-    correct = 'p(MGI:Akt1) increases act(p(MGI:Egf))'
-    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
-    print('Orthologized assertion', result)
-
-    assert correct == result
-
-    # Check species
-    correct = set()
-    correct.add(('TAX:10090', 'mouse', ))
-
-    assert correct == bo.ast.species
-
-
-def test_canonicalization():
-    """Test canonicalization of assertion"""
-
-    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
-    correct = 'p(EG:207) increases act(p(EG:1950))'
-    result = bo.parse(assertion).canonicalize().to_string()
-    print('Canonicalized assertion', result)
-
-    assert correct == result
-
-
-def test_decanonicalization():
-    """Test canonicalization of assertion"""
-
-    assertion = 'p(EG:207) increases act(p(EG:1950))'
-    correct = 'p(HGNC:AKT1) increases act(p(HGNC:EGF))'
-
-    result = bo.parse(assertion).decanonicalize().to_string()
-    print('deCanonicalized assertion', result)
-
-    assert correct == result
-
-    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
-    correct = 'p(HGNC:AKT1) increases act(p(HGNC:EGF))'
-
-    result = bo.parse(assertion).decanonicalize().to_string()
-    print('deCanonicalized assertion', result)
-
-    assert correct == result
+    assert bo.validation_messages[0][1] == 'Obsolete term: HGNC:FAM46C  Current term: HGNC:TENT5C'
