@@ -32,6 +32,8 @@ def process_ast(edges, ast, spec):
     if isinstance(ast, BELAst):
         pass
 
+    # TODO composite is not being addressed right now
+    # TODO
     elif isinstance(ast, Function):
         if ast.name in ('complex', 'complexAbundance'):
             for arg in ast.args:

@@ -1,3 +1,5 @@
+import pytest
+
 import bel.lang.belobj
 from bel.Config import config
 
@@ -13,11 +15,110 @@ bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['b
 #     list_of_expected = [['SP:Q19LI2'],
 #                         ['EG:19877'],
 #                         ['EG:20655'],
-#                         ['EG:21858']]
+#                         ['MGI:Timp2']]
 
 #     for index, (gene, species) in enumerate(gene_species_id_tuples):
 #         result = bo.orthologize(gene, species)
 #         assert result == list_of_expected[index]
+
+
+def test_species():
+
+    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
+    bo.parse(assertion)
+    bo.collect_nsarg_norms()
+
+    print(f'Species should equal TAX:9606 :: {bo.ast.species}')
+
+    correct = set()
+    correct.add(('TAX:9606', 'human', ))
+
+    assert correct == bo.ast.species
+
+
+def test_multi_species():
+
+    assertion = 'p(MGI:Egf) increases act(p(HGNC:EGF))'
+    bo.parse(assertion)
+    bo.collect_nsarg_norms()
+
+    print(f'Species should be human and mouse:: {bo.ast.species}')
+
+    correct = set()
+    correct.add(('TAX:9606', 'human', ))
+    correct.add(('TAX:10090', 'mouse', ))
+
+    assert correct == bo.ast.species
+
+
+def test_obsolete_term_orthologization():
+
+    assertion = 'p(HGNC:FAM46C)'
+    correct = 'p(MGI:Tent5c)'
+
+    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
+    print('Orthologized assertion', result)
+
+    assert correct == result
+
+    # Check species
+    correct = set()
+    correct.add(('TAX:10090', 'mouse', ))
+
+    assert correct == bo.ast.species
+
+
+@pytest.mark.skip(reason="Need to update BEL parsing for this to work")
+# BEL parsing should be able to handle naked NSArg strings but can't right now
+def test_obsolete_term_NSArg_orthologization():
+
+    assertion = 'HGNC:FAM46C'
+    correct = 'MGI:Tent5c'
+
+    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
+    print('Orthologized assertion', result)
+
+    assert correct == result
+
+    # Check species
+    correct = set()
+    correct.add(('TAX:10090', 'mouse', ))
+
+    assert correct == bo.ast.species
+
+
+def test_orthologization():
+    """Test orthologization of assertion"""
+
+    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
+    correct = 'p(MGI:Akt1) increases act(p(MGI:Egf))'
+    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
+    print('Orthologized assertion', result)
+
+    assert correct == result
+
+    # Check species
+    correct = set()
+    correct.add(('TAX:10090', 'mouse', ))
+
+    assert correct == bo.ast.species
+
+
+def test_multi_orthologization():
+    """Test multiple species orthologization of assertion"""
+
+    assertion = 'p(MGI:Akt1) increases act(p(HGNC:EGF))'
+    correct = 'p(MGI:Akt1) increases act(p(MGI:Egf))'
+    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
+    print('Orthologized assertion', result)
+
+    assert correct == result
+
+    # Check species
+    correct = set()
+    correct.add(('TAX:10090', 'mouse', ))
+
+    assert correct == bo.ast.species
 
 
 def test_ortho_one():
@@ -36,7 +137,7 @@ def test_ortho_one():
 def test_ortho_two():
 
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2))'
-    expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(EG:21858))'
+    expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2))'
 
     bo.parse(statement)
     bo.orthologize('TAX:10090')
@@ -46,7 +147,7 @@ def test_ortho_two():
 def test_ortho_nested():
 
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases (complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2)) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2)))'
-    expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases (complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(EG:21858)) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(EG:21858)))'
+    expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases (complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2)) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2)))'
 
     bo.parse(statement)
     bo.orthologize('TAX:10090')
@@ -67,7 +168,7 @@ def test_ortho_partial():
 
     # Fully orthologized
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases complex(p(SFAM:TEST), p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2))'
-    expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(SFAM:TEST), proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(EG:21858))'
+    expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(SFAM:TEST), proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2))'
 
     bo.parse(statement)
     bo.orthologize('TAX:10090')
@@ -106,7 +207,7 @@ def test_ortho_partial():
 
     # Fully orthologized - check that partially_orthologized attribute is reset
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2))'
-    expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(EG:21858))'
+    expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2))'
 
     bo.parse(statement)
     print('1 Species', bo.ast.species)

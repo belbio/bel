@@ -27,6 +27,16 @@ belapi_settings_name = 'settings'  # BEL API settings and configuration
 belapi_statemgmt_name = 'state_mgmt'  # BEL API state mgmt
 
 
+# TODO - update get db and get collections using same pattern as in userstore/common/db.py
+#        I made the mistake below of edgestore_db = sys_db.create_database()
+#        instead of
+#           sys_db.create_database('edgestore')
+#           edgestore_db = client.db('edgestore')
+#           if edgestore_db.has_collection('xxx'):
+#               xxx_coll = edgestore_db.collection('xxx')
+#           else:
+#               xxx_coll = edgestore_db.create_collection('xxx')
+
 def get_user_creds(username, password):
     """Get username/password
 

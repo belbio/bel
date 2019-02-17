@@ -51,8 +51,8 @@ def get_pubtator(pmid):
     known_types = ['CHEBI', 'Chemical', 'Disease', 'Gene', 'Species', ]
 
     for idx, anno in enumerate(pubtator["denotations"]):
-        s_match = re.match('(\w+):(\w+)', anno['obj'])
-        c_match = re.match('(\w+):(\w+):(\w+)', anno['obj'])
+        s_match = re.match(r'(\w+):(\w+)', anno['obj'])
+        c_match = re.match(r'(\w+):(\w+):(\w+)', anno['obj'])
         if c_match:
             (ctype, namespace, cid) = (c_match.group(1), c_match.group(2), c_match.group(3), )
 

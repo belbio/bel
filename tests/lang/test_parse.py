@@ -1,3 +1,5 @@
+import pytest
+
 import bel.lang.belobj
 from bel.Config import config
 
@@ -31,3 +33,12 @@ def test_bad_string_start():
 #     assert parse_obj.ast is None
 #     assert parse_obj.error == 'Please include a valid BEL statement.'
 
+
+@pytest.mark.skip(reason="Not finished with this test")
+def test_complex_parse():
+    """Test parsing plain NSArg as object"""
+
+    # Need to figure out how to handle testing bel.ebnf.j2 changes for this
+    #  right now we pull hard-coded from the master branch of belbio/bel_specifications repo
+    # assertion = 'complex(GO:"NF-kappaB complex") hasComponent GO:"NF-kappaB complex"'
+    pass

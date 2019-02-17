@@ -24,6 +24,7 @@ sphinx-autodoc-typehints = "*"
 sphinx-click = "*"
 sphinx-rtd-theme = "*"
 twine = "*"
+pytest-env = "*"
 
 [requires]
 python_version = "3.7"

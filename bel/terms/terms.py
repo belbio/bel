@@ -1,4 +1,4 @@
-from typing import Mapping, List
+from typing import Mapping, List, Union
 import re
 
 import bel.db.elasticsearch
@@ -45,17 +45,14 @@ def get_terms(term_id):
     return results
 
 
-def get_equivalents(term_id: str, namespaces: List[str]=None) -> List[Mapping[str, str]]:
-    """Get equivalents given ns:id and target namespaces
+def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
+    """Get equivalents given ns:id
 
-    The target_namespaces list in the argument dictionary is ordered by priority.
 
     Args:
         term_id (str): term id
-        namespaces (Mapping[str, Any]): filter resulting equivalents to listed namespaces, ordered by priority
-        primary: only return primary ids (preferred namespace ids) - default = True, otherwise return all equivalent ids
     Returns:
-        List[Mapping[str, str]]: e.g. [{'term_id': 'HGNC:5', 'namespace': 'EG'}]
+        List[Mapping[str, Union[str, bool]]]: e.g. [{'term_id': 'HGNC:5', 'namespace': 'HGNC'}, 'primary': False]
     """
     try:
         errors = []
@@ -87,68 +84,13 @@ def get_equivalents(term_id: str, namespaces: List[str]=None) -> List[Mapping[st
             if doc.get('term_id', False):
                 equivalents.append(doc)
 
+        equivalents.append({'term_id': term_id, 'namespace': term_id.split(':')[0], 'primary': True})
+
         return {'equivalents': equivalents, 'errors': errors}
 
     except Exception as e:
-        log.error(f'Problem getting term equivalents for {term_id} namespaces: {namespaces}  msg: {e}')
+        log.error(f'Problem getting term equivalents for {term_id} msg: {e}')
         return {'equivalents': [], 'errors': [f'Unexpected error {e}']}
-
-
-# Older version - checking larger and larger paths
-# def get_equivalents(term_id: str, namespaces: List[str]=None) -> List[Mapping[str, str]]:
-#     """Get equivalents given ns:id and target namespaces
-
-#     The target_namespaces list in the argument dictionary is ordered by priority.
-
-#     Args:
-#         term_id (str): term id
-#         namespaces (Mapping[str, Any]): filter resulting equivalents to listed namespaces, ordered by priority
-#         primary: only return primary ids (preferred namespace ids) - default = True, otherwise return all equivalent ids
-#     Returns:
-#         List[Mapping[str, str]]: e.g. [{'term_id': 'HGNC:5', 'namespace': 'EG'}]
-#     """
-#     try:
-#         errors = []
-#         terms = get_terms(term_id)
-#         if len(terms) == 0:
-#             return {'equivalents': [], 'errors': errors}
-#         elif len(terms) > 1:
-#             errors.append(f'Too many primary IDs returned. Given term_id: {term_id} matches these term_ids: {[term["id"] for term in terms]}')
-#             return {'equivalents': [], 'errors': errors}
-#         else:
-#             term_id = terms[0]['id']
-
-#         term_id_key = bel.db.arangodb.arango_id_to_key(term_id)
-#         last_count = 0
-#         equivalents = []
-#         for steps in [3, 4, 5, 6]:
-#             query = f"""
-#                 FOR vertex, edge IN 1..{steps}
-#                     ANY 'equivalence_nodes/{term_id_key}' equivalence_edges
-#                     OPTIONS {bfs: true, uniqueVertices : 'global'}
-#                     RETURN DISTINCT {{
-#                         term_id: vertex.name,
-#                         namespace: vertex.namespace,
-#                         primary: vertex.primary
-#                     }}
-#             """
-#             try:
-#                 cursor = belns_db.aql.execute(query, count=True, batch_size=20)
-#                 if cursor.count() == last_count:
-#                     equivalents = [document for document in cursor]
-#                     break
-
-#             except Exception as e:
-#                 log.warning(f'Could not get equivalents for {term_id_key} step: {steps} - error: {str(e)}', query=query)
-
-#         if cursor:
-#             equivalents = [doc for doc in cursor]
-
-#         return {'equivalents': equivalents, 'errors': errors}
-
-#     except Exception as e:
-#         log.exception('Problem getting term equivalents: {e}')
-#         return {'equivalents': [], 'errors': [f'Unexpected error {e}']}
 
 
 def get_normalized_term(term_id: str, equivalents: list, namespace_targets: dict) -> str:
@@ -188,14 +130,14 @@ def get_normalized_terms(term_id: str) -> dict:
 
     canonical_namespace_targets = config['bel']['lang']['canonical']
     decanonical_namespace_targets = config['bel']['lang']['decanonical']
-
-    equivalents = get_equivalents(term_id)
+    results = get_equivalents(term_id)
+    equivalents = results['equivalents']
 
     # log.debug(f'Equivalents: {equivalents}')
 
-    if equivalents['equivalents']:
-        canonical = get_normalized_term(term_id, equivalents['equivalents'], canonical_namespace_targets)
-        decanonical = get_normalized_term(term_id, equivalents['equivalents'], decanonical_namespace_targets)
+    if equivalents:
+        canonical = get_normalized_term(term_id, equivalents, canonical_namespace_targets)
+        decanonical = get_normalized_term(canonical, equivalents, decanonical_namespace_targets)
 
     # log.debug(f'canonical: {canonical}, decanonical: {decanonical}, original: {term_id}')
 

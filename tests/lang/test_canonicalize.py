@@ -1,3 +1,5 @@
+import pytest
+
 import bel.lang.belobj
 import bel.lang.bel_utils
 
@@ -62,6 +64,29 @@ def test_canon_nested():
     assert bo.ast.to_string(fmt='long') == expected
 
 
+def test_canonicalization():
+    """Test canonicalization of assertion"""
+
+    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
+    correct = 'p(EG:207) increases act(p(EG:1950))'
+    result = bo.parse(assertion).canonicalize().to_string()
+    print('Canonicalized assertion', result)
+
+    assert correct == result
+
+
+@pytest.mark.skip(reason="Skip until we update BEL parsing with the partial parser instead of Tatsu")
+def test_canonicalization_NSArg():
+    """Test canonicalization of plain NSArg"""
+
+    assertion = 'HGNC:IL6'
+    correct = 'EG:3569'
+    result = bo.parse(assertion).canonicalize().to_string()
+    print('Canonicalized assertion', result)
+
+    assert correct == result
+
+
 def test_decanon_one():
 
     statement = 'act(p(EG:207), ma(GO:"kinase activity"))'
@@ -99,3 +124,23 @@ def test_decanon_nested():
     bo.decanonicalize()
 
     assert bo.ast.to_string(fmt='long') == expected
+
+
+def test_decanonicalization():
+    """Test canonicalization of assertion"""
+
+    assertion = 'p(EG:207) increases act(p(EG:1950))'
+    correct = 'p(HGNC:AKT1) increases act(p(HGNC:EGF))'
+
+    result = bo.parse(assertion).decanonicalize().to_string()
+    print('deCanonicalized assertion', result)
+
+    assert correct == result
+
+    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
+    correct = 'p(HGNC:AKT1) increases act(p(HGNC:EGF))'
+
+    result = bo.parse(assertion).decanonicalize().to_string()
+    print('deCanonicalized assertion', result)
+
+    assert correct == result

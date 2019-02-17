@@ -152,7 +152,7 @@ def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targ
                     'relation': edge_info['canonical']['relation'],
                     'edge_hash': edge_hash,
                     'edge_dt': edge_dt,
-                    'nanopub_url': nanopub['source_url'],
+                    'nanopub_url': nanopub_url,
                     'nanopub_id': nanopub['nanopub']['id'],
                     'citation': citation_string,
                     'subject_canon': edge_info['canonical']['subject'],
@@ -242,8 +242,7 @@ def generate_assertion_edge_info(assertions: List[dict], orthologize_targets: Li
             canon = bo.canonicalize().to_triple()
 
             components = get_node_subcomponents(bo.ast)  # needs to be run after canonicalization
-            bo_computed = copy.deepcopy(bo)
-            computed_asts = bo_computed.compute_edges(ast_result=True)  # needs to be run after canonicalization
+            computed_asts = bo.compute_edges(ast_result=True)  # needs to be run after canonicalization
             decanon = bo.decanonicalize().to_triple()
 
             if nanopub_type == 'backbone':
@@ -289,6 +288,8 @@ def generate_assertion_edge_info(assertions: List[dict], orthologize_targets: Li
                     'object_comp': components['object_comp'],
                     'errors': [],
                 }
+                if [edge for edge in edge_info_list if edge.get('canonical', {}) == canon]:
+                    continue  # skip if edge is already included (i.e. the primary is same as computed edge)
                 edge_info_list.append(copy.deepcopy(edge_info))
 
             # Skip orthologs if backbone nanopub
@@ -313,8 +314,7 @@ def generate_assertion_edge_info(assertions: List[dict], orthologize_targets: Li
 
                     ortho_decanon = bo.orthologize(species_id).to_triple()  # defaults to decanonicalized orthologized form
                     ortho_canon = bo.canonicalize().to_triple()
-                    bo_computed = copy.deepcopy(bo)
-                    computed_asts = bo_computed.compute_edges(ast_result=True)  # needs to be run after canonicalization
+                    computed_asts = bo.compute_edges(ast_result=True)  # needs to be run after canonicalization
                     components = get_node_subcomponents(bo.ast)  # needs to be run after canonicalization
 
                     if assertion.get('relation', False):
@@ -351,6 +351,8 @@ def generate_assertion_edge_info(assertions: List[dict], orthologize_targets: Li
                             'object_comp': components['object_comp'],
                             'errors': [],
                         }
+                        if [edge for edge in edge_info_list if edge.get('canonical', {}) == canon]:
+                            continue  # skip if edge is already included (i.e. the primary is same as computed edge)
                         edge_info_list.append(copy.deepcopy(edge_info))
 
     log.info('Timing - Generated all edge info for all nanopub assertions', delta_ms=t.elapsed)
