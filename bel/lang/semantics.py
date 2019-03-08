@@ -27,9 +27,13 @@ def validate(bo, error_level: str = "WARNING") -> Tuple[bool, List[Tuple[str, st
         Tuple[bool, List[Tuple[str, str]]]: (is_valid, messages)
     """
 
-    bo = validate_functions(bo.ast, bo)  # No WARNINGs generated in this function
-    if error_level == "WARNING":
-        bo = validate_arg_values(bo.ast, bo)  # validates NSArg and StrArg values
+    if bo.ast:
+        bo = validate_functions(bo.ast, bo)  # No WARNINGs generated in this function
+        if error_level == "WARNING":
+            bo = validate_arg_values(bo.ast, bo)  # validates NSArg and StrArg values
+
+    else:
+        bo.validation_messages.append(("ERROR", "Invalid BEL Statement - cannot parse"))
 
     for msg in bo.validation_messages:
         if msg[0] == "ERROR":
