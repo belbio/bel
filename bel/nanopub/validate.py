@@ -42,7 +42,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
 
     """
 
-    if "nanopub" in nanopub:
+    if "nanopub" not in nanopub:
         nanopub = nanopub["nanopub"]
 
     # Validation results
