@@ -42,9 +42,6 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
 
     """
 
-    if "nanopub" not in nanopub:
-        nanopub = nanopub["nanopub"]
-
     # Validation results
     v = []
 
@@ -52,7 +49,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
 
     # Structural checks
     try:
-        if not isinstance(nanopub["assertions"], list):
+        if not isinstance(nanopub["nanopub"]["assertions"], list):
             msg = "Assertions must be a list/array"
             v.append(
                 {
@@ -64,7 +61,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
                 }
             )
     except Exception as e:
-        msg = 'Missing nanopub["assertions"]'
+        msg = 'Missing nanopub["nanopub"]["assertions"]'
         v.append(
             {
                 "level": "Error",
@@ -76,13 +73,13 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
         )
 
     try:
-        if "name" in nanopub["type"] and "version" in nanopub["type"]:
+        if "name" in nanopub["nanopub"]["type"] and "version" in nanopub["nanopub"]["type"]:
             pass
-        if nanopub["type"]["name"].upper() == "BEL":
-            bel_version = nanopub["type"]["version"]
+        if nanopub["nanopub"]["type"]["name"].upper() == "BEL":
+            bel_version = nanopub["nanopub"]["type"]["version"]
 
     except Exception as e:
-        msg = 'Missing or badly formed type - must have nanopub["type"] = {"name": <name>, "version": <version}'
+        msg = 'Missing or badly formed type - must have nanopub["nanopub"]["type"] = {"name": <name>, "version": <version}'
         v.append(
             {
                 "level": "Error",
@@ -95,10 +92,12 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
 
     try:
         for key in ["uri", "database", "reference"]:
-            if key in nanopub["citation"]:
+            if key in nanopub["nanopub"]["citation"]:
                 break
         else:
-            msg = 'nanopub["citation"] must have either a uri, database or reference key.'
+            msg = (
+                'nanopub["nanopub"]["citation"] must have either a uri, database or reference key.'
+            )
             v.append(
                 {
                     "level": "Error",
@@ -109,7 +108,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
                 }
             )
     except Exception as e:
-        msg = 'nanopub must have a "citation" key with either a uri, database or reference key.'
+        msg = 'nanopub["nanopub"] must have a "citation" key with either a uri, database or reference key.'
         v.append(
             {
                 "level": "Error",
@@ -121,8 +120,8 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
         )
 
     # Assertion checks
-    if "assertions" in nanopub:
-        for idx, assertion in enumerate(nanopub["assertions"]):
+    if "assertions" in nanopub["nanopub"]:
+        for idx, assertion in enumerate(nanopub["nanopub"]["assertions"]):
             bo = bel.lang.belobj.BEL(bel_version, config["bel_api"]["servers"]["api_url"])
             belstr = f'{assertion.get("subject")} {assertion.get("relation", "")} {assertion.get("object", "")}'
             belstr = belstr.replace("None", "")
@@ -175,7 +174,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
 
     # Annotation checks
     if error_level == "WARNING":
-        for idx, annotation in enumerate(nanopub.get("annotations", [])):
+        for idx, annotation in enumerate(nanopub["nanopub"].get("annotations", [])):
             term_type = annotation["type"]
             term_id = annotation["id"]
             # term_label = annotation['label']
