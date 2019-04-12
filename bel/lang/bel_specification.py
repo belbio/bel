@@ -250,7 +250,7 @@ def belspec_yaml2json(yaml_fn: str, json_fn: str) -> str:
     """
 
     try:
-        spec_dict = yaml.load(open(yaml_fn, 'r').read())
+        spec_dict = yaml.load(open(yaml_fn, 'r').read(), Loader=yaml.FullLoader)
 
         # admin-related keys
         spec_dict['admin'] = {}
@@ -567,7 +567,7 @@ def create_ebnf_parser(files):
         ebnf_fn = belspec_fn.replace('.yaml', '.ebnf')
         if not os.path.exists(ebnf_fn) or os.path.getmtime(belspec_fn) > os.path.getmtime(ebnf_fn):
             with open(belspec_fn, 'r') as f:
-                belspec = yaml.load(f)
+                belspec = yaml.load(f, Loader=yaml.FullLoader)
 
             tmpl_dir = os.path.dirname(tmpl_fn)
             tmpl_basename = os.path.basename(tmpl_fn)
