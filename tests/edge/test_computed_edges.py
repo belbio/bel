@@ -3,7 +3,10 @@ import bel.edge.computed
 
 from bel.Config import config
 
-bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
+bo = bel.lang.belobj.BEL(
+    config["bel"]["lang"]["default_bel_version"],
+    config["bel_api"]["servers"]["api_url"],
+)
 
 
 def test_complex():
@@ -27,9 +30,7 @@ def test_complex():
 def test_act():
 
     belstr = "act(p(HGNC:AKT2), ma(kin))"
-    check_edges = [
-        "p(HGNC:AKT2) hasActivity act(p(HGNC:AKT2), ma(kin))",
-    ]
+    check_edges = ["p(HGNC:AKT2) hasActivity act(p(HGNC:AKT2), ma(kin))"]
 
     parsed = bo.parse(belstr)
 
@@ -42,9 +43,7 @@ def test_act():
 def test_pmod():
 
     belstr = "p(HGNC:AKT1, pmod(Ph, S, 473))"
-    check_edges = [
-        "p(HGNC:AKT1) hasModification p(HGNC:AKT1, pmod(Ph, S, 473))"
-    ]
+    check_edges = ["p(HGNC:AKT1) hasModification p(HGNC:AKT1, pmod(Ph, S, 473))"]
 
     parsed = bo.parse(belstr)
 
@@ -56,9 +55,7 @@ def test_pmod():
 def test_var():
 
     belstr = 'p(HGNC:CFTR, var("p.Gly576Ala"))'
-    check_edges = [
-        'p(HGNC:CFTR) hasVariant p(HGNC:CFTR, var("p.Gly576Ala"))'
-    ]
+    check_edges = ['p(HGNC:CFTR) hasVariant p(HGNC:CFTR, var("p.Gly576Ala"))']
 
     parsed = bo.parse(belstr)
 
@@ -70,9 +67,7 @@ def test_var():
 def test_frag():
 
     belstr = 'p(HGNC:YFG, frag("5_20"))'
-    check_edges = [
-        'p(HGNC:YFG) hasFragment p(HGNC:YFG, frag("5_20"))'
-    ]
+    check_edges = ['p(HGNC:YFG) hasFragment p(HGNC:YFG, frag("5_20"))']
 
     parsed = bo.parse(belstr)
 
@@ -102,7 +97,7 @@ def test_tloc():
         'tloc(p(HGNC:EGFR), fromLoc(GO:"cell surface"), toLoc(GO:endosome)) decreases p(HGNC:EGFR, loc(GO:"cell surface"))',
         'tloc(p(HGNC:EGFR), fromLoc(GO:"cell surface"), toLoc(GO:endosome)) increases p(HGNC:EGFR, loc(GO:endosome))',
         'p(HGNC:EGFR) hasLocation p(HGNC:EGFR, loc(GO:"cell surface"))',
-        'p(HGNC:EGFR) hasLocation p(HGNC:EGFR, loc(GO:endosome))',
+        "p(HGNC:EGFR) hasLocation p(HGNC:EGFR, loc(GO:endosome))",
     ]
 
     parsed = bo.parse(belstr)
@@ -117,7 +112,7 @@ def test_tloc():
 
 def test_surf_and_sec():
 
-    belstr = 'surf(p(HGNC:EGFR))'
+    belstr = "surf(p(HGNC:EGFR))"
     check_edges = [
         'surf(p(HGNC:EGFR)) increases p(HGNC:EGFR, loc(GO:"cell surface"))',
         'p(HGNC:EGFR) hasLocation p(HGNC:EGFR, loc(GO:"cell surface"))',
@@ -130,7 +125,7 @@ def test_surf_and_sec():
     for edge in edges:
         assert str(edge) in check_edges
 
-    belstr = 'sec(p(MGI:Il6))'
+    belstr = "sec(p(MGI:Il6))"
     check_edges = [
         'sec(p(MGI:Il6)) increases p(MGI:Il6, loc(GO:"extracellular space"))',
         'p(MGI:Il6) hasLocation p(MGI:Il6, loc(GO:"extracellular space"))',
@@ -159,10 +154,10 @@ def test_fus():
 
 
 def test_deg():
-    belstr = 'act(p(HGNC:HSD11B1), ma(cat)) increases deg(a(SCHEM:Hydrocortisone))'
+    belstr = "act(p(HGNC:HSD11B1), ma(cat)) increases deg(a(SCHEM:Hydrocortisone))"
     check_edges = [
-        'deg(a(SCHEM:Hydrocortisone)) directlyDecreases a(SCHEM:Hydrocortisone)',
-        'p(HGNC:HSD11B1) hasActivity act(p(HGNC:HSD11B1), ma(cat))'
+        "deg(a(SCHEM:Hydrocortisone)) directlyDecreases a(SCHEM:Hydrocortisone)",
+        "p(HGNC:HSD11B1) hasActivity act(p(HGNC:HSD11B1), ma(cat))",
     ]
 
     parsed = bo.parse(belstr)

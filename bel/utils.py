@@ -18,9 +18,10 @@ import requests
 import requests_cache
 
 from structlog import get_logger
+
 log = get_logger()
 
-requests_cache.install_cache(backend='sqlite', expire_after=600)
+requests_cache.install_cache(backend="sqlite", expire_after=600)
 
 
 def get_url(url: str, params: dict = {}, timeout: float = 5.0, cache: bool = True):
@@ -44,14 +45,14 @@ def get_url(url: str, params: dict = {}, timeout: float = 5.0, cache: bool = Tru
         else:
             r = requests.get(url, params=params, timeout=timeout)
 
-        log.debug(f'Response headers {r.headers}  From cache {r.from_cache}')
+        log.debug(f"Response headers {r.headers}  From cache {r.from_cache}")
         return r
 
     except requests.exceptions.Timeout:
-        log.warn(f'Timed out getting url in get_url: {url}')
+        log.warn(f"Timed out getting url in get_url: {url}")
         return None
     except Exception as e:
-        log.warn(f'Error getting url: {url}  error: {e}')
+        log.warn(f"Error getting url: {url}  error: {e}")
         return None
 
 
@@ -83,7 +84,7 @@ def url_path_param_quoting(param):
         gunicorn processes the path prior to Falcon and interprets the
         correct quoting of %2F into a slash
     """
-    return param.replace('/', '_FORWARDSLASH_')
+    return param.replace("/", "_FORWARDSLASH_")
 
 
 def first_true(iterable, default=False, pred=None):
@@ -172,7 +173,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__version__ = '0.3.3'
+__version__ = "0.3.3"
 
 
 import functools
@@ -199,8 +200,14 @@ class Timer(object):
                   For convenience, if you only specify this, output defaults to True.
     """
 
-    def __init__(self, timer=default_timer, factor=1000,
-                 output=None, fmt="took {:.1f} ms", prefix=""):
+    def __init__(
+        self,
+        timer=default_timer,
+        factor=1000,
+        output=None,
+        fmt="took {:.1f} ms",
+        prefix="",
+    ):
         self.timer = timer
         self.factor = factor
         self.output = output
@@ -232,7 +239,7 @@ class Timer(object):
                 print(output)
 
     def __str__(self):
-        return '%.3f' % (self.elapsed)
+        return "%.3f" % (self.elapsed)
 
     @property
     def elapsed(self):
@@ -252,9 +259,13 @@ class Timer(object):
             return (self.end - self.start) * self.factor
 
 
-def timer(logger=None, level=logging.INFO,
-          fmt="function %(function_name)s execution time: %(execution_time).3f",
-          *func_or_func_args, **timer_kwargs):
+def timer(
+    logger=None,
+    level=logging.INFO,
+    fmt="function %(function_name)s execution time: %(execution_time).3f",
+    *func_or_func_args,
+    **timer_kwargs,
+):
     """ Function decorator displaying the function execution time
     All kwargs are the arguments taken by the Timer class constructor.
     """
@@ -266,20 +277,18 @@ def timer(logger=None, level=logging.INFO,
         def wrapped(*args, **kwargs):
             with Timer(**timer_kwargs) as t:
                 out = f(*args, **kwargs)
-            context = {
-                'function_name': f.__name__,
-                'execution_time': t.elapsed,
-            }
+            context = {"function_name": f.__name__, "execution_time": t.elapsed}
             if logger:
-                logger.log(
-                    level,
-                    fmt % context,
-                    extra=context)
+                logger.log(level, fmt % context, extra=context)
             else:
                 print(fmt % context)
             return out
+
         return wrapped
-    if (len(func_or_func_args) == 1 and isinstance(func_or_func_args[0], collections.Callable)):
+
+    if len(func_or_func_args) == 1 and isinstance(
+        func_or_func_args[0], collections.Callable
+    ):
         return wrapped_f(func_or_func_args[0])
     else:
         return wrapped_f

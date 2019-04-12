@@ -25,7 +25,10 @@ log = structlog.getLogger(__name__)
 client = arangodb.get_client()
 edgestore_db = arangodb.get_edgestore_handle(client)
 
-db = {"NanopubStore": client.db("NanopubStore"), "BackboneStore": client.db("BackboneStore")}
+db = {
+    "NanopubStore": client.db("NanopubStore"),
+    "BackboneStore": client.db("BackboneStore"),
+}
 
 edges_coll_name = arangodb.edgestore_edges_name
 nodes_coll_name = arangodb.edgestore_nodes_name
@@ -56,7 +59,9 @@ def get_nanopub(nanopub_id, db_name, collection_name):
     if len(result) > 0:
         return result[0]
     else:
-        log.error(f"Nanopub not found for {nanopub_id} in {db_name} :: {collection_name}")
+        log.error(
+            f"Nanopub not found for {nanopub_id} in {db_name} :: {collection_name}"
+        )
         return {}
 
 
@@ -97,14 +102,23 @@ def process_nanopub(
         edge = get_edges_for_nanopub(nanopub_id)
         if edge:
             # check if edge nanopub is newer
-            if nanopub["nanopub"]["metadata"]["gd:updateTS"] <= edge["metadata"]["gd:updateTS"]:
-                return {"msg": "Nanopub older than edge nanopub", "success": True, "e": ""}
+            if (
+                nanopub["nanopub"]["metadata"]["gd:updateTS"]
+                <= edge["metadata"]["gd:updateTS"]
+            ):
+                return {
+                    "msg": "Nanopub older than edge nanopub",
+                    "success": True,
+                    "e": "",
+                }
 
     end_time2 = datetime.datetime.now()
     delta_ms = f"{(end_time2 - end_time1).total_seconds() * 1000:.1f}"
     log.info("Timing - Get edge to check nanopub", delta_ms=delta_ms)
 
-    results = bel.edge.edges.nanopub_to_edges(nanopub, orthologize_targets=orthologize_targets)
+    results = bel.edge.edges.nanopub_to_edges(
+        nanopub, orthologize_targets=orthologize_targets
+    )
 
     end_time3 = datetime.datetime.now()
     delta_ms = f"{(end_time3 - end_time2).total_seconds() * 1000:.1f}"

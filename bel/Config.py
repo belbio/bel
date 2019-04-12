@@ -19,6 +19,7 @@ import functools
 import collections
 
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -26,26 +27,26 @@ def get_belbio_conf_files():
     """Get belbio configuration from files
     """
 
-    home = os.path.expanduser('~')
+    home = os.path.expanduser("~")
     cwd = os.getcwd()
 
-    belbio_conf_fp, belbio_secrets_fp = '', ''
+    belbio_conf_fp, belbio_secrets_fp = "", ""
 
-    env_conf_dir = os.getenv('BELBIO_CONF', '').rstrip('/')
+    env_conf_dir = os.getenv("BELBIO_CONF", "").rstrip("/")
 
     conf_paths = [
-        f'{cwd}/belbio_conf.yaml',
-        f'{cwd}/belbio_conf.yml',
-        f'{env_conf_dir}/belbio_conf.yaml',
-        f'{env_conf_dir}/belbio_conf.yml',
-        f'{home}/.belbio/conf',
+        f"{cwd}/belbio_conf.yaml",
+        f"{cwd}/belbio_conf.yml",
+        f"{env_conf_dir}/belbio_conf.yaml",
+        f"{env_conf_dir}/belbio_conf.yml",
+        f"{home}/.belbio/conf",
     ]
     secret_paths = [
-        f'{cwd}/belbio_secrets.yaml',
-        f'{cwd}/belbio_secrets.yml',
-        f'{env_conf_dir}/belbio_secrets.yaml',
-        f'{env_conf_dir}/belbio_secrets.yml',
-        f'{home}/.belbio/secrets',
+        f"{cwd}/belbio_secrets.yaml",
+        f"{cwd}/belbio_secrets.yml",
+        f"{env_conf_dir}/belbio_secrets.yaml",
+        f"{env_conf_dir}/belbio_secrets.yml",
+        f"{home}/.belbio/secrets",
     ]
 
     for fn in conf_paths:
@@ -53,7 +54,9 @@ def get_belbio_conf_files():
             belbio_conf_fp = fn
             break
     else:
-        log.error('No BELBio configuration file found - please add one (see http://bel.readthedocs.io/en/latest/configuration.html)')
+        log.error(
+            "No BELBio configuration file found - please add one (see http://bel.readthedocs.io/en/latest/configuration.html)"
+        )
 
     for fn in secret_paths:
         if os.path.exists(fn):
@@ -67,21 +70,21 @@ def load_configuration():
     """Load the configuration"""
 
     (belbio_conf_fp, belbio_secrets_fp) = get_belbio_conf_files()
-    log.info(f'Using conf: {belbio_conf_fp} and secrets files: {belbio_secrets_fp} ')
+    log.info(f"Using conf: {belbio_conf_fp} and secrets files: {belbio_secrets_fp} ")
 
     config = {}
     if belbio_conf_fp:
-        with open(belbio_conf_fp, 'r') as f:
+        with open(belbio_conf_fp, "r") as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
-            config['source_files'] = {}
-            config['source_files']['conf'] = belbio_conf_fp
+            config["source_files"] = {}
+            config["source_files"]["conf"] = belbio_conf_fp
 
     if belbio_secrets_fp:
-        with open(belbio_secrets_fp, 'r') as f:
+        with open(belbio_secrets_fp, "r") as f:
             secrets = yaml.load(f, Loader=yaml.FullLoader)
-            config['secrets'] = copy.deepcopy(secrets)
-            if 'source_files' in config:
-                config['source_files']['secrets'] = belbio_secrets_fp
+            config["secrets"] = copy.deepcopy(secrets)
+            if "source_files" in config:
+                config["source_files"]["secrets"] = belbio_secrets_fp
 
     get_versions(config)
 
@@ -97,29 +100,32 @@ def get_versions(config) -> dict:
     # Collect bel package version
     try:
         import bel.__version__
-        config['bel']['version'] = bel.__version__.__version__
+
+        config["bel"]["version"] = bel.__version__.__version__
     except KeyError:
-        config['bel'] = {'version': bel.__version__.__version__}
+        config["bel"] = {"version": bel.__version__.__version__}
     except ModuleNotFoundError:
         pass
 
     # Collect bel_resources version
     try:
         import tools.__version__
-        config['bel_resources']['version'] = tools.__version__.__version__
+
+        config["bel_resources"]["version"] = tools.__version__.__version__
     except KeyError:
-        config['bel_resources'] = {'version': tools.__version__.__version__}
+        config["bel_resources"] = {"version": tools.__version__.__version__}
     except ModuleNotFoundError:
         pass
 
     # Collect bel_api version
     try:
         import __version__
-        if __version__.__name__ == 'BELBIO API':
-            config['bel_api']['version'] = __version__.__version__
+
+        if __version__.__name__ == "BELBIO API":
+            config["bel_api"]["version"] = __version__.__version__
     except KeyError:
-        if __version__.__name__ == 'BELBIO API':
-            config['bel_api'] = {'version': __version__.__version__}
+        if __version__.__name__ == "BELBIO API":
+            config["bel_api"] = {"version": __version__.__version__}
     except ModuleNotFoundError:
         pass
 
@@ -146,23 +152,27 @@ def add_environment_vars(config: MutableMapping[str, Any]):
     #         check into config libraries again
 
     for e in os.environ:
-        if re.match('BELBIO_', e):
+        if re.match("BELBIO_", e):
             val = os.environ.get(e)
             if val:
-                e.replace('BELBIO_', '')
-                env_keys = e.lower().split('__')
+                e.replace("BELBIO_", "")
+                env_keys = e.lower().split("__")
                 if len(env_keys) > 1:
                     joined = '"]["'.join(env_keys)
                     eval_config = f'config["{joined}"] = val'
                     try:
                         eval(eval_config)
                     except Exception as exc:
-                        log.warn('Cannot process {e} into config')
+                        log.warn("Cannot process {e} into config")
                 else:
                     config[env_keys[0]] = val
 
 
-def merge_config(config: Mapping[str, Any], override_config: Mapping[str, Any] = None, override_config_fn: str = None) -> Mapping[str, Any]:
+def merge_config(
+    config: Mapping[str, Any],
+    override_config: Mapping[str, Any] = None,
+    override_config_fn: str = None,
+) -> Mapping[str, Any]:
     """Override config with additional configuration in override_config or override_config_fn
 
     Used in script to merge CLI options with Config
@@ -174,11 +184,11 @@ def merge_config(config: Mapping[str, Any], override_config: Mapping[str, Any] =
     """
 
     if override_config_fn:
-        with open(override_config_fn, 'r') as f:
+        with open(override_config_fn, "r") as f:
             override_config = yaml.load(f, Loader=yaml.FullLoader)
 
     if not override_config:
-        log.info('Missing override_config')
+        log.info("Missing override_config")
 
     return functools.reduce(rec_merge, (config, override_config))
 
@@ -211,19 +221,20 @@ def rec_merge(d1, d2):
 def main():
 
     import json
+
     config = load_configuration()
-    print('Config:\n', json.dumps(load_configuration(), indent=4))
-    print('ns def', config['bel_resources']['file_locations']['namespaces_definition'])
+    print("Config:\n", json.dumps(load_configuration(), indent=4))
+    print("ns def", config["bel_resources"]["file_locations"]["namespaces_definition"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 else:
     # If building documents in readthedocs - provide empty config
-    if os.getenv('READTHEDOCS', False):
+    if os.getenv("READTHEDOCS", False):
         config = {}
-        log.info('READTHEDOCS environment')
+        log.info("READTHEDOCS environment")
     else:
         config = load_configuration()
 
@@ -240,5 +251,3 @@ else:
 #         else:
 #             result[k] = copy.deepcopy(v)
 #     return result
-
-

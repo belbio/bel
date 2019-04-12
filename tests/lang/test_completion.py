@@ -42,7 +42,9 @@ def test_completion_empty_start():
     print("Completions:\n", json.dumps(completions, indent=4))
     assert completions["completion_text"] == ""
     assert ["a()"] == [
-        c["replacement"] for c in completions["completions"] if c["replacement"] == "a()"
+        c["replacement"]
+        for c in completions["completions"]
+        if c["replacement"] == "a()"
     ]
     assert completions["completions"][0]["cursor_loc"] == 2
     assert completions["function_help"] == []
@@ -94,7 +96,9 @@ def test_completion_fn_name_start_medium():
 
 def test_completion_fn_name_start_medium_2():
 
-    completions = bel.lang.completion.bel_completion("path()", cursor_loc=1, bel_fmt="long")
+    completions = bel.lang.completion.bel_completion(
+        "path()", cursor_loc=1, bel_fmt="long"
+    )
     print("Completions:\n", json.dumps(completions, indent=4))
     assert completions["completion_text"] == "pa"
     assert completions["completions"][0]["replacement"] == "pathology()"
@@ -110,7 +114,10 @@ def test_completion_arg_fn():
     )
     print("Completions:\n", json.dumps(completions, indent=4))
     assert completions["completion_text"] == "pro"
-    assert completions["completions"][0]["replacement"] == "complex(proteinAbundance(HGNC:EGFR))"
+    assert (
+        completions["completions"][0]["replacement"]
+        == "complex(proteinAbundance(HGNC:EGFR))"
+    )
     assert completions["completions"][0]["cursor_loc"] == 24
     assert completions["entity_spans"] != []
     assert completions["function_help"] != []
@@ -149,7 +156,9 @@ def test_completion_arg_fn_4():
 
 def test_completion_arg_fn_5():
 
-    completions = bel.lang.completion.bel_completion("act(r(fus(HGNC:AKT2", bel_fmt="medium")
+    completions = bel.lang.completion.bel_completion(
+        "act(r(fus(HGNC:AKT2", bel_fmt="medium"
+    )
     print("Completions:\n", json.dumps(completions, indent=4))
     assert completions["completion_text"] == "AKT2"
     assert completions["completions"][0]["replacement"] == "act(r(fus(HGNC:AKT2"
@@ -161,7 +170,9 @@ def test_completion_arg_fn_5():
 def test_completion_arg_ns_prefix():
 
     if (
-        bel.utils.get_url(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code
+        bel.utils.get_url(
+            f"{config['bel_api']['servers']['api_url']}/simple_status"
+        ).status_code
         != 200
     ):
         pytest.xfail("BEL.bio API Test environment is not setup")
@@ -180,7 +191,9 @@ def test_completion_arg_ns_prefix():
 def test_completion_arg_ns_val():
 
     if (
-        bel.utils.get_url(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code
+        bel.utils.get_url(
+            f"{config['bel_api']['servers']['api_url']}/simple_status"
+        ).status_code
         != 200
     ):
         pytest.xfail("BEL.bio API Test environment is not setup")
@@ -202,7 +215,10 @@ def test_completion_arg_StrArgNSArg_1():
     )
     print("Completions:\n", json.dumps(completions, indent=4))
     assert completions["completion_text"] == "p"
-    assert completions["completions"][0]["replacement"] == "complex(p(HGNC:EGFR, pmod(Ph)))"
+    assert (
+        completions["completions"][0]["replacement"]
+        == "complex(p(HGNC:EGFR, pmod(Ph)))"
+    )
     assert completions["completions"][0]["cursor_loc"] == 28
     assert completions["entity_spans"] != []
     assert completions["function_help"] != []
@@ -215,7 +231,10 @@ def test_completion_arg_StrArgNSArg_2():
     )
     print("Completions:\n", json.dumps(completions, indent=4))
     assert completions["completion_text"] == "pa"
-    assert completions["completions"][0]["replacement"] == "complex(p(HGNC:EGFR, pmod(Palm)))"
+    assert (
+        completions["completions"][0]["replacement"]
+        == "complex(p(HGNC:EGFR, pmod(Palm)))"
+    )
     assert completions["completions"][0]["cursor_loc"] == 30
     assert completions["entity_spans"] != []
     assert completions["function_help"] != []
@@ -229,7 +248,8 @@ def test_completion_relation_end():
     print("Completions:\n", json.dumps(completions, indent=4))
     assert completions["completion_text"] == "inc"
     assert (
-        completions["completions"][0]["replacement"] == "complex(p(HGNC:EGFR, pmod(pa))) increases"
+        completions["completions"][0]["replacement"]
+        == "complex(p(HGNC:EGFR, pmod(pa))) increases"
     )
     assert completions["completions"][0]["cursor_loc"] == 41
     assert completions["entity_spans"] != []
@@ -243,7 +263,10 @@ def test_completion_relation_end_short():
     )
     print("Completions:\n", json.dumps(completions, indent=4))
     assert completions["completion_text"] == "->"
-    assert completions["completions"][0]["replacement"] == "complex(p(HGNC:EGFR, pmod(pa))) ->"
+    assert (
+        completions["completions"][0]["replacement"]
+        == "complex(p(HGNC:EGFR, pmod(pa))) ->"
+    )
     assert completions["completions"][0]["cursor_loc"] == 34
     assert completions["entity_spans"] != []
     assert completions["function_help"] == []
@@ -255,7 +278,9 @@ def test_completion_relation_end_short_cursorloc():
         "complex(p(HGNC:EGFR, pmod(pa))) -> ", cursor_loc=32, bel_fmt="short"
     )
     print("Completions:\n", json.dumps(completions, indent=4))
-    assert ["--", "->", "-|"] == sorted([c["label"] for c in completions["completions"]])
+    assert ["--", "->", "-|"] == sorted(
+        [c["label"] for c in completions["completions"]]
+    )
     assert ["complex(p(HGNC:EGFR, pmod(pa))) -> "] == [
         c["replacement"]
         for c in completions["completions"]

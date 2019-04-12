@@ -28,13 +28,15 @@ from bel.Config import config
 
 log = structlog.getLogger(__name__)
 
-start_arg_chars = ['(', ',']
-end_arg_chars = [')', ',']
+start_arg_chars = ["(", ","]
+end_arg_chars = [")", ","]
 
-relations_pattern_middle = re.compile(r'\)\s+([a-zA-Z\=\-\>\|\:]+)\s+[\w\(]+')
-relations_pattern_end = re.compile(r'\)\s+([a-zA-Z\=\-\>\|\:]+)\s*$')
+relations_pattern_middle = re.compile(r"\)\s+([a-zA-Z\=\-\>\|\:]+)\s+[\w\(]+")
+relations_pattern_end = re.compile(r"\)\s+([a-zA-Z\=\-\>\|\:]+)\s*$")
 
-Errors = List[Tuple[str, str, Optional[Tuple[int, int]]]]  # (<"Error"|"Warning">, "message", (start_span, end_span))
+Errors = List[
+    Tuple[str, str, Optional[Tuple[int, int]]]
+]  # (<"Error"|"Warning">, "message", (start_span, end_span))
 Parsed = MutableMapping[str, Any]
 AST = MutableMapping[str, Any]
 CharLocs = Mapping[str, Any]
@@ -125,43 +127,61 @@ def parse_chars(bels: list, errors: Errors) -> Tuple[CharLocs, Errors]:
         # print('BEL', prior_char, b[prior_char])
 
         # Find starting quote
-        if (c == '"' and bels[prior_char] != '\\' and len(qstack) == 0):
+        if c == '"' and bels[prior_char] != "\\" and len(qstack) == 0:
             qstack.append(i)
             notquoted_flag = False
 
         # Find closing quote
-        elif c == '"' and bels[prior_char] != '\\':
+        elif c == '"' and bels[prior_char] != "\\":
             quotes[qstack.pop()] = i
             notquoted_flag = True
 
         # Find all escaped quotes outside of quoted string
-        elif c == '"' and bels[prior_char] == '\\' and len(qstack) == 0:
-            errors.append(('ERROR', f'Escaped quote outside of quoted string at location: {i - 1}', (i - 1, i - 1)))
+        elif c == '"' and bels[prior_char] == "\\" and len(qstack) == 0:
+            errors.append(
+                (
+                    "ERROR",
+                    f"Escaped quote outside of quoted string at location: {i - 1}",
+                    (i - 1, i - 1),
+                )
+            )
 
         # Find all nested object opening parens
-        elif notquoted_flag and c == '(' and bels[prior_char] == ' ':
+        elif notquoted_flag and c == "(" and bels[prior_char] == " ":
             if len(nested_pstack) > 1:
-                errors.append(('ERROR', f'More than one nested parenthesis or left parenthesis following a space character', (i, i)))
+                errors.append(
+                    (
+                        "ERROR",
+                        f"More than one nested parenthesis or left parenthesis following a space character",
+                        (i, i),
+                    )
+                )
 
             nested_pstack.append(i)
 
         # Find all opening parens
-        elif notquoted_flag and c == '(' and bels[prior_char] not in ['\\']:
+        elif notquoted_flag and c == "(" and bels[prior_char] not in ["\\"]:
             pstack.append(i)
 
         # Find all closing parens
-        elif notquoted_flag and c == ')' and bels[prior_char] != '\\':
+        elif notquoted_flag and c == ")" and bels[prior_char] != "\\":
             if len(pstack):
                 if len(pstack) > 1:
-                    parens[pstack.pop()] = (i, 'child')
+                    parens[pstack.pop()] = (i, "child")
                 else:
-                    parens[pstack.pop()] = (i, 'top')
+                    parens[pstack.pop()] = (i, "top")
             elif len(nested_pstack):
-                nested_parens[nested_pstack.pop()] = (i, 'top')
+                nested_parens[nested_pstack.pop()] = (i, "top")
             else:
-                errors.append(('ERROR', f'Missing left parenthesis for right parenthesis at location {i}', (i, i)))
+                errors.append(
+                    (
+                        "ERROR",
+                        f"Missing left parenthesis for right parenthesis at location {i}",
+                        (i, i),
+                    )
+                )
         # Find comma outside of quoted string
-        elif notquoted_flag and c == ',' and len(qstack) == 0:
+        elif notquoted_flag and c == "," and len(qstack) == 0:
             sparen = pstack[-1]
             if sparen not in commas:
                 commas[sparen] = [i]
@@ -169,29 +189,52 @@ def parse_chars(bels: list, errors: Errors) -> Tuple[CharLocs, Errors]:
                 commas[sparen].append(i)
 
     while len(pstack):
-        errors.append(('ERROR', f'Missing right parenthesis for left parenthesis at location {pstack[-1]}', (pstack[-1], pstack[-1])))
+        errors.append(
+            (
+                "ERROR",
+                f"Missing right parenthesis for left parenthesis at location {pstack[-1]}",
+                (pstack[-1], pstack[-1]),
+            )
+        )
         if len(pstack) > 1:
-            parens[pstack.pop()] = (-1, 'child')
+            parens[pstack.pop()] = (-1, "child")
         else:
-            parens[pstack.pop()] = (-1, 'top')
+            parens[pstack.pop()] = (-1, "top")
 
     while len(nested_pstack):
-        errors.append(('ERROR', f'Missing right parenthesis for nested object left parenthesis at location {nested_pstack[-1]}', (nested_pstack[-1], nested_pstack[-1])))
-        nested_parens[nested_pstack.pop()] = (-1, 'top')
+        errors.append(
+            (
+                "ERROR",
+                f"Missing right parenthesis for nested object left parenthesis at location {nested_pstack[-1]}",
+                (nested_pstack[-1], nested_pstack[-1]),
+            )
+        )
+        nested_parens[nested_pstack.pop()] = (-1, "top")
 
     if len(qstack):
         missing_quote = qstack.pop()
-        errors.append(('ERROR', f'Missing right quote for left quote at location {missing_quote}', (missing_quote, missing_quote)))
+        errors.append(
+            (
+                "ERROR",
+                f"Missing right quote for left quote at location {missing_quote}",
+                (missing_quote, missing_quote),
+            )
+        )
 
-    return {
-        'parens': parens,
-        'nested_parens': nested_parens,
-        'quotes': quotes,
-        'commas': commas,
-    }, errors
+    return (
+        {
+            "parens": parens,
+            "nested_parens": nested_parens,
+            "quotes": quotes,
+            "commas": commas,
+        },
+        errors,
+    )
 
 
-def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) -> Tuple[Parsed, Errors]:
+def parse_functions(
+    bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors
+) -> Tuple[Parsed, Errors]:
     """Parse functions from BEL using paren, comma, quote character locations
 
     Args:
@@ -202,16 +245,18 @@ def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Err
     Returns:
         (functions, errors): function names and locations and error messages
     """
-    parens = char_locs['parens']
+    parens = char_locs["parens"]
 
     # Handle partial top-level function name
     if not parens:
         bels_len = len(bels) - 1
         span = (0, bels_len)
         parsed[span] = {
-            'name': ''.join(bels), 'type': 'Function',
-            'span': span, 'name_span': (span),
-            'function_level': 'top',
+            "name": "".join(bels),
+            "type": "Function",
+            "span": span,
+            "name_span": (span),
+            "function_level": "top",
         }
         return parsed, errors
 
@@ -219,12 +264,12 @@ def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Err
         ep, function_level = parens[sp]
 
         # Functions can't have a space between function name and left paren
-        if bels[sp - 1] == ' ':
+        if bels[sp - 1] == " ":
             continue
 
         # look in front of start paren for function name
         for i in range(sp - 1, 0, -1):
-            if bels[i] in [' ', ',', '(']:  # function name upstream boundary chars
+            if bels[i] in [" ", ",", "("]:  # function name upstream boundary chars
                 if i < sp - 1:
                     if ep == -1:
                         span = (i + 1, len(bels) - 1)
@@ -232,10 +277,12 @@ def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Err
                         span = (i + 1, ep)
 
                     parsed[span] = {
-                        'name': ''.join(bels[i + 1:sp]),
-                        'type': 'Function', 'span': span,
-                        'name_span': (i + 1, sp - 1), 'parens_span': (sp, ep),
-                        'function_level': function_level,
+                        "name": "".join(bels[i + 1 : sp]),
+                        "type": "Function",
+                        "span": span,
+                        "name_span": (i + 1, sp - 1),
+                        "parens_span": (sp, ep),
+                        "function_level": function_level,
                     }
                 break
         else:
@@ -245,15 +292,20 @@ def parse_functions(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Err
                 span = (0, ep)
 
             parsed[span] = {
-                'name': ''.join(bels[0:sp]), 'type': 'Function',
-                'span': span, 'name_span': (0, sp - 1), 'parens_span': (sp, ep),
-                'function_level': function_level,
+                "name": "".join(bels[0:sp]),
+                "type": "Function",
+                "span": span,
+                "name_span": (0, sp - 1),
+                "parens_span": (sp, ep),
+                "function_level": function_level,
             }
 
     return parsed, errors
 
 
-def parse_args(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) -> Tuple[Parsed, Errors]:
+def parse_args(
+    bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors
+) -> Tuple[Parsed, Errors]:
     """Parse arguments from functions
 
     Args:
@@ -266,13 +318,13 @@ def parse_args(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) 
         (functions, errors): function and arg locations plus error messages
     """
 
-    commas = char_locs['commas']
+    commas = char_locs["commas"]
 
     # Process each span key in parsed from beginning
     for span in parsed:
-        if parsed[span]['type'] != 'Function' or 'parens_span' not in parsed[span]:
+        if parsed[span]["type"] != "Function" or "parens_span" not in parsed[span]:
             continue  # Skip if not argument-less
-        sp, ep = parsed[span]['parens_span']
+        sp, ep = parsed[span]["parens_span"]
 
         # calculate args_end position
         if ep == -1:  # supports bel completion
@@ -288,24 +340,24 @@ def parse_args(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) 
             # log.debug(f'Arg_start: {arg_start}  Arg_end: {arg_end}')
 
             # Skip blanks at beginning of argument
-            while arg_start < args_end and bels[arg_start] == ' ':
+            while arg_start < args_end and bels[arg_start] == " ":
                 arg_start += 1
 
             # Trim arg_end (e.g. HGNC:AKT1  , HGNC:EGF) - if there are spaces before comma
             trimmed_arg_end = arg_end
-            while trimmed_arg_end > arg_start and bels[trimmed_arg_end] == ' ':
+            while trimmed_arg_end > arg_start and bels[trimmed_arg_end] == " ":
                 trimmed_arg_end -= 1
 
             if trimmed_arg_end < arg_start:
                 trimmed_arg_end = arg_start
 
-            arg = ''.join(bels[arg_start:trimmed_arg_end + 1])
+            arg = "".join(bels[arg_start : trimmed_arg_end + 1])
 
             # log.debug(f'Adding arg to args: {arg_start} {trimmed_arg_end}')
-            args.append({'arg': arg, 'span': (arg_start, trimmed_arg_end)})
+            args.append({"arg": arg, "span": (arg_start, trimmed_arg_end)})
             arg_start = arg_end + 2
 
-        parsed[span]['args'] = args
+        parsed[span]["args"] = args
 
     return parsed, errors
 
@@ -321,19 +373,19 @@ def arg_types(parsed: Parsed, errors: Errors) -> Tuple[Parsed, Errors]:
         (parsed, errors): parsed, arguments with arg types plus error messages
     """
 
-    func_pattern = re.compile(r'\s*[a-zA-Z]+\(')
-    nsarg_pattern = re.compile(r'^\s*([A-Z]+):(.*?)\s*$')
+    func_pattern = re.compile(r"\s*[a-zA-Z]+\(")
+    nsarg_pattern = re.compile(r"^\s*([A-Z]+):(.*?)\s*$")
 
     for span in parsed:
-        if parsed[span]['type'] != 'Function' or 'parens_span' not in parsed[span]:
+        if parsed[span]["type"] != "Function" or "parens_span" not in parsed[span]:
             continue
 
-        for i, arg in enumerate(parsed[span]['args']):
-            nsarg_matches = nsarg_pattern.match(arg['arg'])
-            if func_pattern.match(arg['arg']):
-                parsed[span]['args'][i].update({'type': 'Function'})
+        for i, arg in enumerate(parsed[span]["args"]):
+            nsarg_matches = nsarg_pattern.match(arg["arg"])
+            if func_pattern.match(arg["arg"]):
+                parsed[span]["args"][i].update({"type": "Function"})
             elif nsarg_matches:
-                (start, end) = arg['span']
+                (start, end) = arg["span"]
                 ns = nsarg_matches.group(1)
                 ns_val = nsarg_matches.group(2)
                 ns_span = nsarg_matches.span(1)
@@ -341,14 +393,24 @@ def arg_types(parsed: Parsed, errors: Errors) -> Tuple[Parsed, Errors]:
                 ns_val_span = nsarg_matches.span(2)
                 ns_val_span = (ns_val_span[0] + start, ns_val_span[1] + start - 1)
 
-                parsed[span]['args'][i].update({'type': 'NSArg', 'ns': ns, 'ns_span': ns_span, 'ns_val': ns_val, 'ns_val_span': ns_val_span})
+                parsed[span]["args"][i].update(
+                    {
+                        "type": "NSArg",
+                        "ns": ns,
+                        "ns_span": ns_span,
+                        "ns_val": ns_val,
+                        "ns_val_span": ns_val_span,
+                    }
+                )
             else:
-                parsed[span]['args'][i].update({'type': 'StrArg'})
+                parsed[span]["args"][i].update({"type": "StrArg"})
 
     return parsed, errors
 
 
-def parse_relations(belstr: str, char_locs: CharLocs, parsed: Parsed, errors: Errors) -> Tuple[Parsed, Errors]:
+def parse_relations(
+    belstr: str, char_locs: CharLocs, parsed: Parsed, errors: Errors
+) -> Tuple[Parsed, Errors]:
     """Parse relations from BEL string
 
     Args:
@@ -360,7 +422,7 @@ def parse_relations(belstr: str, char_locs: CharLocs, parsed: Parsed, errors: Er
     Returns:
         (parsed, errors):
     """
-    quotes = char_locs['quotes']
+    quotes = char_locs["quotes"]
     quoted_range = set([i for start, end in quotes.items() for i in range(start, end)])
 
     for match in relations_pattern_middle.finditer(belstr):
@@ -377,11 +439,15 @@ def parse_relations(belstr: str, char_locs: CharLocs, parsed: Parsed, errors: Er
             continue
 
         span_key = (start, end)
-        parsed[span_key] = {'type': 'Relation', 'name': match.group(1), 'span': (start, end)}
+        parsed[span_key] = {
+            "type": "Relation",
+            "name": match.group(1),
+            "span": (start, end),
+        }
 
     for match in relations_pattern_end.finditer(belstr):
         (start, end) = match.span(1)
-        log.debug(f'Relation-end {match}')
+        log.debug(f"Relation-end {match}")
         end = end - 1  # adjust end to match actual end character index
         if start != end:
             test_range = set(range(start, end))
@@ -393,19 +459,27 @@ def parse_relations(belstr: str, char_locs: CharLocs, parsed: Parsed, errors: Er
             continue
 
         span_key = (start, end)
-        parsed[span_key] = {'type': 'Relation', 'name': match.group(1), 'span': (start, end)}
+        parsed[span_key] = {
+            "type": "Relation",
+            "name": match.group(1),
+            "span": (start, end),
+        }
 
     return parsed, errors
 
 
-def parse_nested(bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors) -> Tuple[Parsed, Errors]:
+def parse_nested(
+    bels: list, char_locs: CharLocs, parsed: Parsed, errors: Errors
+) -> Tuple[Parsed, Errors]:
     """ Parse nested BEL object """
 
-    for sp in char_locs['nested_parens']:  # sp = start parenthesis, ep = end parenthesis
-        ep, level = char_locs['nested_parens'][sp]
+    for sp in char_locs[
+        "nested_parens"
+    ]:  # sp = start parenthesis, ep = end parenthesis
+        ep, level = char_locs["nested_parens"][sp]
         if ep == -1:
             ep = len(bels) + 1
-        parsed[(sp, ep)] = {'type': 'Nested', 'span': (sp, ep)}
+        parsed[(sp, ep)] = {"type": "Nested", "span": (sp, ep)}
 
     return parsed, errors
 
@@ -441,38 +515,38 @@ def collect_spans(ast: AST) -> List[Tuple[str, Tuple[int, int]]]:
 
     spans = []
 
-    if ast.get('subject', False):
-        spans.extend(collect_spans(ast['subject']))
+    if ast.get("subject", False):
+        spans.extend(collect_spans(ast["subject"]))
 
-    if ast.get('object', False):
-        spans.extend(collect_spans(ast['object']))
+    if ast.get("object", False):
+        spans.extend(collect_spans(ast["object"]))
 
-    if ast.get('nested', False):
-        spans.extend(collect_spans(ast['nested']))
+    if ast.get("nested", False):
+        spans.extend(collect_spans(ast["nested"]))
 
-    if ast.get('function', False):
-        log.debug(f'Processing function')
-        spans.append(('Function', ast['function']['name_span']))
-        log.debug(f'Spans: {spans}')
+    if ast.get("function", False):
+        log.debug(f"Processing function")
+        spans.append(("Function", ast["function"]["name_span"]))
+        log.debug(f"Spans: {spans}")
 
-    if ast.get('args', False):
-        for idx, arg in enumerate(ast['args']):
-            log.debug(f'Arg  {arg}')
+    if ast.get("args", False):
+        for idx, arg in enumerate(ast["args"]):
+            log.debug(f"Arg  {arg}")
 
-            if arg.get('function', False):
-                log.debug(f'Recursing on arg function')
+            if arg.get("function", False):
+                log.debug(f"Recursing on arg function")
                 results = collect_spans(arg)
-                log.debug(f'Results {results}')
+                log.debug(f"Results {results}")
                 spans.extend(results)  # Recurse arg function
-            elif arg.get('nsarg', False):
-                log.debug(f'Processing NSArg   Arg {arg}')
-                spans.append(('NSArg', arg['span']))
-                spans.append(('NSPrefix', arg['nsarg']['ns_span']))
-                spans.append(('NSVal', arg['nsarg']['ns_val_span']))
-            elif arg['type'] == 'StrArg':
-                spans.append(('StrArg', arg['span']))
+            elif arg.get("nsarg", False):
+                log.debug(f"Processing NSArg   Arg {arg}")
+                spans.append(("NSArg", arg["span"]))
+                spans.append(("NSPrefix", arg["nsarg"]["ns_span"]))
+                spans.append(("NSVal", arg["nsarg"]["ns_val_span"]))
+            elif arg["type"] == "StrArg":
+                spans.append(("StrArg", arg["span"]))
 
-    log.debug(f'Spans: {spans}')
+    log.debug(f"Spans: {spans}")
     return spans
 
     # max_idx = 0
@@ -506,9 +580,9 @@ def print_spans(spans, max_idx: int) -> None:
     Mostly for debugging purposes
     """
 
-    bel_spans = [' '] * (max_idx + 3)
+    bel_spans = [" "] * (max_idx + 3)
     for val, span in spans:
-        if val in ['Nested', 'NSArg']:
+        if val in ["Nested", "NSArg"]:
             continue
         for i in range(span[0], span[1] + 1):
             bel_spans[i] = val[0]
@@ -516,9 +590,9 @@ def print_spans(spans, max_idx: int) -> None:
     # print(''.join(bel_spans))
 
     # Add second layer for Nested Objects if available
-    bel_spans = [' '] * (max_idx + 3)
+    bel_spans = [" "] * (max_idx + 3)
     for val, span in spans:
-        if val not in ['Nested']:
+        if val not in ["Nested"]:
             continue
         for i in range(span[0], span[1] + 1):
             bel_spans[i] = val[0]
@@ -532,47 +606,45 @@ def parsed_function_to_ast(parsed: Parsed, parsed_key):
     sub = parsed[parsed_key]
 
     subtree = {
-        'type': 'Function',
-        'span': sub['span'],
-        'function': {
-            'name': sub['name'],
-            'name_span': sub['name_span'],
-            'parens_span': sub.get('parens_span', []),
-        }
+        "type": "Function",
+        "span": sub["span"],
+        "function": {
+            "name": sub["name"],
+            "name_span": sub["name_span"],
+            "parens_span": sub.get("parens_span", []),
+        },
     }
 
     args = []
-    for arg in parsed[parsed_key].get('args', []):
+    for arg in parsed[parsed_key].get("args", []):
 
         # pdb.set_trace()
 
-        if arg['type'] == 'Function':
-            args.append(parsed_function_to_ast(parsed, arg['span']))
-        elif arg['type'] == 'NSArg':
-            args.append({
-                "arg": arg['arg'],
-                "type": arg['type'],
-                'span': arg['span'],
-                'nsarg': {
-                    "ns": arg['ns'],
-                    "ns_val": arg['ns_val'],
-                    "ns_span": arg['ns_span'],
-                    "ns_val_span": arg['ns_val_span'],
+        if arg["type"] == "Function":
+            args.append(parsed_function_to_ast(parsed, arg["span"]))
+        elif arg["type"] == "NSArg":
+            args.append(
+                {
+                    "arg": arg["arg"],
+                    "type": arg["type"],
+                    "span": arg["span"],
+                    "nsarg": {
+                        "ns": arg["ns"],
+                        "ns_val": arg["ns_val"],
+                        "ns_span": arg["ns_span"],
+                        "ns_val_span": arg["ns_val_span"],
+                    },
                 }
-            })
-        elif arg['type'] == 'StrArg':
-            args.append({
-                "arg": arg['arg'],
-                "type": arg['type'],
-                'span': arg['span'],
-            })
+            )
+        elif arg["type"] == "StrArg":
+            args.append({"arg": arg["arg"], "type": arg["type"], "span": arg["span"]})
 
-    subtree['args'] = copy.deepcopy(args)
+    subtree["args"] = copy.deepcopy(args)
 
     return subtree
 
 
-def parsed_top_level_errors(parsed, errors, component_type: str = '') -> Errors:
+def parsed_top_level_errors(parsed, errors, component_type: str = "") -> Errors:
     """Check full parse for errors
 
     Args:
@@ -587,51 +659,84 @@ def parsed_top_level_errors(parsed, errors, component_type: str = '') -> Errors:
     rel_cnt = 0
     nested_cnt = 0
     for key in parsed:
-        if parsed[key]['type'] == 'Function':
+        if parsed[key]["type"] == "Function":
             fn_cnt += 1
-        if parsed[key]['type'] == 'Relation':
+        if parsed[key]["type"] == "Relation":
             rel_cnt += 1
-        if parsed[key]['type'] == 'Nested':
+        if parsed[key]["type"] == "Nested":
             nested_cnt += 1
 
     if not component_type:
         if nested_cnt > 1:
-            errors.append(('Error', 'Too many nested objects - can only have one per BEL Assertion'))
+            errors.append(
+                (
+                    "Error",
+                    "Too many nested objects - can only have one per BEL Assertion",
+                )
+            )
 
         if nested_cnt:
             if rel_cnt > 2:
-                errors.append(('Error', 'Too many relations - can only have two in a nested BEL Assertion'))
+                errors.append(
+                    (
+                        "Error",
+                        "Too many relations - can only have two in a nested BEL Assertion",
+                    )
+                )
             elif fn_cnt > 4:
-                errors.append(('Error', 'Too many BEL subject and object candidates'))
+                errors.append(("Error", "Too many BEL subject and object candidates"))
 
         else:
             if rel_cnt > 1:
-                errors.append(('Error', 'Too many relations - can only have one in a BEL Assertion'))
+                errors.append(
+                    (
+                        "Error",
+                        "Too many relations - can only have one in a BEL Assertion",
+                    )
+                )
             elif fn_cnt > 2:
-                errors.append(('Error', 'Too many BEL subject and object candidates'))
+                errors.append(("Error", "Too many BEL subject and object candidates"))
 
-    elif component_type == 'subject':
+    elif component_type == "subject":
         if rel_cnt > 0:
-            errors.append(('Error', 'Too many relations - cannot have any in a BEL Subject'))
+            errors.append(
+                ("Error", "Too many relations - cannot have any in a BEL Subject")
+            )
         elif fn_cnt > 1:
-            errors.append(('Error', 'Too many BEL subject candidates - can only have one'))
+            errors.append(
+                ("Error", "Too many BEL subject candidates - can only have one")
+            )
 
-    elif component_type == 'object':
+    elif component_type == "object":
         if nested_cnt:
             if rel_cnt > 1:
-                errors.append(('Error', 'Too many relations - can only have one in a nested BEL object'))
+                errors.append(
+                    (
+                        "Error",
+                        "Too many relations - can only have one in a nested BEL object",
+                    )
+                )
             elif fn_cnt > 2:
-                errors.append(('Error', 'Too many BEL subject and object candidates in a nested BEL object'))
+                errors.append(
+                    (
+                        "Error",
+                        "Too many BEL subject and object candidates in a nested BEL object",
+                    )
+                )
         else:
             if rel_cnt > 0:
-                errors.append(('Error', 'Too many relations - cannot have any in a BEL Subject'))
+                errors.append(
+                    ("Error", "Too many relations - cannot have any in a BEL Subject")
+                )
             elif fn_cnt > 1:
-                errors.append(('Error', 'Too many BEL subject candidates - can only have one'))
+                errors.append(
+                    ("Error", "Too many BEL subject candidates - can only have one")
+                )
 
     return errors
 
 
-def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ''):
+def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ""):
     """Convert parsed data struct to AST dictionary
 
     Args:
@@ -646,36 +751,44 @@ def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ''):
 
     # Setup top-level tree
     for key in sorted_keys:
-        if parsed[key]['type'] == 'Nested':
-            nested_component_stack = ['subject', 'object']
+        if parsed[key]["type"] == "Nested":
+            nested_component_stack = ["subject", "object"]
 
     if component_type:
         component_stack = [component_type]
     else:
-        component_stack = ['subject', 'object']
+        component_stack = ["subject", "object"]
 
     for key in sorted_keys:
-        if parsed[key]['type'] == 'Function' and parsed[key]['function_level'] == 'top':
+        if parsed[key]["type"] == "Function" and parsed[key]["function_level"] == "top":
             ast[component_stack.pop(0)] = parsed_function_to_ast(parsed, key)
-        elif parsed[key]['type'] == 'Relation' and 'relation' not in ast:
-            ast['relation'] = {
-                'name': parsed[key]['name'],
-                'type': 'Relation',
-                'span': key,
+        elif parsed[key]["type"] == "Relation" and "relation" not in ast:
+            ast["relation"] = {
+                "name": parsed[key]["name"],
+                "type": "Relation",
+                "span": key,
             }
-        elif parsed[key]['type'] == 'Nested':
-            ast['nested'] = {}
+        elif parsed[key]["type"] == "Nested":
+            ast["nested"] = {}
             for nested_key in sorted_keys:
                 if nested_key <= key:
                     continue
 
-                if parsed[nested_key]['type'] == 'Function' and parsed[nested_key]['function_level'] == 'top':
-                    ast['nested'][nested_component_stack.pop(0)] = parsed_function_to_ast(parsed, nested_key)
-                elif parsed[nested_key]['type'] == 'Relation' and 'relation' not in ast['nested']:
-                    ast['nested']['relation'] = {
-                        'name': parsed[nested_key]['name'],
-                        'type': 'Relation',
-                        'span': parsed[nested_key]['span'],
+                if (
+                    parsed[nested_key]["type"] == "Function"
+                    and parsed[nested_key]["function_level"] == "top"
+                ):
+                    ast["nested"][
+                        nested_component_stack.pop(0)
+                    ] = parsed_function_to_ast(parsed, nested_key)
+                elif (
+                    parsed[nested_key]["type"] == "Relation"
+                    and "relation" not in ast["nested"]
+                ):
+                    ast["nested"]["relation"] = {
+                        "name": parsed[nested_key]["name"],
+                        "type": "Relation",
+                        "span": parsed[nested_key]["span"],
                     }
 
             return ast, errors
@@ -683,7 +796,7 @@ def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ''):
     return ast, errors
 
 
-def get_ast_dict(belstr, component_type: str = ''):
+def get_ast_dict(belstr, component_type: str = ""):
     """Convert BEL string to AST dictionary
 
     Args:
@@ -708,35 +821,40 @@ def get_ast_dict(belstr, component_type: str = ''):
     return ast, errors
 
 
-def get_ast_obj(belstr, bel_version, component_type: str = ''):
+def get_ast_obj(belstr, bel_version, component_type: str = ""):
     """Convert AST partialparse dict to BELAst"""
 
     ast_dict, errors = get_ast_dict(belstr, component_type)
 
     spec = bel_specification.get_specification(bel_version)
 
-    subj = ast_dict['subject']
+    subj = ast_dict["subject"]
     subj_ast = add_ast_fn(subj, spec)
 
     relation = None
     obj = None
 
-    if 'relation' in ast_dict:
-        relation = ast_dict['relation']['name']
+    if "relation" in ast_dict:
+        relation = ast_dict["relation"]["name"]
 
-    if 'object' in ast_dict:
-        obj = ast_dict['object']
+    if "object" in ast_dict:
+        obj = ast_dict["object"]
         obj_ast = add_ast_fn(obj, spec)
 
         return BELAst(subj_ast, relation, obj_ast, spec)
-    elif 'nested' in ast_dict:
-        nested_subj = ast_dict['nested']['subject']
+    elif "nested" in ast_dict:
+        nested_subj = ast_dict["nested"]["subject"]
         nested_subj_ast = add_ast_fn(nested_subj, spec)
-        nested_relation = ast_dict['nested']['relation']['name']
-        nested_obj = ast_dict['nested']['object']
+        nested_relation = ast_dict["nested"]["relation"]["name"]
+        nested_obj = ast_dict["nested"]["object"]
         nested_obj_ast = add_ast_fn(nested_obj, spec)
 
-        return BELAst(subj_ast, relation, BELAst(nested_subj_ast, nested_relation, nested_obj_ast, spec), spec)
+        return BELAst(
+            subj_ast,
+            relation,
+            BELAst(nested_subj_ast, nested_relation, nested_obj_ast, spec),
+            spec,
+        )
 
     return BELAst(subj_ast, None, None, spec)
 
@@ -753,15 +871,17 @@ def add_ast_fn(d, spec, parent_function=None):
         ast_fn
     """
 
-    if d['type'] == 'Function':
-        ast_fn = Function(d['function']['name'], spec, parent_function=parent_function)
-        for arg in d['args']:
-            if arg['type'] == 'Function':
+    if d["type"] == "Function":
+        ast_fn = Function(d["function"]["name"], spec, parent_function=parent_function)
+        for arg in d["args"]:
+            if arg["type"] == "Function":
                 ast_fn.add_argument(add_ast_fn(arg, spec, parent_function=ast_fn))
-            elif arg['type'] == 'NSArg':
-                ast_fn.add_argument(NSArg(arg['nsarg']['ns'], arg['nsarg']['ns_val'], ast_fn))
-            elif arg['type'] == 'StrArg':
-                ast_fn.add_argument(StrArg(arg['arg'], ast_fn))
+            elif arg["type"] == "NSArg":
+                ast_fn.add_argument(
+                    NSArg(arg["nsarg"]["ns"], arg["nsarg"]["ns_val"], ast_fn)
+                )
+            elif arg["type"] == "StrArg":
+                ast_fn.add_argument(StrArg(arg["arg"], ast_fn))
     return ast_fn
 
 
@@ -769,13 +889,15 @@ def main():
 
     import json
 
-    belstr = 'activity(proteinAbundance(SFAM:"GSK3 \"Family"), molecularActivity(DEFAULT:kin))'
+    belstr = 'activity(proteinAbundance(SFAM:"GSK3 "Family"), molecularActivity(DEFAULT:kin))'
     belstr = 'proteinAbundance(HGNC:VHL) increases (proteinAbundance(HGNC:TNF) increases biologicalProcess(GOBP:"cell death"))'
-    belstr = 'complexAbundance(proteinAbundance(HGNC:VHL), proteinAbundance(HGNC:PRKCZ))'
+    belstr = (
+        "complexAbundance(proteinAbundance(HGNC:VHL), proteinAbundance(HGNC:PRKCZ))"
+    )
     # made up (added the 20 in the pmod)
     belstr = 'activity(proteinAbundance(SFAM:"PRKA Family"), molecularActivity(DEF:kin)) directlyIncreases proteinAbundance(SFAM:"PDE4 Long Family", proteinModification(Ph, S, 20))'
-    belstr = 'proteinAbundance(HGNC:VEGFA) increases (compositeAbundance(proteinAbundance(HGNC:ITGB1), proteinAbundance(HGNC:PRKCA, ma(kin))) increases biologicalProcess(GO:\"cell-matrix adhesion\"))'
-    belstr = 'complex(p(HGNC:AKT1))'
+    belstr = 'proteinAbundance(HGNC:VEGFA) increases (compositeAbundance(proteinAbundance(HGNC:ITGB1), proteinAbundance(HGNC:PRKCA, ma(kin))) increases biologicalProcess(GO:"cell-matrix adhesion"))'
+    belstr = "complex(p(HGNC:AKT1))"
     # belstr = 'p(fus(HGNC:EGF, 20, '
     # belstr = 'pa'
 
@@ -783,11 +905,11 @@ def main():
 
     spans = collect_spans(ast)
 
-    print('\n\nBELStr', belstr)
-    print('Spans:\n', json.dumps(spans, indent=4))
+    print("\n\nBELStr", belstr)
+    print("Spans:\n", json.dumps(spans, indent=4))
 
     # print('AST:\n', json.dumps(ast, indent=4))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

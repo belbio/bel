@@ -108,7 +108,9 @@ def cursor(
                     }
 
                 elif in_span(cursor_loc, arg["span"]):
-                    log.debug(f'In argument span {arg["span"]}  Cursor_loc: {cursor_loc}')
+                    log.debug(
+                        f'In argument span {arg["span"]}  Cursor_loc: {cursor_loc}'
+                    )
                     if arg["type"] == "Function":
                         if in_span(cursor_loc, arg["function"]["name_span"]):
                             log.debug("Found replace_span in args: Function type")
@@ -153,8 +155,12 @@ def cursor(
 
                         log.debug(f"Found replace_span in args: NSArg {result}")
                         return result
-                    elif arg["type"] == "StrArg":  # in case this is a default namespace StrArg
-                        if arg["span"][0] == arg["span"][1]:  # handle case like p() cursor=2
+                    elif (
+                        arg["type"] == "StrArg"
+                    ):  # in case this is a default namespace StrArg
+                        if (
+                            arg["span"][0] == arg["span"][1]
+                        ):  # handle case like p() cursor=2
                             completion_text = arg["arg"]
                         else:
                             completion_text = belstr[arg["span"][0] : cursor_loc + 1]
@@ -234,7 +240,9 @@ def nsarg_completions(
         if default_namespace:
             for obj in default_namespace["info"]:
                 replacement = None
-                if bel_fmt == "long" and re.match(completion_text, obj["name"], re.IGNORECASE):
+                if bel_fmt == "long" and re.match(
+                    completion_text, obj["name"], re.IGNORECASE
+                ):
                     replacement = obj["name"]
                 elif bel_fmt in ["short", "medium"] and re.match(
                     completion_text, obj["abbreviation"], re.IGNORECASE
@@ -242,7 +250,9 @@ def nsarg_completions(
                     replacement = obj["abbreviation"]
 
                 if replacement:
-                    highlight = replacement.replace(completion_text, f"<em>{completion_text}</em>")
+                    highlight = replacement.replace(
+                        completion_text, f"<em>{completion_text}</em>"
+                    )
                     replace_list.insert(
                         0,
                         {
@@ -256,7 +266,9 @@ def nsarg_completions(
     return replace_list[:size]
 
 
-def relation_completions(completion_text: str, bel_spec: BELSpec, bel_fmt: str, size: int) -> list:
+def relation_completions(
+    completion_text: str, bel_spec: BELSpec, bel_fmt: str, size: int
+) -> list:
     """Filter BEL relations by prefix
 
     Args:
@@ -282,14 +294,23 @@ def relation_completions(completion_text: str, bel_spec: BELSpec, bel_fmt: str, 
     for match in matches:
         highlight = match.replace(completion_text, f"<em>{completion_text}</em>")
         replace_list.append(
-            {"replacement": match, "label": match, "highlight": highlight, "type": "Relation"}
+            {
+                "replacement": match,
+                "label": match,
+                "highlight": highlight,
+                "type": "Relation",
+            }
         )
 
     return replace_list[:size]
 
 
 def function_completions(
-    completion_text: str, bel_spec: BELSpec, function_list: list, bel_fmt: str, size: int
+    completion_text: str,
+    bel_spec: BELSpec,
+    function_list: list,
+    bel_fmt: str,
+    size: int,
 ) -> list:
     """Filter BEL functions by prefix
 
@@ -305,9 +326,13 @@ def function_completions(
     # Convert provided function list to correct bel_fmt
     if isinstance(function_list, list):
         if bel_fmt in ["short", "medium"]:
-            function_list = [bel_spec["functions"]["to_short"][fn] for fn in function_list]
+            function_list = [
+                bel_spec["functions"]["to_short"][fn] for fn in function_list
+            ]
         else:
-            function_list = [bel_spec["functions"]["to_long"][fn] for fn in function_list]
+            function_list = [
+                bel_spec["functions"]["to_long"][fn] for fn in function_list
+            ]
     elif bel_fmt in ["short", "medium"]:
         function_list = bel_spec["functions"]["primary"]["list_short"]
     else:
@@ -315,7 +340,9 @@ def function_completions(
 
     matches = []
     for f in function_list:
-        escaped_completion_text = completion_text.replace(r"(", r"\(").replace(r")", r"\)")
+        escaped_completion_text = completion_text.replace(r"(", r"\(").replace(
+            r")", r"\)"
+        )
         log.debug(f"Completion match: {escaped_completion_text}  F: {f}")
         if re.match(escaped_completion_text, f):
             matches.append(f)
@@ -450,7 +477,13 @@ def arg_completions(
     if entity_types:
         log.debug(f"ArgComp - position-based Entity types: {entity_types}")
         ns_arg_replace_list = nsarg_completions(
-            completion_text, entity_types, bel_spec, namespace, species_id, bel_fmt, size
+            completion_text,
+            entity_types,
+            bel_spec,
+            namespace,
+            species_id,
+            bel_fmt,
+            size,
         )
 
     replace_list = fn_replace_list + ns_arg_replace_list
@@ -496,7 +529,11 @@ def add_completions(
         )
 
         # Put a space between comma and following function arg
-        if r["type"] == "Function" and replace_span[0] > 0 and belstr[replace_span[0] - 1] == ",":
+        if (
+            r["type"] == "Function"
+            and replace_span[0] > 0
+            and belstr[replace_span[0] - 1] == ","
+        ):
             log.debug("prior char is a comma")
             replacement = (
                 belstr[0 : replace_span[0]]
@@ -504,12 +541,17 @@ def add_completions(
                 + f"{r['replacement']}()"
                 + belstr[replace_span[1] + 1 :]
             )
-            cursor_loc = len(belstr[0 : replace_span[0]] + " " + f"{r['replacement']}()")
+            cursor_loc = len(
+                belstr[0 : replace_span[0]] + " " + f"{r['replacement']}()"
+            )
         # Put a space between comman and following NSArg or StrArg
         elif replace_span[0] > 0 and belstr[replace_span[0] - 1] == ",":
             log.debug("prior char is a comma")
             replacement = (
-                belstr[0 : replace_span[0]] + " " + r["replacement"] + belstr[replace_span[1] + 1 :]
+                belstr[0 : replace_span[0]]
+                + " "
+                + r["replacement"]
+                + belstr[replace_span[1] + 1 :]
             )
             cursor_loc = len(belstr[0 : replace_span[0]] + " " + r["replacement"])
         # Add function to end of belstr
@@ -520,7 +562,9 @@ def add_completions(
         # Insert replacement in beginning or middle of belstr
         else:
             replacement = (
-                belstr[0 : replace_span[0]] + r["replacement"] + belstr[replace_span[1] + 1 :]
+                belstr[0 : replace_span[0]]
+                + r["replacement"]
+                + belstr[replace_span[1] + 1 :]
             )
             cursor_loc = len(
                 belstr[0 : replace_span[0]] + r["replacement"]
@@ -598,11 +642,15 @@ def get_completions(
         )
     elif cursor_results["type"] == "Function":
         function_list = None
-        replace_list = function_completions(completion_text, bel_spec, function_list, bel_fmt, size)
+        replace_list = function_completions(
+            completion_text, bel_spec, function_list, bel_fmt, size
+        )
     elif cursor_results["type"] == "Relation":
         replace_list = relation_completions(completion_text, bel_spec, bel_fmt, size)
 
-    completions.extend(add_completions(replace_list, belstr, replace_span, completion_text))
+    completions.extend(
+        add_completions(replace_list, belstr, replace_span, completion_text)
+    )
 
     return completion_text, completions, function_help, spans
 

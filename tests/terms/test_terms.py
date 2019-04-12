@@ -3,8 +3,8 @@ import bel.terms.terms
 
 def test_terms():
 
-    term_id = 'SP:P31749'
-    check = {'canonical': 'EG:207', 'decanonical': 'HGNC:AKT1', 'original': 'SP:P31749'}
+    term_id = "SP:P31749"
+    check = {"canonical": "EG:207", "decanonical": "HGNC:AKT1", "original": "SP:P31749"}
 
     result = bel.terms.terms.get_normalized_terms(term_id)
 
@@ -19,14 +19,18 @@ def test_obsolete_term():
 
     result = bel.terms.terms.get_terms(term_id)
 
-    print('Result', result)
+    print("Result", result)
 
-    assert check_id == result[0]['id']
+    assert check_id == result[0]["id"]
 
     result = bel.terms.terms.get_normalized_terms(term_id)
 
-    print('Result', result)
+    print("Result", result)
 
-    check = {'canonical': 'EG:54855', 'decanonical': 'HGNC:TENT5C', 'original': 'HGNC:FAM46C'}
+    check = {
+        "canonical": "EG:54855",
+        "decanonical": "HGNC:TENT5C",
+        "original": "HGNC:FAM46C",
+    }
 
     assert check == result

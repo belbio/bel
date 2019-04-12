@@ -10,6 +10,7 @@ from bel.Config import config
 # log = logging.getLogger(__name__)
 
 import structlog
+
 log = structlog.getLogger()
 
 es = bel.db.elasticsearch.get_client()
@@ -36,11 +37,11 @@ def get_terms(term_id):
         }
     }
 
-    result = es.search(index='terms', doc_type='term', body=search_body)
+    result = es.search(index="terms", doc_type="term", body=search_body)
 
     results = []
-    for r in result['hits']['hits']:
-        results.append(r['_source'])
+    for r in result["hits"]["hits"]:
+        results.append(r["_source"])
 
     return results
 
@@ -58,12 +59,14 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
         errors = []
         terms = get_terms(term_id)
         if len(terms) == 0:
-            return {'equivalents': [], 'errors': errors}
+            return {"equivalents": [], "errors": errors}
         elif len(terms) > 1:
-            errors.append(f'Too many primary IDs returned. Given term_id: {term_id} matches these term_ids: {[term["id"] for term in terms]}')
-            return {'equivalents': [], 'errors': errors}
+            errors.append(
+                f'Too many primary IDs returned. Given term_id: {term_id} matches these term_ids: {[term["id"] for term in terms]}'
+            )
+            return {"equivalents": [], "errors": errors}
         else:
-            term_id = terms[0]['id']
+            term_id = terms[0]["id"]
 
         term_id_key = bel.db.arangodb.arango_id_to_key(term_id)
 
@@ -81,19 +84,23 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
 
         cursor = belns_db.aql.execute(query, count=True, batch_size=20)
         for doc in cursor:
-            if doc.get('term_id', False):
+            if doc.get("term_id", False):
                 equivalents.append(doc)
 
-        equivalents.append({'term_id': term_id, 'namespace': term_id.split(':')[0], 'primary': True})
+        equivalents.append(
+            {"term_id": term_id, "namespace": term_id.split(":")[0], "primary": True}
+        )
 
-        return {'equivalents': equivalents, 'errors': errors}
+        return {"equivalents": equivalents, "errors": errors}
 
     except Exception as e:
-        log.error(f'Problem getting term equivalents for {term_id} msg: {e}')
-        return {'equivalents': [], 'errors': [f'Unexpected error {e}']}
+        log.error(f"Problem getting term equivalents for {term_id} msg: {e}")
+        return {"equivalents": [], "errors": [f"Unexpected error {e}"]}
 
 
-def get_normalized_term(term_id: str, equivalents: list, namespace_targets: dict) -> str:
+def get_normalized_term(
+    term_id: str, equivalents: list, namespace_targets: dict
+) -> str:
     """Get normalized term"""
 
     if equivalents and len(equivalents) > 0:
@@ -101,8 +108,8 @@ def get_normalized_term(term_id: str, equivalents: list, namespace_targets: dict
             if re.match(start_ns, term_id):
                 for target_ns in namespace_targets[start_ns]:
                     for e in equivalents:
-                        if e and target_ns in e['namespace'] and e['primary']:
-                            normalized_term = e['term_id']
+                        if e and target_ns in e["namespace"] and e["primary"]:
+                            normalized_term = e["term_id"]
                             return normalized_term
 
     return term_id
@@ -117,7 +124,7 @@ def get_labels(term_ids: list) -> dict:
     term_labels = {}
     for term_id in term_ids:
         term = get_terms(term_id)
-        term_labels[term_id] = term[0].get('label', '')
+        term_labels[term_id] = term[0].get("label", "")
 
     return term_labels
 
@@ -128,17 +135,21 @@ def get_normalized_terms(term_id: str) -> dict:
     canonical = term_id
     decanonical = term_id
 
-    canonical_namespace_targets = config['bel']['lang']['canonical']
-    decanonical_namespace_targets = config['bel']['lang']['decanonical']
+    canonical_namespace_targets = config["bel"]["lang"]["canonical"]
+    decanonical_namespace_targets = config["bel"]["lang"]["decanonical"]
     results = get_equivalents(term_id)
-    equivalents = results['equivalents']
+    equivalents = results["equivalents"]
 
     # log.debug(f'Equivalents: {equivalents}')
 
     if equivalents:
-        canonical = get_normalized_term(term_id, equivalents, canonical_namespace_targets)
-        decanonical = get_normalized_term(canonical, equivalents, decanonical_namespace_targets)
+        canonical = get_normalized_term(
+            term_id, equivalents, canonical_namespace_targets
+        )
+        decanonical = get_normalized_term(
+            canonical, equivalents, decanonical_namespace_targets
+        )
 
     # log.debug(f'canonical: {canonical}, decanonical: {decanonical}, original: {term_id}')
 
-    return {'canonical': canonical, 'decanonical': decanonical, 'original': term_id}
+    return {"canonical": canonical, "decanonical": decanonical, "original": term_id}

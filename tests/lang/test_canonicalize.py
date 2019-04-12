@@ -6,7 +6,10 @@ import bel.lang.bel_utils
 from bel.Config import config
 import bel.Config
 
-bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
+bo = bel.lang.belobj.BEL(
+    config["bel"]["lang"]["default_bel_version"],
+    config["bel_api"]["servers"]["api_url"],
+)
 
 # TODO Add test for specified canonical_targets - need to make sure BEL.bio API endpoint is updated to handle this querystring arg
 
@@ -27,7 +30,9 @@ def test_canon_one():
 
     statement = 'act(p(HGNC:AKT1), ma(GO:"kinase activity"))'
 
-    expected = 'activity(proteinAbundance(EG:207), molecularActivity(GO:"kinase activity"))'
+    expected = (
+        'activity(proteinAbundance(EG:207), molecularActivity(GO:"kinase activity"))'
+    )
 
     bo.parse(statement)
 
@@ -35,7 +40,7 @@ def test_canon_one():
 
     print(f"Result {bo.ast.to_string(fmt='long')}")
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_canon_two():
@@ -48,7 +53,7 @@ def test_canon_two():
 
     bo.canonicalize()
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_canon_nested():
@@ -61,28 +66,30 @@ def test_canon_nested():
 
     bo.canonicalize()
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_canonicalization():
     """Test canonicalization of assertion"""
 
-    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
-    correct = 'p(EG:207) increases act(p(EG:1950))'
+    assertion = "p(SP:P31749) increases act(p(HGNC:EGF))"
+    correct = "p(EG:207) increases act(p(EG:1950))"
     result = bo.parse(assertion).canonicalize().to_string()
-    print('Canonicalized assertion', result)
+    print("Canonicalized assertion", result)
 
     assert correct == result
 
 
-@pytest.mark.skip(reason="Skip until we update BEL parsing with the partial parser instead of Tatsu")
+@pytest.mark.skip(
+    reason="Skip until we update BEL parsing with the partial parser instead of Tatsu"
+)
 def test_canonicalization_NSArg():
     """Test canonicalization of plain NSArg"""
 
-    assertion = 'HGNC:IL6'
-    correct = 'EG:3569'
+    assertion = "HGNC:IL6"
+    correct = "EG:3569"
     result = bo.parse(assertion).canonicalize().to_string()
-    print('Canonicalized assertion', result)
+    print("Canonicalized assertion", result)
 
     assert correct == result
 
@@ -91,13 +98,15 @@ def test_decanon_one():
 
     statement = 'act(p(EG:207), ma(GO:"kinase activity"))'
 
-    expected = 'activity(proteinAbundance(HGNC:AKT1), molecularActivity(GO:"kinase activity"))'
+    expected = (
+        'activity(proteinAbundance(HGNC:AKT1), molecularActivity(GO:"kinase activity"))'
+    )
 
     bo.parse(statement)
 
     bo.decanonicalize()
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_decanon_two():
@@ -110,7 +119,7 @@ def test_decanon_two():
 
     bo.decanonicalize()
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_decanon_nested():
@@ -123,24 +132,24 @@ def test_decanon_nested():
 
     bo.decanonicalize()
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_decanonicalization():
     """Test canonicalization of assertion"""
 
-    assertion = 'p(EG:207) increases act(p(EG:1950))'
-    correct = 'p(HGNC:AKT1) increases act(p(HGNC:EGF))'
+    assertion = "p(EG:207) increases act(p(EG:1950))"
+    correct = "p(HGNC:AKT1) increases act(p(HGNC:EGF))"
 
     result = bo.parse(assertion).decanonicalize().to_string()
-    print('deCanonicalized assertion', result)
+    print("deCanonicalized assertion", result)
 
     assert correct == result
 
-    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
-    correct = 'p(HGNC:AKT1) increases act(p(HGNC:EGF))'
+    assertion = "p(SP:P31749) increases act(p(HGNC:EGF))"
+    correct = "p(HGNC:AKT1) increases act(p(HGNC:EGF))"
 
     result = bo.parse(assertion).decanonicalize().to_string()
-    print('deCanonicalized assertion', result)
+    print("deCanonicalized assertion", result)
 
     assert correct == result

@@ -3,7 +3,10 @@ import pytest
 import bel.lang.belobj
 from bel.Config import config
 
-bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['bel_api']['servers']['api_url'])
+bo = bel.lang.belobj.BEL(
+    config["bel"]["lang"]["default_bel_version"],
+    config["bel_api"]["servers"]["api_url"],
+)
 
 
 # def test_ortho():
@@ -24,46 +27,46 @@ bo = bel.lang.belobj.BEL(config['bel']['lang']['default_bel_version'], config['b
 
 def test_species():
 
-    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
+    assertion = "p(SP:P31749) increases act(p(HGNC:EGF))"
     bo.parse(assertion)
     bo.collect_nsarg_norms()
 
-    print(f'Species should equal TAX:9606 :: {bo.ast.species}')
+    print(f"Species should equal TAX:9606 :: {bo.ast.species}")
 
     correct = set()
-    correct.add(('TAX:9606', 'human', ))
+    correct.add(("TAX:9606", "human"))
 
     assert correct == bo.ast.species
 
 
 def test_multi_species():
 
-    assertion = 'p(MGI:Egf) increases act(p(HGNC:EGF))'
+    assertion = "p(MGI:Egf) increases act(p(HGNC:EGF))"
     bo.parse(assertion)
     bo.collect_nsarg_norms()
 
-    print(f'Species should be human and mouse:: {bo.ast.species}')
+    print(f"Species should be human and mouse:: {bo.ast.species}")
 
     correct = set()
-    correct.add(('TAX:9606', 'human', ))
-    correct.add(('TAX:10090', 'mouse', ))
+    correct.add(("TAX:9606", "human"))
+    correct.add(("TAX:10090", "mouse"))
 
     assert correct == bo.ast.species
 
 
 def test_obsolete_term_orthologization():
 
-    assertion = 'p(HGNC:FAM46C)'
-    correct = 'p(MGI:Tent5c)'
+    assertion = "p(HGNC:FAM46C)"
+    correct = "p(MGI:Tent5c)"
 
-    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
-    print('Orthologized assertion', result)
+    result = bo.parse(assertion).orthologize("TAX:10090").to_string()
+    print("Orthologized assertion", result)
 
     assert correct == result
 
     # Check species
     correct = set()
-    correct.add(('TAX:10090', 'mouse', ))
+    correct.add(("TAX:10090", "mouse"))
 
     assert correct == bo.ast.species
 
@@ -72,17 +75,17 @@ def test_obsolete_term_orthologization():
 # BEL parsing should be able to handle naked NSArg strings but can't right now
 def test_obsolete_term_NSArg_orthologization():
 
-    assertion = 'HGNC:FAM46C'
-    correct = 'MGI:Tent5c'
+    assertion = "HGNC:FAM46C"
+    correct = "MGI:Tent5c"
 
-    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
-    print('Orthologized assertion', result)
+    result = bo.parse(assertion).orthologize("TAX:10090").to_string()
+    print("Orthologized assertion", result)
 
     assert correct == result
 
     # Check species
     correct = set()
-    correct.add(('TAX:10090', 'mouse', ))
+    correct.add(("TAX:10090", "mouse"))
 
     assert correct == bo.ast.species
 
@@ -90,16 +93,16 @@ def test_obsolete_term_NSArg_orthologization():
 def test_orthologization():
     """Test orthologization of assertion"""
 
-    assertion = 'p(SP:P31749) increases act(p(HGNC:EGF))'
-    correct = 'p(MGI:Akt1) increases act(p(MGI:Egf))'
-    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
-    print('Orthologized assertion', result)
+    assertion = "p(SP:P31749) increases act(p(HGNC:EGF))"
+    correct = "p(MGI:Akt1) increases act(p(MGI:Egf))"
+    result = bo.parse(assertion).orthologize("TAX:10090").to_string()
+    print("Orthologized assertion", result)
 
     assert correct == result
 
     # Check species
     correct = set()
-    correct.add(('TAX:10090', 'mouse', ))
+    correct.add(("TAX:10090", "mouse"))
 
     assert correct == bo.ast.species
 
@@ -107,16 +110,16 @@ def test_orthologization():
 def test_multi_orthologization():
     """Test multiple species orthologization of assertion"""
 
-    assertion = 'p(MGI:Akt1) increases act(p(HGNC:EGF))'
-    correct = 'p(MGI:Akt1) increases act(p(MGI:Egf))'
-    result = bo.parse(assertion).orthologize('TAX:10090').to_string()
-    print('Orthologized assertion', result)
+    assertion = "p(MGI:Akt1) increases act(p(HGNC:EGF))"
+    correct = "p(MGI:Akt1) increases act(p(MGI:Egf))"
+    result = bo.parse(assertion).orthologize("TAX:10090").to_string()
+    print("Orthologized assertion", result)
 
     assert correct == result
 
     # Check species
     correct = set()
-    correct.add(('TAX:10090', 'mouse', ))
+    correct.add(("TAX:10090", "mouse"))
 
     assert correct == bo.ast.species
 
@@ -124,14 +127,16 @@ def test_multi_orthologization():
 def test_ortho_one():
 
     statement = 'act(p(HGNC:AKT1), ma(GO:"kinase activity"))'
-    expected = 'activity(proteinAbundance(MGI:Akt1), molecularActivity(GO:"kinase activity"))'
+    expected = (
+        'activity(proteinAbundance(MGI:Akt1), molecularActivity(GO:"kinase activity"))'
+    )
 
     bo.parse(statement)
-    bo.orthologize('TAX:10090')
+    bo.orthologize("TAX:10090")
 
-    print(bo.ast.to_string(fmt='long'))
+    print(bo.ast.to_string(fmt="long"))
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_ortho_two():
@@ -140,8 +145,8 @@ def test_ortho_two():
     expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2))'
 
     bo.parse(statement)
-    bo.orthologize('TAX:10090')
-    assert bo.ast.to_string(fmt='long') == expected
+    bo.orthologize("TAX:10090")
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_ortho_nested():
@@ -150,16 +155,16 @@ def test_ortho_nested():
     expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases (complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2)) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2)))'
 
     bo.parse(statement)
-    bo.orthologize('TAX:10090')
-    assert bo.ast.to_string(fmt='long') == expected
+    bo.orthologize("TAX:10090")
+    assert bo.ast.to_string(fmt="long") == expected
 
 
 def test_ortho_three():
-    statement = 'act(p(HGNC:NR1I3))'
-    expected = 'act(p(MGI:Nr1i3))'
+    statement = "act(p(HGNC:NR1I3))"
+    expected = "act(p(MGI:Nr1i3))"
 
     bo.parse(statement)
-    bo.orthologize('TAX:10090')
+    bo.orthologize("TAX:10090")
     assert bo.to_string() == expected
 
 
@@ -171,11 +176,11 @@ def test_ortho_partial():
     expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(SFAM:TEST), proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2))'
 
     bo.parse(statement)
-    bo.orthologize('TAX:10090')
+    bo.orthologize("TAX:10090")
 
-    print(bo.ast.to_string(fmt='long'))
+    print(bo.ast.to_string(fmt="long"))
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
     assert len(bo.ast.species) == 1
 
     # Partially orthologized p(MGI:Sult2a1) cannot be orthologized
@@ -183,26 +188,26 @@ def test_ortho_partial():
     expected = 'activity(proteinAbundance(HGNC:A1BG), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(HGNC:ROCK1), proteinAbundance(HGNC:SOD1), proteinAbundance(MGI:Sult2a1))'
 
     bo.parse(statement)
-    bo.orthologize('TAX:9606')
+    bo.orthologize("TAX:9606")
 
-    print('Orthologized', bo.ast.to_string(fmt='long'))
+    print("Orthologized", bo.ast.to_string(fmt="long"))
 
-    assert bo.ast.to_string(fmt='long') == expected
+    assert bo.ast.to_string(fmt="long") == expected
 
-    print('Species2: ', bo.ast.species)
+    print("Species2: ", bo.ast.species)
 
     assert len(bo.ast.species) > 1
 
     # Not orthologizable
-    statement = 'bp(GO:apoptosis)'
-    expected = 'bp(GO:apoptosis)'
+    statement = "bp(GO:apoptosis)"
+    expected = "bp(GO:apoptosis)"
 
     bo.parse(statement)
-    bo.orthologize('TAX:10090')
+    bo.orthologize("TAX:10090")
 
-    print(bo.ast.to_string(fmt='medium'))
+    print(bo.ast.to_string(fmt="medium"))
 
-    assert bo.ast.to_string(fmt='medium') == expected
+    assert bo.ast.to_string(fmt="medium") == expected
     assert len(bo.ast.species) == 0
 
     # Fully orthologized - check that partially_orthologized attribute is reset
@@ -210,12 +215,11 @@ def test_ortho_partial():
     expected = 'activity(proteinAbundance(MGI:A1bg), molecularActivity(GO:"catalytic activity")) directlyIncreases complexAbundance(proteinAbundance(MGI:Rock1), proteinAbundance(MGI:Sod1), proteinAbundance(MGI:Timp2))'
 
     bo.parse(statement)
-    print('1 Species', bo.ast.species)
-    bo.orthologize('TAX:10090')
+    print("1 Species", bo.ast.species)
+    bo.orthologize("TAX:10090")
 
-    print(bo.ast.to_string(fmt='long'))
+    print(bo.ast.to_string(fmt="long"))
 
-    assert bo.ast.to_string(fmt='long') == expected
-    print('2 Species', bo.ast.species)
+    assert bo.ast.to_string(fmt="long") == expected
+    print("2 Species", bo.ast.species)
     assert len(bo.ast.species) == 1
-

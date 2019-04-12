@@ -26,13 +26,9 @@ log = structlog.getLogger(__name__)
 if config["bel_api"]["servers"].get("pubmed_api_key", False):
     PUBMED_TMPL = f'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&api_key={config["bel_api"]["servers"]["pubmed_api_key"]}&id=PMID'
 else:
-    PUBMED_TMPL = (
-        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID"
-    )
+    PUBMED_TMPL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID"
 
-PUBTATOR_TMPL = (
-    "https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/RESTful/tmTool.cgi/BioConcept/PMID/JSON"
-)
+PUBTATOR_TMPL = "https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/RESTful/tmTool.cgi/BioConcept/PMID/JSON"
 
 pubtator_ns_convert = {
     "CHEBI": "CHEBI",
@@ -41,7 +37,11 @@ pubtator_ns_convert = {
     "Chemical": "MESH",
     "Disease": "MESH",
 }
-pubtator_entity_convert = {"Chemical": "Abundance", "Gene": "Gene", "Disease": "Pathology"}
+pubtator_entity_convert = {
+    "Chemical": "Abundance",
+    "Gene": "Gene",
+    "Disease": "Pathology",
+}
 pubtator_annotation_convert = {"Disease": "Pathology"}
 pubtator_known_types = [key for key in pubtator_ns_convert.keys()]
 
@@ -80,7 +80,11 @@ def get_pubtator(pmid):
         s_match = re.match(r"(\w+):(\w+)", anno["obj"])
         c_match = re.match(r"(\w+):(\w+):(\w+)", anno["obj"])
         if c_match:
-            (ctype, namespace, cid) = (c_match.group(1), c_match.group(2), c_match.group(3))
+            (ctype, namespace, cid) = (
+                c_match.group(1),
+                c_match.group(2),
+                c_match.group(3),
+            )
 
             if ctype not in known_types:
                 log.info(f"{ctype} not in known_types for Pubtator")
@@ -90,10 +94,12 @@ def get_pubtator(pmid):
             pubtator["denotations"][idx][
                 "obj"
             ] = f'{pubtator_ns_convert.get(namespace, "UNKNOWN")}:{cid}'
-            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(ctype, None)
-            pubtator["denotations"][idx]["annotation_type"] = pubtator_annotation_convert.get(
+            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(
                 ctype, None
             )
+            pubtator["denotations"][idx][
+                "annotation_type"
+            ] = pubtator_annotation_convert.get(ctype, None)
         elif s_match:
             (ctype, cid) = (s_match.group(1), s_match.group(2))
 
@@ -103,10 +109,12 @@ def get_pubtator(pmid):
             pubtator["denotations"][idx][
                 "obj"
             ] = f'{pubtator_ns_convert.get(ctype, "UNKNOWN")}:{cid}'
-            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(ctype, None)
-            pubtator["denotations"][idx]["annotation_type"] = pubtator_annotation_convert.get(
+            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(
                 ctype, None
             )
+            pubtator["denotations"][idx][
+                "annotation_type"
+            ] = pubtator_annotation_convert.get(ctype, None)
 
     annotations = {}
     for anno in pubtator["denotations"]:
@@ -114,7 +122,9 @@ def get_pubtator(pmid):
         if anno["obj"] not in annotations:
             annotations[anno["obj"]] = {"spans": [anno["span"]]}
             annotations[anno["obj"]]["entity_types"] = [anno.get("entity_type", [])]
-            annotations[anno["obj"]]["annotation_types"] = [anno.get("annotation_type", [])]
+            annotations[anno["obj"]]["annotation_types"] = [
+                anno.get("annotation_type", [])
+            ]
 
         else:
             annotations[anno["obj"]]["spans"].append(anno["span"])
@@ -131,9 +141,9 @@ def process_pub_date(year, mon, day):
 
     pub_date = None
     if year and re.match("[a-zA-Z]+", mon):
-        pub_date = datetime.datetime.strptime(f"{year}-{mon}-{day}", "%Y-%b-%d").strftime(
-            "%Y-%m-%d"
-        )
+        pub_date = datetime.datetime.strptime(
+            f"{year}-{mon}-{day}", "%Y-%b-%d"
+        ).strftime("%Y-%m-%d")
     elif year:
         pub_date = f"{year}-{mon}-{day}"
 
@@ -188,15 +198,23 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
                 first_name = initials
             doc["authors"].append(f"{last_name}, {first_name}")
 
-        pub_year = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Year/text()")), None)
-        pub_mon = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Month/text()")), "Jan")
-        pub_day = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Day/text()")), "01")
+        pub_year = next(
+            iter(root.xpath("//Journal/JournalIssue/PubDate/Year/text()")), None
+        )
+        pub_mon = next(
+            iter(root.xpath("//Journal/JournalIssue/PubDate/Month/text()")), "Jan"
+        )
+        pub_day = next(
+            iter(root.xpath("//Journal/JournalIssue/PubDate/Day/text()")), "01"
+        )
 
         pub_date = process_pub_date(pub_year, pub_mon, pub_day)
 
         doc["pub_date"] = pub_date
         doc["journal_title"] = next(iter(root.xpath("//Journal/Title/text()")), "")
-        doc["joural_iso_title"] = next(iter(root.xpath("//Journal/ISOAbbreviation/text()")), "")
+        doc["joural_iso_title"] = next(
+            iter(root.xpath("//Journal/ISOAbbreviation/text()")), ""
+        )
         doc["doi"] = next(iter(root.xpath('//ArticleId[@IdType="doi"]/text()')), None)
 
         doc["compounds"] = []
@@ -254,7 +272,10 @@ def enhance_pubmed_annotations(pubmed: Mapping[str, Any]) -> Mapping[str, Any]:
             pubmed["annotations"][nsarg]["name"] = term["name"]
             pubmed["annotations"][nsarg]["label"] = term["label"]
             pubmed["annotations"][nsarg]["entity_types"] = list(
-                set(pubmed["annotations"][nsarg]["entity_types"] + term.get("entity_types", []))
+                set(
+                    pubmed["annotations"][nsarg]["entity_types"]
+                    + term.get("entity_types", [])
+                )
             )
             pubmed["annotations"][nsarg]["annotation_types"] = list(
                 set(

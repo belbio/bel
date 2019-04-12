@@ -23,24 +23,25 @@ import sys
 import csv
 
 import structlog
+
 log = structlog.getLogger(__name__)
 
 # citation fields are document type, a document name, a document reference ID, and an optional publication date, authors list and comment field
 
-nanopub_type = {'name': 'BEL', 'version': '2.0.0'}
+nanopub_type = {"name": "BEL", "version": "2.0.0"}
 
 
 def convert_csv_str_to_list(csv_str: str) -> list:
     """Convert CSV str to list"""
 
-    csv_str = re.sub('^\s*{', '', csv_str)
-    csv_str = re.sub('}\s*$', '', csv_str)
+    csv_str = re.sub("^\s*{", "", csv_str)
+    csv_str = re.sub("}\s*$", "", csv_str)
     r = csv.reader([csv_str])
     row = list(r)[0]
     new = []
     for col in row:
-        col = re.sub('^\s*"?\s*', '', col)
-        col = re.sub('\s*"?\s*$', '', col)
+        col = re.sub('^\s*"?\s*', "", col)
+        col = re.sub('\s*"?\s*$', "", col)
         new.append(col)
 
     return new
@@ -52,32 +53,34 @@ def process_citation(citation_str: str) -> dict:
     citation_obj = {}
 
     citation_list = convert_csv_str_to_list(citation_str)
-    (citation_type, name, doc_id, pub_date, authors, comment, *extra) = citation_list + [None] * 7
+    (citation_type, name, doc_id, pub_date, authors, comment, *extra) = (
+        citation_list + [None] * 7
+    )
     # print(f'citation_type: {citation_type}, name: {name}, doc_id: {doc_id}, pub_date: {pub_date}, authors: {authors}, comment: {comment}')
 
     authors_list = []
     if authors:
-        authors_list = authors.split('|')
-        citation_obj['authors'] = authors_list
+        authors_list = authors.split("|")
+        citation_obj["authors"] = authors_list
 
-    if name and re.match('http?://', name):
-        citation_obj['uri'] = name
+    if name and re.match("http?://", name):
+        citation_obj["uri"] = name
 
-    elif citation_type and citation_type.upper() == 'PUBMED':
-        citation_obj['database'] = {'name': 'PubMed', 'id': doc_id}
+    elif citation_type and citation_type.upper() == "PUBMED":
+        citation_obj["database"] = {"name": "PubMed", "id": doc_id}
         if name:
-            citation_obj['reference'] = name
+            citation_obj["reference"] = name
     elif name:
-        citation_obj['reference'] = name
+        citation_obj["reference"] = name
 
     else:
-        citation_obj['reference'] = 'No reference found'
+        citation_obj["reference"] = "No reference found"
 
     if pub_date:
-        citation_obj['date_published'] = pub_date
+        citation_obj["date_published"] = pub_date
 
     if comment:
-        citation_obj['comment'] = comment
+        citation_obj["comment"] = comment
 
     return citation_obj
 
@@ -85,18 +88,20 @@ def process_citation(citation_str: str) -> dict:
 def yield_metadata(nanopubs_metadata):
     """Yield nanopub metadata collected from BEL Script"""
 
-    return {'metadata': copy.deepcopy(nanopubs_metadata)}
+    return {"metadata": copy.deepcopy(nanopubs_metadata)}
 
 
 def split_bel_stmt(stmt: str, line_num) -> tuple:
     """Split bel statement into subject, relation, object tuple"""
 
-    m = re.match(f'^(.*?\))\s+([a-zA-Z=\->\|:]+)\s+([\w(]+.*?)$', stmt, flags=0)
+    m = re.match(f"^(.*?\))\s+([a-zA-Z=\->\|:]+)\s+([\w(]+.*?)$", stmt, flags=0)
     if m:
-        return(m.group(1), m.group(2), m.group(3))
+        return (m.group(1), m.group(2), m.group(3))
     else:
-        log.info(f'Could not parse bel statement into components at line number: {line_num} assertion: {stmt}')
-        return(stmt, None, None)
+        log.info(
+            f"Could not parse bel statement into components at line number: {line_num} assertion: {stmt}"
+        )
+        return (stmt, None, None)
 
 
 def yield_nanopub(assertions, annotations, line_num):
@@ -107,34 +112,34 @@ def yield_nanopub(assertions, annotations, line_num):
 
     anno = copy.deepcopy(annotations)
 
-    evidence = anno.pop('evidence', None)
-    stmt_group = anno.pop('statement_group', None)
-    citation = anno.pop('citation', None)
+    evidence = anno.pop("evidence", None)
+    stmt_group = anno.pop("statement_group", None)
+    citation = anno.pop("citation", None)
 
     anno_list = []
     for anno_type in anno:
         if isinstance(anno[anno_type], (list, tuple)):
             for val in anno[anno_type]:
-                anno_list.append({"type": anno_type, 'label': val})
+                anno_list.append({"type": anno_type, "label": val})
         else:
-            anno_list.append({"type": anno_type, 'label': anno[anno_type]})
+            anno_list.append({"type": anno_type, "label": anno[anno_type]})
 
     assertions_list = []
     for assertion in assertions:
         (subj, rel, obj) = split_bel_stmt(assertion, line_num)
-        assertions_list.append({'subject': subj, 'relation': rel, 'object': obj})
+        assertions_list.append({"subject": subj, "relation": rel, "object": obj})
 
     nanopub = {
-        'schema_uri': 'https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.0.0.yaml',
-        'type': copy.deepcopy(nanopub_type),
-        'annotations': copy.deepcopy(anno_list),
-        'citation': copy.deepcopy(citation),
-        'assertions': copy.deepcopy(assertions_list),
-        'evidence': evidence,
-        'metadata': {'statement_group': stmt_group},
+        "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.0.0.yaml",
+        "type": copy.deepcopy(nanopub_type),
+        "annotations": copy.deepcopy(anno_list),
+        "citation": copy.deepcopy(citation),
+        "assertions": copy.deepcopy(assertions_list),
+        "evidence": evidence,
+        "metadata": {"statement_group": stmt_group},
     }
 
-    return {'nanopub': copy.deepcopy(nanopub)}
+    return {"nanopub": copy.deepcopy(nanopub)}
 
 
 def process_documentline(line, nanopubs_metadata):
@@ -154,10 +159,10 @@ def process_definition(line, nanopubs_metadata):
     matches = re.match('DEFINE\s+(\w+)\s+(\w+)\s+AS\s+URL\s+"(.*?)"\s*$', line)
     if matches:
         def_type = matches.group(1).lower()
-        if def_type == 'namespace':
-            def_type = 'namespaces'
-        elif def_type == 'annotation':
-            def_type == 'annotations'
+        if def_type == "namespace":
+            def_type = "namespaces"
+        elif def_type == "annotation":
+            def_type == "annotations"
 
         key = matches.group(2)
         val = matches.group(3)
@@ -167,13 +172,13 @@ def process_definition(line, nanopubs_metadata):
         else:
             nanopubs_metadata[def_type] = {key: val}
 
-    matches = re.match('DEFINE\s+(\w+)\s+(\w+)\s+AS\s+LIST\s+{(.*?)}\s*$', line)
+    matches = re.match("DEFINE\s+(\w+)\s+(\w+)\s+AS\s+LIST\s+{(.*?)}\s*$", line)
     if matches:
         def_type = matches.group(1).lower()
-        if def_type == 'namespace':
-            def_type = 'namespaces'
-        elif def_type == 'annotation':
-            def_type == 'annotations'
+        if def_type == "namespace":
+            def_type = "namespaces"
+        elif def_type == "annotation":
+            def_type == "annotations"
 
         key = matches.group(2)
         val = matches.group(3)
@@ -193,9 +198,9 @@ def process_unset(line, annotations):
     matches = re.match('UNSET\s+"?(.*?)"?\s*$', line)
     if matches:
         val = matches.group(1)
-        if val == 'ALL' or val == 'STATEMENT_GROUP':
+        if val == "ALL" or val == "STATEMENT_GROUP":
             annotations = {}
-        elif re.match('{', val):
+        elif re.match("{", val):
             vals = convert_csv_str_to_list(val)
             for val in vals:
                 annotations.pop(val, None)
@@ -203,7 +208,7 @@ def process_unset(line, annotations):
             annotations.pop(val, None)
 
     else:
-        log.warn(f'Problem with UNSET line: {line}')
+        log.warn(f"Problem with UNSET line: {line}")
 
     return annotations
 
@@ -218,13 +223,13 @@ def process_set(line, annotations):
         key = matches.group(1)
         val = matches.group(2)
 
-    if key == 'STATEMENT_GROUP':
-        annotations['statement_group'] = val
-    elif key == 'Citation':
-        annotations['citation'] = process_citation(val)
-    elif key.lower() == 'support' or key.lower() == 'evidence':
-        annotations['evidence'] = val
-    elif re.match('\s*{.*?}', val):
+    if key == "STATEMENT_GROUP":
+        annotations["statement_group"] = val
+    elif key == "Citation":
+        annotations["citation"] = process_citation(val)
+    elif key.lower() == "support" or key.lower() == "evidence":
+        annotations["evidence"] = val
+    elif re.match("\s*{.*?}", val):
         vals = convert_csv_str_to_list(val)
         annotations[key] = vals
     else:
@@ -236,25 +241,25 @@ def process_set(line, annotations):
 def set_single_line(lines):
 
     flag = False
-    hold = ''
+    hold = ""
 
     for line in lines:
         if flag and re.match('.*"', line):
-            line = hold + ' ' + line
+            line = hold + " " + line
             flag = False
-            line = re.sub('\s+', ' ', line)
+            line = re.sub("\s+", " ", line)
             yield line
         elif flag:
-            hold += ' ' + line.rstrip()
+            hold += " " + line.rstrip()
 
         elif re.match('SET\s*\w+\s*=\s*".*"', line):
-            line = re.sub('\s+', ' ', line)
+            line = re.sub("\s+", " ", line)
             yield line
         elif re.match('SET\s*\w+\s*=\s*".*', line):
             hold = line.rstrip()
             flag = True
         else:
-            line = re.sub('\s+', ' ', line)
+            line = re.sub("\s+", " ", line)
             yield line
 
 
@@ -263,15 +268,15 @@ def preprocess_belscript(lines):
 
     set_flag = False
     for line in lines:
-        if set_flag is False and re.match('SET', line):
+        if set_flag is False and re.match("SET", line):
             set_flag = True
             set_line = [line.rstrip()]
         # SET following SET
-        elif set_flag and re.match('SET', line):
+        elif set_flag and re.match("SET", line):
             yield f"{' '.join(set_line)}\n"
             set_line = [line.rstrip()]
         # Blank line following SET yields single line SET
-        elif set_flag and re.match('\s+$', line):
+        elif set_flag and re.match("\s+$", line):
             yield f"{' '.join(set_line)}\n"
             yield line
             set_flag = False
@@ -304,23 +309,23 @@ def parse_belscript(lines):
 
         line_num += 1
         # Get rid of trailing comments
-        line = re.sub('\/\/.*?$', '', line)
+        line = re.sub("\/\/.*?$", "", line)
 
         line = line.rstrip()
 
         # Collapse continuation lines
-        while re.search('\\\s*$', line):
-            line = line.replace('\\', '') + next(lines)
+        while re.search("\\\s*$", line):
+            line = line.replace("\\", "") + next(lines)
 
         # Process lines #################################
-        if re.match('\s*#', line) or re.match('\s*$', line):
+        if re.match("\s*#", line) or re.match("\s*$", line):
             # Skip comments and empty lines
             continue
-        elif re.match('SET DOCUMENT', line):
+        elif re.match("SET DOCUMENT", line):
             nanopubs_metadata = process_documentline(line, nanopubs_metadata)
-        elif re.match('DEFINE', line):
+        elif re.match("DEFINE", line):
             nanopubs_metadata = process_definition(line, nanopubs_metadata)
-        elif re.match('UNSET', line):
+        elif re.match("UNSET", line):
 
             # Process any assertions prior to changing annotations
             if assertions:
@@ -328,7 +333,7 @@ def parse_belscript(lines):
                 assertions = []
             annotations = process_unset(line, annotations)
 
-        elif re.match('SET', line):
+        elif re.match("SET", line):
             # Create nanopubs metadata prior to starting BEL Script statements section
             if nanopubs_metadata:
                 yield yield_metadata(nanopubs_metadata)
@@ -350,7 +355,7 @@ def parse_belscript(lines):
 
 def main():
 
-    with open('test.v2.bel', 'r') as f:
+    with open("test.v2.bel", "r") as f:
         for doc in parse_belscript(f):
             print(json.dumps(doc, indent=4))
 
@@ -365,6 +370,5 @@ def main():
     quit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-

@@ -29,5 +29,3 @@
 #     doc = bel.edge.pipeline.get_start_dates()
 #     print(f'Doc3: {json.dumps(doc, indent=4)}')
 #     assert '2018-02-30T01:01:30.000Z' == [start_date for start_date in doc['start_dates'] if start_date['nanopubstore_url'] == 'https://nanopubstore.demo.biodati.com'][0]['start_dt']
-
-

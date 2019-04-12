@@ -22,13 +22,13 @@ import bel.nanopub.belscripts
 import logging
 import logging.config
 
-if config.get('logging', False):
-    logging.config.dictConfig(config.get('logging'))
+if config.get("logging", False):
+    logging.config.dictConfig(config.get("logging"))
 log = logging.getLogger(__name__)
 
 
 # Add -h to help options for commands
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 class Context(object):
@@ -60,18 +60,42 @@ def nanopub():
 
 
 @belc.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('input_fn')
-@click.option('--db_save', help="Save Edges direct to EdgeStore")
-@click.option('--db_delete', help="Delete EdgeStore prior to saving new Edges")
-@click.option('--output_fn', default='-', help="BEL Edges output filename - defaults to STDOUT")
-@click.option('--rules', help='Select specific rules to create BEL Edges, comma-delimited, e.g. "component_of,degradation", default is to run all rules. Special rule: "skip" does not compute edges at all - just processes primary edge')
-@click.option('--species', help='Orthologize to species (Format TAX:<NCBI tax_id_number>)')
-@click.option('--namespace_targets', help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}')
-@click.option('--version', help='BEL language version')
-@click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config_fn', help="BEL configuration file - overrides default configuration files")
+@click.argument("input_fn")
+@click.option("--db_save", help="Save Edges direct to EdgeStore")
+@click.option("--db_delete", help="Delete EdgeStore prior to saving new Edges")
+@click.option(
+    "--output_fn", default="-", help="BEL Edges output filename - defaults to STDOUT"
+)
+@click.option(
+    "--rules",
+    help='Select specific rules to create BEL Edges, comma-delimited, e.g. "component_of,degradation", default is to run all rules. Special rule: "skip" does not compute edges at all - just processes primary edge',
+)
+@click.option(
+    "--species", help="Orthologize to species (Format TAX:<NCBI tax_id_number>)"
+)
+@click.option(
+    "--namespace_targets",
+    help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}',
+)
+@click.option("--version", help="BEL language version")
+@click.option("--api", help="API Endpoint to use for BEL Entity validation")
+@click.option(
+    "--config_fn", help="BEL configuration file - overrides default configuration files"
+)
 @pass_context
-def pipeline(ctx, input_fn, db_save, db_delete, output_fn, rules, species, namespace_targets, version, api, config_fn):
+def pipeline(
+    ctx,
+    input_fn,
+    db_save,
+    db_delete,
+    output_fn,
+    rules,
+    species,
+    namespace_targets,
+    version,
+    api,
+    config_fn,
+):
     """BEL Pipeline - BEL Nanopubs into BEL Edges
 
     This will process BEL Nanopubs into BEL Edges by validating, orthologizing (if requested),
@@ -102,12 +126,20 @@ def pipeline(ctx, input_fn, db_save, db_delete, output_fn, rules, species, names
     if namespace_targets:
         namespace_targets = json.loads(namespace_targets)
     if rules:
-        rules = rules.replace(' ', '').split(',')
+        rules = rules.replace(" ", "").split(",")
 
-    namespace_targets = utils.first_true([namespace_targets, config['bel']['lang'].get('canonical')], None)
-    rules = utils.first_true([rules, config['bel']['nanopub'].get('pipeline_edge_rules', False)], False)
-    api = utils.first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
-    version = utils.first_true([version, config['bel']['lang'].get('default_bel_version', None)], None)
+    namespace_targets = utils.first_true(
+        [namespace_targets, config["bel"]["lang"].get("canonical")], None
+    )
+    rules = utils.first_true(
+        [rules, config["bel"]["nanopub"].get("pipeline_edge_rules", False)], False
+    )
+    api = utils.first_true(
+        [api, config["bel_api"]["servers"].get("api_url", None)], None
+    )
+    version = utils.first_true(
+        [version, config["bel"]["lang"].get("default_bel_version", None)], None
+    )
 
     n = bnn.Nanopub()
 
@@ -125,21 +157,21 @@ def pipeline(ctx, input_fn, db_save, db_delete, output_fn, rules, species, names
 
             edgestore_handle = bel.db.arangodb.get_edgestore_handle(arango_client)
 
-        elif re.search('ya?ml', output_fn):
+        elif re.search("ya?ml", output_fn):
             yaml_flag = True
-        elif 'jsonl' in output_fn:
+        elif "jsonl" in output_fn:
             jsonl_flag = True
-        elif 'json' in output_fn:
+        elif "json" in output_fn:
             json_flag = True
-        elif 'jgf' in output_fn:
+        elif "jgf" in output_fn:
             jgf_flag = True
 
         if db_save:
             pass
-        elif 'gz' in output_fn:
-            fout = gzip.open(output_fn, 'wt')
+        elif "gz" in output_fn:
+            fout = gzip.open(output_fn, "wt")
         else:
-            fout = open(output_fn, 'wt')
+            fout = open(output_fn, "wt")
 
         nanopub_cnt = 0
         with timy.Timer() as timer:
@@ -148,9 +180,14 @@ def pipeline(ctx, input_fn, db_save, db_delete, output_fn, rules, species, names
 
                 nanopub_cnt += 1
                 if nanopub_cnt % 100 == 0:
-                    timer.track(f'{nanopub_cnt} Nanopubs processed into Edges')
+                    timer.track(f"{nanopub_cnt} Nanopubs processed into Edges")
 
-                bel_edges = n.bel_edges(np, namespace_targets=namespace_targets, orthologize_target=species, rules=rules)
+                bel_edges = n.bel_edges(
+                    np,
+                    namespace_targets=namespace_targets,
+                    orthologize_target=species,
+                    rules=rules,
+                )
 
                 if db_save:
                     bel.edge.edges.load_edges_into_db(edgestore_handle, edges=bel_edges)
@@ -174,10 +211,18 @@ def pipeline(ctx, input_fn, db_save, db_delete, output_fn, rules, species, names
 
 
 @nanopub.command(name="validate", context_settings=CONTEXT_SETTINGS)
-@click.option('--output_fn', type=click.File('wt'), default='-', help="BEL Edges JSON output filename - defaults to STDOUT")
-@click.option('--api', help='BEL.bio API endpoint')
-@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
-@click.argument('input_fn')
+@click.option(
+    "--output_fn",
+    type=click.File("wt"),
+    default="-",
+    help="BEL Edges JSON output filename - defaults to STDOUT",
+)
+@click.option("--api", help="BEL.bio API endpoint")
+@click.option(
+    "--config_fn",
+    help="BEL Pipeline configuration file - overrides default configuration files",
+)
+@click.argument("input_fn")
 @pass_context
 def nanopub_validate(ctx, input_fn, output_fn, api, config_fn):
     """Validate nanopubs"""
@@ -187,7 +232,9 @@ def nanopub_validate(ctx, input_fn, output_fn, api, config_fn):
     else:
         config = ctx.config
 
-    api = utils.first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
+    api = utils.first_true(
+        [api, config["bel_api"]["servers"].get("api_url", None)], None
+    )
 
     print(f"Running validate nanopubs using {api}")
 
@@ -199,8 +246,8 @@ def nanopub_validate(ctx, input_fn, output_fn, api, config_fn):
 
 
 @nanopub.command(name="belscript", context_settings=CONTEXT_SETTINGS)
-@click.option('--input_fn', '-i', default='-')
-@click.option('--output_fn', '-o', default='-')
+@click.option("--input_fn", "-i", default="-")
+@click.option("--output_fn", "-o", default="-")
 @pass_context
 def convert_belscript(ctx, input_fn, output_fn):
     """Convert belscript to nanopubs_bel format
@@ -222,15 +269,20 @@ def convert_belscript(ctx, input_fn, output_fn):
 
     try:
 
-        (out_fh, yaml_flag, jsonl_flag, json_flag) = bel.nanopub.files.create_nanopubs_fh(output_fn)
+        (
+            out_fh,
+            yaml_flag,
+            jsonl_flag,
+            json_flag,
+        ) = bel.nanopub.files.create_nanopubs_fh(output_fn)
         if yaml_flag or json_flag:
             docs = []
 
         # input file
-        if re.search('gz$', input_fn):
-            f = gzip.open(input_fn, 'rt')
+        if re.search("gz$", input_fn):
+            f = gzip.open(input_fn, "rt")
         else:
-            f = open(input_fn, 'rt')
+            f = open(input_fn, "rt")
 
         # process belscript
         for doc in bel.nanopub.belscripts.parse_belscript(f):
@@ -251,8 +303,8 @@ def convert_belscript(ctx, input_fn, output_fn):
 
 
 @nanopub.command(name="reformat", context_settings=CONTEXT_SETTINGS)
-@click.option('--input_fn', '-i')
-@click.option('--output_fn', '-o')
+@click.option("--input_fn", "-i")
+@click.option("--output_fn", "-o")
 @pass_context
 def reformat(ctx, input_fn, output_fn):
     """Reformat between JSON, YAML, JSONLines formats
@@ -271,15 +323,20 @@ def reformat(ctx, input_fn, output_fn):
 
     try:
 
-        (out_fh, yaml_flag, jsonl_flag, json_flag) = bel.nanopub.files.create_nanopubs_fh(output_fn)
+        (
+            out_fh,
+            yaml_flag,
+            jsonl_flag,
+            json_flag,
+        ) = bel.nanopub.files.create_nanopubs_fh(output_fn)
         if yaml_flag or json_flag:
             docs = []
 
         # input file
-        if re.search('gz$', input_fn):
-            f = gzip.open(input_fn, 'rt')
+        if re.search("gz$", input_fn):
+            f = gzip.open(input_fn, "rt")
         else:
-            f = open(input_fn, 'rt')
+            f = open(input_fn, "rt")
 
         for np in bnf.read_nanopubs(input_fn):
             if yaml_flag or json_flag:
@@ -299,7 +356,7 @@ def reformat(ctx, input_fn, output_fn):
 
 
 @nanopub.command(name="stats", context_settings=CONTEXT_SETTINGS)
-@click.argument('input_fn')
+@click.argument("input_fn")
 @pass_context
 def nanopub_stats(ctx, input_fn):
     """Collect statistics on nanopub file
@@ -307,27 +364,35 @@ def nanopub_stats(ctx, input_fn):
     input_fn can be json, jsonl or yaml and additionally gzipped
     """
 
-    counts = {'nanopubs': 0, 'assertions': {'total': 0, 'subject_only': 0, 'nested': 0, 'relations': {}}}
+    counts = {
+        "nanopubs": 0,
+        "assertions": {"total": 0, "subject_only": 0, "nested": 0, "relations": {}},
+    }
 
     for np in bnf.read_nanopubs(input_fn):
-        if 'nanopub' in np:
-            counts['nanopubs'] += 1
-            counts['assertions']['total'] += len(np['nanopub']['assertions'])
-            for assertion in np['nanopub']['assertions']:
-                if assertion['relation'] is None:
-                    counts['assertions']['subject_only'] += 1
+        if "nanopub" in np:
+            counts["nanopubs"] += 1
+            counts["assertions"]["total"] += len(np["nanopub"]["assertions"])
+            for assertion in np["nanopub"]["assertions"]:
+                if assertion["relation"] is None:
+                    counts["assertions"]["subject_only"] += 1
                 else:
-                    if re.match('\s*\(', assertion['object']):
-                        counts['assertions']['nested'] += 1
+                    if re.match("\s*\(", assertion["object"]):
+                        counts["assertions"]["nested"] += 1
 
-                    if not assertion.get('relation') in counts['assertions']['relations']:
-                        counts['assertions']['relations'][assertion.get('relation')] = 1
+                    if (
+                        not assertion.get("relation")
+                        in counts["assertions"]["relations"]
+                    ):
+                        counts["assertions"]["relations"][assertion.get("relation")] = 1
                     else:
-                        counts['assertions']['relations'][assertion.get('relation')] += 1
+                        counts["assertions"]["relations"][
+                            assertion.get("relation")
+                        ] += 1
 
-    counts['assertions']['relations'] = sorted(counts['assertions']['relations'])
+    counts["assertions"]["relations"] = sorted(counts["assertions"]["relations"])
 
-    print('DumpVar:\n', json.dumps(counts, indent=4))
+    print("DumpVar:\n", json.dumps(counts, indent=4))
 
 
 @belc.group()
@@ -337,11 +402,14 @@ def stmt():
     pass
 
 
-@stmt.command(name='validate', context_settings=CONTEXT_SETTINGS)
-@click.option('--version', help='BEL language version')
-@click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
-@click.argument('statement')
+@stmt.command(name="validate", context_settings=CONTEXT_SETTINGS)
+@click.option("--version", help="BEL language version")
+@click.option("--api", help="API Endpoint to use for BEL Entity validation")
+@click.option(
+    "--config_fn",
+    help="BEL Pipeline configuration file - overrides default configuration files",
+)
+@click.argument("statement")
 @pass_context
 def stmt_validate(ctx, statement, version, api, config_fn):
     """Parse statement and validate """
@@ -352,13 +420,17 @@ def stmt_validate(ctx, statement, version, api, config_fn):
         config = ctx.config
 
     # Configuration - will return the first truthy result in list else the default option
-    api = utils.first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
-    version = utils.first_true([version, config['bel']['lang'].get('default_bel_version', None)], None)
+    api = utils.first_true(
+        [api, config["bel_api"]["servers"].get("api_url", None)], None
+    )
+    version = utils.first_true(
+        [version, config["bel"]["lang"].get("default_bel_version", None)], None
+    )
 
-    print('------------------------------')
-    print('BEL version: {}'.format(version))
-    print('API Endpoint: {}'.format(api))
-    print('------------------------------')
+    print("------------------------------")
+    print("BEL version: {}".format(version))
+    print("API Endpoint: {}".format(api))
+    print("------------------------------")
 
     bo = BEL(version=version, endpoint=api)
     bo.parse(statement)
@@ -377,11 +449,17 @@ def stmt_validate(ctx, statement, version, api, config_fn):
 
 
 @stmt.command()
-@click.option('--namespace_targets', help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}')
-@click.option('--version', help='BEL language version')
-@click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
-@click.argument('statement')
+@click.option(
+    "--namespace_targets",
+    help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}',
+)
+@click.option("--version", help="BEL language version")
+@click.option("--api", help="API Endpoint to use for BEL Entity validation")
+@click.option(
+    "--config_fn",
+    help="BEL Pipeline configuration file - overrides default configuration files",
+)
+@click.argument("statement")
 @pass_context
 def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
     """Canonicalize statement
@@ -402,14 +480,16 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
     if namespace_targets:
         namespace_targets = json.loads(namespace_targets)
 
-    namespace_targets = utils.first_true([namespace_targets, config.get('canonical')], None)
-    api = utils.first_true([api, config.get('api', None)], None)
-    version = utils.first_true([version, config.get('bel_version', None)], None)
+    namespace_targets = utils.first_true(
+        [namespace_targets, config.get("canonical")], None
+    )
+    api = utils.first_true([api, config.get("api", None)], None)
+    version = utils.first_true([version, config.get("bel_version", None)], None)
 
-    print('------------------------------')
-    print('BEL version: {}'.format(version))
-    print('API Endpoint: {}'.format(api))
-    print('------------------------------')
+    print("------------------------------")
+    print("BEL version: {}".format(version))
+    print("API Endpoint: {}".format(api))
+    print("------------------------------")
 
     bo = BEL(version=version, endpoint=api)
     bo.parse(statement).canonicalize(namespace_targets=namespace_targets)
@@ -419,8 +499,8 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
         print(bo.parse_visualize_error)
         print(bo.validation_messages)
     else:
-        print('ORIGINAL ', bo.original_bel_stmt)
-        print('CANONICAL', bo.ast)
+        print("ORIGINAL ", bo.original_bel_stmt)
+        print("CANONICAL", bo.ast)
         if bo.validation_messages:
             print(bo.validation_messages)
         else:
@@ -429,11 +509,14 @@ def canonicalize(ctx, statement, namespace_targets, version, api, config_fn):
 
 
 @stmt.command()
-@click.option('--species', help='species ID format TAX:<tax_id_number>')
-@click.option('--version', help='BEL language version')
-@click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
-@click.argument('statement')
+@click.option("--species", help="species ID format TAX:<tax_id_number>")
+@click.option("--version", help="BEL language version")
+@click.option("--api", help="API Endpoint to use for BEL Entity validation")
+@click.option(
+    "--config_fn",
+    help="BEL Pipeline configuration file - overrides default configuration files",
+)
+@click.argument("statement")
 @pass_context
 def orthologize(ctx, statement, species, version, api, config_fn):
     """Orthologize statement
@@ -449,13 +532,17 @@ def orthologize(ctx, statement, species, version, api, config_fn):
         config = ctx.config
 
     # Configuration - will return the first truthy result in list else the default option
-    api_url = utils.first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
-    version = utils.first_true([version, config['bel']['lang'].get('default_bel_version', None)], None)
+    api_url = utils.first_true(
+        [api, config["bel_api"]["servers"].get("api_url", None)], None
+    )
+    version = utils.first_true(
+        [version, config["bel"]["lang"].get("default_bel_version", None)], None
+    )
 
-    print('------------------------------')
-    print('BEL version: {}'.format(version))
-    print('API Endpoint: {}'.format(api))
-    print('------------------------------')
+    print("------------------------------")
+    print("BEL version: {}".format(version))
+    print("API Endpoint: {}".format(api))
+    print("------------------------------")
 
     bo = BEL(version=version, endpoint=api_url)
     bo.parse(statement).orthologize(species)
@@ -465,8 +552,8 @@ def orthologize(ctx, statement, species, version, api, config_fn):
         print(bo.parse_visualize_error)
         print(bo.validation_messages)
     else:
-        print('ORIGINAL     ', bo.original_bel_stmt)
-        print('ORTHOLOGIZED ', bo.ast)
+        print("ORIGINAL     ", bo.original_bel_stmt)
+        print("ORTHOLOGIZED ", bo.ast)
         if bo.validation_messages:
             print(bo.validation_messages)
         else:
@@ -475,13 +562,22 @@ def orthologize(ctx, statement, species, version, api, config_fn):
 
 
 @stmt.command()
-@click.option('--rules', help='Select specific rules to create BEL Edges, comma-delimited, e.g. "component_of,degradation", default is to run all rules')
-@click.option('--species', help='Species ID format TAX:<tax_id_number>')
-@click.option('--namespace_targets', help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}')
-@click.option('--version', help='BEL language version')
-@click.option('--api', help='API Endpoint to use for BEL Entity validation')
-@click.option('--config_fn', help="BEL Pipeline configuration file - overrides default configuration files")
-@click.argument('statement')
+@click.option(
+    "--rules",
+    help='Select specific rules to create BEL Edges, comma-delimited, e.g. "component_of,degradation", default is to run all rules',
+)
+@click.option("--species", help="Species ID format TAX:<tax_id_number>")
+@click.option(
+    "--namespace_targets",
+    help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}',
+)
+@click.option("--version", help="BEL language version")
+@click.option("--api", help="API Endpoint to use for BEL Entity validation")
+@click.option(
+    "--config_fn",
+    help="BEL Pipeline configuration file - overrides default configuration files",
+)
+@click.argument("statement")
 @pass_context
 def edges(ctx, statement, rules, species, namespace_targets, version, api, config_fn):
     """Create BEL Edges from BEL Statement"""
@@ -495,22 +591,37 @@ def edges(ctx, statement, rules, species, namespace_targets, version, api, confi
     if namespace_targets:
         namespace_targets = json.loads(namespace_targets)
     if rules:
-        rules = rules.replace(' ', '').split(',')
+        rules = rules.replace(" ", "").split(",")
 
-    namespace_targets = utils.first_true([namespace_targets, config['bel']['lang'].get('canonical')], None)
-    api_url = utils.first_true([api, config['bel_api']['servers'].get('api_url', None)], None)
-    version = utils.first_true([version, config['bel']['lang'].get('default_bel_version', None)], None)
+    namespace_targets = utils.first_true(
+        [namespace_targets, config["bel"]["lang"].get("canonical")], None
+    )
+    api_url = utils.first_true(
+        [api, config["bel_api"]["servers"].get("api_url", None)], None
+    )
+    version = utils.first_true(
+        [version, config["bel"]["lang"].get("default_bel_version", None)], None
+    )
 
-    print('------------------------------')
-    print('BEL version: {}'.format(version))
-    print('API Endpoint: {}'.format(api))
-    print('------------------------------')
+    print("------------------------------")
+    print("BEL version: {}".format(version))
+    print("API Endpoint: {}".format(api))
+    print("------------------------------")
 
     bo = BEL(version=version, endpoint=api_url)
     if species:
-        edges = bo.parse(statement).orthologize(species).canonicalize(namespace_targets=namespace_targets).compute_edges(rules=rules)
+        edges = (
+            bo.parse(statement)
+            .orthologize(species)
+            .canonicalize(namespace_targets=namespace_targets)
+            .compute_edges(rules=rules)
+        )
     else:
-        edges = bo.parse(statement).canonicalize(namespace_targets=namespace_targets).compute_edges(rules=rules)
+        edges = (
+            bo.parse(statement)
+            .canonicalize(namespace_targets=namespace_targets)
+            .compute_edges(rules=rules)
+        )
 
     if edges is None:
         print(bo.original_bel_stmt)
@@ -533,8 +644,14 @@ def db():
 
 
 @db.command()
-@click.option('--delete/--no-delete', default=False, help="Remove indexes and re-create them")
-@click.option('--index_name', default='terms_blue', help='Use this name for index. Default is "terms_blue"')
+@click.option(
+    "--delete/--no-delete", default=False, help="Remove indexes and re-create them"
+)
+@click.option(
+    "--index_name",
+    default="terms_blue",
+    help='Use this name for index. Default is "terms_blue"',
+)
 def elasticsearch(delete, index_name):
     """Setup Elasticsearch namespace indexes
 
@@ -551,8 +668,10 @@ def elasticsearch(delete, index_name):
 
 
 @db.command()
-@click.argument('db_name')
-@click.option('--delete/--no-delete', default=False, help="Remove indexes and re-create them")
+@click.argument("db_name")
+@click.option(
+    "--delete/--no-delete", default=False, help="Remove indexes and re-create them"
+)
 def arangodb(delete, db_name):
     """Setup ArangoDB database
 
@@ -566,7 +685,7 @@ def arangodb(delete, db_name):
         client = bel.db.arangodb.get_client()
         bel.db.arangodb.delete_database(client, db_name)
 
-    if db_name == 'belns':
+    if db_name == "belns":
         bel.db.arangodb.get_belns_handle(client)
-    elif db_name == 'edgestore':
+    elif db_name == "edgestore":
         bel.db.arangodb.get_edgestore_handle(client)

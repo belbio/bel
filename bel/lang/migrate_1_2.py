@@ -16,9 +16,10 @@ import bel.lang.ast
 from bel.lang.ast import BELAst, Function, NSArg, StrArg
 
 import structlog
+
 log = structlog.getLogger(__name__)
 
-bo = BEL('2.0.0', config['bel_api']['servers']['api_url'])
+bo = BEL("2.0.0", config["bel_api"]["servers"]["api_url"])
 spec = bo.spec
 
 
@@ -32,7 +33,7 @@ def migrate(belstr: str) -> str:
         bel: BEL 2
     """
 
-    bo.ast = bel.lang.partialparse.get_ast_obj(belstr, '2.0.0')
+    bo.ast = bel.lang.partialparse.get_ast_obj(belstr, "2.0.0")
 
     return migrate_ast(bo.ast).to_string()
 
@@ -40,7 +41,7 @@ def migrate(belstr: str) -> str:
 def migrate_into_triple(belstr: str) -> str:
     """Migrate BEL1 assertion into BEL 2.0.0 SRO triple"""
 
-    bo.ast = bel.lang.partialparse.get_ast_obj(belstr, '2.0.0')
+    bo.ast = bel.lang.partialparse.get_ast_obj(belstr, "2.0.0")
 
     return migrate_ast(bo.ast).to_triple()
 
@@ -51,7 +52,7 @@ def migrate_ast(ast: BELAst) -> BELAst:
     bo.ast.bel_subject = convert(bo.ast.bel_subject)
 
     if bo.ast.bel_object:
-        if bo.ast.bel_object.type == 'BELAst':
+        if bo.ast.bel_object.type == "BELAst":
             bo.ast.bel_object.bel_subject = convert(bo.ast.bel_object.bel_subject)
             if bo.ast.bel_object.bel_object:
                 bo.ast.bel_object.bel_object = convert(bo.ast.bel_object.bel_object)
@@ -64,32 +65,35 @@ def migrate_ast(ast: BELAst) -> BELAst:
 def convert(ast):
     """Convert BEL1 AST Function to BEL2 AST Function"""
 
-    if ast and ast.type == 'Function':
+    if ast and ast.type == "Function":
         # Activity function conversion
-        if ast.name != 'molecularActivity' and ast.name in spec['namespaces']['Activity']['list']:
-            print('name', ast.name, 'type', ast.type)
+        if (
+            ast.name != "molecularActivity"
+            and ast.name in spec["namespaces"]["Activity"]["list"]
+        ):
+            print("name", ast.name, "type", ast.type)
             ast = convert_activity(ast)
             return ast  # Otherwise - this will trigger on the BEL2 molecularActivity
 
         # translocation conversion
-        elif ast.name in ['tloc', 'translocation']:
+        elif ast.name in ["tloc", "translocation"]:
             ast = convert_tloc(ast)
 
         fus_flag = False
         for idx, arg in enumerate(ast.args):
-            if arg.__class__.__name__ == 'Function':
+            if arg.__class__.__name__ == "Function":
 
                 # Fix substitution -> variation()
-                if arg.name in ['sub', 'substitution']:
+                if arg.name in ["sub", "substitution"]:
                     ast.args[idx] = convert_sub(arg)
 
-                elif arg.name in ['trunc', 'truncation']:
+                elif arg.name in ["trunc", "truncation"]:
                     ast.args[idx] = convert_trunc(arg)
 
-                elif arg.name in ['pmod', 'proteinModification']:
+                elif arg.name in ["pmod", "proteinModification"]:
                     ast.args[idx] = convert_pmod(arg)
 
-                elif arg.name in ['fus', 'fusion']:
+                elif arg.name in ["fus", "fusion"]:
                     fus_flag = True
 
                 # Recursively process Functions
@@ -106,10 +110,14 @@ def convert_tloc(ast):
 
     from_loc_arg = ast.args[1]
     to_loc_arg = ast.args[2]
-    from_loc = Function('fromLoc', spec, parent_function=ast)
-    from_loc.add_argument(NSArg(from_loc_arg.namespace, from_loc_arg.value, parent_function=from_loc))
-    to_loc = Function('toLoc', spec, parent_function=ast)
-    to_loc.add_argument(NSArg(to_loc_arg.namespace, to_loc_arg.value, parent_function=to_loc))
+    from_loc = Function("fromLoc", spec, parent_function=ast)
+    from_loc.add_argument(
+        NSArg(from_loc_arg.namespace, from_loc_arg.value, parent_function=from_loc)
+    )
+    to_loc = Function("toLoc", spec, parent_function=ast)
+    to_loc.add_argument(
+        NSArg(to_loc_arg.namespace, to_loc_arg.value, parent_function=to_loc)
+    )
 
     ast.args[1] = from_loc
     ast.args[2] = to_loc
@@ -121,14 +129,14 @@ def convert_activity(ast):
     """Convert BEL1 activities to BEL2 act()"""
 
     if len(ast.args) > 1:
-        log.error(f'Activity should not have more than 1 argument {ast.to_string()}')
+        log.error(f"Activity should not have more than 1 argument {ast.to_string()}")
 
     p_arg = ast.args[0]  # protein argument
-    print('p_arg', p_arg)
-    ma_arg = Function('ma', bo.spec)
+    print("p_arg", p_arg)
+    ma_arg = Function("ma", bo.spec)
     ma_arg.add_argument(StrArg(ast.name, ma_arg))
     p_arg.change_parent_fn(ma_arg)
-    ast = Function('activity', bo.spec)
+    ast = Function("activity", bo.spec)
     p_arg.change_parent_fn(ast)
     ast.add_argument(p_arg)
     ast.add_argument(ma_arg)
@@ -139,8 +147,10 @@ def convert_activity(ast):
 def convert_pmod(pmod):
     """Update BEL1 pmod() protein modification term"""
 
-    if pmod.args[0].value in spec['bel1_migration']['protein_modifications']:
-        pmod.args[0].value = spec['bel1_migration']['protein_modifications'][pmod.args[0].value]
+    if pmod.args[0].value in spec["bel1_migration"]["protein_modifications"]:
+        pmod.args[0].value = spec["bel1_migration"]["protein_modifications"][
+            pmod.args[0].value
+        ]
 
     return pmod
 
@@ -149,32 +159,37 @@ def convert_fus(ast):
     """Convert BEL1 fus() to BEL2 fus()"""
 
     parent_fn_name = ast.name_short
-    prefix_list = {'p': 'p.', 'r': 'r.', 'g': 'c.'}
+    prefix_list = {"p": "p.", "r": "r.", "g": "c."}
     prefix = prefix_list[parent_fn_name]
 
     fus1_ns = ast.args[0].namespace
     fus1_val = ast.args[0].value
 
     arg_fus = ast.args[1]
-    fus_args = [None, '?', '?']
+    fus_args = [None, "?", "?"]
     for idx, arg in enumerate(arg_fus.args):
         fus_args[idx] = arg
 
     fus2_ns = fus_args[0].namespace
     fus2_val = fus_args[0].value
 
-    if fus_args[1] == '?':
+    if fus_args[1] == "?":
         fus1_range = fus_args[1]
     else:
         fus1_range = f'"{prefix}1_{fus_args[1].value}"'
 
-    if fus_args[2] == '?':
+    if fus_args[2] == "?":
         fus2_range = fus_args[2]
     else:
         fus2_range = f'"{prefix}{fus_args[2].value}_?"'
 
-    fus = Function('fus', spec, parent_function=ast)
-    fus.args = [NSArg(fus1_ns, fus1_val, fus), StrArg(fus1_range, fus), NSArg(fus2_ns, fus2_val, fus), StrArg(fus2_range, fus), ]
+    fus = Function("fus", spec, parent_function=ast)
+    fus.args = [
+        NSArg(fus1_ns, fus1_val, fus),
+        StrArg(fus1_range, fus),
+        NSArg(fus2_ns, fus2_val, fus),
+        StrArg(fus2_range, fus),
+    ]
 
     # Remove BEL
     ast_args = ast.args
@@ -200,12 +215,12 @@ def convert_sub(sub):
     (ref_aa, pos, new_aa) = args
 
     parent_fn_name = sub.parent_function.name_short
-    prefix_list = {'p': 'p.', 'r': 'r.', 'g': 'c.'}
+    prefix_list = {"p": "p.", "r": "r.", "g": "c."}
     prefix = prefix_list[parent_fn_name]
 
     new_var_arg = f'"{prefix}{spec["namespaces"]["AminoAcid"]["to_short"][ref_aa.value]}{pos.value}{spec["namespaces"]["AminoAcid"]["to_short"][new_aa.value]}"'
 
-    new_var = bel.lang.ast.Function('var', bo.spec)
+    new_var = bel.lang.ast.Function("var", bo.spec)
 
     new_var.add_argument(StrArg(new_var_arg, new_var))
 
@@ -216,12 +231,12 @@ def convert_trunc(trunc):
     """Convert BEL1 trunc() to BEL2 var()"""
 
     parent_fn_name = trunc.parent_function.name_short
-    prefix_list = {'p': 'p.', 'r': 'r.', 'g': 'c.'}
+    prefix_list = {"p": "p.", "r": "r.", "g": "c."}
     prefix = prefix_list[parent_fn_name]
 
     new_var_arg = f'"truncated at {trunc.args[0].value}"'
 
-    new_var = bel.lang.ast.Function('var', bo.spec)
+    new_var = bel.lang.ast.Function("var", bo.spec)
 
     new_var.add_argument(StrArg(new_var_arg, new_var))
 
@@ -232,12 +247,12 @@ def main():
 
     import bel.lang.migrate_1_2
 
-    bel1 = 'kin(p(HGNC:BRAF))'
+    bel1 = "kin(p(HGNC:BRAF))"
 
-    bel1 = 'p(HGNC:PIK3CA, sub(E, 545, K))'
+    bel1 = "p(HGNC:PIK3CA, sub(E, 545, K))"
     # bel2 = 'p(HGNC:PIK3CA, var(p.Glu545Lys))'
 
-    bel1 = 'r(HGNC:BCR, fus(HGNC:JAK2, 1875, 2626), pmod(P))'
+    bel1 = "r(HGNC:BCR, fus(HGNC:JAK2, 1875, 2626), pmod(P))"
     bel2 = 'r(fus(HGNC:BCR, "r.1_1875", HGNC:JAK2, "r.2626_?"), pmod(Ph))'
 
     # bel1 = 'p(HGNC:MAPK1, pmod(P, Thr, 185))'
@@ -251,8 +266,8 @@ def main():
 
     bel2 = bel.lang.migrate_1_2.migrate(bel1)
 
-    print('BEL2', bel2)
+    print("BEL2", bel2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

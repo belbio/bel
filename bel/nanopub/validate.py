@@ -73,7 +73,10 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
         )
 
     try:
-        if "name" in nanopub["nanopub"]["type"] and "version" in nanopub["nanopub"]["type"]:
+        if (
+            "name" in nanopub["nanopub"]["type"]
+            and "version" in nanopub["nanopub"]["type"]
+        ):
             pass
         if nanopub["nanopub"]["type"]["name"].upper() == "BEL":
             bel_version = nanopub["nanopub"]["type"]["version"]
@@ -95,9 +98,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
             if key in nanopub["nanopub"]["citation"]:
                 break
         else:
-            msg = (
-                'nanopub["nanopub"]["citation"] must have either a uri, database or reference key.'
-            )
+            msg = 'nanopub["nanopub"]["citation"] must have either a uri, database or reference key.'
             v.append(
                 {
                     "level": "Error",
@@ -122,7 +123,9 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
     # Assertion checks
     if "assertions" in nanopub["nanopub"]:
         for idx, assertion in enumerate(nanopub["nanopub"]["assertions"]):
-            bo = bel.lang.belobj.BEL(bel_version, config["bel_api"]["servers"]["api_url"])
+            bo = bel.lang.belobj.BEL(
+                bel_version, config["bel_api"]["servers"]["api_url"]
+            )
             belstr = f'{assertion.get("subject")} {assertion.get("relation", "")} {assertion.get("object", "")}'
             belstr = belstr.replace("None", "")
             try:

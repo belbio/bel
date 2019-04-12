@@ -27,7 +27,6 @@ from bel.lang.ast import BELAst, Function, Arg, NSArg, StrArg
 
 
 class InvalidStatementObject(object):
-
     def __init__(self, s, r, o):
         self.subject = s
         self.relation = r
@@ -40,29 +39,30 @@ class InvalidStatementObject(object):
         rlt = r
         obj = self.stmt_creation_decode(o)
 
-        return '{} {} {}'.format(sub, rlt, obj)
+        return "{} {} {}".format(sub, rlt, obj)
 
     def stmt_creation_decode(self, ast_dict):
 
-        arg_type = ast_dict.get('type', False)
-        arg_value = ast_dict.get('value', False)
+        arg_type = ast_dict.get("type", False)
+        arg_value = ast_dict.get("value", False)
 
-        if arg_type == 'Function':
-            f_name = ast_dict.get('name', None)
+        if arg_type == "Function":
+            f_name = ast_dict.get("name", None)
 
             tmp = self.stmt_creation_decode(arg_value[0])
 
             for arg in arg_value[1:]:
-                tmp += ', {}'.format(self.stmt_creation_decode(arg))
+                tmp += ", {}".format(self.stmt_creation_decode(arg))
 
-            return '{}({})'.format(f_name, tmp)
+            return "{}({})".format(f_name, tmp)
 
-        elif arg_type == 'String':
+        elif arg_type == "String":
             return arg_value
-        elif arg_type == 'Entity':
+        elif arg_type == "Entity":
             return arg_value
         else:
-            return 'UNK'
+            return "UNK"
+
 
 # TODO: move these functions to appropriate place; create_invalid , make_statement, etc. need not be in tools.
 def create_invalid(bel_obj, count, max_args):
@@ -87,24 +87,28 @@ def make_statement(bel_obj, max_args):
 
 def choose_and_make_function(bel_obj, max_args):
 
-    full_func = {'name': choose_rand_function(bel_obj.function_signatures), 'type': 'Function', 'value': []}
+    full_func = {
+        "name": choose_rand_function(bel_obj.function_signatures),
+        "type": "Function",
+        "value": [],
+    }
 
     num_args = random.randint(1, max_args)  # how many args to have
     for _ in range(num_args):
 
-        t = random.choice(['Entity', 'String', 'Function'])
-        arg = {'type': t}
+        t = random.choice(["Entity", "String", "Function"])
+        arg = {"type": t}
 
-        if t == 'Entity':
-            arg['value'] = random_namespace_arg()
-        elif t == 'String':
-            arg['value'] = random_quoted_string()
-        elif t == 'Function':
+        if t == "Entity":
+            arg["value"] = random_namespace_arg()
+        elif t == "String":
+            arg["value"] = random_quoted_string()
+        elif t == "Function":
             arg = choose_and_make_function(bel_obj, max_args)
         else:
             pass
 
-        full_func['value'].append(arg)
+        full_func["value"].append(arg)
 
     return full_func
 
@@ -125,17 +129,21 @@ def random_namespace_arg():
     ascii_alphanumeric = ascii_letters + string.digits
 
     i = random.randint(2, 5)
-    rand_nspace = 'NS' + ''.join(random.choice(ascii_alphanumeric_upper) for _ in range(i))
+    rand_nspace = "NS" + "".join(
+        random.choice(ascii_alphanumeric_upper) for _ in range(i)
+    )
 
     j = random.randint(5, 25)
 
     if random.random() < 0.5:  # quoted nsvalue
-        rand_nsvalue = ''.join(random.choice(ascii_alphanumeric + ' \' - , + /.') for _ in range(j))
+        rand_nsvalue = "".join(
+            random.choice(ascii_alphanumeric + " ' - , + /.") for _ in range(j)
+        )
         rand_nsvalue = '"{}"'.format(rand_nsvalue)
     else:  # unquoted nsvalue
-        rand_nsvalue = ''.join(random.choice(ascii_alphanumeric) for _ in range(j))
+        rand_nsvalue = "".join(random.choice(ascii_alphanumeric) for _ in range(j))
 
-    return '{}: {}'.format(rand_nspace, rand_nsvalue)
+    return "{}: {}".format(rand_nspace, rand_nsvalue)
 
 
 def random_quoted_string():
@@ -144,10 +152,10 @@ def random_quoted_string():
 
     j = random.randint(5, 25)
 
-    rand_nsvalue = ''.join(random.choice(ascii_alphanumeric + ' \' - , + /.') for _ in range(j))
+    rand_nsvalue = "".join(
+        random.choice(ascii_alphanumeric + " ' - , + /.") for _ in range(j)
+    )
     return '"{}"'.format(rand_nsvalue)
-
-
 
 
 # def simple_args(args, bel_obj):
@@ -267,14 +275,11 @@ def random_quoted_string():
 
 
 class Colors:
-    PINK = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    END = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-
+    PINK = "\033[95m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    END = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"

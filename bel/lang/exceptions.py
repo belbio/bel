@@ -5,7 +5,7 @@ class InvalidArgeter(Exception):
 
 class ArgeterMissing(Exception):
     def __init__(self, function):
-        self.message = 'There are no args given to {}().'.format(function)
+        self.message = "There are no args given to {}().".format(function)
 
 
 class NoValidSignature(Exception):
@@ -15,7 +15,7 @@ class NoValidSignature(Exception):
 
 class InvalidRelationship(Exception):
     def __init__(self, given_r):
-        self.message = '\"{}\" is not a defined relation.'.format(given_r)
+        self.message = '"{}" is not a defined relation.'.format(given_r)
 
 
 class MissingParenthesis(Exception):
@@ -35,4 +35,4 @@ class MissingQuotation(Exception):
 
 class NoParserFound(Exception):
     def __init__(self, version):
-        self.message = 'No parser found for BEL v{}!'.format(version)
+        self.message = "No parser found for BEL v{}!".format(version)

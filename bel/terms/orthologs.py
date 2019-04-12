@@ -4,9 +4,10 @@ import bel.db.arangodb
 import bel.terms.terms
 
 import structlog
+
 log = structlog.getLogger()
 
-default_canonical_namespace = 'EG'  # for genes, proteins
+default_canonical_namespace = "EG"  # for genes, proteins
 
 arangodb_client = bel.db.arangodb.get_client()
 belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)
@@ -32,7 +33,7 @@ def get_orthologs(canonical_gene_id: str, species: list = []) -> List[dict]:
     if species:
         query_filter = f"FILTER vertex.tax_id IN {species}"
 
-    query = f'''
+    query = f"""
         LET start = (
             FOR vertex in ortholog_nodes
                 FILTER vertex._key == "{gene_id_key}"
@@ -48,14 +49,15 @@ def get_orthologs(canonical_gene_id: str, species: list = []) -> List[dict]:
         )
 
         RETURN {{ 'orthologs': FLATTEN(UNION(start, orthologs)) }}
-    '''
+    """
 
     cursor = belns_db.aql.execute(query, batch_size=20)
     results = cursor.pop()
-    for ortholog in results['orthologs']:
-        norms = bel.terms.terms.get_normalized_terms(ortholog['name'])
-        orthologs[ortholog['tax_id']] = {'canonical': norms['canonical'], 'decanonical': norms['decanonical']}
+    for ortholog in results["orthologs"]:
+        norms = bel.terms.terms.get_normalized_terms(ortholog["name"])
+        orthologs[ortholog["tax_id"]] = {
+            "canonical": norms["canonical"],
+            "decanonical": norms["decanonical"],
+        }
 
     return orthologs
-
-
