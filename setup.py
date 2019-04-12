@@ -20,7 +20,6 @@ AUTHOR = 'William Hayes'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'cachecontrol',
     'cityhash',
     'click',
     'elasticsearch',
@@ -33,6 +32,7 @@ REQUIRED = [
     'python-json-logger',
     'pyyaml',
     'requests',
+    'requests-cache',
     'structlog',
     'timy',
     'TatSu',
@@ -99,7 +99,7 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     url=URL,
-    packages=find_packages(include=['bel', 'bel.edge', 'bel.resources'], exclude=['tests',]),
+    packages=find_packages(include=['bel', ], exclude=['tests', ]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 

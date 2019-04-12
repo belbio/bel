@@ -7,10 +7,13 @@ validation and BEL transformation (e.g. canonicalization, orthologization, etc)
 """
 
 from typing import Mapping, Any
-import re
+import traceback
+import sys
 
-import logging
-log = logging.getLogger(__name__)
+import bel.lang.bel_utils
+
+import structlog
+log = structlog.getLogger(__name__)
 
 
 ########################
@@ -23,8 +26,75 @@ class BELAst(object):
         self.bel_relation = bel_relation
         self.bel_object = bel_object
         self.spec = spec  # bel specification dictionary
-        self.args = [bel_subject, bel_relation, bel_object]
         self.type = 'BELAst'
+        self.species = set()  # tuples of (species_id, species_label)
+        self.collected_nsarg_norms = False
+        self.collected_orthologs = False
+        self.partially_orthologized = False
+        self.args = [self.bel_subject, self.bel_object]
+
+    def dump(self):
+        return {
+            'bel_subject': self.bel_subject.to_string(),
+            'bel_relation': self.bel_relation,
+            'bel_object': self.bel_object.to_string(),
+            'type': self.type,
+            'collected_nsarg_norms': self.collected_nsarg_norms,
+            'collected_orthologs': self.collected_orthologs,
+            'args': self.args,
+            'spec': 'Not included',
+        }
+
+    def canonicalize(self):
+
+        if not self.collected_nsarg_norms:
+            log.error(f'Cannot canonicalize without running collected_nsarg_norms() on BEL object first {self.dump()}')
+            log.info(self.dump)
+            traceback.print_stack(file=sys.stdout)
+            return self
+
+        if self and isinstance(self, NSArg):
+            self.canonicalize()
+
+        if hasattr(self, 'args'):
+            for arg in self.args:
+                if arg:
+                    arg.canonicalize()
+
+        return self
+
+    def decanonicalize(self):
+        if not self.collected_nsarg_norms:
+            log.error(f'Cannot decanonicalize without running collected_nsarg_norms() on BEL object first {self.dump()}')
+            log.info(self.dump)
+            traceback.print_stack(file=sys.stdout)
+            return self
+
+        if self and isinstance(self, NSArg):
+            self.decanonicalize()
+
+        if hasattr(self, 'args'):
+            for arg in self.args:
+                if arg:
+                    arg.decanonicalize()
+
+        return self
+
+    def orthologize(self, species_id, belast=None):
+        if not self.collected_orthologs:
+            log.error(f'Cannot orthologize without running collect_orthologs() on BEL object first {self.dump()}')
+            log.info(self.dump)
+            traceback.print_stack(file=sys.stdout)
+            return self
+
+        if hasattr(self, 'args'):
+            if belast is None:
+                belast = self
+            for arg in self.args:
+                if arg:
+                    arg.orthologize(species_id, belast)
+
+        return self
 
     def to_string(self, ast_obj=None, fmt: str = 'medium') -> str:
         """Convert AST object to string
@@ -34,6 +104,7 @@ class BELAst(object):
                 short = short function and short relation format
                 medium = short function and long relation format
                 long = long function and long relation format
+            canonicalize
 
         Returns:
             str: string version of BEL AST
@@ -44,9 +115,9 @@ class BELAst(object):
 
         bel_relation = None
         if self.bel_relation and fmt == 'short':
-            bel_relation = self.spec['relations']['to_short'].get(self.bel_relation, None)
+            bel_relation = self.spec['relations']['to_short'].get(self.bel_relation, self.bel_relation)
         elif self.bel_relation:
-            bel_relation = self.spec['relations']['to_long'].get(self.bel_relation, None)
+            bel_relation = self.spec['relations']['to_long'].get(self.bel_relation, self.bel_relation)
 
         if self.bel_subject and bel_relation and self.bel_object:
             if isinstance(self.bel_object, BELAst):
@@ -60,7 +131,7 @@ class BELAst(object):
         else:
             return ''
 
-    def to_components(self, ast_obj=None, fmt='medium'):
+    def to_triple(self, ast_obj=None, fmt='medium'):
         """Convert AST object to BEL triple
 
         Args:
@@ -72,6 +143,7 @@ class BELAst(object):
         Returns:
             dict: {'subject': <subject>, 'relation': <relations>, 'object': <object>}
         """
+
         if not ast_obj:
             ast_obj = self
 
@@ -89,6 +161,7 @@ class BELAst(object):
                 bel_object = f'({self.bel_object.to_string(fmt=fmt)})'
             else:
                 bel_object = self.bel_object.to_string(fmt=fmt)
+
             return {
                 'subject': bel_subject,
                 'relation': bel_relation,
@@ -115,16 +188,36 @@ class BELAst(object):
 
         if not ast_obj:
             ast_obj = self
-        self.bel_subject.print_tree(ast_obj, indent=0)
 
-        if hasattr(self, 'relation'):
-            print(self.bel_relation)
-            self.bel_object.print_tree(ast_obj, indent=0)
+        if hasattr(self, 'bel_subject'):
+            print('Subject:')
+            self.bel_subject.print_tree(self.bel_subject, indent=0)
 
+        if hasattr(self, 'bel_relation'):
+            print('Relation:', self.bel_relation)
+
+        if hasattr(self, 'bel_object'):
+            if self.bel_object.type == 'BELAst':
+                if hasattr(self, 'bel_subject'):
+                    print('Nested Subject:')
+                    self.bel_object.bel_subject.print_tree(indent=0)
+
+                if hasattr(self, 'bel_relation'):
+                    print('Nested Relation:', self.bel_object.bel_relation)
+
+                if hasattr(self, 'bel_object'):
+                    print('Nested Object:')
+                    self.bel_object.bel_object.print_tree(indent=0)
+            else:
+                print('Object:')
+                self.bel_object.print_tree(self.bel_object, indent=0)
+
+        return self
 
 ###################
 # Function object #
 ###################
+
 
 class Function(object):
 
@@ -167,7 +260,37 @@ class Function(object):
     def change_function_type(self, function_type):
         self.function_type = function_type
 
-    def to_string(self, fmt: str = 'medium') -> str:
+    def canonicalize(self):
+        if isinstance(self, NSArg):
+            self.canonicalize()
+
+        if hasattr(self, 'args'):
+            for arg in self.args:
+                arg.canonicalize()
+
+        return self
+
+    def decanonicalize(self):
+        if isinstance(self, NSArg):
+            self.decanonicalize()
+
+        if hasattr(self, 'args'):
+            for arg in self.args:
+                arg.decanonicalize()
+
+        return self
+
+    def orthologize(self, species_id, belast):
+        if isinstance(self, NSArg):
+            self.orthologize(species_id)
+
+        if hasattr(self, 'args'):
+            for arg in self.args:
+                arg.orthologize(species_id, belast)
+
+        return self
+
+    def to_string(self, fmt: str = 'medium', canonicalize: bool = False, decanonicalize: bool = False, orthologize: str = None) -> str:
         """Convert AST object to string
 
         Args:
@@ -198,12 +321,11 @@ class Function(object):
     def print_tree(self, ast_obj=None, indent=0):
         if not ast_obj:
             ast_obj = self
-        print('\t' * indent + str(self))
         for arg in self.args:
             if arg.__class__.__name__ == 'Function':
                 arg.print_tree(arg, indent + 1)
             else:
-                print('\t' * (indent + 1) + str(arg))
+                print('\t' * (indent + 1) + arg.print_tree())
 
     def subcomponents(self, subcomponents):
         """Generate subcomponents of the BEL subject or object
@@ -244,6 +366,15 @@ class Arg(object):
     def add_sibling(self, sibling):
         self.siblings.append(sibling)
 
+    def canonicalize(self):
+        return self
+
+    def decanonicalize(self):
+        return self
+
+    def orthologize(self, species_id, belast):
+        return self
+
 
 class NSArg(Arg):
 
@@ -253,14 +384,41 @@ class NSArg(Arg):
         self.value = self.normalize_nsarg_value(value)
         self.value_types = value_types
         self.type = 'NSArg'
+        self.canonical = None
+        self.decanonical = None
+        self.species_id = None
+        self.species_label = None
+        self.orthologs = {}  # {'TAX:9606': {'species_label': 'human', 'canonical': 'EG:207', 'decanonical': 'HGNC:AKT1'}, 'TAX:10090': {'species_label': 'mouse', canonical': 'EG:11651', 'decanonical': 'MGI:Akt1'}, ...
+        self.orthology_species = None
+        self.orthologized = None  # True for orthologized - False -> unable to orthologize
+        self.original = f'{namespace}:{value}'
 
         # What entity types can this be from the function signatures?
         #    this is used for statement autocompletion and entity validation
         self.entity_types = []
 
     def change_nsvalue(self, namespace, value):
+        """Deprecated"""
+
         self.namespace = namespace
         self.value = value
+
+    def update_nsval(self, *, nsval: str = None, ns: str = None, val: str = None) -> None:
+        """Update Namespace and valueast.
+
+        Args:
+            nsval: e.g. HGNC:AKT1
+            ns: namespace
+            val: value of entity
+        """
+
+        if not (ns and val) and nsval:
+            (ns, val) = nsval.split(':', 1)
+        elif not (ns and val) and not nsval:
+            log.error("Did not update NSArg - no ns:val or nsval provided")
+
+        self.namespace = ns
+        self.value = val
 
     def add_value_types(self, value_types):
         self.value_types = value_types
@@ -276,20 +434,35 @@ class NSArg(Arg):
 
         Returns:
             str:
-
         """
-        quoted = re.findall(r'^"(.*)"$', nsarg_value)
 
-        if re.search(r'[),\s]', nsarg_value):  # quote only if it contains whitespace, comma or ')'
-            if quoted:
-                return nsarg_value
-            else:
-                return f'"{nsarg_value}"'
-        else:
-            if quoted:
-                return quoted[0]
-            else:
-                return nsarg_value
+        return bel.lang.bel_utils.quoting_nsarg(nsarg_value)
+
+    def canonicalize(self):
+        if isinstance(self, NSArg):
+            self.update_nsval(nsval=self.canonical)
+        return self
+
+    def decanonicalize(self):
+        if isinstance(self, NSArg):
+            self.update_nsval(nsval=self.decanonical)
+        return self
+
+    def orthologize(self, ortho_species_id, belast):
+        """Decanonical ortholog name used"""
+
+        if self.orthologs and ortho_species_id in self.orthologs and ortho_species_id != self.species_id:
+            self.orthology_species = ortho_species_id
+            self.canonical = self.orthologs[ortho_species_id]['canonical']
+            self.decanonical = self.orthologs[ortho_species_id]['decanonical']
+            self.update_nsval(nsval=self.decanonical)
+            self.orthologized = True
+
+        elif self.species_id and ortho_species_id not in self.orthologs:
+            self.orthologized = False
+            belast.partially_orthologized = True
+
+        return self
 
     def to_string(self, fmt: str = 'medium') -> str:
         """Convert AST object to string
@@ -303,10 +476,13 @@ class NSArg(Arg):
         Returns:
             str: string version of BEL AST
         """
-        return '{}:{}'.format(self.namespace, self.value)
+        return f'{self.namespace}:{self.value}'
+
+    def print_tree(self, fmt: str = 'medium') -> str:
+        return f'NSArg: {self.namespace}:{self.value} canonical: {self.canonical} decanonical: {self.decanonical} orthologs: {self.orthologs} orig_species: {self.orthology_species}'
 
     def __str__(self):
-        return 'NSArg: {}:{}'.format(self.namespace, self.value)
+        return f'{self.namespace}:{self.value}'
 
     __repr__ = __str__
 
@@ -334,6 +510,9 @@ class StrArg(Arg):
         Returns:
             str: string version of BEL AST
         """
+        return '{}'.format(self.value)
+
+    def print_tree(self, fmt: str = 'medium') -> str:
         return '{}'.format(self.value)
 
     def __str__(self):

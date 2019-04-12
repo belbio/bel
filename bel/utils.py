@@ -7,8 +7,6 @@ NOTE: reqsess allows caching external (including ElasticSearch and ArangoDB) RES
       changes in the Pubtator results, etc.
 """
 
-import os
-import urllib
 import ulid
 import tempfile
 from cityhash import CityHash64
@@ -17,19 +15,15 @@ from typing import Mapping, Any
 import datetime
 import dateutil
 import requests
-
-from cachecontrol import CacheControl
-from cachecontrol.heuristics import ExpiresAfter
+import requests_cache
 
 from structlog import get_logger
 log = get_logger()
 
-# Caches Requests Library GET requests -
-reqsess = CacheControl(requests.Session(), heuristic=ExpiresAfter(days=1))
-reqsess_nocache = requests.Session()
+requests_cache.install_cache(backend='sqlite', expire_after=600)
 
 
-def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = True):
+def get_url(url: str, params: dict = {}, timeout: float = 5.0, cache: bool = True):
     """Wrapper for requests.get(url)
 
     Args:
@@ -42,25 +36,15 @@ def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = T
         Requests Result obj or None if timed out
     """
 
-    start = datetime.datetime.now()
-
-    if cache:
-        req_obj = reqsess
-    else:
-        req_obj = reqsess_nocache
-
     try:
 
-        if params:
-            params = {k: params[k] for k in sorted(params)}
-            r = req_obj.get(url, params=params, timeout=timeout)
+        if not cache:
+            with requests_cache.disabled():
+                r = requests.get(url, params=params, timeout=timeout)
         else:
-            r = req_obj.get(url, timeout=timeout)
+            r = requests.get(url, params=params, timeout=timeout)
 
-        timespan = datetime.datetime.now() - start
-        timespan_ms = timespan.total_seconds() * 1000  # converted to milliseconds
-        # log.debug(f'GET url success', cache_allowed=cache, timespan_ms=timespan_ms, url=url, params=params)
-
+        log.debug(f'Response headers {r.headers}  From cache {r.from_cache}')
         return r
 
     except requests.exceptions.Timeout:
@@ -68,6 +52,7 @@ def get_url(url: str, params: dict = None, timeout: float = 5.0, cache: bool = T
         return None
     except Exception as e:
         log.warn(f'Error getting url: {url}  error: {e}')
+        return None
 
 
 def timespan(start_time):
@@ -169,37 +154,132 @@ def parse_dt(dt: str):
     return dateutil.parse(dt)
 
 
-# TODO - doesn't this replicate functionality of timy package?
-class FuncTimer():
-    """ Convenience class to time function calls
+"""
+https://github.com/brouberol/contexttimer/blob/master/contexttimer/__init__.py
 
-    Use via the "with" keyword ::
+Ctimer - A timer context manager measuring the
+clock wall time of the code block it contains.
+Copyright (C) 2013 Balthazar Rouberol - <brouberol@imap.cc>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
-        with Functimer("Expensive Function call"):
-            foo = expensiveFunction(bar)
+__version__ = '0.3.3'
 
-    A timer will be displayed in the current logger as `"Starting expensive function call ..."`
-    then when the code exits the with statement, the log will mention `"Finished expensive function call in 28.42s"`
 
-    By default, all FuncTimer log messages are written at the `logging.DEBUG` level. For info-level messages, set the
-    `FuncTimer.info`  argument to `True`::
+import functools
+import collections
+import logging
 
-        with Functimer("Expensive Function call",info=True):
-            foo = expensiveFunction(bar)
+from timeit import default_timer
+
+
+class Timer(object):
+
+    """ A timer as a context manager
+    Wraps around a timer. A custom timer can be passed
+    to the constructor. The default timer is timeit.default_timer.
+    Note that the latter measures wall clock time, not CPU time!
+    On Unix systems, it corresponds to time.time.
+    On Windows systems, it corresponds to time.clock.
+    Keyword arguments:
+        output -- if True, print output after exiting context.
+                  if callable, pass output to callable.
+        factor -- 1000 for milliseconds, 1 for seconds
+        format -- str.format string to be used for output; default "took {} ms"
+        prefix -- string to prepend (plus a space) to output
+                  For convenience, if you only specify this, output defaults to True.
     """
-    import time
 
-    def __init__(self, funcName, info=False):
+    def __init__(self, timer=default_timer, factor=1000,
+                 output=None, fmt="took {:.1f} ms", prefix=""):
+        self.timer = timer
+        self.factor = factor
+        self.output = output
+        self.fmt = fmt
+        self.prefix = prefix
+        self.end = None
 
-        self.funcName = funcName
-        self.infoLogLevel = True
+    def __call__(self):
+        """ Return the current time """
+        return self.timer()
 
     def __enter__(self):
-        log.debug("Starting {} ...".format(self.funcName))
-        self.start = time.clock()
+        """ Set the start time """
+        self.start = self()
         return self
 
-    def __exit__(self, *args):
-        self.end = time.clock()
-        self.interval = self.end - self.start
-        log.info("{} over in {}s".format(self.funcName, self.interval).capitalize())
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        """ Set the end time """
+        self.end = self()
+
+        if self.prefix and self.output is None:
+            self.output = True
+
+        if self.output:
+            output = " ".join([self.prefix, self.fmt.format(self.elapsed)])
+            if callable(self.output):
+                self.output(output)
+            else:
+                print(output)
+
+    def __str__(self):
+        return '%.3f' % (self.elapsed)
+
+    @property
+    def elapsed(self):
+        """ Return the current elapsed time since start
+        If the `elapsed` property is called in the context manager scope,
+        the elapsed time bewteen start and property access is returned.
+        However, if it is accessed outside of the context manager scope,
+        it returns the elapsed time bewteen entering and exiting the scope.
+        The `elapsed` property can thus be accessed at different points within
+        the context manager scope, to time different parts of the block.
+        """
+        if self.end is None:
+            # if elapsed is called in the context manager scope
+            return (self() - self.start) * self.factor
+        else:
+            # if elapsed is called out of the context manager scope
+            return (self.end - self.start) * self.factor
+
+
+def timer(logger=None, level=logging.INFO,
+          fmt="function %(function_name)s execution time: %(execution_time).3f",
+          *func_or_func_args, **timer_kwargs):
+    """ Function decorator displaying the function execution time
+    All kwargs are the arguments taken by the Timer class constructor.
+    """
+    # store Timer kwargs in local variable so the namespace isn't polluted
+    # by different level args and kwargs
+
+    def wrapped_f(f):
+        @functools.wraps(f)
+        def wrapped(*args, **kwargs):
+            with Timer(**timer_kwargs) as t:
+                out = f(*args, **kwargs)
+            context = {
+                'function_name': f.__name__,
+                'execution_time': t.elapsed,
+            }
+            if logger:
+                logger.log(
+                    level,
+                    fmt % context,
+                    extra=context)
+            else:
+                print(fmt % context)
+            return out
+        return wrapped
+    if (len(func_or_func_args) == 1 and isinstance(func_or_func_args[0], collections.Callable)):
+        return wrapped_f(func_or_func_args[0])
+    else:
+        return wrapped_f

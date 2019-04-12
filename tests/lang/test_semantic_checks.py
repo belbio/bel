@@ -1,3 +1,5 @@
+import pytest
+
 import bel.lang.belobj
 from bel.Config import config
 
@@ -57,6 +59,7 @@ def test_valid_statements():
 ##############################
 # VALID STATEMENT TEST CASES #
 ##############################
+@pytest.mark.skip(reason="Need to update complex namespace")
 def test_complex_nsarg():
     stmts = [
         'activity(complexAbundance(SCOMP:"TORC2 Complex", p(HGNC:AKT1)), molecularActivity(DEFAULT:kin))'

@@ -10,8 +10,8 @@ def test_complex():
 
     belstr = "complex(p(HGNC:AKT1), p(HGNC:EGF)) increases act(p(HGNC:AKT2), ma(kin))"
     check_edges = [
-        "complex(p(HGNC:AKT1), p(HGNC:EGF)) hasMember p(HGNC:AKT1)",
-        "complex(p(HGNC:AKT1), p(HGNC:EGF)) hasMember p(HGNC:EGF)",
+        "complex(p(HGNC:AKT1), p(HGNC:EGF)) hasComponent p(HGNC:AKT1)",
+        "complex(p(HGNC:AKT1), p(HGNC:EGF)) hasComponent p(HGNC:EGF)",
         "p(HGNC:AKT2) hasActivity act(p(HGNC:AKT2), ma(kin))",
     ]
 
@@ -20,6 +20,7 @@ def test_complex():
     edges = bel.edge.computed.compute_edges(parsed.ast, bo.spec)
 
     for edge in edges:
+        print(str(edge))
         assert str(edge) in check_edges
 
 

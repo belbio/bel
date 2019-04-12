@@ -368,7 +368,7 @@ def stmt_validate(ctx, statement, version, api, config_fn):
         print(bo.parse_visualize_error)
         print(bo.validation_messages)
     else:
-        print(bo.ast.to_components())
+        print(bo.ast.to_triple())
         if bo.validation_messages:
             print(bo.validation_messages)
         else:

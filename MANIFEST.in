@@ -1,4 +1,3 @@
 include README.rst LICENSE
-include bel/lang/versions/*
 include belbio*
 include bel/db/es_mappings_terms.yml

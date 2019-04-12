@@ -72,13 +72,13 @@ def load_configuration():
     config = {}
     if belbio_conf_fp:
         with open(belbio_conf_fp, 'r') as f:
-            config = yaml.load(f)
+            config = yaml.load(f, Loader=yaml.FullLoader)
             config['source_files'] = {}
             config['source_files']['conf'] = belbio_conf_fp
 
     if belbio_secrets_fp:
         with open(belbio_secrets_fp, 'r') as f:
-            secrets = yaml.load(f)
+            secrets = yaml.load(f, Loader=yaml.FullLoader)
             config['secrets'] = copy.deepcopy(secrets)
             if 'source_files' in config:
                 config['source_files']['secrets'] = belbio_secrets_fp
@@ -175,7 +175,7 @@ def merge_config(config: Mapping[str, Any], override_config: Mapping[str, Any] =
 
     if override_config_fn:
         with open(override_config_fn, 'r') as f:
-            override_config = yaml.load(f)
+            override_config = yaml.load(f, Loader=yaml.FullLoader)
 
     if not override_config:
         log.info('Missing override_config')

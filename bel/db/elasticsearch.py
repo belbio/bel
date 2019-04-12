@@ -51,7 +51,7 @@ def create_terms_index(es, index_name: str):
     """Create terms index"""
 
     with open(mappings_terms_fn, 'r') as f:
-        mappings_terms = yaml.load(f)
+        mappings_terms = yaml.load(f, Loader=yaml.FullLoader)
 
     try:
         es.indices.create(index=index_name, body=mappings_terms)
@@ -76,7 +76,6 @@ def get_client():
         es: Elasticsearch client handle
     """
 
-    log.debug(f"{config['bel_api']['servers']['elasticsearch']}")
     es = Elasticsearch([config['bel_api']['servers']['elasticsearch']], send_get_body_as='POST')
 
     return es

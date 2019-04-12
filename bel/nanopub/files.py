@@ -63,7 +63,7 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
             for nanopub in nanopubs:
                 yield nanopub
         elif yaml_flag:
-            nanopubs = yaml.load(f)
+            nanopubs = yaml.load(f, Loader=yaml.FullLoader)
             for nanopub in nanopubs:
                 yield nanopub
 
@@ -141,7 +141,7 @@ def read_edges(fn):
             for edge in edges:
                 yield edge
         elif yaml_flag:
-            edges = yaml.load_all(f)
+            edges = yaml.load_all(f, Loader=yaml.FullLoader)
             for edge in edges:
                 yield edge
 

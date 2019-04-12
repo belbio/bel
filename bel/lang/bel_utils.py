@@ -3,19 +3,25 @@
 import re
 import json
 import yaml
-import requests
-import sys
+import copy
 from typing import Mapping, List
-import functools
-import fastcache
-import urllib.parse
 
-from bel.lang.ast import BELAst, NSArg, Function
+from bel.lang.ast import NSArg
 from bel.Config import config
 from bel.utils import get_url, url_path_param_quoting
+import bel.terms.terms
+import bel.terms.orthologs
 
 import logging
 log = logging.getLogger(__name__)
+
+
+def convert_nsarg_db(nsarg: str) -> dict:
+    """Get default canonical and decanonical versions of nsarg
+
+    Returns:
+        dict: {'canonical': <nsarg>, 'decanonical': <nsarg>}
+    """
 
 
 def convert_nsarg(nsarg: str, api_url: str = None, namespace_targets: Mapping[str, List[str]] = None, canonicalize: bool = False, decanonicalize: bool = False) -> str:
@@ -57,7 +63,7 @@ def convert_nsarg(nsarg: str, api_url: str = None, namespace_targets: Mapping[st
 
     request_url = api_url.format(url_path_param_quoting(nsarg))
 
-    r = get_url(request_url, params=params)
+    r = get_url(request_url, params=params, timeout=10)
 
     if r and r.status_code == 200:
         nsarg = r.json().get('term_id', nsarg)
@@ -100,7 +106,7 @@ def convert_namespaces_str(bel_str: str, api_url: str = None, namespace_targets:
 
 
 def convert_namespaces_ast(ast, api_url: str = None, namespace_targets: Mapping[str, List[str]] = None, canonicalize: bool = False, decanonicalize: bool = False):
-    """Convert namespaces of BEL Entities in BEL AST using API endpoint
+    """Recursively convert namespaces of BEL Entities in BEL AST using API endpoint
 
     Canonicalization and decanonicalization is determined by endpoint used and namespace_targets.
 
@@ -116,9 +122,21 @@ def convert_namespaces_ast(ast, api_url: str = None, namespace_targets: Mapping[
     if isinstance(ast, NSArg):
         given_term_id = '{}:{}'.format(ast.namespace, ast.value)
 
-        updated_nsarg = convert_nsarg(given_term_id, api_url=api_url, namespace_targets=namespace_targets, canonicalize=canonicalize, decanonicalize=decanonicalize)
-        ns, value = updated_nsarg.split(':')
-        ast.change_nsvalue(ns, value)
+        # Get normalized term if necessary
+        if (canonicalize and not ast.canonical) or (decanonicalize and not ast.decanonical):
+            normalized_term = convert_nsarg(given_term_id, api_url=api_url, namespace_targets=namespace_targets, canonicalize=canonicalize, decanonicalize=decanonicalize)
+            if canonicalize:
+                ast.canonical = normalized_term
+            elif decanonicalize:
+                ast.decanonical = normalized_term
+
+        # Update normalized term
+        if canonicalize:
+            ns, value = ast.canonical.split(':')
+            ast.change_nsvalue(ns, value)
+        elif decanonicalize:
+            ns, value = ast.canonical.split(':')
+            ast.change_nsvalue(ns, value)
 
     # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
@@ -128,8 +146,53 @@ def convert_namespaces_ast(ast, api_url: str = None, namespace_targets: Mapping[
     return ast
 
 
+def populate_ast_nsarg_defaults(ast, belast, species_id=None):
+    """Recursively populate NSArg AST entries for default (de)canonical values
+
+    This was added specifically for the BEL Pipeline. It is designed to
+    run directly against ArangoDB and not through the BELAPI.
+
+    Args:
+        ast (BEL): BEL AST
+
+    Returns:
+        BEL: BEL AST
+    """
+
+    if isinstance(ast, NSArg):
+        given_term_id = '{}:{}'.format(ast.namespace, ast.value)
+
+        r = bel.terms.terms.get_normalized_terms(given_term_id)
+        ast.canonical = r['canonical']
+        ast.decanonical = r['decanonical']
+
+        r = bel.terms.terms.get_terms(ast.canonical)
+
+        if len(r) > 0:
+            ast.species_id = r[0].get('species_id', False)
+            ast.species_label = r[0].get('species_label', False)
+
+        # Check to see if species is set and if it's consistent
+        #   if species is not consistent for the entire AST - set species_id/label
+        #   on belast to False (instead of None)
+        if ast.species_id and species_id is None:
+            species_id = ast.species_id
+            belast.species.add((ast.species_id, ast.species_label, ))
+
+        elif ast.species_id and species_id and species_id != ast.species_id:
+            belast.species_id = False
+            belast.species_label = False
+
+    # Recursively process every NSArg by processing BELAst and Functions
+    if hasattr(ast, 'args'):
+        for arg in ast.args:
+            populate_ast_nsarg_defaults(arg, belast, species_id)
+
+    return ast
+
+
 def orthologize(ast, bo, species_id: str):
-    """Orthologize BEL Entities in BEL AST using API endpoint
+    """Recursively orthologize BEL Entities in BEL AST using API endpoint
 
     NOTE: - will take first ortholog returned in BEL.bio API result (which may return more than one ortholog)
 
@@ -141,31 +204,63 @@ def orthologize(ast, bo, species_id: str):
         BEL: BEL AST
     """
 
+    # if species_id == 'TAX:9606' and str(ast) == 'MGI:Sult2a1':
+    #     import pdb; pdb.set_trace()
+
     if not species_id:
-        bo.validation_messages.append(('WARNING', 'No species id was provided'))
+        bo.validation_messages.append(('WARNING', 'No species id was provided for orthologization'))
         return ast
 
     if isinstance(ast, NSArg):
-        given_term_id = '{}:{}'.format(ast.namespace, ast.value)
-
-        # Quote given_term_id
-        orthologize_req_url = f'{bo.api_url}/orthologs/{url_path_param_quoting(given_term_id)}/{species_id}'
-        log.debug(f'Orthologize url {orthologize_req_url}')
-        r = get_url(orthologize_req_url)
-
-        if r.status_code == 200:
-            orthologs = r.json().get('orthologs')
-            if orthologs:
-                ortholog_id = orthologs[0]
-                ns, value = ortholog_id.split(':')
+        if ast.orthologs:
+            # log.debug(f'AST: {ast.to_string()}  species_id: {species_id}  orthologs: {ast.orthologs}')
+            if ast.orthologs.get(species_id, None):
+                orthologized_nsarg_val = ast.orthologs[species_id]['decanonical']
+                ns, value = orthologized_nsarg_val.split(':')
                 ast.change_nsvalue(ns, value)
-        else:
-            bo.validation_messages.append(('WARNING', f'No ortholog found for {given_term_id}'))
+                ast.canonical = ast.orthologs[species_id]['canonical']
+                ast.decanonical = ast.orthologs[species_id]['decanonical']
+                ast.orthologized = True
+                bo.ast.species.add((species_id, ast.orthologs[species_id]['species_label']))
+            else:
+                bo.ast.species.add((ast.species_id, ast.species_label))
+                bo.validation_messages.append(('WARNING', f'No ortholog found for {ast.namespace}:{ast.value}'))
+        elif ast.species_id:
+            bo.ast.species.add((ast.species_id, ast.species_label))
 
     # Recursively process every NSArg by processing BELAst and Functions
     if hasattr(ast, 'args'):
         for arg in ast.args:
             orthologize(arg, bo, species_id)
+
+    return ast
+
+
+def populate_ast_nsarg_orthologs(ast, species):
+    """Recursively collect NSArg orthologs for BEL AST
+
+    This requires bo.collect_nsarg_norms() to be run first so NSArg.canonical is available
+
+    Args:
+        ast: AST at recursive point in belobj
+        species: dictionary of species ids vs labels for or
+    """
+
+    ortholog_namespace = 'EG'
+
+    if isinstance(ast, NSArg):
+        if re.match(ortholog_namespace, ast.canonical):
+            orthologs = bel.terms.orthologs.get_orthologs(ast.canonical, list(species.keys()))
+            for species_id in species:
+                if species_id in orthologs:
+                    orthologs[species_id]['species_label'] = species[species_id]
+
+            ast.orthologs = copy.deepcopy(orthologs)
+
+    # Recursively process every NSArg by processing BELAst and Functions
+    if hasattr(ast, 'args'):
+        for arg in ast.args:
+            populate_ast_nsarg_orthologs(arg, species)
 
     return ast
 
@@ -186,6 +281,29 @@ def preprocess_bel_stmt(stmt: str) -> str:
     stmt = re.sub(r' +', ' ', stmt)  # remove multiple spaces
 
     return stmt
+
+
+# TODO remove AST normalize_nsarg_value for this and add tests
+def quoting_nsarg(nsarg_value):
+    """Quoting nsargs
+
+    If needs quotes (only if it contains whitespace, comma or ')' ), make sure
+        it is quoted, else don't add them.
+
+
+    """
+    quoted = re.findall(r'^"(.*)"$', nsarg_value)
+
+    if re.search(r'[),\s]', nsarg_value):  # quote only if it contains whitespace, comma or ')'
+        if quoted:
+            return nsarg_value
+        else:
+            return f'"{nsarg_value}"'
+    else:
+        if quoted:
+            return quoted[0]
+        else:
+            return nsarg_value
 
 
 # # See TODO in bel.py for this function - not currently enabled

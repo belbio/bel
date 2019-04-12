@@ -13,7 +13,6 @@ PARSERS = $(patsubst $(VDIR)/bel%.yaml, $(VDIR)/parser%.py, $(YAMLS))
 
 define deploy_commands
     @echo "Update CHANGELOG"
-    @echo "Create Github release and attach the gem file"
 
     git push
 	git push --tags
@@ -46,14 +45,22 @@ clean_generated:
 	rm bel/lang/versions/parser*
 	rm bel/lang/versions/*.ebnf
 
+
 # Travis CI environment
 ci_tests:
 	BELTEST='Travis' py.test -rs --cov=./bel -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
+
 
 # Local virtualenv test runner with BEL.bio test environment
 # add --pdb to get dropped into a debugging env
 tests: clean_pyc
 	BELTEST='Local' py.test -x -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
+
+
+# Run all tests - failing or not
+testall: clean_pyc
+	BELTEST='Local' py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
+
 
 clean_pyc:
 	find . -name '*.pyc' -exec rm -r -- {} +

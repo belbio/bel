@@ -1,11 +1,12 @@
 import importlib
 import sys
 import os
-from typing import Mapping, Any, List, Tuple
+import datetime
+from typing import Mapping, Any, List, Union
 from tatsu.exceptions import FailedParse
 
-import bel.lang.bel_specification as bel_specification
 import bel.lang.bel_utils as bel_utils
+import bel.lang.bel_specification as bel_specification
 import bel.lang.ast as lang_ast
 import bel.lang.exceptions as bel_ex
 import bel.lang.semantics as semantics
@@ -13,10 +14,11 @@ import bel.edge.computed
 
 from bel.Config import config
 
-from structlog import get_logger
-log = get_logger()
+import structlog
 
-sys.path.append('../')
+log = structlog.getLogger(__name__)
+
+sys.path.append("../")
 
 
 class BEL(object):
@@ -35,7 +37,7 @@ class BEL(object):
 
         computed_edges = bel_obj.computed()
 
-        primary_edge = bel_obj.ast.to_components()
+        primary_edge = bel_obj.ast.to_triple()
     """
 
     def __init__(self, version: str = None, api_url: str = None) -> None:
@@ -50,17 +52,17 @@ class BEL(object):
 
         # use bel_utils._default_to_version to check if valid version, and if it exists or not
         if not version:
-            self.version = config['bel']['lang']['default_bel_version']
+            self.version = config["bel"]["lang"]["default_bel_version"]
         else:
             self.version = version
 
-        self.version = bel_utils._default_to_version(self.version, bel_versions)
-
         if self.version not in bel_versions:
-            log.warning('Cannot validate with invalid version.')
+            log.warning(
+                f"Cannot validate with invalid version: {self.version} in BEL Versions: {bel_versions}"
+            )
 
         if not api_url:
-            self.api_url = config['bel_api']['servers']['api_url']
+            self.api_url = config["bel_api"]["servers"]["api_url"]
         else:
             self.api_url = api_url
 
@@ -76,18 +78,25 @@ class BEL(object):
         # Import Tatsu parser
         # use importlib to import our parser (a .py file) and set the BELParse object as an instance variable
         try:
-            parser_fn = self.spec['admin']['parser_fn']
+            parser_fn = self.spec["admin"]["parser_fn"]
 
-            parser_name = os.path.basename(parser_fn).replace('.py', '')
+            parser_name = os.path.basename(parser_fn).replace(".py", "")
             module_spec = importlib.util.spec_from_file_location(parser_name, parser_fn)
             imported_parser = importlib.util.module_from_spec(module_spec)
             module_spec.loader.exec_module(imported_parser)
             self.parser = imported_parser.BELParser()
         except Exception as e:
             # if not found, we raise the NoParserFound exception which can be found in bel.lang.exceptions
-            raise bel_ex.NoParserFound(f'Version: {self.version} Msg: {e}')
+            raise bel_ex.NoParserFound(f"Version: {self.version} Msg: {e}")
 
-    def parse(self, statement: str, strict: bool = False, parseinfo: bool = False, rule_name: str = 'start', error_level: str = 'WARNING') -> 'BEL':
+    def parse(
+        self,
+        assertion: Union[str, Mapping[str, str]],
+        strict: bool = False,
+        parseinfo: bool = False,
+        rule_name: str = "start",
+        error_level: str = "WARNING",
+    ) -> "BEL":
         """Parse and semantically validate BEL statement
 
         Parses a BEL statement given as a string and returns an AST, Abstract Syntax Tree (defined in ast.py)
@@ -99,7 +108,7 @@ class BEL(object):
         WARNING and ERROR, selecting ERROR just includes ERROR
 
         Args:
-            statement: BEL statement
+            assertion: BEL statement (if str -> 'S R O', if dict {'subject': S, 'relation': R, 'object': O})
             strict: specify to use strict or loose parsing; defaults to loose
             parseinfo: specify whether or not to include Tatsu parse information in AST
             rule_name: starting point in parser - defaults to 'start'
@@ -111,8 +120,18 @@ class BEL(object):
 
         self.ast = None
         self.parse_valid = False
-        self.parse_visualize_error = ''
+        self.parse_visualize_error = ""
         self.validation_messages = []  # Reset messages when parsing a new BEL Statement
+
+        if isinstance(assertion, dict):
+            if assertion.get("relation", False) and assertion.get("object", False):
+                statement = f"{assertion['subject']} {assertion['relation']} {assertion['object']}"
+            elif assertion.get("subject"):
+                statement = f"{assertion['subject']}"
+            else:
+                statement = ""
+        else:
+            statement = assertion
 
         self.original_bel_stmt = statement
 
@@ -127,13 +146,17 @@ class BEL(object):
 
         # Check to see if empty string for bel statement
         if len(self.bel_stmt) == 0:
-            self.validation_messages.append(('ERROR', 'Please include a valid BEL statement - found empty string.'))
+            self.validation_messages.append(
+                ("ERROR", "Please include a valid BEL statement - found empty string.")
+            )
             return self
 
         try:
             # see if an AST is returned without any parsing errors
 
-            ast_dict = self.parser.parse(self.bel_stmt, rule_name=rule_name, trace=False, parseinfo=parseinfo)
+            ast_dict = self.parser.parse(
+                self.bel_stmt, rule_name=rule_name, trace=False, parseinfo=parseinfo
+            )
             self.ast = lang_ast.ast_dict_to_objects(ast_dict, self)
 
             self.parse_valid = True
@@ -143,19 +166,20 @@ class BEL(object):
             error, visualize_error = bel_utils.handle_parser_syntax_error(e)
             self.parse_visualize_error = visualize_error
             if visualize_error:
-                self.validation_messages.append(('ERROR', f'{error}\n{visualize_error}'))
+                self.validation_messages.append(("ERROR", f"{error}\n{visualize_error}"))
             else:
-                self.validation_messages.append(('ERROR', f'{error}\nBEL: {self.bel_stmt}'))
-
+                self.validation_messages.append(("ERROR", f"{error}\nBEL: {self.bel_stmt}"))
             self.ast = None
 
         except Exception as e:
-            log.error('Error {}, error type: {}'.format(e, type(e)))
-            self.validation_messages.append(('ERROR', 'Error {}, error type: {}'.format(e, type(e))))
+            log.error("Error {}, error type: {}".format(e, type(e)))
+            self.validation_messages.append(
+                ("ERROR", "Error {}, error type: {}".format(e, type(e)))
+            )
 
         return self
 
-    def semantic_validation(self, error_level: str = 'WARNING') -> 'BEL':
+    def semantic_validation(self, error_level: str = "WARNING") -> "BEL":
         """Semantically validate parsed BEL statement
 
         Run semantics validation - and decorate AST with nsarg entity_type and arg optionality
@@ -167,13 +191,11 @@ class BEL(object):
             BEL: return self
         """
 
-        if not self.ast:
-            log.error('Cannot semantically validate BEL object with missing ast property')
-            return None
         semantics.validate(self, error_level)
+
         return self
 
-    def canonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
+    def canonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> "BEL":
         """
         Takes an AST and returns a canonicalized BEL statement string.
 
@@ -187,11 +209,21 @@ class BEL(object):
 
         # TODO Need to order position independent args
 
-        self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize=True, api_url=self.api_url, namespace_targets=namespace_targets)
+        if not self.ast:
+            return self
+
+        # Collect canonical/decanonical NSArg values
+        if not self.ast.collected_nsarg_norms:
+            self = self.collect_nsarg_norms()
+
+        # TODO Need to pass namespace target overrides for canonicalization
+        self.ast.canonicalize()
+
+        # self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize=True, api_url=self.api_url, namespace_targets=namespace_targets)
 
         return self
 
-    def decanonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> 'BEL':
+    def decanonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> "BEL":
         """
         Takes an AST and returns a decanonicalized BEL statement string.
 
@@ -203,10 +235,42 @@ class BEL(object):
             BEL: returns self
         """
 
-        self.ast = bel_utils.convert_namespaces_ast(self.ast, decanonicalize=True, namespace_targets=namespace_targets)
+        if not self.ast:
+            return self
+
+        # Collect canonical/decanonical NSArg values
+        if not self.ast.collected_nsarg_norms:
+            self = self.collect_nsarg_norms()
+
+        self.ast.decanonicalize()
+
+        # self.ast = bel_utils.convert_namespaces_ast(self.ast, decanonicalize=True, namespace_targets=namespace_targets)
         return self
 
-    def orthologize(self, species_id: str) -> 'BEL':
+    def collect_nsarg_norms(self):
+        """Adds canonical and decanonical values to NSArgs in AST
+
+        This prepares the AST object for (de)canonicalization
+        """
+        start_time = datetime.datetime.now()
+
+        self.ast = bel_utils.populate_ast_nsarg_defaults(self.ast, self.ast)
+        self.ast.collected_nsarg_norms = True
+        if (
+            hasattr(self.ast, "bel_object")
+            and self.ast.bel_object
+            and self.ast.bel_object.type == "BELAst"
+        ):
+            self.ast.bel_object.collected_nsarg_norms = True
+
+        end_time = datetime.datetime.now()
+        delta_ms = f"{(end_time - start_time).total_seconds() * 1000:.1f}"
+
+        log.info("Timing - prepare nsarg normalization", delta_ms=delta_ms)
+
+        return self
+
+    def orthologize(self, species_id: str) -> "BEL":
         """Orthologize BEL AST to given species_id
 
         Will return original entity (ns:value) if no ortholog found.
@@ -218,11 +282,57 @@ class BEL(object):
             BEL: returns self
         """
 
+        if not self.ast:
+            return self
+
+        # Collect canonical/decanonical NSArg values
+        if not self.ast.collected_orthologs:
+            self = self.collect_orthologs([species_id])
+
+        self.ast.species = set()
         self.ast = bel_utils.orthologize(self.ast, self, species_id)
 
         return self
 
-    def compute_edges(self, rules: List[str] = None, ast_result=False, fmt="medium") -> List[Mapping[str, Any]]:
+    def collect_orthologs(self, species: list) -> "BEL":
+        """Add NSArg orthologs for given species (TAX:<number format)
+
+        This will add orthologs to the AST for all of the given species (as available).
+
+        NOTE: This will run self.collect_nsarg_norms() first if not already available
+        as we need the canonical forms of the NSArgs
+        """
+
+        if not species:
+            return self
+
+        species_labels = bel.terms.terms.get_labels(species)
+
+        # Collect canonical/decanonical NSArg values
+        if not self.ast.collected_nsarg_norms:
+            self = self.collect_nsarg_norms()
+
+        start_time = datetime.datetime.now()
+
+        self.ast = bel_utils.populate_ast_nsarg_orthologs(self.ast, species_labels)
+        self.ast.collected_orthologs = True
+        if (
+            hasattr(self.ast, "bel_object")
+            and self.ast.bel_object
+            and self.ast.bel_object.type == "BELAst"
+        ):
+            self.ast.bel_object.collected_orthologs = True
+
+        end_time = datetime.datetime.now()
+        delta_ms = f"{(end_time - start_time).total_seconds() * 1000:.1f}"
+
+        log.info("Timing - prepare nsarg normalization", delta_ms=delta_ms)
+
+        return self
+
+    def compute_edges(
+        self, rules: List[str] = None, ast_result=False, fmt="medium"
+    ) -> List[Mapping[str, Any]]:
         """Computed edges from primary BEL statement
 
         Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
@@ -235,30 +345,27 @@ class BEL(object):
             List[Mapping[str, Any]]: BEL Edges in medium format
         """
 
-        compute_rules = self.spec['computed_signatures'].keys()
+        if not self.ast:
+            return self
 
-        if rules:
-            compute_rules = [rule for rule in compute_rules if rule in rules]
-
-        edges_ast = bel.edge.computed.compute_edges(self.ast, self.spec)
+        edges_asts = bel.edge.computed.compute_edges(self.ast, self.spec)
 
         if ast_result:
-            return edges_ast
+            return edges_asts
 
         edges = []
-        for es, er, eo in edges_ast:
-
-            # Some components are not part of AST - e.g. NSArg
-            if isinstance(es, lang_ast.Function):
-                es = es.to_string(fmt='medium')
-            if isinstance(eo, lang_ast.Function):
-                eo = eo.to_string(fmt='medium')
-
-            edges.append({'subject': es, 'relation': er, 'object': eo})
+        for ast in edges_asts:
+            edges.append(
+                {
+                    "subject": ast.bel_subject.to_string(),
+                    "relation": ast.bel_relation,
+                    "object": ast.bel_object.to_string(),
+                }
+            )
 
         return edges
 
-    def to_string(self, fmt: str = 'medium') -> str:
+    def to_string(self, fmt: str = "medium") -> str:
         """Convert AST object to string
 
         Args:
@@ -272,11 +379,9 @@ class BEL(object):
         """
 
         if self.ast:
-            return self.ast.to_string(ast_obj=self.ast, fmt=fmt)
-        else:
-            return ''
+            return f"{self.ast.to_string(ast_obj=self.ast, fmt=fmt)}"
 
-    def to_triple(self, fmt: str = 'medium') -> dict:
+    def to_triple(self, fmt: str = "medium") -> dict:
         """Convert AST object to BEL triple
 
         Args:
@@ -290,7 +395,7 @@ class BEL(object):
         """
 
         if self.ast:
-            return self.ast.to_components(ast_obj=self.ast, fmt=fmt)
+            return self.ast.to_triple(ast_obj=self.ast, fmt=fmt)
         else:
             return {}
 
@@ -304,6 +409,4 @@ class BEL(object):
         if self.ast:
             return self.ast.print_tree(ast_obj=self.ast)
         else:
-            return ''
-
-
+            return ""

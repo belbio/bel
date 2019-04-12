@@ -8,19 +8,15 @@ Usage:  program.py <customer>
 
 from typing import Mapping, Any, List, MutableSequence
 import copy
-import itertools
-import os
 import json
-import datetime
-import urllib
+import sys
+import os
 
 import bel.lang.belobj
 import bel.lang.bel_specification
-import bel.lang.bel_utils as bel_utils
 import bel.db.arangodb as arangodb
 import bel.utils as utils
-import bel.nanopub.files as files
-import bel.nanopub.nanopubstore as nanopubstore
+
 
 from bel.Config import config
 
@@ -36,57 +32,13 @@ edgestore_db = arangodb.get_edgestore_handle(arango_client)
 def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targets: list = []):
     """Process nanopub into edges and load into EdgeStore
 
-    """
-
-    nanopub_url = nanopub.get('source_url', '')
-
-    try:
-        if orthologize_targets == []:
-            if config['bel_api'].get('edges', None):
-                orthologize_targets = config['bel_api']['edges'].get('orthologize_targets', [])
-
-        api_url = config['bel_api']['servers']['api_url']
-
-        citation_string = normalize_nanopub_citation(nanopub)
-
-        start_time = datetime.datetime.now()
-
-        # Add unorthologized edges
-        edges = create_edges(nanopub, api_url, citation_string)
-        end_time1 = datetime.datetime.now()
-        delta_ms = f'{(end_time1 - start_time).total_seconds() * 1000:.1f}'
-        log.info('Timing - Get unorthologized edges from nanopub', delta_ms=delta_ms)
-
-        # Add orthologized edges
-        for orthologize_target in orthologize_targets:
-            edges.extend(create_edges(nanopub, api_url, citation_string, orthologize_target=orthologize_target))
-
-        end_time2 = datetime.datetime.now()
-        delta_ms = f'{(end_time2 - end_time1).total_seconds() * 1000:.1f}'
-        log.info('Timing - Get orthologized edges from nanopub', delta_ms=delta_ms)
-
-        return {"edges": edges, "nanopub_id": nanopub['nanopub']['id'], "nanopub_url": nanopub_url, "success": True}
-
-    except Exception as e:
-        log.error(f'Failed converting nanopub into edges NanopubUrl: {nanopub_url}', exc_info=True)
-        return {"nanopub_id": nanopub['nanopub']['id'], "nanopub_url": nanopub_url, "success": False, "error": str(e)}
-
-
-def create_edges(nanopub: Mapping[str, Any], api_url: str, citation: str, rules: List[str] = [], orthologize_target: str = []) -> Edges:
-    """Create edges from assertions
-
     Args:
-        nanopub (Mapping[str, Any]): nanopub in nanopub_bel schema format
-        api_url (str): BEL.bio API endpoint to use
-        citation (str): citation string normalized from Nanopub citation object
-        rules (List[str]): which computed edge rules to process, default is all,
-           look at BEL Specification yaml file for computed edge signature keys,
-           e.g. degradation, if any rule in list is 'skip', then skip computing edges
-           just return primary_edge
-        orthologize_target: species to convert BEL into, e.g. TAX:10090 for mouse, default option does not orthologize
+        nanopub: BEL Nanopub
+        rules: list of compute rules to process
+        orthologize_targets: list of species in TAX:<int> format
 
     Returns:
-        Tuple[List[Mapping[str, Any]], List[Tuple[str, List[str]]]]: (edge list, validation messages) - edge list with edge attributes (e.g. context) and parse validation messages
+        list: of edges
 
     Edge object:
         {
@@ -102,7 +54,6 @@ def create_edges(nanopub: Mapping[str, Any], api_url: str, citation: str, rules:
                     "relation": edge_ast.bel_relation,
                     "edge_hash": edge_hash,
                     "edge_dt": edge_dt,
-                    "nanopub_dt": gd:updateTS,
                     "nanopub_url": nanopub_url,
                     "nanopub_id": nanopub_id,
                     "citation": citation,
@@ -112,7 +63,7 @@ def create_edges(nanopub: Mapping[str, Any], api_url: str, citation: str, rules:
                     "object": obj_lbl,
                     "annotations": nanopub['annotations'],
                     "metadata": nanopub['metadata'],
-                    "public_flag": nanopub['isPublished'],
+                    "public_flag": True,  # will be added when groups/permissions feature is finished,
                     "edge_types": edge_types,
                 },
                 'object': {
@@ -124,8 +75,10 @@ def create_edges(nanopub: Mapping[str, Any], api_url: str, citation: str, rules:
                 }
             }
         }
-
     """
+
+    # Collect input values ####################################################
+    nanopub_url = nanopub.get('source_url', '')
 
     edge_dt = utils.dt_utc_formatted()  # don't want this in relation_id
 
@@ -140,161 +93,294 @@ def create_edges(nanopub: Mapping[str, Any], api_url: str, citation: str, rules:
         log.error(f"Not a BEL Nanopub according to nanopub.type.name: {nanopub['nanopub']['type']['name']}")
         return []
 
-    annotations = copy.deepcopy(nanopub['nanopub']['annotations'])
-    metadata = copy.deepcopy(nanopub['nanopub']['metadata'])
-    metadata.pop('gd:abstract', None)
+    # Required for BEL parsing/canonicalization/orthologization
+    api_url = config['bel_api']['servers']['api_url']
 
-    if orthologize_target:
-        annotations = orthologize_context(orthologize_target, annotations)
+    try:
+        citation_string = normalize_nanopub_citation(nanopub)
+    except Exception as e:
+        log.error(f'Could not create citation string for {nanopub_url}')
+        citation_string = ''
 
+    if orthologize_targets == []:
+        if config['bel_api'].get('edges', None):
+            orthologize_targets = config['bel_api']['edges'].get('orthologize_targets', [])
+
+    # orig_species_id = [anno['id'] for anno in nanopub['nanopub']['annotations'] if anno['type'] == 'Species']
+    # if orig_species_id:
+    #     orig_species_id = orig_species_id[0]
+
+    master_annotations = copy.deepcopy(nanopub['nanopub']['annotations'])
+    master_metadata = copy.deepcopy(nanopub['nanopub']['metadata'])
+    master_metadata.pop('gd:abstract', None)
+
+    nanopub_type = nanopub['nanopub']['metadata'].get('nanopub_type')
+
+    # Create Edge Assertion Info ##############################################
+    # r = generate_assertion_edge_info(nanopub['nanopub']['assertions'], orig_species_id, orthologize_targets, bel_version, api_url, nanopub_type)
+    r = generate_assertion_edge_info(nanopub['nanopub']['assertions'], orthologize_targets, bel_version, api_url, nanopub_type)
+    edge_info_list = r['edge_info_list']
+
+    # Build Edges #############################################################
     edges = []
-    bo = bel.lang.belobj.BEL(bel_version, api_url)
+    errors = []
+    for edge_info in edge_info_list:
+        annotations = copy.deepcopy(master_annotations)
+        metadata = copy.deepcopy(master_metadata)
 
-    for assertion in nanopub['nanopub']['assertions']:
+        errors.extend(edge_info['errors'])
 
-        start_time = datetime.datetime.now()
+        if not edge_info.get('canonical'):
+            continue
 
-        if not assertion['relation']:
-            continue  # Skip any subject only statements
+        # TODO - remove this
+        # if edge_info.get('species_id', False):
+        #     annotations = orthologize_context(edge_info['species_id'], annotations)
+
+        edge_hash = utils._create_hash(f'{edge_info["canonical"]["subject"]} {edge_info["canonical"]["relation"]} {edge_info["canonical"]["object"]}')
 
         edge = {
             'edge': {
-                'subject': {},
+                'subject': {
+                    "name": edge_info['canonical']['subject'],
+                    "name_lc": edge_info['canonical']['subject'].lower(),
+                    "label": edge_info['decanonical']['subject'],
+                    "label_lc": edge_info['decanonical']['subject'].lower(),
+                    "components": edge_info['subject_comp'],
+                },
                 'relation': {
-                    'relation': assertion['relation'],
+                    'relation': edge_info['canonical']['relation'],
+                    'edge_hash': edge_hash,
                     'edge_dt': edge_dt,
-                    'nanopub_url': nanopub['source_url'],
+                    'nanopub_url': nanopub_url,
                     'nanopub_id': nanopub['nanopub']['id'],
-                    'citation': citation,
+                    'citation': citation_string,
+                    'subject_canon': edge_info['canonical']['subject'],
+                    'subject': edge_info['decanonical']['subject'],
+                    'object_canon': edge_info['canonical']['object'],
+                    'object': edge_info['decanonical']['object'],
                     'annotations': copy.deepcopy(annotations),
                     'metadata': copy.deepcopy(metadata),
-                    'public_flag': nanopub['isPublished'],
+                    'public_flag': True,
+                    'edge_types': edge_info['edge_types'],
+                    'species_id': edge_info['species_id'],
+                    'species_label': edge_info['species_label'],
                 },
-                'object': {},
+                'object': {
+                    "name": edge_info['canonical']['object'],
+                    "name_lc": edge_info['canonical']['object'].lower(),
+                    "label": edge_info['decanonical']['object'],
+                    "label_lc": edge_info['decanonical']['object'].lower(),
+                    "components": edge_info['object_comp'],
+                }
             }
         }
 
-        if assertion['relation']:
-            bel_statement = f"{assertion['subject']} {assertion['relation']} {assertion['object']}"
-        else:
-            bel_statement = assertion['subject']
+        edges.append(copy.deepcopy(edge))
 
-        bo.parse(bel_statement)
-        if not bo.parse_valid:  # Continue processing BEL Nanopub assertions
-            log.error(f'Invalid BEL Statement: {bo.validation_messages}')
-            continue
-
-        end_time1 = datetime.datetime.now()
-        delta_ms = f'{(end_time1 - start_time).total_seconds() * 1000:.1f}'
-        log.info('Timing - Parse bel statement', delta_ms=delta_ms)
-
-        if 'backbone' in nanopub['source_url']:
-            edge['edge']['relation']['edge_types'] = ['backbone']
-        else:
-            edge['edge']['relation']['edge_types'] = ['primary']
-
-        # Orthologize #####################################################
-        if orthologize_target:
-            orig_bel_str = bo.to_string()
-            bo.orthologize(orthologize_target)
-
-            if bo.to_string() == orig_bel_str:
-                log.info(f'Cannot orthologize BEL stmt to {orthologize_target}')
-                continue
-
-            edge['edge']['relation']['edge_types'].append('orthologized')
-
-        # Add BEL causal edge type
-        if bo.ast.bel_relation and 'causal' in bo.ast.spec['relations']['info'][bo.ast.bel_relation]['categories']:
-            edge['edge']['relation']['edge_types'].append('causal')
-
-        end_time2 = datetime.datetime.now()
-        # Primary Edge
-        process_belobj_into_triples(bo, edge)
-        end_time3 = datetime.datetime.now()
-        delta_ms = f'{(end_time3 - end_time2).total_seconds() * 1000:.1f}'
-        log.info('Timing - Canonicalize into triples', delta_ms=delta_ms)
-
-        # log.debug(f'Edge: {edge}')
-        edge_hash = utils._create_hash(f'{edge["edge"]["subject"]["name"]} {edge["edge"]["relation"]["relation"]} {edge["edge"]["object"]["name"]}')
-        edge['edge']['relation']['edge_hash'] = edge_hash
-        edges.append(edge)
-
-        # Computed edges ##################################################
-        computed_edges_ast = bo.compute_edges(rules=rules, ast_result=True)
-
-        if orthologize_target:
-            edge_types = ['computed', 'orthologized']
-        else:
-            edge_types = ['computed']
-
-        for edge_ast in computed_edges_ast:
-            edge = {
-                'edge': {
-                    'subject': {},
-                    'relation': {
-                        'relation': assertion['relation'],
-                        'edge_dt': edge_dt,
-                        'public_flag': True,
-                        'edge_types': edge_types,
-                    },
-                    'object': {},
-                }
-            }
-
-            bo.ast = edge_ast
-            process_belobj_into_triples(bo, edge)
-
-            edge_hash = utils._create_hash(f'{edge["edge"]["subject"]["name"]} {edge["edge"]["relation"]["relation"]} {edge["edge"]["object"]["name"]}')
-            edge['edge']['relation']['edge_hash'] = edge_hash
-            edges.append(edge)
-
-    end_time1 = datetime.datetime.now()
-    delta_ms = f'{(end_time1 - start_time).total_seconds() * 1000:.1f}'
-    log.info('Timing - Assertion to edges', delta_ms=delta_ms)
-
-    return edges
+    return {"edges": edges, "nanopub_id": nanopub['nanopub']['id'], "nanopub_url": nanopub_url, "success": True, "errors": errors}
 
 
-def process_belobj_into_triples(bo, edge):
-    """Create triples (canonicalized and decanonicalized)
+def extract_ast_species(ast):
+    """Extract species from ast.species set of tuples (id, label)"""
 
-    Create SRO strings and components canonicalized and decanonicalized
-    as well as the Subject and Object triples
+    species_id = 'None'
+    species_label = 'None'
+    species = [(species_id, species_label,) for (species_id, species_label) in ast.species if species_id]
+
+    if len(species) == 1:
+        (species_id, species_label) = species[0]
+
+    if not species_id:
+        species_id = 'None'
+        species_label = 'None'
+
+    log.debug(f'AST Species: {ast.species}  Species: {species}  SpeciesID: {species_id}')
+
+    return (species_id, species_label)
+
+
+# def generate_assertion_edge_info(assertions: List[dict], orig_species_id: str, orthologize_targets: List[str], bel_version: str, api_url: str, nanopub_type: str) -> dict:
+def generate_assertion_edge_info(assertions: List[dict], orthologize_targets: List[str], bel_version: str, api_url: str, nanopub_type: str = '') -> dict:
+    """Create edges (SRO) for assertions given orthologization targets
+
+    Args:
+        assertions: list of BEL statements (SRO object)
+        orthologize_targets: list of species in TAX:<int> format
+        bel_version: to be used for processing assertions
+        api_url: BEL API url endpoint to use for terminologies and orthologies
     """
 
-    bo.canonicalize()
-    sro = bo.to_triple()
-    edge['edge']['subject']['name'] = sro['subject']
-    edge['edge']['subject']['name_lc'] = sro['subject'].lower()
-    edge['edge']['relation']['subject_canon'] = sro['subject']
+    bo = bel.lang.belobj.BEL(bel_version, api_url)
+    bo_computed = bel.lang.belobj.BEL(bel_version, api_url)
 
-    edge['edge']['relation']['relation'] = sro['relation']
-    edge['edge']['object']['name'] = sro['object']
-    edge['edge']['object']['name_lc'] = sro['object'].lower()
-    edge['edge']['relation']['object_canon'] = sro['object']
+    edge_info_list = []
 
-    edge['edge']['subject']['components'] = bo.ast.bel_subject.subcomponents(subcomponents=[])
+    with utils.Timer() as t:
+        for assertion in assertions:
+            # if not assertion.get('relation', False):
+            #     continue  # Skip any subject only statements
 
-    if bo.ast.bel_object.__class__.__name__ == 'BELAst':  # Nested BEL Assertion
-        obj_components = bo.ast.bel_object.bel_subject.subcomponents(subcomponents=[])
-        obj_components = bo.ast.bel_object.bel_object.subcomponents(subcomponents=obj_components)
-    else:  # Normal BEL Assertion
-        obj_components = bo.ast.bel_object.subcomponents(subcomponents=[])
+            start_time = t.elapsed
+            bo.parse(assertion)
 
-    edge['edge']['object']['components'] = obj_components
+            if not bo.ast:
+                errors = [f'{error[0]} {error[1]}' for error in bo.validation_messages if error[0] == 'ERROR']
+                edge_info = {'errors': copy.deepcopy(errors)}
+                edge_info_list.append(copy.deepcopy(edge_info))
+                continue
 
-    bo.decanonicalize()
-    sro = bo.to_triple()
+            # populate canonical terms and orthologs for assertion
+            bo.collect_nsarg_norms()
+            bo.collect_orthologs(orthologize_targets)
 
-    log.info(f'BO {bo}')
+            log.info('Timing - time to collect nsargs and orthologs', delta_ms=(t.elapsed - start_time))
 
-    edge['edge']['subject']['label'] = sro['subject']
-    edge['edge']['subject']['label_lc'] = sro['subject'].lower()
-    edge['edge']['relation']['subject'] = sro['subject']
-    edge['edge']['object']['label'] = sro['object']
-    edge['edge']['object']['label_lc'] = sro['object'].lower()
-    edge['edge']['relation']['object'] = sro['object']
+            (edge_species_id, edge_species_label) = extract_ast_species(bo.ast)
+            orig_species_id = edge_species_id
+
+            canon = bo.canonicalize().to_triple()
+
+            components = get_node_subcomponents(bo.ast)  # needs to be run after canonicalization
+            computed_asts = bo.compute_edges(ast_result=True)  # needs to be run after canonicalization
+            decanon = bo.decanonicalize().to_triple()
+
+            if nanopub_type == 'backbone':
+                edge_types = ['backbone']
+            else:
+                edge_types = ['original', 'primary']
+
+            if assertion.get('relation', False):
+
+                causal_edge_type = []
+                if 'causal' in bo.spec['relations']['info'][assertion['relation']]['categories']:
+                    edge_types.append('causal')
+
+                edge_info = {
+                    'edge_types': edge_types,
+                    'species_id': edge_species_id,
+                    'species_label': edge_species_label,
+                    'canonical': canon,
+                    'decanonical': decanon,
+                    'subject_comp': components['subject_comp'],
+                    'object_comp': components['object_comp'],
+                    'errors': [],
+                }
+                edge_info_list.append(copy.deepcopy(edge_info))
+
+            # Loop through primary computed asts
+            for computed_ast in computed_asts:
+                bo_computed.ast = computed_ast
+                bo_computed.collect_nsarg_norms()
+                canon = bo_computed.canonicalize().to_triple()
+                components = get_node_subcomponents(bo_computed.ast)  # needs to be run after canonicalization
+                decanon = bo_computed.decanonicalize().to_triple()
+
+                (edge_species_id, edge_species_label) = extract_ast_species(bo_computed.ast)
+
+                edge_info = {
+                    'edge_types': ['computed'],
+                    'species_id': edge_species_id,
+                    'species_label': edge_species_label,
+                    'canonical': canon,
+                    'decanonical': decanon,
+                    'subject_comp': components['subject_comp'],
+                    'object_comp': components['object_comp'],
+                    'errors': [],
+                }
+                if [edge for edge in edge_info_list if edge.get('canonical', {}) == canon]:
+                    continue  # skip if edge is already included (i.e. the primary is same as computed edge)
+                edge_info_list.append(copy.deepcopy(edge_info))
+
+            # Skip orthologs if backbone nanopub
+            if nanopub_type == 'backbone':
+                continue
+
+            # only process orthologs if there are species-specific NSArgs
+            if len(bo.ast.species) > 0:
+                # Loop through orthologs
+                for species_id in orthologize_targets:
+                    log.debug(f'Orig species: {orig_species_id}  Target species: {species_id}')
+                    if species_id == orig_species_id:
+                        continue
+
+                    bo.orthologize(species_id)
+
+                    (edge_species_id, edge_species_label) = extract_ast_species(bo.ast)
+
+                    if edge_species_id == 'None' or edge_species_id == orig_species_id:
+                        log.debug(f'Skipping orthologization- species == "None" or {orig_species_id}  ASTspecies: {bo.ast.species} for {bo}')
+                        continue
+
+                    ortho_decanon = bo.orthologize(species_id).to_triple()  # defaults to decanonicalized orthologized form
+                    ortho_canon = bo.canonicalize().to_triple()
+                    computed_asts = bo.compute_edges(ast_result=True)  # needs to be run after canonicalization
+                    components = get_node_subcomponents(bo.ast)  # needs to be run after canonicalization
+
+                    if assertion.get('relation', False):
+                        edge_info = {
+                            'edge_types': ['orthologized', 'primary'] + causal_edge_type,
+                            'species_id': edge_species_id,
+                            'species_label': edge_species_label,
+                            'canonical': ortho_canon,
+                            'decanonical': ortho_decanon,
+                            'subject_comp': components['subject_comp'],
+                            'object_comp': components['object_comp'],
+                            'errors': [],
+                        }
+
+                        edge_info_list.append(copy.deepcopy(edge_info))
+
+                    # Loop through orthologized computed asts
+                    for computed_ast in computed_asts:
+                        bo_computed.ast = computed_ast
+                        bo_computed.collect_nsarg_norms()
+                        canon = bo_computed.canonicalize().to_triple()
+                        components = get_node_subcomponents(bo_computed.ast)  # needs to be run after canonicalization
+                        decanon = bo_computed.decanonicalize().to_triple()
+
+                        (edge_species_id, edge_species_label) = extract_ast_species(bo_computed.ast)
+
+                        edge_info = {
+                            'edge_types': ['computed', 'orthologized'],
+                            'species_id': edge_species_id,
+                            'species_label': edge_species_label,
+                            'canonical': canon,
+                            'decanonical': decanon,
+                            'subject_comp': components['subject_comp'],
+                            'object_comp': components['object_comp'],
+                            'errors': [],
+                        }
+                        if [edge for edge in edge_info_list if edge.get('canonical', {}) == canon]:
+                            continue  # skip if edge is already included (i.e. the primary is same as computed edge)
+                        edge_info_list.append(copy.deepcopy(edge_info))
+
+    log.info('Timing - Generated all edge info for all nanopub assertions', delta_ms=t.elapsed)
+
+    return {'edge_info_list': edge_info_list}
+
+
+def get_node_subcomponents(ast):
+
+    sub, obj = [], []
+
+    try:
+        sub = ast.bel_subject.subcomponents(subcomponents=[])
+
+        # TODO - update handling nested BEL statement - see Natalie's recommendation on how to handle
+        obj_components = []
+        if ast.bel_object.__class__.__name__ == 'BELAst':  # Nested BEL Assertion
+            obj_components = ast.bel_object.bel_subject.subcomponents(subcomponents=[])
+            obj_components = ast.bel_object.bel_object.subcomponents(subcomponents=obj_components)
+        elif hasattr(ast.bel_object, 'subcomponents'):  # Normal BEL Assertion
+            obj_components = ast.bel_object.subcomponents(subcomponents=[])
+
+        obj = obj_components
+
+    except Exception as e:
+        log.warning(f'Problem getting subcomponents for {ast.to_string()}', error=str(e))
+
+    return {'subject_comp': sub, 'object_comp': obj}
 
 
 def orthologize_context(orthologize_target: str, annotations: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -307,11 +393,14 @@ def orthologize_context(orthologize_target: str, annotations: Mapping[str, Any])
     r = utils.get_url(url)
     species_label = r.json().get("label", "unlabeled")
 
+    orthologized_from = {}
     for idx, annotation in enumerate(annotations):
         if annotation['type'] == 'Species':
-            annotations[idx]['type'] = 'OrthologizedFrom'
+            orthologized_from = {'id': annotation['id'], 'label': annotation['label']}
+            annotations[idx] = {'type': 'Species', 'id': orthologize_target, 'label': species_label}
 
-    annotations.append({'type': 'Species', 'id': orthologize_target, 'label': species_label})
+    if 'id' in orthologized_from:
+        annotations.append({'type': 'OrigSpecies', 'id': f'Orig-{orthologized_from["id"]}', 'label': f'Orig-{orthologized_from["label"]}'})
 
     return annotations
 
