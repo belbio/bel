@@ -37,7 +37,7 @@ def get_terms(term_id):
         }
     }
 
-    result = es.search(index="terms", doc_type="term", body=search_body)
+    result = es.search(index="terms", body=search_body)
 
     results = []
     for r in result["hits"]["hits"]:
@@ -98,9 +98,7 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
         return {"equivalents": [], "errors": [f"Unexpected error {e}"]}
 
 
-def get_normalized_term(
-    term_id: str, equivalents: list, namespace_targets: dict
-) -> str:
+def get_normalized_term(term_id: str, equivalents: list, namespace_targets: dict) -> str:
     """Get normalized term"""
 
     if equivalents and len(equivalents) > 0:
@@ -143,12 +141,8 @@ def get_normalized_terms(term_id: str) -> dict:
     # log.debug(f'Equivalents: {equivalents}')
 
     if equivalents:
-        canonical = get_normalized_term(
-            term_id, equivalents, canonical_namespace_targets
-        )
-        decanonical = get_normalized_term(
-            canonical, equivalents, decanonical_namespace_targets
-        )
+        canonical = get_normalized_term(term_id, equivalents, canonical_namespace_targets)
+        decanonical = get_normalized_term(canonical, equivalents, decanonical_namespace_targets)
 
     # log.debug(f'canonical: {canonical}, decanonical: {decanonical}, original: {term_id}')
 
