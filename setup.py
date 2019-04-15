@@ -22,7 +22,7 @@ AUTHOR = "William Hayes"
 REQUIRED = [
     "cityhash",
     "click",
-    "elasticsearch",
+    "elasticsearch>=6,<7",
     "fastcache",
     "Jinja2",
     "jsonschema",

@@ -43,9 +43,7 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
     elif re.search("ya?ml", fn):
         yaml_flag = True
     else:
-        log.error(
-            "Do not recognize nanopub file format - neither json nor jsonl format."
-        )
+        log.error("Do not recognize nanopub file format - neither json nor jsonl format.")
         return {}
 
     try:
@@ -66,7 +64,7 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
             for nanopub in nanopubs:
                 yield nanopub
         elif yaml_flag:
-            nanopubs = yaml.load(f, Loader=yaml.FullLoader)
+            nanopubs = yaml.load(f, Loader=yaml.SafeLoader)
             for nanopub in nanopubs:
                 yield nanopub
 
@@ -144,7 +142,7 @@ def read_edges(fn):
             for edge in edges:
                 yield edge
         elif yaml_flag:
-            edges = yaml.load_all(f, Loader=yaml.FullLoader)
+            edges = yaml.load_all(f, Loader=yaml.SafeLoader)
             for edge in edges:
                 yield edge
 
