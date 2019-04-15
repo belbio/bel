@@ -47,11 +47,7 @@ def test_generate_assertion_edge_info1():
     orthologize_targets = ["TAX:9606", "TAX:10090"]
 
     assertions = [
-        {
-            "subject": "act(p(HGNC:DUOX1))",
-            "relation": "decreases",
-            "object": "act(p(HGNC:SRC))",
-        },
+        {"subject": "act(p(HGNC:DUOX1))", "relation": "decreases", "object": "act(p(HGNC:SRC))"},
         {
             "subject": "act(p(MGI:Nr1i2))",
             "relation": "increases",
@@ -62,11 +58,7 @@ def test_generate_assertion_edge_info1():
             "relation": "association",
             "object": 'act(p(PMIPFAM:"ABCC subfamily transporter"))',
         },
-        {
-            "subject": "act(p(MGI:Hnf4a))",
-            "relation": "decreases",
-            "object": "r(MGI:AhR)",
-        },
+        {"subject": "act(p(MGI:Hnf4a))", "relation": "decreases", "object": "r(MGI:AhR)"},
         {
             "subject": 'path(TBD:"Neuropathic Pain")',
             "relation": "positiveCorrelation",
@@ -117,11 +109,7 @@ def test_generate_assertion_edge_info2():
     orthologize_targets = ["TAX:9606", "TAX:10090"]
 
     assertions = [
-        {
-            "subject": "p(HGNC:AKT1)",
-            "relation": "increases",
-            "object": "act(p(HGNC:EGF))",
-        },
+        {"subject": "p(HGNC:AKT1)", "relation": "increases", "object": "act(p(HGNC:EGF))"},
         {
             "subject": "complex(p(HGNC:AKT1), p(HGNC:EGF))",
             "relation": "increases",
@@ -138,11 +126,7 @@ def test_generate_assertion_edge_info2():
             "relation": "decreases",
             "object": "r(MGI:Sult2a1)",
         },  # MGI:Sult2a1 doesn't have an ortholog
-        {
-            "subject": "act(p(MGI:Rora))",
-            "relation": "decreases",
-            "object": "r(MGI:Egf)",
-        },
+        {"subject": "act(p(MGI:Rora))", "relation": "decreases", "object": "r(MGI:Egf)"},
         {
             "subject": 'a(SCHEM:"Smoke, cigarette")',
             "relation": "decreases",
@@ -217,11 +201,7 @@ def test_nanopub_to_edges():
             "annotations": [
                 {"id": "", "label": "0.01", "type": "p-value"},
                 {"id": "", "label": "ELISA", "type": "Methodology"},
-                {
-                    "id": "",
-                    "label": "52 ALS patients and 31 non-ALS patients",
-                    "type": "Cohort",
-                },
+                {"id": "", "label": "52 ALS patients and 31 non-ALS patients", "type": "Cohort"},
                 {"id": "UBERON:serum", "label": "serum", "type": "Anatomy"},
                 {
                     "id": 'MESH:"Amyotrophic Lateral Sclerosis"',
@@ -248,19 +228,17 @@ def test_nanopub_to_edges():
             ],
             "evidence": "Compared to the non-ALS patients, the ALS patients displayed significantly increased levels of IFN-γ in both CSF and serum, and these values consistently correlated with disease progression.",
             "metadata": {
-                "gd:createTS": "2018-04-13T00:14:05.902",
-                "gd:creator": "amontagut",
-                "gd:published": True,
-                "gd:updateTS": "2018-06-11T16:46:50.869Z",
+                "gd_createTS": "2018-04-13T00:14:05.902",
+                "gd_creator": "amontagut",
+                "gd_status": "finalized",
+                "gd_updateTS": "2018-06-11T16:46:50.869Z",
                 "project": "Fasting Presentation Curation",
             },
         },
     }
 
     orthologize_targets = ["TAX:9606", "TAX:10090"]
-    r = bel.edge.edges.nanopub_to_edges(
-        nanopub, orthologize_targets=orthologize_targets
-    )
+    r = bel.edge.edges.nanopub_to_edges(nanopub, orthologize_targets=orthologize_targets)
 
     print("Edge Listing")
     for edge in r["edges"]:
