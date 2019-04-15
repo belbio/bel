@@ -30,7 +30,7 @@ REQUIRED = [
     "python-arango",
     "python-dateutil",
     "python-json-logger",
-    "pyyaml",
+    "pyyaml>5",
     "requests",
     "requests-cache",
     "structlog",
