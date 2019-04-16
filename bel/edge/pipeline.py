@@ -97,8 +97,10 @@ def process_nanopub(
         edge = get_edges_for_nanopub(nanopub_id)
         if edge:
             # check if edge nanopub is newer
-            if nanopub["nanopub"]["metadata"]["gd_updateTS"] <= edge["metadata"]["gd_updateTS"]:
-                return {"msg": "Nanopub older than edge nanopub", "success": True, "e": ""}
+            # log.info("Nanopub to Edge comparison", nanopub=nanopub, edge=edge)
+            if edge["metadata"].get("gd_updateTS", None):
+                if nanopub["nanopub"]["metadata"]["gd_updateTS"] <= edge["metadata"]["gd_updateTS"]:
+                    return {"msg": "Nanopub older than edge nanopub", "success": True, "e": ""}
 
     end_time2 = datetime.datetime.now()
     delta_ms = f"{(end_time2 - end_time1).total_seconds() * 1000:.1f}"
