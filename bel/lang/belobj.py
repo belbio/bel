@@ -166,13 +166,9 @@ class BEL(object):
             error, visualize_error = bel_utils.handle_parser_syntax_error(e)
             self.parse_visualize_error = visualize_error
             if visualize_error:
-                self.validation_messages.append(
-                    ("ERROR", f"{error}\n{visualize_error}")
-                )
+                self.validation_messages.append(("ERROR", f"{error}\n{visualize_error}"))
             else:
-                self.validation_messages.append(
-                    ("ERROR", f"{error}\nBEL: {self.bel_stmt}")
-                )
+                self.validation_messages.append(("ERROR", f"{error}\nBEL: {self.bel_stmt}"))
             self.ast = None
 
         except Exception as e:
@@ -227,9 +223,7 @@ class BEL(object):
 
         return self
 
-    def decanonicalize(
-        self, namespace_targets: Mapping[str, List[str]] = None
-    ) -> "BEL":
+    def decanonicalize(self, namespace_targets: Mapping[str, List[str]] = None) -> "BEL":
         """
         Takes an AST and returns a decanonicalized BEL statement string.
 
@@ -272,7 +266,7 @@ class BEL(object):
         end_time = datetime.datetime.now()
         delta_ms = f"{(end_time - start_time).total_seconds() * 1000:.1f}"
 
-        log.info("Timing - prepare nsarg normalization", delta_ms=delta_ms)
+        log.debug("Timing - prepare nsarg normalization", delta_ms=delta_ms)
 
         return self
 
@@ -332,7 +326,7 @@ class BEL(object):
         end_time = datetime.datetime.now()
         delta_ms = f"{(end_time - start_time).total_seconds() * 1000:.1f}"
 
-        log.info("Timing - prepare nsarg normalization", delta_ms=delta_ms)
+        log.debug("Timing - prepare nsarg normalization", delta_ms=delta_ms)
 
         return self
 

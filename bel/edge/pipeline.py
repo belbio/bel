@@ -89,7 +89,7 @@ def process_nanopub(
 
     end_time1 = datetime.datetime.now()
     delta_ms = f"{(end_time1 - start_time).total_seconds() * 1000:.1f}"
-    log.info("Timing - Get nanopub", delta_ms=delta_ms)
+    log.debug("Timing - Get nanopub", delta_ms=delta_ms)
 
     # Is nanopub in edge newer than from queue? If so, skip
     if not override:
@@ -104,23 +104,23 @@ def process_nanopub(
 
     end_time2 = datetime.datetime.now()
     delta_ms = f"{(end_time2 - end_time1).total_seconds() * 1000:.1f}"
-    log.info("Timing - Get edge to check nanopub", delta_ms=delta_ms)
+    log.debug("Timing - Get edge to check nanopub", delta_ms=delta_ms)
 
     results = bel.edge.edges.nanopub_to_edges(nanopub, orthologize_targets=orthologize_targets)
 
     end_time3 = datetime.datetime.now()
     delta_ms = f"{(end_time3 - end_time2).total_seconds() * 1000:.1f}"
-    log.info("Timing - Get edges for nanopub", delta_ms=delta_ms)
+    log.debug("Timing - Get edges for nanopub", delta_ms=delta_ms)
 
     if results["success"]:
         load_edges_into_db(nanopub_id, nanopub["source_url"], edges=results["edges"])
 
         end_time4 = datetime.datetime.now()
         delta_ms = f"{(end_time4 - end_time3).total_seconds() * 1000:.1f}"
-        log.info("Timing - Load edges into edgestore", delta_ms=delta_ms)
+        log.debug("Timing - Load edges into edgestore", delta_ms=delta_ms)
 
         delta_ms = f"{(end_time4 - start_time).total_seconds() * 1000:.1f}"
-        log.info("Timing - Process edge into nanopub", delta_ms=delta_ms)
+        log.debug("Timing - Process edge into nanopub", delta_ms=delta_ms)
 
         return {
             "msg": f"Loaded {len(results['edges'])} edges into edgestore",
@@ -165,7 +165,7 @@ def load_edges_into_db(
 
     end_time1 = datetime.datetime.now()
     delta_ms = f"{(end_time1 - start_time).total_seconds() * 1000:.1f}"
-    log.info("Timing - Delete edges for nanopub", delta_ms=delta_ms)
+    log.debug("Timing - Delete edges for nanopub", delta_ms=delta_ms)
 
     # Clean out errors for nanopub in pipeline_errors
     query = f"""
@@ -180,7 +180,7 @@ def load_edges_into_db(
 
     end_time2 = datetime.datetime.now()
     delta_ms = f"{(end_time2 - end_time1).total_seconds() * 1000:.1f}"
-    log.info("Timing - Delete pipeline errors for nanopub", delta_ms=delta_ms)
+    log.debug("Timing - Delete pipeline errors for nanopub", delta_ms=delta_ms)
 
     # Collect edges and nodes to load into arangodb
     node_list, edge_list = [], []
@@ -192,7 +192,7 @@ def load_edges_into_db(
 
     end_time3 = datetime.datetime.now()
     delta_ms = f"{(end_time3 - end_time2).total_seconds() * 1000:.1f}"
-    log.info("Timing - Collect edges and nodes", delta_ms=delta_ms)
+    log.debug("Timing - Collect edges and nodes", delta_ms=delta_ms)
 
     try:
         results = edgestore_db.collection(edges_coll_name).import_bulk(
@@ -203,7 +203,7 @@ def load_edges_into_db(
 
     end_time4 = datetime.datetime.now()
     delta_ms = f"{(end_time4 - end_time3).total_seconds() * 1000:.1f}"
-    log.info("Timing - Load edges into edgestore", delta_ms=delta_ms)
+    log.debug("Timing - Load edges into edgestore", delta_ms=delta_ms)
 
     try:
         results = edgestore_db.collection(nodes_coll_name).import_bulk(
@@ -214,7 +214,7 @@ def load_edges_into_db(
 
     end_time5 = datetime.datetime.now()
     delta_ms = f"{(end_time5 - end_time4).total_seconds() * 1000:.1f}"
-    log.info("Timing - Load nodes into edgestore", delta_ms=delta_ms)
+    log.debug("Timing - Load nodes into edgestore", delta_ms=delta_ms)
 
 
 def edge_iterator(edges=[], edges_fn=None):

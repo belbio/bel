@@ -261,7 +261,7 @@ def generate_assertion_edge_info(
             bo.collect_nsarg_norms()
             bo.collect_orthologs(orthologize_targets)
 
-            log.info(
+            log.debug(
                 "Timing - time to collect nsargs and orthologs", delta_ms=(t.elapsed - start_time)
             )
 
@@ -398,7 +398,7 @@ def generate_assertion_edge_info(
                             continue  # skip if edge is already included (i.e. the primary is same as computed edge)
                         edge_info_list.append(copy.deepcopy(edge_info))
 
-    log.info("Timing - Generated all edge info for all nanopub assertions", delta_ms=t.elapsed)
+    log.debug("Timing - Generated all edge info for all nanopub assertions", delta_ms=t.elapsed)
 
     return {"edge_info_list": edge_info_list}
 
@@ -459,16 +459,14 @@ def orthologize_context(
 def normalize_nanopub_citation(nanopub):
 
     citation_string = ""
-    if "database" in nanopub["nanopub"]["citation"]:
+    if nanopub["nanopub"]["citation"].get("database", False):
         if nanopub["nanopub"]["citation"]["database"]["name"].lower() == "pubmed":
             citation_string = f"PMID:{nanopub['nanopub']['citation']['database']['id']}"
         else:
             citation_string = f"{nanopub['nanopub']['citation']['database']['name']}:{nanopub['nanopub']['citation']['database']['id']}"
-    elif "reference" in nanopub["nanopub"]["citation"] and isinstance(
-        nanopub["nanopub"]["citation"]["reference"], str
-    ):
+    elif nanopub["nanopub"]["citation"].get("reference", False):
         citation_string = nanopub["nanopub"]["citation"]["reference"]
-    elif "uri" in nanopub["nanopub"]["citation"]:
+    elif nanopub["nanopub"]["citation"].get("uri", False):
         citation_string = nanopub["nanopub"]["citation"]["uri"]
 
     return citation_string
