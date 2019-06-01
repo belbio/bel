@@ -37,6 +37,33 @@ def test_get_pubmed2():
     )
 
 
+def test_get_pubmed3():
+    """Get a book Pubmed record"""
+
+    pmid = "28520369"
+
+    doc = bel.nanopub.pubmed.get_pubmed(pmid)
+
+    print("Doc:\n", json.dumps(doc, indent=4))
+
+    assert doc["pmid"] == pmid
+    assert doc["title"] == "Medical Genetics Summaries"
+    assert doc["pub_date"] == "2012-01-01"
+
+
+def test_get_pubmed4():
+    """Get a bad date Pubmed record"""
+
+    pmid = "24656623"
+
+    doc = bel.nanopub.pubmed.get_pubmed(pmid)
+
+    print("Doc:\n", json.dumps(doc, indent=4))
+
+    assert doc["pmid"] == pmid
+    assert doc["pub_date"] == "2015-Jan-01"
+
+
 def test_get_pubmed_structured_abstract():
     """Make sure we collect full structured abstract
 
@@ -50,4 +77,4 @@ def test_get_pubmed_structured_abstract():
     print("Doc:\n", json.dumps(doc, indent=4))
 
     assert doc["pmid"] == pmid
-    assert "Subjects and Methods" in doc["abstract"]
+    assert "SUBJECT AND METHODS" in doc["abstract"]

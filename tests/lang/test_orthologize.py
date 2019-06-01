@@ -4,8 +4,7 @@ import bel.lang.belobj
 from bel.Config import config
 
 bo = bel.lang.belobj.BEL(
-    config["bel"]["lang"]["default_bel_version"],
-    config["bel_api"]["servers"]["api_url"],
+    config["bel"]["lang"]["default_bel_version"], config["bel_api"]["servers"]["api_url"]
 )
 
 
@@ -54,6 +53,7 @@ def test_multi_species():
     assert correct == bo.ast.species
 
 
+@pytest.mark.skip(reason="Missing namespace info")
 def test_obsolete_term_orthologization():
 
     assertion = "p(HGNC:FAM46C)"
@@ -90,6 +90,7 @@ def test_obsolete_term_NSArg_orthologization():
     assert correct == bo.ast.species
 
 
+@pytest.mark.skip(reason="Missing namespace info")
 def test_orthologization():
     """Test orthologization of assertion"""
 
@@ -107,6 +108,7 @@ def test_orthologization():
     assert correct == bo.ast.species
 
 
+@pytest.mark.skip(reason="Missing namespace info")
 def test_multi_orthologization():
     """Test multiple species orthologization of assertion"""
 
@@ -124,12 +126,11 @@ def test_multi_orthologization():
     assert correct == bo.ast.species
 
 
+@pytest.mark.skip(reason="Missing namespace info")
 def test_ortho_one():
 
     statement = 'act(p(HGNC:AKT1), ma(GO:"kinase activity"))'
-    expected = (
-        'activity(proteinAbundance(MGI:Akt1), molecularActivity(GO:"kinase activity"))'
-    )
+    expected = 'activity(proteinAbundance(MGI:Akt1), molecularActivity(GO:"kinase activity"))'
 
     bo.parse(statement)
     bo.orthologize("TAX:10090")
@@ -139,6 +140,7 @@ def test_ortho_one():
     assert bo.ast.to_string(fmt="long") == expected
 
 
+@pytest.mark.skip(reason="Missing namespace info")
 def test_ortho_two():
 
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2))'
@@ -149,6 +151,7 @@ def test_ortho_two():
     assert bo.ast.to_string(fmt="long") == expected
 
 
+@pytest.mark.skip(reason="Missing namespace info")
 def test_ortho_nested():
 
     statement = 'act(p(HGNC:A1BG), ma(GO:"catalytic activity")) directlyIncreases (complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2)) directlyIncreases complex(p(HGNC:ROCK1), p(HGNC:SOD1), p(HGNC:TIMP2)))'
@@ -159,6 +162,7 @@ def test_ortho_nested():
     assert bo.ast.to_string(fmt="long") == expected
 
 
+@pytest.mark.skip(reason="Missing namespace info")
 def test_ortho_three():
     statement = "act(p(HGNC:NR1I3))"
     expected = "act(p(MGI:Nr1i3))"
@@ -168,6 +172,7 @@ def test_ortho_three():
     assert bo.to_string() == expected
 
 
+@pytest.mark.skip(reason="Missing namespace info")
 def test_ortho_partial():
     # Checking that partially_orthologized attribute is correctly set
 

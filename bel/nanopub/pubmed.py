@@ -26,9 +26,13 @@ log = structlog.getLogger(__name__)
 if config["bel_api"]["servers"].get("pubmed_api_key", False):
     PUBMED_TMPL = f'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&api_key={config["bel_api"]["servers"]["pubmed_api_key"]}&id=PMID'
 else:
-    PUBMED_TMPL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID"
+    PUBMED_TMPL = (
+        "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID"
+    )
 
-PUBTATOR_TMPL = "https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/RESTful/tmTool.cgi/BioConcept/PMID/JSON"
+PUBTATOR_TMPL = (
+    "https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/RESTful/tmTool.cgi/BioConcept/PMID/JSON"
+)
 
 pubtator_ns_convert = {
     "CHEBI": "CHEBI",
@@ -37,11 +41,7 @@ pubtator_ns_convert = {
     "Chemical": "MESH",
     "Disease": "MESH",
 }
-pubtator_entity_convert = {
-    "Chemical": "Abundance",
-    "Gene": "Gene",
-    "Disease": "Pathology",
-}
+pubtator_entity_convert = {"Chemical": "Abundance", "Gene": "Gene", "Disease": "Pathology"}
 pubtator_annotation_convert = {"Disease": "Pathology"}
 pubtator_known_types = [key for key in pubtator_ns_convert.keys()]
 
@@ -80,11 +80,7 @@ def get_pubtator(pmid):
         s_match = re.match(r"(\w+):(\w+)", anno["obj"])
         c_match = re.match(r"(\w+):(\w+):(\w+)", anno["obj"])
         if c_match:
-            (ctype, namespace, cid) = (
-                c_match.group(1),
-                c_match.group(2),
-                c_match.group(3),
-            )
+            (ctype, namespace, cid) = (c_match.group(1), c_match.group(2), c_match.group(3))
 
             if ctype not in known_types:
                 log.info(f"{ctype} not in known_types for Pubtator")
@@ -94,12 +90,10 @@ def get_pubtator(pmid):
             pubtator["denotations"][idx][
                 "obj"
             ] = f'{pubtator_ns_convert.get(namespace, "UNKNOWN")}:{cid}'
-            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(
+            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(ctype, None)
+            pubtator["denotations"][idx]["annotation_type"] = pubtator_annotation_convert.get(
                 ctype, None
             )
-            pubtator["denotations"][idx][
-                "annotation_type"
-            ] = pubtator_annotation_convert.get(ctype, None)
         elif s_match:
             (ctype, cid) = (s_match.group(1), s_match.group(2))
 
@@ -109,12 +103,10 @@ def get_pubtator(pmid):
             pubtator["denotations"][idx][
                 "obj"
             ] = f'{pubtator_ns_convert.get(ctype, "UNKNOWN")}:{cid}'
-            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(
+            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(ctype, None)
+            pubtator["denotations"][idx]["annotation_type"] = pubtator_annotation_convert.get(
                 ctype, None
             )
-            pubtator["denotations"][idx][
-                "annotation_type"
-            ] = pubtator_annotation_convert.get(ctype, None)
 
     annotations = {}
     for anno in pubtator["denotations"]:
@@ -122,9 +114,7 @@ def get_pubtator(pmid):
         if anno["obj"] not in annotations:
             annotations[anno["obj"]] = {"spans": [anno["span"]]}
             annotations[anno["obj"]]["entity_types"] = [anno.get("entity_type", [])]
-            annotations[anno["obj"]]["annotation_types"] = [
-                anno.get("annotation_type", [])
-            ]
+            annotations[anno["obj"]]["annotation_types"] = [anno.get("annotation_type", [])]
 
         else:
             annotations[anno["obj"]]["spans"].append(anno["span"])
@@ -135,19 +125,122 @@ def get_pubtator(pmid):
     return pubtator
 
 
-def process_pub_date(year, mon, day):
+def process_pub_date(year, mon, day, medline_date):
     """Create pub_date from what Pubmed provides in Journal PubDate entry
     """
 
-    pub_date = None
-    if year and re.match("[a-zA-Z]+", mon):
-        pub_date = datetime.datetime.strptime(
-            f"{year}-{mon}-{day}", "%Y-%b-%d"
-        ).strftime("%Y-%m-%d")
-    elif year:
+    if medline_date:
+        year = "0000"
+        match = re.search(r"\d{4,4}", medline_date)
+        if match:
+            print("Matches", match)
+            year = match.group(0)
         pub_date = f"{year}-{mon}-{day}"
 
+    else:
+        pub_date = None
+        if year and re.match("[a-zA-Z]+", mon):
+            pub_date = datetime.datetime.strptime(f"{year}-{mon}-{day}", "%Y-%b-%d").strftime(
+                "%Y-%m-%d"
+            )
+        elif year:
+            pub_date = f"{year}-{mon}-{day}"
+
     return pub_date
+
+
+def parse_book_record(doc: dict, root) -> dict:
+    """Parse Pubmed Book entry"""
+
+    doc["title"] = next(iter(root.xpath("//BookTitle/text()")))
+
+    doc["authors"] = []
+    for author in root.xpath("//Author"):
+        last_name = next(iter(author.xpath("LastName/text()")), "")
+        first_name = next(iter(author.xpath("ForeName/text()")), "")
+        initials = next(iter(author.xpath("Initials/text()")), "")
+        if not first_name and initials:
+            first_name = initials
+        doc["authors"].append(f"{last_name}, {first_name}")
+
+    pub_year = next(iter(root.xpath("//Book/PubDate/Year/text()")), None)
+    pub_mon = next(iter(root.xpath("//Book/PubDate/Month/text()")), "Jan")
+    pub_day = next(iter(root.xpath("//Book/PubDate/Day/text()")), "01")
+    medline_date = next(iter(root.xpath("//Journal/JournalIssue/PubDate/MedlineDate/text()")), None)
+
+    pub_date = process_pub_date(pub_year, pub_mon, pub_day, medline_date)
+
+    doc["pub_date"] = pub_date
+
+    for abstracttext in root.xpath("//Abstract/AbstractText"):
+        abstext = node_text(abstracttext)
+
+        label = abstracttext.get("Label", None)
+        if label:
+            doc["abstract"] += f"{label}: {abstext}\n"
+        else:
+            doc["abstract"] += f"{abstext}\n"
+
+    doc["abstract"] = doc["abstract"].rstrip()
+
+    return doc
+
+
+def parse_journal_article_record(doc: dict, root) -> dict:
+    """Parse Pubmed Journal Article record"""
+
+    doc["title"] = next(iter(root.xpath("//ArticleTitle/text()")), "")
+
+    # TODO https://stackoverflow.com/questions/4770191/lxml-etree-element-text-doesnt-return-the-entire-text-from-an-element
+    atext = next(iter(root.xpath("//Abstract/AbstractText/text()")), "")
+    print("Text", atext)
+
+    for abstracttext in root.xpath("//Abstract/AbstractText"):
+        abstext = node_text(abstracttext)
+
+        label = abstracttext.get("Label", None)
+        if label:
+            doc["abstract"] += f"{label}: {abstext}\n"
+        else:
+            doc["abstract"] += f"{abstext}\n"
+
+    doc["abstract"] = doc["abstract"].rstrip()
+
+    doc["authors"] = []
+    for author in root.xpath("//Author"):
+        last_name = next(iter(author.xpath("LastName/text()")), "")
+        first_name = next(iter(author.xpath("ForeName/text()")), "")
+        initials = next(iter(author.xpath("Initials/text()")), "")
+        if not first_name and initials:
+            first_name = initials
+        doc["authors"].append(f"{last_name}, {first_name}")
+
+    pub_year = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Year/text()")), None)
+    pub_mon = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Month/text()")), "Jan")
+    pub_day = next(iter(root.xpath("//Journal/JournalIssue/PubDate/Day/text()")), "01")
+    medline_date = next(iter(root.xpath("//Journal/JournalIssue/PubDate/MedlineDate/text()")), None)
+
+    pub_date = process_pub_date(pub_year, pub_mon, pub_day, medline_date)
+
+    doc["pub_date"] = pub_date
+    doc["journal_title"] = next(iter(root.xpath("//Journal/Title/text()")), "")
+    doc["joural_iso_title"] = next(iter(root.xpath("//Journal/ISOAbbreviation/text()")), "")
+    doc["doi"] = next(iter(root.xpath('//ArticleId[@IdType="doi"]/text()')), None)
+
+    doc["compounds"] = []
+    for chem in root.xpath("//ChemicalList/Chemical/NameOfSubstance"):
+        chem_id = chem.get("UI")
+        doc["compounds"].append({"id": f"MESH:{chem_id}", "name": chem.text})
+
+    compounds = [cmpd["id"] for cmpd in doc["compounds"]]
+    doc["mesh"] = []
+    for mesh in root.xpath("//MeshHeading/DescriptorName"):
+        mesh_id = f"MESH:{mesh.get('UI')}"
+        if mesh_id in compounds:
+            continue
+        doc["mesh"].append({"id": mesh_id, "name": mesh.text})
+
+    return doc
 
 
 def get_pubmed(pmid: str) -> Mapping[str, Any]:
@@ -164,79 +257,46 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
     Returns:
         pubmed json
     """
-    pubmed_url = PUBMED_TMPL.replace("PMID", str(pmid))
-    r = get_url(pubmed_url)
-    log.info(f"Getting Pubmed URL {pubmed_url}")
+
+    doc = {
+        "abstract": "",
+        "pmid": pmid,
+        "title": "",
+        "authors": [],
+        "pub_date": "",
+        "joural_iso_title": "",
+        "journal_title": "",
+        "doi": "",
+        "compounds": [],
+        "mesh": [],
+    }
 
     try:
-        root = etree.fromstring(r.content)
-        doc = {"abstract": ""}
-        doc["pmid"] = root.xpath("//PMID/text()")[0]
-        doc["title"] = next(iter(root.xpath("//ArticleTitle/text()")), "")
+        pubmed_url = PUBMED_TMPL.replace("PMID", str(pmid))
+        r = get_url(pubmed_url)
+        content = r.content
+        log.info(f"Getting Pubmed URL {pubmed_url}")
+        root = etree.fromstring(content)
 
-        # TODO https://stackoverflow.com/questions/4770191/lxml-etree-element-text-doesnt-return-the-entire-text-from-an-element
-        atext = next(iter(root.xpath("//Abstract/AbstractText/text()")), "")
-        print("Text", atext)
-
-        for abstracttext in root.xpath("//Abstract/AbstractText"):
-            abstext = node_text(abstracttext)
-
-            label = abstracttext.get("Label", None)
-            if label:
-                doc["abstract"] += f"{label}: {abstext}\n"
-            else:
-                doc["abstract"] += f"{abstext}\n"
-
-        doc["abstract"] = doc["abstract"].rstrip()
-
-        doc["authors"] = []
-        for author in root.xpath("//Author"):
-            last_name = next(iter(author.xpath("LastName/text()")), "")
-            first_name = next(iter(author.xpath("ForeName/text()")), "")
-            initials = next(iter(author.xpath("Initials/text()")), "")
-            if not first_name and initials:
-                first_name = initials
-            doc["authors"].append(f"{last_name}, {first_name}")
-
-        pub_year = next(
-            iter(root.xpath("//Journal/JournalIssue/PubDate/Year/text()")), None
-        )
-        pub_mon = next(
-            iter(root.xpath("//Journal/JournalIssue/PubDate/Month/text()")), "Jan"
-        )
-        pub_day = next(
-            iter(root.xpath("//Journal/JournalIssue/PubDate/Day/text()")), "01"
-        )
-
-        pub_date = process_pub_date(pub_year, pub_mon, pub_day)
-
-        doc["pub_date"] = pub_date
-        doc["journal_title"] = next(iter(root.xpath("//Journal/Title/text()")), "")
-        doc["joural_iso_title"] = next(
-            iter(root.xpath("//Journal/ISOAbbreviation/text()")), ""
-        )
-        doc["doi"] = next(iter(root.xpath('//ArticleId[@IdType="doi"]/text()')), None)
-
-        doc["compounds"] = []
-        for chem in root.xpath("//ChemicalList/Chemical/NameOfSubstance"):
-            chem_id = chem.get("UI")
-            doc["compounds"].append({"id": f"MESH:{chem_id}", "name": chem.text})
-
-        compounds = [cmpd["id"] for cmpd in doc["compounds"]]
-        doc["mesh"] = []
-        for mesh in root.xpath("//MeshHeading/DescriptorName"):
-            mesh_id = f"MESH:{mesh.get('UI')}"
-            if mesh_id in compounds:
-                continue
-            doc["mesh"].append({"id": mesh_id, "name": mesh.text})
-
-        return doc
     except Exception as e:
         log.error(
             f"Bad Pubmed request, status: {r.status_code} error: {e}",
             url=f'{PUBMED_TMPL.replace("PMID", pmid)}',
         )
-        return {"message": f"Cannot get PMID: {pubmed_url}"}
+        return {"doc": {}, "message": f"Cannot get PMID: {pubmed_url}"}
+
+    doc["pmid"] = root.xpath("//PMID/text()")[0]
+    print("PMID", doc["pmid"])
+
+    if doc["pmid"] != pmid:
+        log.error("Requested PMID doesn't match record PMID", url=pubmed_url)
+
+    if root.find("PubmedArticle") is not None:
+        doc = parse_journal_article_record(doc, root)
+    elif root.find("PubmedBookArticle") is not None:
+        doc = parse_book_record(doc, root)
+
+    return doc
 
 
 def enhance_pubmed_annotations(pubmed: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -272,10 +332,7 @@ def enhance_pubmed_annotations(pubmed: Mapping[str, Any]) -> Mapping[str, Any]:
             pubmed["annotations"][nsarg]["name"] = term["name"]
             pubmed["annotations"][nsarg]["label"] = term["label"]
             pubmed["annotations"][nsarg]["entity_types"] = list(
-                set(
-                    pubmed["annotations"][nsarg]["entity_types"]
-                    + term.get("entity_types", [])
-                )
+                set(pubmed["annotations"][nsarg]["entity_types"] + term.get("entity_types", []))
             )
             pubmed["annotations"][nsarg]["annotation_types"] = list(
                 set(
