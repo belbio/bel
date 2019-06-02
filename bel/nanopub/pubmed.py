@@ -135,7 +135,13 @@ def process_pub_date(year, mon, day, medline_date):
         if match:
             print("Matches", match)
             year = match.group(0)
-        pub_date = f"{year}-{mon}-{day}"
+
+        if year and re.match("[a-zA-Z]+", mon):
+            pub_date = datetime.datetime.strptime(f"{year}-{mon}-{day}", "%Y-%b-%d").strftime(
+                "%Y-%m-%d"
+            )
+        elif year:
+            pub_date = f"{year}-{mon}-{day}"
 
     else:
         pub_date = None
