@@ -170,7 +170,7 @@ def update_specifications(force: bool = False):
         os.rename(fn, new_fn)
 
     # Convert YAML to enhanced JSON
-    files = glob.glob(f"{spec_dir}/*.yaml")
+    files = glob.glob(f"{spec_dir}/bel_*.yaml")
     versions = {}
     for fn in files:
         filename = os.path.basename(fn)
@@ -278,12 +278,8 @@ def belspec_yaml2json(yaml_fn: str, json_fn: str) -> str:
         with open(json_fn, "w") as f:
             json.dump(spec_dict, f)
 
-    except Exception as e:
-        log.error(
-            "Warning: BEL Specification {yaml_fn} could not be read. Cannot proceed.".format(
-                yaml_fn
-            )
-        )
+    except Exception:
+        log.error(f"Warning: BEL Specification {yaml_fn} could not be read. Cannot proceed.")
         sys.exit()
 
     return spec_dict["version"]
