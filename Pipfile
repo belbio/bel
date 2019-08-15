@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-bel = {editable = true, path = "."}
+bel = {editable = true,path = "."}
 pip = "==18.0"
 
 [dev-packages]
@@ -25,6 +25,8 @@ sphinx-click = "*"
 sphinx-rtd-theme = "*"
 twine = "*"
 pytest-env = "*"
+pep8 = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.7"

@@ -278,8 +278,11 @@ def belspec_yaml2json(yaml_fn: str, json_fn: str) -> str:
         with open(json_fn, "w") as f:
             json.dump(spec_dict, f)
 
-    except Exception:
-        log.error(f"Warning: BEL Specification {yaml_fn} could not be read. Cannot proceed.")
+    except Exception as e:
+        log.error(
+            f"Warning: BEL Specification {yaml_fn} could not be read. Cannot proceed -- error {str(e)}"
+        )
+        print("DumpVar:\n", json.dumps(spec_dict, indent=4))
         sys.exit()
 
     return spec_dict["version"]

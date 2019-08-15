@@ -1,10 +1,10 @@
 import re
+
 import arango
+from structlog import get_logger
 
 import bel.utils as utils
 from bel.Config import config
-
-from structlog import get_logger
 
 log = get_logger()
 
@@ -15,12 +15,7 @@ belapi_db_name = "belapi"
 edgestore_nodes_name = "nodes"  # edgestore node collection name
 edgestore_edges_name = "edges"  # edgestore edge collection name
 edgestore_pipeline_name = "pipeline"  # edgestore pipeline state collection name
-edgestore_pipeline_errors_name = (
-    "pipeline_errors"
-)  # edgestore pipeline errors collection name
-edgestore_pipeline_stats_name = (
-    "pipeline_stats"
-)  # edgestore pipeline stats collection name
+
 
 equiv_nodes_name = "equivalence_nodes"  # equivalence node collection name
 equiv_edges_name = "equivalence_edges"  # equivalence edge collection name
@@ -52,8 +47,7 @@ def get_user_creds(username, password):
         [username, config["bel_api"]["servers"]["arangodb_username"]], default=""
     )
     password = utils.first_true(
-        [password, config["secrets"]["bel_api"]["servers"].get("arangodb_password")],
-        default="",
+        [password, config["secrets"]["bel_api"]["servers"].get("arangodb_password")], default=""
     )
 
     return username, password
@@ -62,20 +56,13 @@ def get_user_creds(username, password):
 def get_client(host=None, port=None, username=None, password=None, enable_logging=True):
     """Get arango client and edgestore db handle"""
 
-    host = utils.first_true(
-        [host, config["bel_api"]["servers"]["arangodb_host"], "localhost"]
-    )
+    host = utils.first_true([host, config["bel_api"]["servers"]["arangodb_host"], "localhost"])
     port = utils.first_true([port, config["bel_api"]["servers"]["arangodb_port"], 8529])
-    username = utils.first_true(
-        [username, config["bel_api"]["servers"]["arangodb_username"], ""]
-    )
+    username = utils.first_true([username, config["bel_api"]["servers"]["arangodb_username"], ""])
     password = utils.first_true(
         [
             password,
-            config.get(
-                "secrets",
-                config["secrets"]["bel_api"]["servers"].get("arangodb_password"),
-            ),
+            config.get("secrets", config["secrets"]["bel_api"]["servers"].get("arangodb_password")),
             "",
         ]
     )
@@ -102,8 +89,6 @@ def get_edgestore_handle(
     edgestore_edges_name: str = edgestore_edges_name,
     edgestore_nodes_name: str = edgestore_nodes_name,
     edgestore_pipeline_name: str = edgestore_pipeline_name,
-    edgestore_pipeline_stats_name: str = edgestore_pipeline_stats_name,
-    edgestore_pipeline_errors_name: str = edgestore_pipeline_errors_name,
 ) -> arango.database.StandardDatabase:
     """Get Edgestore arangodb database handle
 
@@ -121,67 +106,52 @@ def get_edgestore_handle(
 
     (username, password) = get_user_creds(username, password)
 
+    # client is created when module is first imported
     sys_db = client.db("_system", username=username, password=password)
 
-    # Create a new database named "edgestore"
-    try:
+    # Create a new database for Edgestore
+    if sys_db.has_database(edgestore_db_name):
         if username and password:
-            edgestore_db = sys_db.create_database(
+            edgestore_db = client.db(edgestore_db_name, username=username, password=password)
+        else:
+            edgestore_db = client.db(edgestore_db_name)
+    else:
+        if username and password:
+            sys_db.create_database(
                 name=edgestore_db_name,
                 users=[{"username": username, "password": password, "active": True}],
             )
         else:
-            edgestore_db = sys_db.create_database(name=edgestore_db_name)
-    except arango.exceptions.DatabaseCreateError:
-        if username and password:
-            edgestore_db = client.db(
-                edgestore_db_name, username=username, password=password
-            )
-        else:
-            edgestore_db = client.db(edgestore_db_name)
+            sys_db.create_database(name=edgestore_db_name)
+        edgestore_db = client.db(edgestore_db_name)
 
-    # TODO - add a skiplist index for _from? or _key? to be able to do paging?
-    # has_collection function doesn't seem to be working
-    # if not edgestore_db.has_collection(edgestore_nodes_name):
-    try:
-        nodes = edgestore_db.create_collection(
-            edgestore_nodes_name, index_bucket_count=64
+    # Add edges collection
+    if edgestore_db.has_collection(edgestore_edges_name):
+        edges_coll = edgestore_db.collection(edgestore_edges_name)
+    else:
+        edges_coll = edgestore_db.create_collection(edgestore_edges_name, index_bucket_count=64)
+        edges_coll.add_hash_index(fields=["relation"], unique=False)
+        edges_coll.add_hash_index(fields=["edge_types"], unique=False)
+        edges_coll.add_hash_index(fields=["nanopub_id"], unique=False)
+        edges_coll.add_hash_index(fields=["metadata.project"], unique=False)
+        edges_coll.add_hash_index(fields=["annotations[*].id"], unique=False)
+
+    # Add nodes collection
+    if edgestore_db.has_collection(edgestore_nodes_name):
+        nodes_coll = edgestore_db.collection(edgestore_nodes_name)
+    else:
+        nodes_coll = edgestore_db.create_collection(edgestore_nodes_name, index_bucket_count=64)
+        nodes_coll.add_hash_index(fields=["name"], unique=False)
+        nodes_coll.add_hash_index(fields=["components"], unique=False)
+
+    # Add pipeline_info collection
+    if edgestore_db.has_collection(edgestore_pipeline_name):
+        pipeline_coll = edgestore_db.collection(edgestore_pipeline_name)
+    else:
+        pipeline_coll = edgestore_db.create_collection(
+            edgestore_pipeline_name, index_bucket_count=64
         )
-        nodes.add_hash_index(fields=["name"], unique=False)
-        nodes.add_hash_index(
-            fields=["components"], unique=False
-        )  # add subject/object components as node properties
-    except Exception:
-        pass
-
-    # if not edgestore_db.has_collection(edgestore_edges_name):
-    try:
-        edges = edgestore_db.create_collection(
-            edgestore_edges_name, edge=True, index_bucket_count=64
-        )
-        edges.add_hash_index(fields=["relation"], unique=False)
-        edges.add_hash_index(fields=["edge_types"], unique=False)
-        edges.add_hash_index(fields=["nanopub_id"], unique=False)
-        edges.add_hash_index(fields=["metadata.project"], unique=False)
-        edges.add_hash_index(fields=["annotations[*].id"], unique=False)
-    except Exception:
-        pass
-
-    # if not edgestore_db.has_collection(edgestore_pipeline_name):
-    try:
-        edgestore_db.create_collection(edgestore_pipeline_name)
-    except Exception:
-        pass
-
-    try:
-        edgestore_db.create_collection(edgestore_pipeline_errors_name)
-    except Exception:
-        pass
-
-    try:
-        edgestore_db.create_collection(edgestore_pipeline_stats_name)
-    except arango.exceptions.CollectionCreateError as e:
-        pass
+        pipeline_coll.add_persistent_index(fields=["processed_ts"], sparse=False)
 
     return edgestore_db
 
@@ -214,9 +184,7 @@ def get_belns_handle(client, username=None, password=None):
         pass
 
     try:
-        equiv_nodes = belns_db.create_collection(
-            equiv_nodes_name, index_bucket_count=64
-        )
+        equiv_nodes = belns_db.create_collection(equiv_nodes_name, index_bucket_count=64)
         equiv_nodes.add_hash_index(fields=["name"], unique=True)
     except Exception:
         pass
@@ -227,17 +195,13 @@ def get_belns_handle(client, username=None, password=None):
         pass
 
     try:
-        ortholog_nodes = belns_db.create_collection(
-            ortholog_nodes_name, index_bucket_count=64
-        )
+        ortholog_nodes = belns_db.create_collection(ortholog_nodes_name, index_bucket_count=64)
         ortholog_nodes.add_hash_index(fields=["name"], unique=True)
     except Exception:
         pass
 
     try:
-        belns_db.create_collection(
-            ortholog_edges_name, edge=True, index_bucket_count=64
-        )
+        belns_db.create_collection(ortholog_edges_name, edge=True, index_bucket_count=64)
     except Exception:
         pass
 
@@ -334,9 +298,7 @@ def batch_load_docs(db, doc_iterator, on_duplicate="replace"):
 
     log.info(f"Bulk import arangodb: {counter}")
     for cname in docs:
-        collections[cname].import_bulk(
-            docs[cname], on_duplicate=on_duplicate, halt_on_error=False
-        )
+        collections[cname].import_bulk(docs[cname], on_duplicate=on_duplicate, halt_on_error=False)
         docs[cname] = []
 
 
@@ -352,9 +314,7 @@ def arango_id_to_key(_id):
 
     key = re.sub(r"[^a-zA-Z0-9\_\-\:\.\@\(\)\+\,\=\;\$\!\*\%]+", r"_", _id)
     if len(key) > 254:
-        log.error(
-            f"Arango _key cannot be longer than 254 chars: Len={len(key)}  Key: {key}"
-        )
+        log.error(f"Arango _key cannot be longer than 254 chars: Len={len(key)}  Key: {key}")
     elif len(key) < 1:
         log.error(f"Arango _key cannot be an empty string: Len={len(key)}  Key: {key}")
 

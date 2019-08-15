@@ -6,21 +6,19 @@ Usage:  program.py <customer>
 
 """
 
-from typing import Mapping, Any, List, MutableSequence
 import copy
 import json
-import sys
 import os
-
-import bel.lang.belobj
-import bel.lang.bel_specification
-import bel.db.arangodb as arangodb
-import bel.utils as utils
-
-
-from bel.Config import config
+import sys
+from typing import Any, List, Mapping, MutableSequence
 
 import structlog
+
+import bel.db.arangodb as arangodb
+import bel.lang.bel_specification
+import bel.lang.belobj
+import bel.utils as utils
+from bel.Config import config
 
 log = structlog.getLogger(__name__)
 
@@ -57,6 +55,7 @@ def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targ
                     "edge_dt": edge_dt,
                     "nanopub_url": nanopub_url,
                     "nanopub_id": nanopub_id,
+                    "nanopub_status": nanopub_status,
                     "citation": citation,
                     "subject_canon": subj_canon,
                     "subject": subj_lbl,
@@ -120,6 +119,11 @@ def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targ
     master_metadata.pop("gd_abstract", None)
 
     nanopub_type = nanopub["nanopub"]["metadata"].get("nanopub_type")
+    nanopub_status = ""
+    if nanopub["nanopub"]["metadata"].get("gd_status", False):
+        nanopub_status = nanopub["nanopub"]["metadata"]["gd_status"]
+    elif nanopub["nanopub"]["metadata"].get("status", False):
+        nanopub_status = nanopub["nanopub"]["metadata"]["status"]
 
     # Create Edge Assertion Info ##############################################
     # r = generate_assertion_edge_info(nanopub['nanopub']['assertions'], orig_species_id, orthologize_targets, bel_version, api_url, nanopub_type)
@@ -163,6 +167,7 @@ def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targ
                     "edge_dt": edge_dt,
                     "nanopub_url": nanopub_url,
                     "nanopub_id": nanopub["nanopub"]["id"],
+                    "nanopub_status": nanopub_status,
                     "citation": citation_string,
                     "subject_canon": edge_info["canonical"]["subject"],
                     "subject": edge_info["decanonical"]["subject"],

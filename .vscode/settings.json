@@ -1,3 +1,18 @@
 {
-    "python.pythonPath": "${workspaceFolder}/.venv/bin/python"
+    "python.pythonPath": "/Users/william/.virtualenvs/bel-wvk-0dh9/bin/python",
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#a6f291",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#708cee",
+        "activityBarBadge.foreground": "#15202b",
+        "titleBar.activeBackground": "#81ec64",
+        "titleBar.inactiveBackground": "#81ec6499",
+        "titleBar.activeForeground": "#15202b",
+        "titleBar.inactiveForeground": "#15202b99",
+        "statusBar.background": "#81ec64",
+        "statusBarItem.hoverBackground": "#5ce637",
+        "statusBar.foreground": "#15202b"
+    },
+    "peacock.color": "#81ec64"
 }
