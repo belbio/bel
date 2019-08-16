@@ -4,8 +4,7 @@ import bel.lang.belobj
 from bel.Config import config
 
 bo = bel.lang.belobj.BEL(
-    config["bel"]["lang"]["default_bel_version"],
-    config["bel_api"]["servers"]["api_url"],
+    config["bel"]["lang"]["default_bel_version"], config["bel_api"]["servers"]["api_url"]
 )
 
 SPECIFIED_VERSION_UNDERLINED = config["bel"]["lang"]["default_bel_version"]
@@ -13,6 +12,14 @@ SPECIFIED_VERSION_UNDERLINED = config["bel"]["lang"]["default_bel_version"]
 #######################
 # SEMANTIC TEST CASES #
 #######################
+
+
+def test_term_validation():
+
+    s = 'a(CHEBI:"1,5-anhydro-D-glucitol")'
+    bo.parse(s).semantic_validation()
+    print("Comma validation", bo.parse_valid, "Msg", bo.validation_messages)
+    assert bo.parse_valid
 
 
 def test_bad_function():
@@ -55,9 +62,7 @@ def test_valid_statements():
 
     for s in stmts:
         bo.parse(s).semantic_validation()
-        error_msgs = [
-            msg for msg_level, msg in bo.validation_messages if msg_level == "ERROR"
-        ]
+        error_msgs = [msg for msg_level, msg in bo.validation_messages if msg_level == "ERROR"]
         assert error_msgs == []
 
 
@@ -73,11 +78,7 @@ def test_complex_nsarg():
     for s in stmts:
         bo.parse(s).semantic_validation()
         print(bo.validation_messages)
-        error_msgs = [
-            msg for msg_level, msg in bo.validation_messages if msg_level == "ERROR"
-        ]
-        warning_msgs = [
-            msg for msg_level, msg in bo.validation_messages if msg_level == "WARNING"
-        ]
+        error_msgs = [msg for msg_level, msg in bo.validation_messages if msg_level == "ERROR"]
+        warning_msgs = [msg for msg_level, msg in bo.validation_messages if msg_level == "WARNING"]
         assert error_msgs == []
         assert warning_msgs == []
