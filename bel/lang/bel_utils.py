@@ -1,18 +1,18 @@
 # BEL object utilities
 
-import re
-import json
-import yaml
 import copy
-from typing import Mapping, List
-
-from bel.lang.ast import NSArg
-from bel.Config import config
-from bel.utils import get_url, url_path_param_quoting
-import bel.terms.terms
-import bel.terms.orthologs
-
+import json
 import logging
+import re
+from typing import List, Mapping
+
+import yaml
+
+import bel.terms.orthologs
+import bel.terms.terms
+from bel.Config import config
+from bel.lang.ast import NSArg
+from bel.utils import get_url, url_path_param_quoting
 
 log = logging.getLogger(__name__)
 
@@ -66,9 +66,7 @@ def convert_nsarg(
             return nsarg
     else:
 
-        api_url = (
-            api_url + "/terms/{}/canonicalized"
-        )  # overriding with namespace_targets
+        api_url = api_url + "/terms/{}/canonicalized"  # overriding with namespace_targets
 
     request_url = api_url.format(url_path_param_quoting(nsarg))
 
@@ -150,9 +148,7 @@ def convert_namespaces_ast(
         given_term_id = "{}:{}".format(ast.namespace, ast.value)
 
         # Get normalized term if necessary
-        if (canonicalize and not ast.canonical) or (
-            decanonicalize and not ast.decanonical
-        ):
+        if (canonicalize and not ast.canonical) or (decanonicalize and not ast.decanonical):
             normalized_term = convert_nsarg(
                 given_term_id,
                 api_url=api_url,
@@ -249,9 +245,7 @@ def orthologize(ast, bo, species_id: str):
     #     import pdb; pdb.set_trace()
 
     if not species_id:
-        bo.validation_messages.append(
-            ("WARNING", "No species id was provided for orthologization")
-        )
+        bo.validation_messages.append(("WARNING", "No species id was provided for orthologization"))
         return ast
 
     if isinstance(ast, NSArg):
@@ -264,9 +258,7 @@ def orthologize(ast, bo, species_id: str):
                 ast.canonical = ast.orthologs[species_id]["canonical"]
                 ast.decanonical = ast.orthologs[species_id]["decanonical"]
                 ast.orthologized = True
-                bo.ast.species.add(
-                    (species_id, ast.orthologs[species_id]["species_label"])
-                )
+                bo.ast.species.add((species_id, ast.orthologs[species_id]["species_label"]))
             else:
                 bo.ast.species.add((ast.species_id, ast.species_label))
                 bo.validation_messages.append(
@@ -297,9 +289,7 @@ def populate_ast_nsarg_orthologs(ast, species):
 
     if isinstance(ast, NSArg):
         if re.match(ortholog_namespace, ast.canonical):
-            orthologs = bel.terms.orthologs.get_orthologs(
-                ast.canonical, list(species.keys())
-            )
+            orthologs = bel.terms.orthologs.get_orthologs(ast.canonical, list(species.keys()))
             for species_id in species:
                 if species_id in orthologs:
                     orthologs[species_id]["species_label"] = species[species_id]
@@ -323,10 +313,12 @@ def preprocess_bel_stmt(stmt: str) -> str:
     Returns:
         cleaned BEL statement
     """
+    # TODO - statement formatting should be done by reassembling the AST -
+    #   the comma, space formatting breaks Term validation
 
     stmt = stmt.strip()  # remove newline at end of stmt
     stmt = re.sub(r",+", ",", stmt)  # remove multiple commas
-    stmt = re.sub(r",", ", ", stmt)  # add space after each comma
+    # stmt = re.sub(r",", ", ", stmt)  # add space after each comma  BREAKS Validation
     stmt = re.sub(r" +", " ", stmt)  # remove multiple spaces
 
     return stmt
@@ -343,9 +335,7 @@ def quoting_nsarg(nsarg_value):
     """
     quoted = re.findall(r'^"(.*)"$', nsarg_value)
 
-    if re.search(
-        r"[),\s]", nsarg_value
-    ):  # quote only if it contains whitespace, comma or ')'
+    if re.search(r"[),\s]", nsarg_value):  # quote only if it contains whitespace, comma or ')'
         if quoted:
             return nsarg_value
         else:
@@ -406,16 +396,13 @@ def handle_parser_syntax_error(e):
 
     err_visualizer = "{}\n{}^".format(text, leading)
     if undefined_type == "relations":
-        error_msg = (
-            "Failed parse at position {}. "
-            "Check that you have a valid relation.".format(col_failed)
+        error_msg = "Failed parse at position {}. " "Check that you have a valid relation.".format(
+            col_failed
         )
     elif undefined_type == "funcs":
         error_msg = (
             "Failed parse at position {}. "
-            "Check that you have a valid primary or modifier function.".format(
-                col_failed
-            )
+            "Check that you have a valid primary or modifier function.".format(col_failed)
         )
     elif undefined_type == "function_open":
         error_msg = (
@@ -439,9 +426,7 @@ def handle_parser_syntax_error(e):
     else:
         error_msg = (
             "Failed parse at position {}. "
-            "Check to make sure commas/spaces are not missing.".format(
-                col_failed, undefined_type
-            )
+            "Check to make sure commas/spaces are not missing.".format(col_failed, undefined_type)
         )
 
     return error_msg, err_visualizer
@@ -505,9 +490,7 @@ def _default_to_version(version, available_versions):
 
     if best_choice is not None:
         log.error(
-            "Version {} not available in library. Defaulting to {}.".format(
-                version, best_choice
-            )
+            "Version {} not available in library. Defaulting to {}.".format(version, best_choice)
         )
     else:
         log.error("Version {} not available in library.".format(version))
