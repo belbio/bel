@@ -129,7 +129,9 @@ def get_edgestore_handle(
     if edgestore_db.has_collection(edgestore_edges_name):
         edges_coll = edgestore_db.collection(edgestore_edges_name)
     else:
-        edges_coll = edgestore_db.create_collection(edgestore_edges_name, index_bucket_count=64)
+        edges_coll = edgestore_db.create_collection(
+            edgestore_edges_name, edge=True, index_bucket_count=64
+        )
         edges_coll.add_hash_index(fields=["relation"], unique=False)
         edges_coll.add_hash_index(fields=["edge_types"], unique=False)
         edges_coll.add_hash_index(fields=["nanopub_id"], unique=False)

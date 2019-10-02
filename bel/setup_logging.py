@@ -1,4 +1,5 @@
 import logging.config
+
 from structlog import configure, processors, stdlib, threadlocal
 
 # Found in https://blog.sneawo.com/blog/2017/07/28/json-logging-in-python/

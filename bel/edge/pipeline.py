@@ -44,7 +44,9 @@ def get_edges_for_nanopub(nanopub_id):
         return None
 
 
-def process_nanopub(nanopub_url, orthologize_targets: list = [], overwrite: bool = False):
+def process_nanopub(
+    nanopub_url, orthologize_targets: list = [], overwrite: bool = False, token: str = None
+):
 
     log.info("Processing nanopub", nanopub_url=nanopub_url)
 
@@ -55,9 +57,14 @@ def process_nanopub(nanopub_url, orthologize_targets: list = [], overwrite: bool
     start_time = datetime.datetime.now()
 
     # collect nanopub
-    r = requests.get(nanopub_url)
+    headers = {}
+    if token:
+        headers = {"Authorization": f"Bearer {token}"}
+
+    r = requests.get(nanopub_url, headers=headers)
+
     nanopub = r.json()
-    # log.debug(f"Nanopub {nanopub_url}", nanopub=nanopub)
+    log.debug(f"Nanopub {nanopub_url}", nanopub=nanopub)
 
     assertions = []
     for assertion in nanopub["nanopub"].get("assertions", []):
@@ -98,7 +105,6 @@ def process_nanopub(nanopub_url, orthologize_targets: list = [], overwrite: bool
 
     end_time3 = datetime.datetime.now()
     delta_ms = f"{(end_time3 - end_time2).total_seconds() * 1000:.1f}"
-    log.info("Timing - Get edges for nanopub", delta_ms=delta_ms, results=results)
 
     if results["success"]:
 
@@ -161,6 +167,9 @@ def load_edges_into_db(
     # Collect edges and nodes to load into arangodb
     node_list, edge_list = [], []
     for doc in edge_iterator(edges=edges):
+
+        log.error("Edge to be inserted", doc=doc)
+
         if doc[0] == "nodes":
             node_list.append(doc[1])
         else:

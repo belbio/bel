@@ -14,5 +14,6 @@
         "statusBarItem.hoverBackground": "#5ce637",
         "statusBar.foreground": "#15202b"
     },
-    "peacock.color": "#81ec64"
+    "peacock.color": "#81ec64",
+    "deepcode.review.results.hideInformationIssues": false
 }
