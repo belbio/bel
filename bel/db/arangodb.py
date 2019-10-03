@@ -67,11 +67,8 @@ def get_client(host=None, port=None, username=None, password=None, enable_loggin
         ]
     )
 
-    client = arango.client.ArangoClient(
-        protocol=config["bel_api"]["servers"]["arangodb_protocol"], host=host, port=port
-    )
-
-    return client
+    arango_url = f"http://{host}:{port}"
+    return arango.ArangoClient(hosts=arango_url)
 
 
 def aql_query(db, query):

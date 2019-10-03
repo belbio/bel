@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Fixed
 
+## \[0.13.0\] Oct 3, 2019
+
+### Changed
+
+-   Requires python-arango 5.1.0 or better
+
 ## \[0.4.3\] Aug 16, 2018
 
 [Full Commit Log](https://github.com/belbio/bel_api/compare/v0.3.1...v0.4.3)
@@ -22,5 +28,5 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Fixed
 
--   Fixed term completion species\_id bug
+-   Fixed term completion species_id bug
 -   Added missing parameters to Swagger docs

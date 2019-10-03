@@ -9,7 +9,7 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import Command, find_packages, setup
 
 # Package meta-data.
 NAME = "bel"
@@ -27,7 +27,7 @@ REQUIRED = [
     "Jinja2",
     "jsonschema",
     "lxml",
-    "python-arango",
+    "python-arango>=5.1",
     "python-dateutil",
     "python-json-logger",
     "pyyaml>5",
