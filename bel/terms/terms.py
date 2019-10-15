@@ -1,22 +1,21 @@
-from typing import Mapping, List, Union
 import re
+from typing import List, Mapping, Union
 
-import bel.db.elasticsearch
+import structlog
+
 import bel.db.arangodb
-
+import bel.db.elasticsearch
 from bel.Config import config
 
 # import logging
 # log = logging.getLogger(__name__)
 
-import structlog
 
 log = structlog.getLogger()
 
 es = bel.db.elasticsearch.get_client()
 
 arangodb_client = bel.db.arangodb.get_client()
-belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)
 
 
 def get_terms(term_id):
@@ -55,6 +54,12 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
     Returns:
         List[Mapping[str, Union[str, bool]]]: e.g. [{'term_id': 'HGNC:5', 'namespace': 'HGNC'}, 'primary': False]
     """
+    if not arangodb_client:
+        print("Cannot get equivalents without arangodb access")
+        quit()
+
+    belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)
+
     try:
         errors = []
         terms = get_terms(term_id)

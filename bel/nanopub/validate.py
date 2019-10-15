@@ -1,11 +1,11 @@
-from typing import Tuple
 import re
+from typing import Tuple
+
+import structlog
 
 import bel.db.elasticsearch
 import bel.lang.belobj
 from bel.Config import config
-
-import structlog
 
 log = structlog.getLogger(__name__)
 
@@ -43,7 +43,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
     """
 
     # Validation results
-    v = []
+    validation_results = []
 
     bel_version = config["bel"]["lang"]["default_bel_version"]
 
@@ -51,7 +51,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
     try:
         if not isinstance(nanopub["nanopub"]["assertions"], list):
             msg = "Assertions must be a list/array"
-            v.append(
+            validation_results.append(
                 {
                     "level": "Error",
                     "section": "Structure",
@@ -62,7 +62,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
             )
     except Exception as e:
         msg = 'Missing nanopub["nanopub"]["assertions"]'
-        v.append(
+        validation_results.append(
             {
                 "level": "Error",
                 "section": "Structure",
@@ -73,17 +73,14 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
         )
 
     try:
-        if (
-            "name" in nanopub["nanopub"]["type"]
-            and "version" in nanopub["nanopub"]["type"]
-        ):
+        if "name" in nanopub["nanopub"]["type"] and "version" in nanopub["nanopub"]["type"]:
             pass
         if nanopub["nanopub"]["type"]["name"].upper() == "BEL":
             bel_version = nanopub["nanopub"]["type"]["version"]
 
     except Exception as e:
         msg = 'Missing or badly formed type - must have nanopub["nanopub"]["type"] = {"name": <name>, "version": <version}'
-        v.append(
+        validation_results.append(
             {
                 "level": "Error",
                 "section": "Structure",
@@ -98,8 +95,10 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
             if key in nanopub["nanopub"]["citation"]:
                 break
         else:
-            msg = 'nanopub["nanopub"]["citation"] must have either a uri, database or reference key.'
-            v.append(
+            msg = (
+                'nanopub["nanopub"]["citation"] must have either a uri, database or reference key.'
+            )
+            validation_results.append(
                 {
                     "level": "Error",
                     "section": "Structure",
@@ -110,7 +109,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
             )
     except Exception as e:
         msg = 'nanopub["nanopub"] must have a "citation" key with either a uri, database or reference key.'
-        v.append(
+        validation_results.append(
             {
                 "level": "Error",
                 "section": "Structure",
@@ -123,9 +122,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
     # Assertion checks
     if "assertions" in nanopub["nanopub"]:
         for idx, assertion in enumerate(nanopub["nanopub"]["assertions"]):
-            bo = bel.lang.belobj.BEL(
-                bel_version, config["bel_api"]["servers"]["api_url"]
-            )
+            bo = bel.lang.belobj.BEL(bel_version, config["bel_api"]["servers"]["api_url"])
             belstr = f'{assertion.get("subject")} {assertion.get("relation", "")} {assertion.get("object", "")}'
             belstr = belstr.replace("None", "")
             try:
@@ -139,7 +136,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
                     (level, msg) = message
                     if error_level == "ERROR":
                         if level == "ERROR":
-                            v.append(
+                            validation_results.append(
                                 {
                                     "level": f"{level.title()}",
                                     "section": "Assertion",
@@ -150,7 +147,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
                                 }
                             )
                     else:
-                        v.append(
+                        validation_results.append(
                             {
                                 "level": f"{level.title()}",
                                 "section": "Assertion",
@@ -163,7 +160,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
 
             except Exception as e:
                 msg = f"Could not parse: {belstr}"
-                v.append(
+                validation_results.append(
                     {
                         "level": "Error",
                         "section": "Assertion",
@@ -193,7 +190,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
                 result = results["hits"]["hits"][0]["_source"]
                 if term_type not in result["annotation_types"]:
                     msg = f'Annotation type: {term_type} for {term_id} does not match annotation types in database: {result["annotation_types"]}'
-                    v.append(
+                    validation_results.append(
                         {
                             "level": "Warning",
                             "section": "Annotation",
@@ -205,7 +202,7 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
                     )
             else:
                 msg = f"Annotation term: {term_id} not found in database"
-                v.append(
+                validation_results.append(
                     {
                         "level": "Warning",
                         "section": "Annotation",
@@ -216,4 +213,4 @@ def validate(nanopub: dict, error_level: str = "WARNING") -> Tuple[str, str, str
                     }
                 )
 
-    return v
+    return validation_results

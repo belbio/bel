@@ -1,16 +1,15 @@
 from typing import List
 
+import structlog
+
 import bel.db.arangodb
 import bel.terms.terms
-
-import structlog
 
 log = structlog.getLogger()
 
 default_canonical_namespace = "EG"  # for genes, proteins
 
 arangodb_client = bel.db.arangodb.get_client()
-belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)
 
 
 def get_orthologs(canonical_gene_id: str, species: list = []) -> List[dict]:
@@ -51,7 +50,13 @@ def get_orthologs(canonical_gene_id: str, species: list = []) -> List[dict]:
         RETURN {{ 'orthologs': FLATTEN(UNION(start, orthologs)) }}
     """
 
+    if not arango_client:
+        print("Cannot get orthologs without ArangoDB access")
+        quit()
+    belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)
+
     cursor = belns_db.aql.execute(query, batch_size=20)
+
     results = cursor.pop()
     for ortholog in results["orthologs"]:
         norms = bel.terms.terms.get_normalized_terms(ortholog["name"])

@@ -68,7 +68,14 @@ def get_client(host=None, port=None, username=None, password=None, enable_loggin
     )
 
     arango_url = f"http://{host}:{port}"
-    return arango.ArangoClient(hosts=arango_url)
+    try:
+        client = arango.ArangoClient(hosts=arango_url)
+        client.db(verify=True)
+        return client
+
+    except Exception as e:
+        log.warning(f"Cannot access arangodb at {arango_url}")
+        return None
 
 
 def aql_query(db, query):
@@ -157,6 +164,8 @@ def get_edgestore_handle(
 
 def get_belns_handle(client, username=None, password=None):
     """Get BEL namespace arango db handle"""
+
+    print("Here", client, "||")
 
     (username, password) = get_user_creds(username, password)
 

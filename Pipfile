@@ -27,6 +27,7 @@ twine = "*"
 pytest-env = "*"
 pep8 = "*"
 pylint = "*"
+isort = "*"
 
 [requires]
 python_version = "3.7"

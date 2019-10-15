@@ -24,9 +24,6 @@ log = structlog.getLogger(__name__)
 
 Edges = MutableSequence[Mapping[str, Any]]
 
-arango_client = arangodb.get_client()
-edgestore_db = arangodb.get_edgestore_handle(arango_client)
-
 
 def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targets: list = []):
     """Process nanopub into edges and load into EdgeStore

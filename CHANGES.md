@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Changed
 
+-   Only requires ArangoDB access for tasks specifically using ArangoDB
+
 ### Fixed
 
 ## \[0.13.0\] Oct 3, 2019
