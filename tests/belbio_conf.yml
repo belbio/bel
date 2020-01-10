@@ -1,0 +1,159 @@
+# YAML Configuration file for BELbio tools
+# Uses virtualenv for BELbio API and server for Elasticsearch/ArangoDB
+
+# bel package settings
+bel:
+  lang:
+    default_bel_version: 2.0.0
+
+    # Location of BEL Language Specification yaml files for different versions
+    specifications: /Users/william/studio/dev/bel_specifications
+
+    # Collect necessary files from belbio/bel_specifications repo if True
+    specification_github_repo: True
+
+    # Term Canonicalization and decanonicalization
+    # Note that we don't decanonicalize CHEBI (this is not necessarily a symmetric process)
+    canonical:
+      HGNC: ["EG", "SP"]
+      MGI: ["EG", "SP"]
+      RGD: ["EG", "SP"]
+      ZFIN: ["EG", "SP"]
+      SP: ["EG"]
+      CHEMBL: ["CHEBI"]
+
+    decanonical:
+      # EG will convert into the first valid namespace based on species
+      EG: ['HGNC', "MGI", 'RGD', "ZFIN", "SP"]
+      SP: ['HGNC', "MGI", 'RGD', "ZFIN"]
+
+  nanopub:
+    # JSON Schema for BEL Nanopubs (in YAML format :)
+    schema_uri: https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.0.0.yaml
+
+    # Rules to apply for computing BEL Edges from BEL Nanopubs
+    # pipeline_edge_rules: ["component_of", "degradation"]
+    pipeline_edge_rules: []  # If empty, don't filter out any of the compute rules
+
+# bel_api service settings
+bel_api:
+
+  # Should we require authentication in API?
+  authenticated: false
+
+  mail:
+    api: "https://api.mailgun.net/v3/mg.biodati.com"
+    api_key: key-3889184692a942591b7e7de67b0a892d
+    admin_email: admin@biodati.com
+
+  search:
+    # Boost these namespace in term search results and completions
+    boost_namespaces: ['HGNC', 'MGI', 'RGD', 'ZFIN', 'CHEBI', 'GO']
+
+    # Term completion only applies species filtering to following entity types
+    species_entity_types: ['Gene', 'Protein', 'RNA', 'Micro_RNA']
+
+  # For accessing localhost from docker on a mac, use special dns name 'docker.for.mac.localhost'
+  servers:
+    server_type: DEV
+
+    # api_url: http://localhost:8181
+    api_url: http://belapi.dev.biodati.test
+    # api_url: https://api.bel.bio
+
+    # elasticsearch: http://docker.for.mac.localhost:9200
+    # elasticsearch: http://localhost:9200
+    elasticsearch: http://dev.biodati.test:9200
+
+    # arangodb_host: docker.for.mac.localhost
+    # arangodb_host: api.bel.bio
+    arangodb_host: dev.biodati.test
+    arangodb_protocol: http
+    arangodb_port: 8529
+    arangodb_username: ''
+    # arangodb_password - comes from secrets file - will be merged in as config['secrets']['bel_api']['servers']['arangodb_password']
+
+    nanopubstore: "http://nanopubstore.dev.biodati.test"
+
+  edges:
+    orthologize_targets: ["TAX:9606", "TAX:10090"]
+
+
+bel_resources:
+
+  # restrict collecting to listed species, empty array means collect everything
+  # species_list: ['TAX:9606', 'TAX:10090']
+  species_list: ['TAX:9606', 'TAX:10090', 'TAX:10116', 'TAX:7955']
+  # species_list: []
+
+  # Will download new source datafiles if older than 7 days if cannot determine
+  #    source file modification date (some FTP sites or Web files make it hard)
+  update_cycle_days: 7
+
+  # Everything is relative to bel_resources root folder unless it starts with '/'
+  file_locations:
+
+    # Root - root folder of bel_resources - added automatically - 2 levels above Config.py
+    root: '/Users/william/belbio/bel_resources'
+
+    # Downloads - location for all source datafiles to be stored
+    downloads: downloads
+
+    # Data files - converted from source databases into standard formats
+    data: data
+
+    # Resources - static resources deployed with repository
+    resources: resources
+
+    # Tools directory
+    tools: tools
+
+    # Namespaces metadata definition file
+    namespaces_definition: resources/namespaces.yml
+
+  # openbel related resource configuration
+  openbel:
+    # Used to select what to convert using tools/terms/openbel_annotations.py
+    openbel_annotation_sources:
+      Anatomy: http://resources.openbel.org/belframework/20150611/annotation/anatomy.belanno
+      Cell: http://resources.openbel.org/belframework/20150611/annotation/cell.belanno
+      CellLine: http://resources.openbel.org/belframework/20150611/annotation/cell-line.belanno
+      Eco: http://belief-demo.scai.fraunhofer.de/openbel/repository/annotation/evidence.belanno
+
+    # Used to select what to convert using tools/terms/openbel_namespaces.py
+    openbel_namespace_sources:
+      AFFX: http://resources.openbel.org/belframework/20150611/namespace/affy-probeset-ids.belns
+      # LMSD: http://belief-demo.scai.fraunhofer.de/openbel/repository/namespaces/LMSD.belns
+      PMIBP: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmibp.belns
+      PMICHEM: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmichem.belns
+      PMICOMP: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmicomp.belns
+      PMIDIS: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmidis.belns
+      PMIPFAM: http://belief-demo.scai.fraunhofer.de/BeliefDashboard/dicten/namespaces/pmipfam.belns
+      SCHEM: http://resources.openbel.org/belframework/20150611/namespace/selventa-legacy-chemicals.belns
+      SCOMP: http://resources.openbel.org/belframework/20150611/namespace/selventa-named-complexes.belns
+      SDIS: http://resources.openbel.org/belframework/20150611/namespace/selventa-legacy-diseases.belns
+      SFAM: http://resources.openbel.org/belframework/20150611/namespace/selventa-protein-families.belns
+
+logging:
+  version: 1
+  disable_existing_loggers: False
+  formatters:
+    json:
+      (): structlog.stdlib.ProcessorFormatter
+      processor: structlog.processors.JSONRenderer()
+      foreign_pre_chain: pre_chain
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: INFO
+      formatter: json
+      stream: ext://sys.stdout
+  loggers:
+    root:
+      level: INFO
+      handlers: [console]
+      propagate: True
+    elasticsearch:
+      level: WARNING
+    urllib3:
+      level: CRITICAL

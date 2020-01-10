@@ -21,7 +21,7 @@ from structlog import get_logger
 
 log = get_logger()
 
-requests_cache.install_cache(backend="sqlite", expire_after=600)
+requests_cache.install_cache("requests_cache", backend="sqlite", expire_after=600)
 
 
 def get_url(url: str, params: dict = {}, timeout: float = 5.0, cache: bool = True):
@@ -201,12 +201,7 @@ class Timer(object):
     """
 
     def __init__(
-        self,
-        timer=default_timer,
-        factor=1000,
-        output=None,
-        fmt="took {:.1f} ms",
-        prefix="",
+        self, timer=default_timer, factor=1000, output=None, fmt="took {:.1f} ms", prefix=""
     ):
         self.timer = timer
         self.factor = factor
@@ -286,9 +281,7 @@ def timer(
 
         return wrapped
 
-    if len(func_or_func_args) == 1 and isinstance(
-        func_or_func_args[0], collections.Callable
-    ):
+    if len(func_or_func_args) == 1 and isinstance(func_or_func_args[0], collections.Callable):
         return wrapped_f(func_or_func_args[0])
     else:
         return wrapped_f

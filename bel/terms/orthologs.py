@@ -50,7 +50,7 @@ def get_orthologs(canonical_gene_id: str, species: list = []) -> List[dict]:
         RETURN {{ 'orthologs': FLATTEN(UNION(start, orthologs)) }}
     """
 
-    if not arango_client:
+    if not arangodb_client:
         print("Cannot get orthologs without ArangoDB access")
         quit()
     belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)

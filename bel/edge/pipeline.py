@@ -64,7 +64,7 @@ def process_nanopub(
     r = requests.get(nanopub_url, headers=headers)
 
     nanopub = r.json()
-    log.debug(f"Nanopub {nanopub_url}", nanopub=nanopub)
+    log.info(f"Nanopub {nanopub_url}", nanopub=nanopub)
 
     assertions = []
     for assertion in nanopub["nanopub"].get("assertions", []):
