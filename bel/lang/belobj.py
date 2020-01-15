@@ -1,20 +1,18 @@
-import importlib
-import sys
-import os
 import datetime
-from typing import Mapping, Any, List, Union
-from tatsu.exceptions import FailedParse
+import importlib
+import os
+import sys
+from typing import Any, List, Mapping, Union
 
-import bel.lang.bel_utils as bel_utils
-import bel.lang.bel_specification as bel_specification
+import bel.edge.computed
 import bel.lang.ast as lang_ast
+import bel.lang.bel_specification as bel_specification
+import bel.lang.bel_utils as bel_utils
 import bel.lang.exceptions as bel_ex
 import bel.lang.semantics as semantics
-import bel.edge.computed
-
-from bel.Config import config
-
 import structlog
+from bel.Config import config
+from tatsu.exceptions import FailedParse
 
 log = structlog.getLogger(__name__)
 

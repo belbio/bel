@@ -8,17 +8,16 @@ Given PMID - collect Pubmed data and Pubtator Bioconcepts used for the BELMgr
 or enhancing BEL Nanopubs
 """
 
-from typing import Mapping, Any
-from lxml import etree
-import re
 import copy
 import datetime
+import re
+from typing import Any, Mapping
 
-from bel.Config import config
 import bel.lang.bel_utils as bel_utils
-from bel.utils import get_url, url_path_param_quoting
-
 import structlog
+from bel.Config import config
+from bel.utils import get_url, url_path_param_quoting
+from lxml import etree
 
 log = structlog.getLogger(__name__)
 

@@ -1,12 +1,11 @@
 # Semantic validation code
 
-from typing import Tuple, List
 import re
-
-from bel.lang.ast import BELAst, Function, NSArg, StrArg
-from bel.utils import get_url, url_path_param_quoting
+from typing import List, Tuple
 
 import structlog
+from bel.lang.ast import BELAst, Function, NSArg, StrArg
+from bel.utils import get_url, url_path_param_quoting
 
 log = structlog.getLogger()
 
@@ -139,9 +138,7 @@ def check_function_args(args, signatures, function_name):
         for sig_idx, sig_req in enumerate(sig_req_args):
             if len(arg_types) > sig_idx:
                 log.debug(
-                    "Req args: arg_type {} vs sig_req {}".format(
-                        arg_types[sig_idx][0], sig_req
-                    )
+                    "Req args: arg_type {} vs sig_req {}".format(arg_types[sig_idx][0], sig_req)
                 )
                 if arg_types[sig_idx][0] not in sig_req:
                     reqs_mismatch_flag = True
@@ -207,18 +204,11 @@ def check_function_args(args, signatures, function_name):
     # Add NSArg and StrArg value types (e.g. Protein, Complex, ec)
     if matched_signature_idx > -1:
         # Shouldn't have single optional NSArg arguments - not currently checking for that
-        log.debug(
-            f'AST1, Sigs {signatures[matched_signature_idx]["arguments"]}  Args: {args}'
-        )
+        log.debug(f'AST1, Sigs {signatures[matched_signature_idx]["arguments"]}  Args: {args}')
         for arg_idx, arg in enumerate(args):
             log.debug(f"Arg type {arg.type}")
-            for sig_idx, sig_arg in enumerate(
-                signatures[matched_signature_idx]["arguments"]
-            ):
-                if arg.type == "Function" or sig_arg["type"] in [
-                    "Function",
-                    "Modifier",
-                ]:
+            for sig_idx, sig_arg in enumerate(signatures[matched_signature_idx]["arguments"]):
+                if arg.type == "Function" or sig_arg["type"] in ["Function", "Modifier"]:
                     pass  # Skip Function arguments
                 elif sig_arg.get("position", None):
                     if sig_arg["position"] == arg_idx + 1:
@@ -267,25 +257,18 @@ def validate_arg_values(ast, bo):
             for value_type in value_types:
                 default_namespace = [
                     ns["name"] for ns in bo.spec["namespaces"][value_type]["info"]
-                ] + [
-                    ns["abbreviation"]
-                    for ns in bo.spec["namespaces"][value_type]["info"]
-                ]
+                ] + [ns["abbreviation"] for ns in bo.spec["namespaces"][value_type]["info"]]
 
                 if ast.value in default_namespace:
                     log.debug("Default namespace valid term: {}".format(term_id))
                     break
             else:  # if for loop doesn't hit the break, run this else
                 log.debug("Default namespace invalid term: {}".format(term_id))
-                bo.validation_messages.append(
-                    ("WARNING", f"Default Term: {term_id} not found")
-                )
+                bo.validation_messages.append(("WARNING", f"Default Term: {term_id} not found"))
 
         # Process normal, non-default-namespace terms
         else:
-            request_url = bo.api_url + "/terms/{}".format(
-                url_path_param_quoting(term_id)
-            )
+            request_url = bo.api_url + "/terms/{}".format(url_path_param_quoting(term_id))
             log.info(f"Validate Arg Values url {request_url}")
             r = get_url(request_url)
             if r and r.status_code == 200:
@@ -297,14 +280,7 @@ def validate_arg_values(ast, bo):
                 )
 
                 # Check that entity types match
-                if (
-                    len(
-                        set(ast.value_types).intersection(
-                            result.get("entity_types", [])
-                        )
-                    )
-                    == 0
-                ):
+                if len(set(ast.value_types).intersection(result.get("entity_types", []))) == 0:
                     log.debug(
                         "Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}".format(
                             term_id, ast.value_types, result.get("entity_types", [])
@@ -321,10 +297,7 @@ def validate_arg_values(ast, bo):
 
                 if term_id in result.get("obsolete_ids", []):
                     bo.validation_messages.append(
-                        (
-                            "WARNING",
-                            f'Obsolete term: {term_id}  Current term: {result["id"]}',
-                        )
+                        ("WARNING", f'Obsolete term: {term_id}  Current term: {result["id"]}')
                     )
 
             elif r.status_code == 404:
@@ -348,10 +321,7 @@ def validate_arg_values(ast, bo):
             if value_type in bo.spec["namespaces"]:
                 default_namespace = [
                     ns["name"] for ns in bo.spec["namespaces"][value_type]["info"]
-                ] + [
-                    ns["abbreviation"]
-                    for ns in bo.spec["namespaces"][value_type]["info"]
-                ]
+                ] + [ns["abbreviation"] for ns in bo.spec["namespaces"][value_type]["info"]]
                 if ast.value in default_namespace:
                     break
         else:  # If for loop doesn't hit the break, no matches found, therefore for StrArg value is bad

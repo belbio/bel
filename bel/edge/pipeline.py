@@ -13,13 +13,12 @@ import json
 import os.path
 import urllib
 
-import requests
-import structlog
-
 import bel.db.arangodb as arangodb
 import bel.edge.edges
 import bel.nanopub.files as files
 import bel.utils as utils
+import requests
+import structlog
 
 log = structlog.getLogger(__name__)
 

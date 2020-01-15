@@ -9,24 +9,23 @@ NOTE !!!!  Have to BEL Spec JSON files if the BEL Spec JSON format is changed he
 
 """
 
+import copy
+import datetime
 import glob
+import importlib
+import itertools
+import json
 import os
 import re
-import copy
-import requests
 import sys
-import yaml
-import datetime
-import json
-import itertools
-from typing import Mapping, List, Any
+from typing import Any, List, Mapping
+
 import jinja2
-import tatsu
-import importlib
-
-from bel.Config import config
-
+import requests
 import structlog
+import tatsu
+import yaml
+from bel.Config import config
 
 log = structlog.getLogger(__name__)
 

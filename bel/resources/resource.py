@@ -1,17 +1,14 @@
-import timy
-import json
-import gzip
 import copy
+import gzip
+import json
 
-import bel.utils
-import bel.db.elasticsearch as elasticsearch
 import bel.db.arangodb as arangodb
-
+import bel.db.elasticsearch as elasticsearch
 import bel.resources.namespace
 import bel.resources.ortholog
-
+import bel.utils
+import timy
 from bel.Config import config
-
 from structlog import get_logger
 
 log = get_logger()

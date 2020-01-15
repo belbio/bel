@@ -9,18 +9,16 @@
 
 
 """
-import re
 import copy
-from typing import Mapping, Any, List, Tuple, MutableMapping, Optional
-
 import logging
 import logging.config
-import structlog
+import re
+from typing import Any, List, Mapping, MutableMapping, Optional, Tuple
 
 import bel.lang.bel_specification as bel_specification
-from bel.lang.ast import BELAst, Function, NSArg, StrArg
-
+import structlog
 from bel.Config import config
+from bel.lang.ast import BELAst, Function, NSArg, StrArg
 
 # if config.get('logging', False):
 #     logging.config.dictConfig(config.get('logging'))
@@ -222,12 +220,7 @@ def parse_chars(bels: list, errors: Errors) -> Tuple[CharLocs, Errors]:
         )
 
     return (
-        {
-            "parens": parens,
-            "nested_parens": nested_parens,
-            "quotes": quotes,
-            "commas": commas,
-        },
+        {"parens": parens, "nested_parens": nested_parens, "quotes": quotes, "commas": commas},
         errors,
     )
 
@@ -439,11 +432,7 @@ def parse_relations(
             continue
 
         span_key = (start, end)
-        parsed[span_key] = {
-            "type": "Relation",
-            "name": match.group(1),
-            "span": (start, end),
-        }
+        parsed[span_key] = {"type": "Relation", "name": match.group(1), "span": (start, end)}
 
     for match in relations_pattern_end.finditer(belstr):
         (start, end) = match.span(1)
@@ -459,11 +448,7 @@ def parse_relations(
             continue
 
         span_key = (start, end)
-        parsed[span_key] = {
-            "type": "Relation",
-            "name": match.group(1),
-            "span": (start, end),
-        }
+        parsed[span_key] = {"type": "Relation", "name": match.group(1), "span": (start, end)}
 
     return parsed, errors
 
@@ -473,9 +458,7 @@ def parse_nested(
 ) -> Tuple[Parsed, Errors]:
     """ Parse nested BEL object """
 
-    for sp in char_locs[
-        "nested_parens"
-    ]:  # sp = start parenthesis, ep = end parenthesis
+    for sp in char_locs["nested_parens"]:  # sp = start parenthesis, ep = end parenthesis
         ep, level = char_locs["nested_parens"][sp]
         if ep == -1:
             ep = len(bels) + 1
@@ -669,19 +652,13 @@ def parsed_top_level_errors(parsed, errors, component_type: str = "") -> Errors:
     if not component_type:
         if nested_cnt > 1:
             errors.append(
-                (
-                    "Error",
-                    "Too many nested objects - can only have one per BEL Assertion",
-                )
+                ("Error", "Too many nested objects - can only have one per BEL Assertion")
             )
 
         if nested_cnt:
             if rel_cnt > 2:
                 errors.append(
-                    (
-                        "Error",
-                        "Too many relations - can only have two in a nested BEL Assertion",
-                    )
+                    ("Error", "Too many relations - can only have two in a nested BEL Assertion")
                 )
             elif fn_cnt > 4:
                 errors.append(("Error", "Too many BEL subject and object candidates"))
@@ -689,49 +666,32 @@ def parsed_top_level_errors(parsed, errors, component_type: str = "") -> Errors:
         else:
             if rel_cnt > 1:
                 errors.append(
-                    (
-                        "Error",
-                        "Too many relations - can only have one in a BEL Assertion",
-                    )
+                    ("Error", "Too many relations - can only have one in a BEL Assertion")
                 )
             elif fn_cnt > 2:
                 errors.append(("Error", "Too many BEL subject and object candidates"))
 
     elif component_type == "subject":
         if rel_cnt > 0:
-            errors.append(
-                ("Error", "Too many relations - cannot have any in a BEL Subject")
-            )
+            errors.append(("Error", "Too many relations - cannot have any in a BEL Subject"))
         elif fn_cnt > 1:
-            errors.append(
-                ("Error", "Too many BEL subject candidates - can only have one")
-            )
+            errors.append(("Error", "Too many BEL subject candidates - can only have one"))
 
     elif component_type == "object":
         if nested_cnt:
             if rel_cnt > 1:
                 errors.append(
-                    (
-                        "Error",
-                        "Too many relations - can only have one in a nested BEL object",
-                    )
+                    ("Error", "Too many relations - can only have one in a nested BEL object")
                 )
             elif fn_cnt > 2:
                 errors.append(
-                    (
-                        "Error",
-                        "Too many BEL subject and object candidates in a nested BEL object",
-                    )
+                    ("Error", "Too many BEL subject and object candidates in a nested BEL object")
                 )
         else:
             if rel_cnt > 0:
-                errors.append(
-                    ("Error", "Too many relations - cannot have any in a BEL Subject")
-                )
+                errors.append(("Error", "Too many relations - cannot have any in a BEL Subject"))
             elif fn_cnt > 1:
-                errors.append(
-                    ("Error", "Too many BEL subject candidates - can only have one")
-                )
+                errors.append(("Error", "Too many BEL subject candidates - can only have one"))
 
     return errors
 
@@ -763,11 +723,7 @@ def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ""):
         if parsed[key]["type"] == "Function" and parsed[key]["function_level"] == "top":
             ast[component_stack.pop(0)] = parsed_function_to_ast(parsed, key)
         elif parsed[key]["type"] == "Relation" and "relation" not in ast:
-            ast["relation"] = {
-                "name": parsed[key]["name"],
-                "type": "Relation",
-                "span": key,
-            }
+            ast["relation"] = {"name": parsed[key]["name"], "type": "Relation", "span": key}
         elif parsed[key]["type"] == "Nested":
             ast["nested"] = {}
             for nested_key in sorted_keys:
@@ -778,13 +734,10 @@ def parsed_to_ast(parsed: Parsed, errors: Errors, component_type: str = ""):
                     parsed[nested_key]["type"] == "Function"
                     and parsed[nested_key]["function_level"] == "top"
                 ):
-                    ast["nested"][
-                        nested_component_stack.pop(0)
-                    ] = parsed_function_to_ast(parsed, nested_key)
-                elif (
-                    parsed[nested_key]["type"] == "Relation"
-                    and "relation" not in ast["nested"]
-                ):
+                    ast["nested"][nested_component_stack.pop(0)] = parsed_function_to_ast(
+                        parsed, nested_key
+                    )
+                elif parsed[nested_key]["type"] == "Relation" and "relation" not in ast["nested"]:
                     ast["nested"]["relation"] = {
                         "name": parsed[nested_key]["name"],
                         "type": "Relation",
@@ -850,10 +803,7 @@ def get_ast_obj(belstr, bel_version, component_type: str = ""):
         nested_obj_ast = add_ast_fn(nested_obj, spec)
 
         return BELAst(
-            subj_ast,
-            relation,
-            BELAst(nested_subj_ast, nested_relation, nested_obj_ast, spec),
-            spec,
+            subj_ast, relation, BELAst(nested_subj_ast, nested_relation, nested_obj_ast, spec), spec
         )
 
     return BELAst(subj_ast, None, None, spec)
@@ -877,9 +827,7 @@ def add_ast_fn(d, spec, parent_function=None):
             if arg["type"] == "Function":
                 ast_fn.add_argument(add_ast_fn(arg, spec, parent_function=ast_fn))
             elif arg["type"] == "NSArg":
-                ast_fn.add_argument(
-                    NSArg(arg["nsarg"]["ns"], arg["nsarg"]["ns_val"], ast_fn)
-                )
+                ast_fn.add_argument(NSArg(arg["nsarg"]["ns"], arg["nsarg"]["ns_val"], ast_fn))
             elif arg["type"] == "StrArg":
                 ast_fn.add_argument(StrArg(arg["arg"], ast_fn))
     return ast_fn
@@ -891,9 +839,7 @@ def main():
 
     belstr = 'activity(proteinAbundance(SFAM:"GSK3 "Family"), molecularActivity(DEFAULT:kin))'
     belstr = 'proteinAbundance(HGNC:VHL) increases (proteinAbundance(HGNC:TNF) increases biologicalProcess(GOBP:"cell death"))'
-    belstr = (
-        "complexAbundance(proteinAbundance(HGNC:VHL), proteinAbundance(HGNC:PRKCZ))"
-    )
+    belstr = "complexAbundance(proteinAbundance(HGNC:VHL), proteinAbundance(HGNC:PRKCZ))"
     # made up (added the 20 in the pmod)
     belstr = 'activity(proteinAbundance(SFAM:"PRKA Family"), molecularActivity(DEF:kin)) directlyIncreases proteinAbundance(SFAM:"PDE4 Long Family", proteinModification(Ph, S, 20))'
     belstr = 'proteinAbundance(HGNC:VEGFA) increases (compositeAbundance(proteinAbundance(HGNC:ITGB1), proteinAbundance(HGNC:PRKCA, ma(kin))) increases biologicalProcess(GO:"cell-matrix adhesion"))'

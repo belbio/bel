@@ -69,6 +69,3 @@ Planned features
 * BEL Pipeline - Process new Nanopubs in NanopubStore into Edges and load in EdgeStore
 * [Done] Convert BELScript into BEL Nanopubs
 * Command line interface (partially done)
-
-
-

@@ -1,10 +1,9 @@
 import re
 
 import arango
-from structlog import get_logger
-
 import bel.utils as utils
 from bel.Config import config
+from structlog import get_logger
 
 log = get_logger()
 

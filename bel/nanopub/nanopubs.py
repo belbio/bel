@@ -1,14 +1,13 @@
-from typing import Mapping, Any, List, Iterable, Tuple
 import gzip
+import logging
+from typing import Any, Iterable, List, Mapping, Tuple
+
+import bel.edge.edges
 import bel.lang.belobj
 import jsonschema
 import requests
-from cityhash import CityHash64
-
-import bel.edge.edges
 from bel.Config import config
-
-import logging
+from cityhash import CityHash64
 
 log = logging.getLogger(__name__)
 
@@ -27,9 +26,7 @@ class Nanopub(object):
         """
         self.endpoint = endpoint
 
-    def validate(
-        self, nanopub: Mapping[str, Any]
-    ) -> Tuple[bool, List[Tuple[str, str]]]:
+    def validate(self, nanopub: Mapping[str, Any]) -> Tuple[bool, List[Tuple[str, str]]]:
         """Validates using the nanopub schema
 
         Args:
@@ -82,9 +79,7 @@ class Nanopub(object):
 
         return (is_valid, all_messages)
 
-    def validate_context(
-        self, context: Mapping[str, Any]
-    ) -> Tuple[bool, List[Tuple[str, str]]]:
+    def validate_context(self, context: Mapping[str, Any]) -> Tuple[bool, List[Tuple[str, str]]]:
         """ Validate context
 
         Args:
@@ -210,12 +205,8 @@ def hash_nanopub(nanopub: Mapping[str, Any]) -> str:
 
     # Citation
     if nanopub["nanopub"]["citation"].get("database", False):
-        hash_list.append(
-            nanopub["nanopub"]["citation"]["database"].get("name", "").strip()
-        )
-        hash_list.append(
-            nanopub["nanopub"]["citation"]["database"].get("id", "").strip()
-        )
+        hash_list.append(nanopub["nanopub"]["citation"]["database"].get("name", "").strip())
+        hash_list.append(nanopub["nanopub"]["citation"]["database"].get("id", "").strip())
     elif nanopub["nanopub"]["citation"].get("uri", False):
         hash_list.append(nanopub["nanopub"]["citation"].get("uri", "").strip())
     elif nanopub["nanopub"]["citation"].get("reference", False):

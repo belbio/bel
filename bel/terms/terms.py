@@ -1,10 +1,9 @@
 import re
 from typing import List, Mapping, Union
 
-import structlog
-
 import bel.db.arangodb
 import bel.db.elasticsearch
+import structlog
 from bel.Config import config
 
 # import logging

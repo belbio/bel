@@ -6,12 +6,11 @@ ast_dict from Tatsu is converted to this Ast Class object and used for
 validation and BEL transformation (e.g. canonicalization, orthologization, etc)
 """
 
-from typing import Mapping, Any
-import traceback
 import sys
+import traceback
+from typing import Any, Mapping
 
 import bel.lang.bel_utils
-
 import structlog
 
 log = structlog.getLogger(__name__)
@@ -169,13 +168,9 @@ class BELAst(object):
             if self.bel_relation.startswith("has"):
                 bel_relation = self.bel_relation
             elif fmt == "short":
-                bel_relation = self.spec["relations"]["to_short"].get(
-                    self.bel_relation, None
-                )
+                bel_relation = self.spec["relations"]["to_short"].get(self.bel_relation, None)
             else:
-                bel_relation = self.spec["relations"]["to_long"].get(
-                    self.bel_relation, None
-                )
+                bel_relation = self.spec["relations"]["to_long"].get(self.bel_relation, None)
 
             bel_subject = self.bel_subject.to_string(fmt=fmt)
 
@@ -184,11 +179,7 @@ class BELAst(object):
             else:
                 bel_object = self.bel_object.to_string(fmt=fmt)
 
-            return {
-                "subject": bel_subject,
-                "relation": bel_relation,
-                "object": bel_object,
-            }
+            return {"subject": bel_subject, "relation": bel_relation, "object": bel_object}
 
         elif self.bel_subject:
             return {"subject": self.bel_subject.to_string(fmt=fmt)}
@@ -418,9 +409,7 @@ class NSArg(Arg):
             {}
         )  # {'TAX:9606': {'species_label': 'human', 'canonical': 'EG:207', 'decanonical': 'HGNC:AKT1'}, 'TAX:10090': {'species_label': 'mouse', canonical': 'EG:11651', 'decanonical': 'MGI:Akt1'}, ...
         self.orthology_species = None
-        self.orthologized = (
-            None
-        )  # True for orthologized - False -> unable to orthologize
+        self.orthologized = None  # True for orthologized - False -> unable to orthologize
         self.original = f"{namespace}:{value}"
 
         # What entity types can this be from the function signatures?
@@ -433,9 +422,7 @@ class NSArg(Arg):
         self.namespace = namespace
         self.value = value
 
-    def update_nsval(
-        self, *, nsval: str = None, ns: str = None, val: str = None
-    ) -> None:
+    def update_nsval(self, *, nsval: str = None, ns: str = None, val: str = None) -> None:
         """Update Namespace and valueast.
 
         Args:
@@ -592,9 +579,7 @@ def function_ast_to_objects(fn_ast_dict, bel_obj):
     func_name = fn_ast_dict.get("function", None)
     potential_bel_stmt = fn_ast_dict.get("bel_statement", None)
 
-    if (
-        func_name is None and potential_bel_stmt is not None
-    ):  # this is a nested BEL statement
+    if func_name is None and potential_bel_stmt is not None:  # this is a nested BEL statement
         tmp_fn_obj = ast_dict_to_objects(potential_bel_stmt, bel_obj)
     else:
         tmp_fn_obj = Function(func_name, spec)

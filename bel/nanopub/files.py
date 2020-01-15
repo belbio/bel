@@ -6,16 +6,16 @@
 
 """
 
-import json
-import yaml
-import re
 import copy
-import sys
-import click
-from typing import Mapping, Any, List, Iterable, Tuple
 import gzip
-
+import json
 import logging
+import re
+import sys
+from typing import Any, Iterable, List, Mapping, Tuple
+
+import click
+import yaml
 
 log = logging.getLogger(__name__)
 

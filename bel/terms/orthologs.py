@@ -1,9 +1,8 @@
 from typing import List
 
-import structlog
-
 import bel.db.arangodb
 import bel.terms.terms
+import structlog
 
 log = structlog.getLogger()
 

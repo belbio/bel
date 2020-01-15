@@ -164,3 +164,7 @@ app/common
 cache.sqlite
 *.sqlite
 /coverage
+**/belbio_conf.yml
+**/belbio_conf.yaml
+**/.env
+**/*secret*

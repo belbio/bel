@@ -6,10 +6,9 @@ import logging
 import re
 from typing import List, Mapping
 
-import yaml
-
 import bel.terms.orthologs
 import bel.terms.terms
+import yaml
 from bel.Config import config
 from bel.lang.ast import NSArg
 from bel.utils import get_url, url_path_param_quoting

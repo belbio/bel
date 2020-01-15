@@ -5,10 +5,6 @@ import logging.config
 import re
 import sys
 
-import click
-import timy
-import yaml
-
 import bel.Config
 import bel.db.arangodb
 import bel.db.elasticsearch
@@ -17,6 +13,9 @@ import bel.nanopub.belscripts
 import bel.nanopub.files as bnf
 import bel.nanopub.nanopubs as bnn
 import bel.utils as utils
+import click
+import timy
+import yaml
 from bel.Config import config
 from bel.lang.belobj import BEL
 

@@ -12,12 +12,11 @@ import os
 import sys
 from typing import Any, List, Mapping, MutableSequence
 
-import structlog
-
 import bel.db.arangodb as arangodb
 import bel.lang.bel_specification
 import bel.lang.belobj
 import bel.utils as utils
+import structlog
 from bel.Config import config
 
 log = structlog.getLogger(__name__)

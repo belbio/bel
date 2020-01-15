@@ -7,16 +7,20 @@ NOTE: reqsess allows caching external (including ElasticSearch and ArangoDB) RES
       changes in the Pubtator results, etc.
 """
 
-import ulid
-import tempfile
-from cityhash import CityHash64
-import json
-from typing import Mapping, Any
+import collections
 import datetime
+import functools
+import json
+import logging
+import tempfile
+from timeit import default_timer
+from typing import Any, Mapping
+
 import dateutil
 import requests
 import requests_cache
-
+import ulid
+from cityhash import CityHash64
 from structlog import get_logger
 
 log = get_logger()
@@ -174,13 +178,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __version__ = "0.3.3"
-
-
-import functools
-import collections
-import logging
-
-from timeit import default_timer
 
 
 class Timer(object):

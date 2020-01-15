@@ -1,9 +1,8 @@
-import pytest
 import json
 
 import bel.lang.completion
 import bel.utils
-
+import pytest
 from bel.Config import config
 
 

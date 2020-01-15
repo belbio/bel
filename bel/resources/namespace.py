@@ -3,14 +3,13 @@ import gzip
 import json
 from typing import IO
 
-import timy
-from arango import ArangoError
-from structlog import get_logger
-
 import bel.db.arangodb as arangodb
 import bel.db.elasticsearch as elasticsearch
 import bel.utils
+import timy
+from arango import ArangoError
 from bel.Config import config
+from structlog import get_logger
 
 # import structlog
 # import logging

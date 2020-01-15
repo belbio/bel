@@ -62,5 +62,3 @@ bel\.lang\.semantics module
     :members:
     :undoc-members:
     :show-inheritance:
-
-
