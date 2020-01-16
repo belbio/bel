@@ -90,7 +90,7 @@ import_heading_stdlib="Standard Library"
 import_heading_thirdparty="Third Party Imports"
 import_heading_firstparty="Local Imports"
 
-known_third_party = ["arango", "cityhash", "click", "dateutil", "elasticsearch", "jinja2", "jsonschema", "lxml", "pytest", "requests", "requests_cache", "setuptools", "sphinx_rtd_theme", "structlog", "tatsu", "timy", "ulid", "yaml"]
+known_third_party = ["arango", "cityhash", "click", "dateutil", "elasticsearch", "jinja2", "jsonschema", "lxml", "requests", "requests_cache", "setuptools", "sphinx_rtd_theme", "structlog", "tatsu", "timy", "ulid", "yaml"]
 
 
 

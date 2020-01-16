@@ -168,3 +168,5 @@ cache.sqlite
 **/belbio_conf.yaml
 **/.env
 **/*secret*
+
+.secrets.baseline
