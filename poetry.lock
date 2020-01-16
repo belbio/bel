@@ -177,6 +177,21 @@ toml = ["toml"]
 
 [[package]]
 category = "dev"
+description = "Tool for detecting secrets in the codebase"
+name = "detect-secrets"
+optional = false
+python-versions = "*"
+version = "0.13.0"
+
+[package.dependencies]
+pyyaml = "*"
+requests = "*"
+
+[package.extras]
+word_list = ["pyahocorasick"]
+
+[[package]]
+category = "dev"
 description = "Docutils -- Python Documentation Utilities"
 name = "docutils"
 optional = false
@@ -1084,7 +1099,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "5c9631f4d2e0432da774648fa4191c9861675ea085bf3e339ee44dc119c64763"
+content-hash = "00e4f0f2f44a20f7452fb86f02a73952f502e2c6a1c2443e86ec7610730235ca"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1183,6 +1198,10 @@ coverage = [
     {file = "coverage-5.0.2-cp39-cp39m-win32.whl", hash = "sha256:d095a7b473f8a95f7efe821f92058c8a2ecfb18f8db6677ae3819e15dc11aaae"},
     {file = "coverage-5.0.2-cp39-cp39m-win_amd64.whl", hash = "sha256:ddeb42a3d5419434742bf4cc71c9eaa22df3b76808e23a82bd0b0bd360f1a9f1"},
     {file = "coverage-5.0.2.tar.gz", hash = "sha256:b251c7092cbb6d789d62dc9c9e7c4fb448c9138b51285c36aeb72462cad3600e"},
+]
+detect-secrets = [
+    {file = "detect_secrets-0.13.0-py2.py3-none-any.whl", hash = "sha256:8e3cc5bb21fee76e71fee4d57c65b2928b4badb7ae45a5839e70f625057f1a21"},
+    {file = "detect_secrets-0.13.0.tar.gz", hash = "sha256:2f1dfe05d1f1bcd46205a46a4117c82a49b2c837771efc625e967c0a710b25a9"},
 ]
 docutils = [
     {file = "docutils-0.15.2-py2-none-any.whl", hash = "sha256:9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827"},
