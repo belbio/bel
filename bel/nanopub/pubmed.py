@@ -8,16 +8,20 @@ Given PMID - collect Pubmed data and Pubtator Bioconcepts used for the BELMgr
 or enhancing BEL Nanopubs
 """
 
+# Standard Library
 import copy
 import datetime
 import re
 from typing import Any, Mapping
 
-import bel.lang.bel_utils as bel_utils
+# Third Party Imports
 import structlog
+from lxml import etree
+
+# Local Imports
+import bel.lang.ast as bel_ast
 from bel.Config import config
 from bel.utils import get_url, url_path_param_quoting
-from lxml import etree
 
 log = structlog.getLogger(__name__)
 
@@ -332,7 +336,7 @@ def enhance_pubmed_annotations(pubmed: Mapping[str, Any]) -> Mapping[str, Any]:
         new_nsarg = ""
         if r and r.status_code == 200:
             term = r.json()
-            new_nsarg = bel_utils.convert_nsarg(term["id"], decanonicalize=True)
+            new_nsarg = bel_ast.convert_nsarg(term["id"], decanonicalize=True)
 
             pubmed["annotations"][nsarg]["name"] = term["name"]
             pubmed["annotations"][nsarg]["label"] = term["label"]

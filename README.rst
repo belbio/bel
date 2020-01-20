@@ -69,3 +69,14 @@ Planned features
 * BEL Pipeline - Process new Nanopubs in NanopubStore into Edges and load in EdgeStore
 * [Done] Convert BELScript into BEL Nanopubs
 * Command line interface (partially done)
+
+
+## Development setup
+
+-   `git clone git@github.com:belbio/bel.git`
+-   install pipx (python 3.7+)
+-   `pipx install poetry`
+-   `poetry install` # will install using poetry dependencies in pyproject.toml
+-   `poetry shell`
+-   `detect-secrets scan > .secrets.baseline`
+-   `pre-commit install`

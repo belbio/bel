@@ -1,18 +1,21 @@
+# Standard Library
 import datetime
 import importlib
 import os
 import sys
 from typing import Any, List, Mapping, Union
 
+# Third Party Imports
+import structlog
+from tatsu.exceptions import FailedParse
+
+# Local Imports
 import bel.edge.computed
-import bel.lang.ast as lang_ast
+import bel.lang.ast as bel_ast
 import bel.lang.bel_specification as bel_specification
-import bel.lang.bel_utils as bel_utils
 import bel.lang.exceptions as bel_ex
 import bel.lang.semantics as semantics
-import structlog
 from bel.Config import config
-from tatsu.exceptions import FailedParse
 
 log = structlog.getLogger(__name__)
 
@@ -48,7 +51,7 @@ class BEL(object):
 
         bel_versions = bel_specification.get_bel_versions()
 
-        # use bel_utils._default_to_version to check if valid version, and if it exists or not
+        # use bel_ast._default_to_version to check if valid version, and if it exists or not
         if not version:
             self.version = config["bel"]["lang"]["default_bel_version"]
         else:
@@ -71,7 +74,7 @@ class BEL(object):
         # self.semantics = BELSemantics()  # each instance also instantiates a BELSemantics object used in parsing statements
         self.spec = bel_specification.get_specification(self.version)
 
-        # bel_utils._dump_spec(self.spec)
+        # bel_ast._dump_spec(self.spec)
 
         # Import Tatsu parser
         # use importlib to import our parser (a .py file) and set the BELParse object as an instance variable
@@ -134,10 +137,10 @@ class BEL(object):
         self.original_bel_stmt = statement
 
         # pre-process to remove extra white space, add space after commas, etc.
-        self.bel_stmt = bel_utils.preprocess_bel_stmt(statement)
+        self.bel_stmt = bel_ast.preprocess_bel_stmt(statement)
 
         # TODO - double check these tests before enabling
-        # is_valid, messages = bel_utils.simple_checks(self.bel_stmt)
+        # is_valid, messages = bel_ast.simple_checks(self.bel_stmt)
         # if not is_valid:
         #     self.validation_messages.extend(messages)
         #     return self
@@ -155,13 +158,13 @@ class BEL(object):
             ast_dict = self.parser.parse(
                 self.bel_stmt, rule_name=rule_name, trace=False, parseinfo=parseinfo
             )
-            self.ast = lang_ast.ast_dict_to_objects(ast_dict, self)
+            self.ast = bel_ast.ast_dict_to_objects(ast_dict, self)
 
             self.parse_valid = True
 
         except FailedParse as e:
             # if an error is returned, send to handle_syntax, error
-            error, visualize_error = bel_utils.handle_parser_syntax_error(e)
+            error, visualize_error = bel_ast.handle_parser_syntax_error(e)
             self.parse_visualize_error = visualize_error
             if visualize_error:
                 self.validation_messages.append(("ERROR", f"{error}\n{visualize_error}"))
@@ -217,7 +220,7 @@ class BEL(object):
         # TODO Need to pass namespace target overrides for canonicalization
         self.ast.canonicalize()
 
-        # self.ast = bel_utils.convert_namespaces_ast(self.ast, canonicalize=True, api_url=self.api_url, namespace_targets=namespace_targets)
+        # self.ast = bel_ast.convert_namespaces_ast(self.ast, canonicalize=True, api_url=self.api_url, namespace_targets=namespace_targets)
 
         return self
 
@@ -242,7 +245,7 @@ class BEL(object):
 
         self.ast.decanonicalize()
 
-        # self.ast = bel_utils.convert_namespaces_ast(self.ast, decanonicalize=True, namespace_targets=namespace_targets)
+        # self.ast = bel_ast.convert_namespaces_ast(self.ast, decanonicalize=True, namespace_targets=namespace_targets)
         return self
 
     def collect_nsarg_norms(self):
@@ -252,7 +255,7 @@ class BEL(object):
         """
         start_time = datetime.datetime.now()
 
-        self.ast = bel_utils.populate_ast_nsarg_defaults(self.ast, self.ast)
+        self.ast = bel_ast.populate_ast_nsarg_defaults(self.ast, self.ast)
         self.ast.collected_nsarg_norms = True
         if (
             hasattr(self.ast, "bel_object")
@@ -288,7 +291,7 @@ class BEL(object):
             self = self.collect_orthologs([species_id])
 
         self.ast.species = set()
-        self.ast = bel_utils.orthologize(self.ast, self, species_id)
+        self.ast = bel_ast.orthologize(self.ast, self, species_id)
 
         return self
 
@@ -312,7 +315,7 @@ class BEL(object):
 
         start_time = datetime.datetime.now()
 
-        self.ast = bel_utils.populate_ast_nsarg_orthologs(self.ast, species_labels)
+        self.ast = bel_ast.populate_ast_nsarg_orthologs(self.ast, species_labels)
         self.ast.collected_orthologs = True
         if (
             hasattr(self.ast, "bel_object")

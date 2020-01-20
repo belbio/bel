@@ -1,9 +1,13 @@
+# Standard Library
 import re
 
+# Third Party Imports
 import arango
+from structlog import get_logger
+
+# Local Imports
 import bel.utils as utils
 from bel.Config import config
-from structlog import get_logger
 
 log = get_logger()
 
@@ -163,8 +167,6 @@ def get_edgestore_handle(
 
 def get_belns_handle(client, username=None, password=None):
     """Get BEL namespace arango db handle"""
-
-    print("Here", client, "||")
 
     (username, password) = get_user_creds(username, password)
 

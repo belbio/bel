@@ -15,7 +15,7 @@
         "statusBarItem.hoverBackground": "#5ce637",
         "statusBar.foreground": "#15202b"
     },
-    "python.pythonPath": "/Users/william/studio/dev/bel/.venv/bin/python3",
+    "python.pythonPath": ".venv/bin/python",
     "python.analysis.openFilesOnly": false,
     "python.analysis.memory.keepLibraryLocalVariables": true,
     "python.autoComplete.addBrackets": true,

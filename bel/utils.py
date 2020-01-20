@@ -7,6 +7,7 @@ NOTE: reqsess allows caching external (including ElasticSearch and ArangoDB) RES
       changes in the Pubtator results, etc.
 """
 
+# Standard Library
 import collections
 import datetime
 import functools
@@ -16,6 +17,7 @@ import tempfile
 from timeit import default_timer
 from typing import Any, Mapping
 
+# Third Party Imports
 import dateutil
 import requests
 import requests_cache
@@ -25,7 +27,12 @@ from structlog import get_logger
 
 log = get_logger()
 
-requests_cache.install_cache("requests_cache", backend="sqlite", expire_after=600)
+# TODO - figure out when/where to cache
+# requests_cache.install_cache("requests_cache", backend="sqlite", expire_after=600)
+
+
+class Session:
+    s = requests.Session()
 
 
 def get_url(url: str, params: dict = {}, timeout: float = 5.0, cache: bool = True):

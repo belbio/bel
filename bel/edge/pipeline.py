@@ -6,6 +6,7 @@ Usage:  program.py <customer>
 
 """
 
+# Standard Library
 import copy
 import datetime
 import itertools
@@ -13,14 +14,20 @@ import json
 import os.path
 import urllib
 
+# Third Party Imports
+import requests
+import structlog
+
+# Local Imports
 import bel.db.arangodb as arangodb
 import bel.edge.edges
 import bel.nanopub.files as files
 import bel.utils as utils
-import requests
-import structlog
+from bel.utils import Session
 
 log = structlog.getLogger(__name__)
+
+session = Session.s
 
 client = arangodb.get_client()
 edgestore_db = arangodb.get_edgestore_handle(client)
@@ -47,6 +54,12 @@ def process_nanopub(
     nanopub_url, orthologize_targets: list = [], overwrite: bool = False, token: str = None
 ):
 
+    log.debug(
+        "Process nanopub parameters",
+        nanopub_url=nanopub_url,
+        orthologize_targets=orthologize_targets,
+        overwrite=overwrite,
+    )
     log.info("Processing nanopub", nanopub_url=nanopub_url)
 
     url_comps = urllib.parse.urlparse(nanopub_url)
@@ -60,16 +73,21 @@ def process_nanopub(
     if token:
         headers = {"Authorization": f"Bearer {token}"}
 
-    r = requests.get(nanopub_url, headers=headers)
+    r = session.get(nanopub_url, headers=headers)
 
     nanopub = r.json()
-    log.info(f"Nanopub {nanopub_url}", nanopub=nanopub)
+
+    end_time1 = datetime.datetime.now()
+    delta_ms = f"{(end_time1 - start_time).total_seconds() * 1000:.1f}"
+    log.debug("Timing - Get nanopub", delta_ms=delta_ms, nanopub=nanopub)
 
     assertions = []
     for assertion in nanopub["nanopub"].get("assertions", []):
         assertions.append(f"{assertion['subject']} {assertion['relation']} {assertion['object']}")
 
     if not nanopub:
+        log.error(f"Could not GET nanopub: {nanopub_url}")
+
         return {
             "msg": f"Could not GET nanopub: {nanopub_url}",
             "edges_cnt": 0,
@@ -81,10 +99,6 @@ def process_nanopub(
 
     nanopub["source_url"] = nanopub_url
 
-    end_time1 = datetime.datetime.now()
-    delta_ms = f"{(end_time1 - start_time).total_seconds() * 1000:.1f}"
-    log.debug("Timing - Get nanopub", delta_ms=delta_ms)
-
     # Is nanopub in edge newer than from queue? If so, skip
     if not overwrite:
         # collect one edge for nanopub from edgestore
@@ -94,6 +108,11 @@ def process_nanopub(
             # log.info("Nanopub to Edge comparison", nanopub=nanopub, edge=edge)
             if edge["metadata"].get("gd_updateTS", None):
                 if nanopub["nanopub"]["metadata"]["gd_updateTS"] <= edge["metadata"]["gd_updateTS"]:
+                    log.info(
+                        "Nanopub older than edge nanopub",
+                        nanopub_dt=nanopub["nanopub"]["metadata"]["gd_updateTS"],
+                        edge_dt=edge["metadata"]["gd_updateTS"],
+                    )
                     return {"msg": "Nanopub older than edge nanopub", "success": True, "e": ""}
 
     end_time2 = datetime.datetime.now()
@@ -107,7 +126,9 @@ def process_nanopub(
 
     if results["success"]:
 
-        load_edges_into_db(nanopub_id, nanopub["source_url"], edges=results["edges"])
+        db_results = load_edges_into_db(nanopub_id, nanopub["source_url"], edges=results["edges"])
+
+        # log.info("Convert nanopub to edges", db_results=db_results, results=results)
 
         end_time4 = datetime.datetime.now()
         delta_ms = f"{(end_time4 - end_time3).total_seconds() * 1000:.1f}"
@@ -126,6 +147,7 @@ def process_nanopub(
         }
 
     else:
+        log.error(f'Could not process nanopub {nanopub_id} into edges - error: {results["errors"]}')
         return {
             "msg": f'Could not process nanopub into edges - error: {results["errors"]}',
             "edges_cnt": 0,
@@ -166,22 +188,26 @@ def load_edges_into_db(
     # Collect edges and nodes to load into arangodb
     node_list, edge_list = [], []
     for doc in edge_iterator(edges=edges):
-
-        log.error("Edge to be inserted", doc=doc)
-
-        if doc[0] == "nodes":
-            node_list.append(doc[1])
+        if doc:  # Apparently needed to realize the doc variable
+            if doc[0] == "nodes":
+                node_list.append(doc[1])
+            else:
+                edge_list.append(doc[1])
         else:
-            edge_list.append(doc[1])
+            log.error("Cannot process edges from iterator - bad doc", doc=doc)
 
     end_time2 = datetime.datetime.now()
     delta_ms = f"{(end_time2 - end_time1).total_seconds() * 1000:.1f}"
+
+    # log.info("Edge list to load into db", edge_list=edge_list)
+
     log.debug("Timing - Collect edges and nodes", delta_ms=delta_ms)
 
     try:
         results = edgestore_db.collection(edges_coll_name).import_bulk(
             edge_list, on_duplicate="replace", halt_on_error=False
         )
+
     except Exception as e:
         log.error(f"Could not load edges  msg: {e}")
 
