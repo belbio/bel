@@ -6,17 +6,22 @@ Usage:  program.py <customer>
 
 """
 
+# Standard Library
 import copy
 import json
 import os
 import sys
 from typing import Any, List, Mapping, MutableSequence
 
+# Third Party Imports
+import httpx
+import structlog
+
+# Local Imports
 import bel.db.arangodb as arangodb
 import bel.lang.bel_specification
 import bel.lang.belobj
 import bel.utils as utils
-import structlog
 from bel.Config import config
 
 log = structlog.getLogger(__name__)
@@ -99,7 +104,7 @@ def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targ
     try:
         citation_string = normalize_nanopub_citation(nanopub)
     except Exception as e:
-        log.error(f"Could not create citation string for {nanopub_url}")
+        log.exception(f"Could not create citation string for {nanopub_url}")
         citation_string = ""
 
     if orthologize_targets == []:
@@ -436,7 +441,7 @@ def orthologize_context(
     """
 
     url = f'{config["bel_api"]["servers"]["api_url"]}/terms/{orthologize_target}'
-    r = utils.get_url(url)
+    r = httpx.get(url)
     species_label = r.json().get("label", "unlabeled")
 
     orthologized_from = {}

@@ -6,6 +6,7 @@
 
 """
 
+# Standard Library
 import copy
 import gzip
 import json
@@ -14,6 +15,7 @@ import re
 import sys
 from typing import Any, Iterable, List, Mapping, Tuple
 
+# Third Party Imports
 import click
 import yaml
 
@@ -69,7 +71,7 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
                 yield nanopub
 
     except Exception as e:
-        log.error(f"Could not open file: {fn}")
+        log.exception(f"Could not open file: {fn}")
 
 
 def create_nanopubs_fh(output_fn: str):
@@ -147,7 +149,7 @@ def read_edges(fn):
                 yield edge
 
     except Exception as e:
-        log.error(f"Could not open file: {fn}")
+        log.exception(f"Could not open file: {fn}")
 
 
 def write_edges(

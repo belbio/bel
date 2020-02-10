@@ -1,9 +1,14 @@
+# Standard Library
 import re
 from typing import List, Mapping, Union
 
+# Third Party Imports
+import cachetools
+import structlog
+
+# Local Imports
 import bel.db.arangodb
 import bel.db.elasticsearch
-import structlog
 from bel.Config import config
 
 # import logging
@@ -17,6 +22,7 @@ es = bel.db.elasticsearch.get_client()
 arangodb_client = bel.db.arangodb.get_client()
 
 
+@cachetools.cached(cachetools.TTLCache(maxsize=512, ttl=600))
 def get_terms(term_id):
     """Get term(s) using term_id - given term_id may match multiple term records
 
@@ -44,6 +50,7 @@ def get_terms(term_id):
     return results
 
 
+@cachetools.cached(cachetools.TTLCache(maxsize=1024, ttl=600))
 def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
     """Get equivalents given ns:id
 
@@ -98,7 +105,7 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
         return {"equivalents": equivalents, "errors": errors}
 
     except Exception as e:
-        log.error(f"Problem getting term equivalents for {term_id} msg: {e}")
+        log.exception(f"Problem getting term equivalents for {term_id} msg: {e}")
         return {"equivalents": [], "errors": [f"Unexpected error {e}"]}
 
 
@@ -131,6 +138,7 @@ def get_labels(term_ids: list) -> dict:
     return term_labels
 
 
+@cachetools.cached(cachetools.TTLCache(maxsize=1024, ttl=600))
 def get_normalized_terms(term_id: str) -> dict:
     """Get normalized terms - canonical/decanonical forms"""
 

@@ -16,6 +16,7 @@ import traceback
 from typing import Any, List, Mapping
 
 # Third Party Imports
+import httpx
 import structlog
 import yaml
 
@@ -23,7 +24,7 @@ import yaml
 import bel.terms.orthologs
 import bel.terms.terms
 from bel.Config import config
-from bel.utils import get_url, url_path_param_quoting
+from bel.utils import url_path_param_quoting
 
 log = structlog.getLogger(__name__)
 
@@ -717,7 +718,7 @@ def convert_nsarg(
 
     request_url = api_url.format(url_path_param_quoting(nsarg))
 
-    r = get_url(request_url, params=params, timeout=10)
+    r = httpx.get(request_url, params=params, timeout=10)
 
     if r and r.status_code == 200:
         nsarg = r.json().get("term_id", nsarg)

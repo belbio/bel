@@ -17,20 +17,18 @@ tatsu = "^4.4.0"
 jinja2 = "^2.10.3"
 structlog = "^19.2.0"
 pyyaml = "^5.3"
-requests = "^2.22.0"
 ulid-py = "^0.0.12"
 timy = "^0.4.2"
-requests-cache = "^0.5.2"
 python-json-logger = "^0.1.11"
 lxml = "^4.4.2"
 python-arango = "^5.2.1"
 jsonschema = "^3.2.0"
-fastcache = "^1.1.0"
 click = "^7.0"
 cityhash = "^0.2.3"
 python-dateutil = "2.8.1"
 elasticsearch = ">=6.0.0,<7.0.0"
-black = "^19.10b0"
+cachetools = "^4.0.0"
+httpx = "^0.11.1"
 
 
 [tool.poetry.dev-dependencies]
@@ -80,11 +78,6 @@ exclude = '''
 '''
 
 
-[build-system]
-requires = ["poetry>=1.0.0"]
-build-backend = "poetry.masonry.api"
-
-
 [tool.isort]
 multi_line_output=3
 include_trailing_comma=true
@@ -96,4 +89,8 @@ import_heading_stdlib="Standard Library"
 import_heading_thirdparty="Third Party Imports"
 import_heading_firstparty="Local Imports"
 
-known_third_party = ["arango", "cityhash", "click", "dateutil", "elasticsearch", "jinja2", "jsonschema", "lxml", "requests", "requests_cache", "setuptools", "sphinx_rtd_theme", "structlog", "tatsu", "timy", "ulid", "yaml"]
+known_third_party = ["arango", "cachetools", "cityhash", "click", "dateutil", "elasticsearch", "httpx", "jinja2", "jsonschema", "lxml", "setuptools", "sphinx_rtd_theme", "structlog", "tatsu", "timy", "ulid", "yaml"]
+
+[build-system]
+requires = ["poetry>=1.0.0"]
+build-backend = "poetry.masonry.api"

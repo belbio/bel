@@ -1,8 +1,13 @@
+# Standard Library
 from typing import List
 
+# Third Party Imports
+import cachetools
+import structlog
+
+# Local Imports
 import bel.db.arangodb
 import bel.terms.terms
-import structlog
 
 log = structlog.getLogger()
 

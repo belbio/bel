@@ -8,16 +8,21 @@
 3. commas separate arguments of upstream function
 """
 
+# Standard Library
 import copy
 import json
 import re
 from typing import Any, List, Mapping, Optional, Tuple
 
+# Third Party Imports
+import httpx
+from structlog import get_logger
+
+# Local Imports
 import bel.lang.bel_specification as bel_specification
 import bel.lang.partialparse as pparse
 from bel.Config import config
-from bel.utils import get_url, url_path_param_quoting
-from structlog import get_logger
+from bel.utils import url_path_param_quoting
 
 log = get_logger()
 
@@ -207,7 +212,7 @@ def nsarg_completions(
             "namespaces": namespaces,
             "species": species,
         }
-        r = get_url(url, params=params)
+        r = httpx.get(url, params=params)
 
         if r.status_code == 200:
             ns_completions = r.json()

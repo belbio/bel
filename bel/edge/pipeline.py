@@ -15,7 +15,7 @@ import os.path
 import urllib
 
 # Third Party Imports
-import requests
+import httpx
 import structlog
 
 # Local Imports
@@ -23,11 +23,9 @@ import bel.db.arangodb as arangodb
 import bel.edge.edges
 import bel.nanopub.files as files
 import bel.utils as utils
-from bel.utils import Session
 
 log = structlog.getLogger(__name__)
 
-session = Session.s
 
 client = arangodb.get_client()
 edgestore_db = arangodb.get_edgestore_handle(client)
@@ -73,7 +71,7 @@ def process_nanopub(
     if token:
         headers = {"Authorization": f"Bearer {token}"}
 
-    r = session.get(nanopub_url, headers=headers)
+    r = httpx.get(nanopub_url, headers=headers)
 
     nanopub = r.json()
 
@@ -209,7 +207,7 @@ def load_edges_into_db(
         )
 
     except Exception as e:
-        log.error(f"Could not load edges  msg: {e}")
+        log.exception(f"Could not load edges  msg: {e}")
 
     end_time3 = datetime.datetime.now()
     delta_ms = f"{(end_time3 - end_time2).total_seconds() * 1000:.1f}"
@@ -220,7 +218,7 @@ def load_edges_into_db(
             node_list, on_duplicate="replace", halt_on_error=False
         )
     except Exception as e:
-        log.error(f"Could not load nodes  msg: {e}")
+        log.exception(f"Could not load nodes  msg: {e}")
 
     end_time4 = datetime.datetime.now()
     delta_ms = f"{(end_time4 - end_time3).total_seconds() * 1000:.1f}"

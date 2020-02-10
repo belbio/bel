@@ -173,7 +173,7 @@ class BEL(object):
             self.ast = None
 
         except Exception as e:
-            log.error("Error {}, error type: {}".format(e, type(e)))
+            log.exception("Error {}, error type: {}".format(e, type(e)))
             self.validation_messages.append(
                 ("ERROR", "Error {}, error type: {}".format(e, type(e)))
             )

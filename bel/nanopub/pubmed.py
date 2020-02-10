@@ -15,13 +15,14 @@ import re
 from typing import Any, Mapping
 
 # Third Party Imports
+import httpx
 import structlog
 from lxml import etree
 
 # Local Imports
 import bel.lang.ast as bel_ast
 from bel.Config import config
-from bel.utils import get_url, url_path_param_quoting
+from bel.utils import url_path_param_quoting
 
 log = structlog.getLogger(__name__)
 
@@ -68,7 +69,7 @@ def get_pubtator(pmid):
     Re-configure the denotations into an annotation dictionary format
     and collapse duplicate terms so that their spans are in a list.
     """
-    r = get_url(PUBTATOR_TMPL.replace("PMID", pmid), timeout=10)
+    r = httpx.get(PUBTATOR_TMPL.replace("PMID", pmid), timeout=10)
     if r and r.status_code == 200:
         pubtator = r.json()[0]
     else:
@@ -282,13 +283,13 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
 
     try:
         pubmed_url = PUBMED_TMPL.replace("PMID", str(pmid))
-        r = get_url(pubmed_url)
+        r = httpx.get(pubmed_url)
         content = r.content
         log.info(f"Getting Pubmed URL {pubmed_url}")
         root = etree.fromstring(content)
 
     except Exception as e:
-        log.error(
+        log.exception(
             f"Bad Pubmed request, status: {r.status_code} error: {e}",
             url=f'{PUBMED_TMPL.replace("PMID", pmid)}',
         )
@@ -331,7 +332,7 @@ def enhance_pubmed_annotations(pubmed: Mapping[str, Any]) -> Mapping[str, Any]:
     for nsarg in pubmed["annotations"]:
         url = f'{config["bel_api"]["servers"]["api_url"]}/terms/{url_path_param_quoting(nsarg)}'
         log.info(f"URL: {url}")
-        r = get_url(url)
+        r = httpx.get(url)
         log.info(f"Result: {r}")
         new_nsarg = ""
         if r and r.status_code == 200:

@@ -5,6 +5,7 @@
 This file contains tools used in our parser for BEL statements.
 """
 
+# Standard Library
 import collections
 import json
 import math
@@ -15,9 +16,11 @@ import re
 import string
 from typing import Any, List, Mapping
 
-import bel.lang.exceptions as bel_ex
-import requests
+# Third Party Imports
 import yaml
+
+# Local Imports
+import bel.lang.exceptions as bel_ex
 from bel.lang.ast import Arg, BELAst, Function, NSArg, StrArg
 
 ###################
