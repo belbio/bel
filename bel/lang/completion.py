@@ -206,12 +206,15 @@ def nsarg_completions(
         #   is there a better way to  handle this?
 
         url = f'{config["bel_api"]["servers"]["api_url"]}/terms/completions/{url_path_param_quoting(completion_text)}'
+
         params = {
             "size": size,
             "entity_types": entity_types,
             "namespaces": namespaces,
             "species": species,
         }
+        log.info("NSArg completion", api_url=config["bel_api"]["servers"]["api_url"], url=url)
+
         r = httpx.get(url, params=params)
 
         if r.status_code == 200:
@@ -658,6 +661,8 @@ def bel_completion(
 
     """
     bel_spec = bel_specification.get_specification(bel_version)
+
+    log.info("BEL Completion")
 
     belstrlen = len(belstr)
     if cursor_loc == -1:
