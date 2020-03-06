@@ -1,10 +1,9 @@
-import pytest
-
-import bel.lang.belobj
-import bel.lang.bel_utils
-
-from bel.Config import config
+# Local Imports
 import bel.Config
+import bel.lang.bel_utils
+import bel.lang.belobj
+import pytest
+from bel.Config import config
 
 bo = bel.lang.belobj.BEL(
     config["bel"]["lang"]["default_bel_version"], config["bel_api"]["servers"]["api_url"]

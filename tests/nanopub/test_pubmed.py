@@ -1,6 +1,9 @@
-import bel.nanopub.pubmed
+# Standard Library
 import json
 import time
+
+# Local Imports
+import bel.nanopub.pubmed
 
 
 def test_get_pubmed1():

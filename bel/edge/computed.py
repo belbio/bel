@@ -1,11 +1,14 @@
 # Compute Edges related code
 
+# Standard Library
 import copy
-from typing import List, Any, Mapping, MutableSequence
+from typing import Any, List, Mapping, MutableSequence
 
-from bel.lang.ast import BELAst, Function, NSArg
-
+# Third Party Imports
 from structlog import get_logger
+
+# Local Imports
+from bel.lang.ast import BELAst, Function, NSArg
 
 log = get_logger()
 

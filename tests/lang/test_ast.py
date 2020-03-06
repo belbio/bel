@@ -1,9 +1,8 @@
-import pytest
-
+# Local Imports
 import bel.lang.ast
-import bel.lang.belobj
 import bel.lang.bel_utils
-
+import bel.lang.belobj
+import pytest
 from bel.Config import config
 
 bo = bel.lang.belobj.BEL(

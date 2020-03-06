@@ -1,11 +1,10 @@
-import bel.lang.belobj
+# Local Imports
 import bel.edge.computed
-
+import bel.lang.belobj
 from bel.Config import config
 
 bo = bel.lang.belobj.BEL(
-    config["bel"]["lang"]["default_bel_version"],
-    config["bel_api"]["servers"]["api_url"],
+    config["bel"]["lang"]["default_bel_version"], config["bel_api"]["servers"]["api_url"]
 )
 
 

@@ -1,17 +1,17 @@
-import timy
-import json
+# Standard Library
 import gzip
-
-from arango import ArangoError
-
+import json
 from typing import IO
 
-import bel.utils
-import bel.db.arangodb as arangodb
-
-from bel.Config import config
-
+# Third Party Imports
+import timy
+from arango import ArangoError
 from structlog import get_logger
+
+# Local Imports
+import bel.db.arangodb as arangodb
+import bel.utils
+from bel.Config import config
 
 log = get_logger()
 
@@ -28,17 +28,15 @@ def load_orthologs(fo: IO, metadata: dict):
 
     # LOAD ORTHOLOGS INTO ArangoDB
     with timy.Timer("Load Orthologs") as timer:
-        arango_client = arangodb.get_client()
-        belns_db = arangodb.get_belns_handle(arango_client)
-        arangodb.batch_load_docs(
-            belns_db, orthologs_iterator(fo, version), on_duplicate="update"
-        )
 
-        log.info(
-            "Load orthologs",
-            elapsed=timer.elapsed,
-            source=metadata["metadata"]["source"],
-        )
+        arango_client = arangodb.get_client()
+        if not arango_client:
+            print("Cannot load orthologs without ArangoDB access")
+            quit()
+        belns_db = arangodb.get_belns_handle(arango_client)
+        arangodb.batch_load_docs(belns_db, orthologs_iterator(fo, version), on_duplicate="update")
+
+        log.info("Load orthologs", elapsed=timer.elapsed, source=metadata["metadata"]["source"])
 
         # Clean up old entries
         remove_old_ortholog_edges = f"""

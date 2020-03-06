@@ -1,23 +1,24 @@
-import timy
-import json
-import gzip
+# Standard Library
 import copy
-
-from arango import ArangoError
-
+import gzip
+import json
 from typing import IO
 
-import bel.utils
-import bel.db.elasticsearch as elasticsearch
-import bel.db.arangodb as arangodb
+# Third Party Imports
+import timy
+from arango import ArangoError
+from structlog import get_logger
 
+# Local Imports
+import bel.db.arangodb as arangodb
+import bel.db.elasticsearch as elasticsearch
+import bel.utils
 from bel.Config import config
 
 # import structlog
 # import logging
 # log = logging.getLogger(__name__)
 
-from structlog import get_logger
 
 log = get_logger()
 
@@ -77,6 +78,9 @@ def load_terms(fo: IO, metadata: dict, forceupdate: bool):
     # LOAD EQUIVALENCES INTO ArangoDB
     with timy.Timer("Load Term Equivalences") as timer:
         arango_client = arangodb.get_client()
+        if not arango_client:
+            print("Cannot load terms without ArangoDB access")
+            quit()
         belns_db = arangodb.get_belns_handle(arango_client)
         arangodb.batch_load_docs(
             belns_db, terms_iterator_for_arangodb(fo, version), on_duplicate="update"

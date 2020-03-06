@@ -5,21 +5,23 @@
 This file contains tools used in our parser for BEL statements.
 """
 
+# Standard Library
 import collections
+import json
 import math
 import os
 import pprint
 import random
 import re
 import string
-import requests
-from typing import Mapping, List, Any
+from typing import Any, List, Mapping
 
+# Third Party Imports
 import yaml
-import json
-import bel.lang.exceptions as bel_ex
-from bel.lang.ast import BELAst, Function, Arg, NSArg, StrArg
 
+# Local Imports
+import bel.lang.exceptions as bel_ex
+from bel.lang.ast import Arg, BELAst, Function, NSArg, StrArg
 
 ###################
 # STATEMENT TOOLS #
@@ -129,16 +131,12 @@ def random_namespace_arg():
     ascii_alphanumeric = ascii_letters + string.digits
 
     i = random.randint(2, 5)
-    rand_nspace = "NS" + "".join(
-        random.choice(ascii_alphanumeric_upper) for _ in range(i)
-    )
+    rand_nspace = "NS" + "".join(random.choice(ascii_alphanumeric_upper) for _ in range(i))
 
     j = random.randint(5, 25)
 
     if random.random() < 0.5:  # quoted nsvalue
-        rand_nsvalue = "".join(
-            random.choice(ascii_alphanumeric + " ' - , + /.") for _ in range(j)
-        )
+        rand_nsvalue = "".join(random.choice(ascii_alphanumeric + " ' - , + /.") for _ in range(j))
         rand_nsvalue = '"{}"'.format(rand_nsvalue)
     else:  # unquoted nsvalue
         rand_nsvalue = "".join(random.choice(ascii_alphanumeric) for _ in range(j))
@@ -152,9 +150,7 @@ def random_quoted_string():
 
     j = random.randint(5, 25)
 
-    rand_nsvalue = "".join(
-        random.choice(ascii_alphanumeric + " ' - , + /.") for _ in range(j)
-    )
+    rand_nsvalue = "".join(random.choice(ascii_alphanumeric + " ' - , + /.") for _ in range(j))
     return '"{}"'.format(rand_nsvalue)
 
 

@@ -71,4 +71,12 @@ Planned features
 * Command line interface (partially done)
 
 
+## Development setup
 
+-   `git clone git@github.com:belbio/bel.git`
+-   install pipx (python 3.7+)
+-   `pipx install poetry`
+-   `poetry install` # will install using poetry dependencies in pyproject.toml
+-   `poetry shell`
+-   `detect-secrets scan > .secrets.baseline`
+-   `pre-commit install`

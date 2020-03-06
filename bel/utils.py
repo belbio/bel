@@ -1,59 +1,23 @@
-"""Various utilities used throughout the BEL package
+"""Various utilities used throughout the BEL package"""
 
-NOTE: reqsess allows caching external (including ElasticSearch and ArangoDB) REST
-      requests for 1 day. This can cause stale results to show up. The cache
-      lives for the life of the application using *bel* so you'll need to restart
-      the BEL.bio API server if you update the terminologies, you expect major
-      changes in the Pubtator results, etc.
-"""
-
-import ulid
-import tempfile
-from cityhash import CityHash64
-import json
-from typing import Mapping, Any
+# Standard Library
+import collections
 import datetime
-import dateutil
-import requests
-import requests_cache
+import functools
+import json
+import logging
+import tempfile
+from timeit import default_timer
+from typing import Any, Mapping
 
+# Third Party Imports
+import dateutil
+import httpx
+import ulid
+from cityhash import CityHash64
 from structlog import get_logger
 
 log = get_logger()
-
-requests_cache.install_cache(backend="sqlite", expire_after=600)
-
-
-def get_url(url: str, params: dict = {}, timeout: float = 5.0, cache: bool = True):
-    """Wrapper for requests.get(url)
-
-    Args:
-        url: url to retrieve
-        params: query string parameters
-        timeout: allow this much time for the request and time it out if over
-        cache: Cache for up to a day unless this is false
-
-    Returns:
-        Requests Result obj or None if timed out
-    """
-
-    try:
-
-        if not cache:
-            with requests_cache.disabled():
-                r = requests.get(url, params=params, timeout=timeout)
-        else:
-            r = requests.get(url, params=params, timeout=timeout)
-
-        log.debug(f"Response headers {r.headers}  From cache {r.from_cache}")
-        return r
-
-    except requests.exceptions.Timeout:
-        log.warn(f"Timed out getting url in get_url: {url}")
-        return None
-    except Exception as e:
-        log.warn(f"Error getting url: {url}  error: {e}")
-        return None
 
 
 def timespan(start_time):
@@ -67,7 +31,7 @@ def timespan(start_time):
 def download_file(url):
     """Download file"""
 
-    response = requests.get(url, stream=True)
+    response = httpx.get(url, stream=True)
     fp = tempfile.NamedTemporaryFile()
     for chunk in response.iter_content(chunk_size=1024):
         if chunk:  # filter out keep-alive new chunks
@@ -176,13 +140,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 __version__ = "0.3.3"
 
 
-import functools
-import collections
-import logging
-
-from timeit import default_timer
-
-
 class Timer(object):
 
     """ A timer as a context manager
@@ -201,12 +158,7 @@ class Timer(object):
     """
 
     def __init__(
-        self,
-        timer=default_timer,
-        factor=1000,
-        output=None,
-        fmt="took {:.1f} ms",
-        prefix="",
+        self, timer=default_timer, factor=1000, output=None, fmt="took {:.1f} ms", prefix=""
     ):
         self.timer = timer
         self.factor = factor
@@ -286,9 +238,7 @@ def timer(
 
         return wrapped
 
-    if len(func_or_func_args) == 1 and isinstance(
-        func_or_func_args[0], collections.Callable
-    ):
+    if len(func_or_func_args) == 1 and isinstance(func_or_func_args[0], collections.Callable):
         return wrapped_f(func_or_func_args[0])
     else:
         return wrapped_f

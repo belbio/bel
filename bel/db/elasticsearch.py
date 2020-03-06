@@ -1,11 +1,14 @@
+# Standard Library
+import logging
 import os
+
+# Third Party Imports
+import elasticsearch.helpers
 import yaml
 from elasticsearch import Elasticsearch
-import elasticsearch.helpers
 
+# Local Imports
 from bel.Config import config
-
-import logging
 
 log = logging.getLogger(__name__)
 

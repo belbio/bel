@@ -1,7 +1,8 @@
 {
-    "python.pythonPath": "/Users/william/.virtualenvs/bel-wvk-0dh9/bin/python",
+    "peacock.color": "#81ec64",
     "workbench.colorCustomizations": {
         "activityBar.background": "#a6f291",
+        "activityBar.activeBorder": "#708cee",
         "activityBar.foreground": "#15202b",
         "activityBar.inactiveForeground": "#15202b99",
         "activityBarBadge.background": "#708cee",
@@ -14,6 +15,17 @@
         "statusBarItem.hoverBackground": "#5ce637",
         "statusBar.foreground": "#15202b"
     },
-    "peacock.color": "#81ec64",
-    "deepcode.review.results.hideInformationIssues": false
+    "python.pythonPath": ".venv/bin/python",
+    "python.analysis.openFilesOnly": false,
+    "python.analysis.memory.keepLibraryLocalVariables": true,
+    "python.autoComplete.addBrackets": true,
+    "python.venvPath": "~/.virtualenvs",
+    "python.testing.cwd": "${workspaceFolder}",
+    "python.testing.pytestEnabled": true,
+    "python.linting.pycodestylePath": "pep8",
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.linting.pycodestyleEnabled": false,
+    "python.sortImports.path": "/Users/william/.virtualenvs/bel-wvk-0dh9/bin/isort",
+    "autoDocstring.docstringFormat": "google",
+    "python.formatting.blackPath": "/usr/local/bin/black"
 }

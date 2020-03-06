@@ -1,24 +1,28 @@
-from typing import Mapping, List, Union
+# Standard Library
 import re
+from typing import List, Mapping, Union
 
-import bel.db.elasticsearch
+# Third Party Imports
+import cachetools
+import structlog
+
+# Local Imports
 import bel.db.arangodb
-
+import bel.db.elasticsearch
 from bel.Config import config
 
 # import logging
 # log = logging.getLogger(__name__)
 
-import structlog
 
 log = structlog.getLogger()
 
 es = bel.db.elasticsearch.get_client()
 
 arangodb_client = bel.db.arangodb.get_client()
-belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)
 
 
+@cachetools.cached(cachetools.TTLCache(maxsize=512, ttl=600))
 def get_terms(term_id):
     """Get term(s) using term_id - given term_id may match multiple term records
 
@@ -46,6 +50,7 @@ def get_terms(term_id):
     return results
 
 
+@cachetools.cached(cachetools.TTLCache(maxsize=1024, ttl=600))
 def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
     """Get equivalents given ns:id
 
@@ -55,6 +60,12 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
     Returns:
         List[Mapping[str, Union[str, bool]]]: e.g. [{'term_id': 'HGNC:5', 'namespace': 'HGNC'}, 'primary': False]
     """
+    if not arangodb_client:
+        print("Cannot get equivalents without arangodb access")
+        quit()
+
+    belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)
+
     try:
         errors = []
         terms = get_terms(term_id)
@@ -94,7 +105,7 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
         return {"equivalents": equivalents, "errors": errors}
 
     except Exception as e:
-        log.error(f"Problem getting term equivalents for {term_id} msg: {e}")
+        log.exception(f"Problem getting term equivalents for {term_id} msg: {e}")
         return {"equivalents": [], "errors": [f"Unexpected error {e}"]}
 
 
@@ -127,6 +138,7 @@ def get_labels(term_ids: list) -> dict:
     return term_labels
 
 
+@cachetools.cached(cachetools.TTLCache(maxsize=1024, ttl=600))
 def get_normalized_terms(term_id: str) -> dict:
     """Get normalized terms - canonical/decanonical forms"""
 

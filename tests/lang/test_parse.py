@@ -1,11 +1,10 @@
-import pytest
-
+# Local Imports
 import bel.lang.belobj
+import pytest
 from bel.Config import config
 
 bo = bel.lang.belobj.BEL(
-    config["bel"]["lang"]["default_bel_version"],
-    config["bel_api"]["servers"]["api_url"],
+    config["bel"]["lang"]["default_bel_version"], config["bel_api"]["servers"]["api_url"]
 )
 
 
@@ -16,8 +15,7 @@ def test_empty_string():
 
     assert bo.ast is None
     assert (
-        "Please include a valid BEL statement - found empty string."
-        in bo.validation_messages[0][1]
+        "Please include a valid BEL statement - found empty string." in bo.validation_messages[0][1]
     )
 
 

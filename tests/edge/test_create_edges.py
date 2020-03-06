@@ -1,6 +1,6 @@
-import pytest
+# Local Imports
 import bel.edge.edges
-
+import pytest
 from bel.Config import config
 
 api_url = config["bel_api"]["servers"]["api_url"]

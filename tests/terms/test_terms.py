@@ -1,3 +1,4 @@
+# Local Imports
 import bel.terms.terms
 
 
@@ -27,10 +28,6 @@ def test_obsolete_term():
 
     print("Result", result)
 
-    check = {
-        "canonical": "EG:54855",
-        "decanonical": "HGNC:TENT5C",
-        "original": "HGNC:FAM46C",
-    }
+    check = {"canonical": "EG:54855", "decanonical": "HGNC:TENT5C", "original": "HGNC:FAM46C"}
 
     assert check == result

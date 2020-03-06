@@ -1,18 +1,8 @@
+# Standard Library
 import re
 
+# Local Imports
 import bel.utils as utils
-
-
-def test_get_url():
-
-    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=19894120"
-
-    # with pytest.raises(requests.exceptions.Timeout):
-    #     r = utils.get_url(url, timeout=0.0001)
-
-    r = utils.get_url(url)
-    r = utils.get_url(url)
-    assert r.from_cache
 
 
 def test_first_true():

@@ -5,17 +5,19 @@
 # Migrate BEL from 1 to 2.0.0
 #
 
+# Standard Library
 import json
 
-import bel
-from bel import BEL
-import bel.lang.partialparse
-
-from bel.Config import config
-import bel.lang.ast
-from bel.lang.ast import BELAst, Function, NSArg, StrArg
-
+# Third Party Imports
 import structlog
+
+# Local Imports
+import bel
+import bel.lang.ast
+import bel.lang.partialparse
+from bel import BEL
+from bel.Config import config
+from bel.lang.ast import BELAst, Function, NSArg, StrArg
 
 log = structlog.getLogger(__name__)
 
@@ -67,10 +69,7 @@ def convert(ast):
 
     if ast and ast.type == "Function":
         # Activity function conversion
-        if (
-            ast.name != "molecularActivity"
-            and ast.name in spec["namespaces"]["Activity"]["list"]
-        ):
+        if ast.name != "molecularActivity" and ast.name in spec["namespaces"]["Activity"]["list"]:
             print("name", ast.name, "type", ast.type)
             ast = convert_activity(ast)
             return ast  # Otherwise - this will trigger on the BEL2 molecularActivity
@@ -115,9 +114,7 @@ def convert_tloc(ast):
         NSArg(from_loc_arg.namespace, from_loc_arg.value, parent_function=from_loc)
     )
     to_loc = Function("toLoc", spec, parent_function=ast)
-    to_loc.add_argument(
-        NSArg(to_loc_arg.namespace, to_loc_arg.value, parent_function=to_loc)
-    )
+    to_loc.add_argument(NSArg(to_loc_arg.namespace, to_loc_arg.value, parent_function=to_loc))
 
     ast.args[1] = from_loc
     ast.args[2] = to_loc
@@ -148,9 +145,7 @@ def convert_pmod(pmod):
     """Update BEL1 pmod() protein modification term"""
 
     if pmod.args[0].value in spec["bel1_migration"]["protein_modifications"]:
-        pmod.args[0].value = spec["bel1_migration"]["protein_modifications"][
-            pmod.args[0].value
-        ]
+        pmod.args[0].value = spec["bel1_migration"]["protein_modifications"][pmod.args[0].value]
 
     return pmod
 
