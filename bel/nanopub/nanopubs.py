@@ -1,14 +1,17 @@
-from typing import Mapping, Any, List, Iterable, Tuple
+# Standard Library
 import gzip
-import bel.lang.belobj
+import logging
+from typing import Any, Iterable, List, Mapping, Tuple
+
+# Third Party Imports
+import httpx
 import jsonschema
-import requests
 from cityhash import CityHash64
 
+# Local Imports
 import bel.edge.edges
+import bel.lang.belobj
 from bel.Config import config
-
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -27,9 +30,7 @@ class Nanopub(object):
         """
         self.endpoint = endpoint
 
-    def validate(
-        self, nanopub: Mapping[str, Any]
-    ) -> Tuple[bool, List[Tuple[str, str]]]:
+    def validate(self, nanopub: Mapping[str, Any]) -> Tuple[bool, List[Tuple[str, str]]]:
         """Validates using the nanopub schema
 
         Args:
@@ -82,9 +83,7 @@ class Nanopub(object):
 
         return (is_valid, all_messages)
 
-    def validate_context(
-        self, context: Mapping[str, Any]
-    ) -> Tuple[bool, List[Tuple[str, str]]]:
+    def validate_context(self, context: Mapping[str, Any]) -> Tuple[bool, List[Tuple[str, str]]]:
         """ Validate context
 
         Args:
@@ -99,7 +98,7 @@ class Nanopub(object):
 
         url = f'{self.endpoint}/terms/{context["id"]}'
 
-        res = requests.get(url)
+        res = httpx.get(url)
         if res.status_code == 200:
             return (True, [])
         else:
@@ -210,12 +209,8 @@ def hash_nanopub(nanopub: Mapping[str, Any]) -> str:
 
     # Citation
     if nanopub["nanopub"]["citation"].get("database", False):
-        hash_list.append(
-            nanopub["nanopub"]["citation"]["database"].get("name", "").strip()
-        )
-        hash_list.append(
-            nanopub["nanopub"]["citation"]["database"].get("id", "").strip()
-        )
+        hash_list.append(nanopub["nanopub"]["citation"]["database"].get("name", "").strip())
+        hash_list.append(nanopub["nanopub"]["citation"]["database"].get("id", "").strip())
     elif nanopub["nanopub"]["citation"].get("uri", False):
         hash_list.append(nanopub["nanopub"]["citation"].get("uri", "").strip())
     elif nanopub["nanopub"]["citation"].get("reference", False):

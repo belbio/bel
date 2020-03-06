@@ -1,9 +1,10 @@
-import pytest
+# Standard Library
 import json
 
+# Local Imports
 import bel.lang.completion
 import bel.utils
-
+import pytest
 from bel.Config import config
 
 
@@ -164,10 +165,7 @@ def test_completion_arg_fn_5():
 
 def test_completion_arg_ns_prefix():
 
-    if (
-        bel.utils.get_url(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code
-        != 200
-    ):
+    if bel.httpx.get(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code != 200:
         pytest.xfail("BEL.bio API Test environment is not setup")
 
     completions = bel.lang.completion.bel_completion(
@@ -183,10 +181,7 @@ def test_completion_arg_ns_prefix():
 
 def test_completion_arg_ns_val():
 
-    if (
-        bel.utils.get_url(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code
-        != 200
-    ):
+    if bel.httpx.get(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code != 200:
         pytest.xfail("BEL.bio API Test environment is not setup")
 
     completions = bel.lang.completion.bel_completion(

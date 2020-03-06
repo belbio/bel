@@ -1,11 +1,10 @@
-import os
-import yaml
-from elasticsearch import Elasticsearch
-import elasticsearch.helpers
-
-from bel.Config import config
-
 import logging
+import os
+
+import elasticsearch.helpers
+import yaml
+from bel.Config import config
+from elasticsearch import Elasticsearch
 
 log = logging.getLogger(__name__)
 

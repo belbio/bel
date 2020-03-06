@@ -1,7 +1,8 @@
-import pytest
-import bel.nanopub.nanopubs as nb
 import json
 import os
+
+import bel.nanopub.nanopubs as nb
+import pytest
 
 local_dir = os.path.dirname(__file__)
 
@@ -39,14 +40,10 @@ def test_simple_nanopub():
 def test_multiple_nanopub():
     """Convert nanopub with multiple assertions to edges"""
 
-    with open(
-        f"{local_dir}/datasets/nanopub_bel-good-multiple-assertions-1.0.0.json", "r"
-    ) as f:
+    with open(f"{local_dir}/datasets/nanopub_bel-good-multiple-assertions-1.0.0.json", "r") as f:
         nanopub = json.load(f)
 
-    with open(
-        f"{local_dir}/datasets/edges-good-multiple-assertions-1.0.0.json", "r"
-    ) as f:
+    with open(f"{local_dir}/datasets/edges-good-multiple-assertions-1.0.0.json", "r") as f:
         edges_result = json.load(f)
 
     N = nb.Nanopub()
@@ -79,9 +76,7 @@ def test_nested_nanopub():
 def test_degradation_nanopub():
     """Convert nanopub with degradation assertion to edges"""
 
-    with open(
-        f"{local_dir}/datasets/nanopub_bel-good-degradation-1.0.0.json", "r"
-    ) as f:
+    with open(f"{local_dir}/datasets/nanopub_bel-good-degradation-1.0.0.json", "r") as f:
         nanopub = json.load(f)
 
     with open(f"{local_dir}/datasets/edges-good-degradation-1.0.0.json", "r") as f:

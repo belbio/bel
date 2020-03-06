@@ -24,4 +24,3 @@ The following commands sets up a virtual environment, installs *bel* as an edita
 To run the tests
 
     make tests
-

@@ -1,6 +1,5 @@
-import pytest
-
 import bel.lang.belobj
+import pytest
 from bel.Config import config
 
 bo = bel.lang.belobj.BEL(

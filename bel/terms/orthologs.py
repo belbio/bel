@@ -1,7 +1,11 @@
+# Standard Library
 from typing import List
 
+# Third Party Imports
+import cachetools
 import structlog
 
+# Local Imports
 import bel.db.arangodb
 import bel.terms.terms
 
@@ -50,7 +54,7 @@ def get_orthologs(canonical_gene_id: str, species: list = []) -> List[dict]:
         RETURN {{ 'orthologs': FLATTEN(UNION(start, orthologs)) }}
     """
 
-    if not arango_client:
+    if not arangodb_client:
         print("Cannot get orthologs without ArangoDB access")
         quit()
     belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)

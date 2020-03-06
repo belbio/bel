@@ -9,24 +9,27 @@ NOTE !!!!  Have to BEL Spec JSON files if the BEL Spec JSON format is changed he
 
 """
 
+# Standard Library
+import copy
+import datetime
 import glob
+import importlib
+import itertools
+import json
 import os
 import re
-import copy
-import requests
 import sys
-import yaml
-import datetime
-import json
-import itertools
-from typing import Mapping, List, Any
+from typing import Any, List, Mapping
+
+# Third Party Imports
+import httpx
 import jinja2
-import tatsu
-import importlib
-
-from bel.Config import config
-
 import structlog
+import tatsu
+import yaml
+
+# Local Imports
+from bel.Config import config
 
 log = structlog.getLogger(__name__)
 
@@ -219,7 +222,7 @@ def github_belspec_files(spec_dir, force: bool = False):
     if github_access_token:
         params = {"access_token": github_access_token}
 
-    r = requests.get(repo_url, params=params)
+    r = httpx.get(repo_url, params=params)
     if r.status_code == 200:
         results = r.json()
         for f in results:
@@ -229,7 +232,7 @@ def github_belspec_files(spec_dir, force: bool = False):
             if "yaml" not in fn and "yml" in fn:
                 fn = fn.replace("yml", "yaml")
 
-            r = requests.get(url, params=params, allow_redirects=True)
+            r = httpx.get(url, params=params, allow_redirects=True)
             if r.status_code == 200:
                 open(f"{spec_dir}/{fn}", "wb").write(r.content)
             else:
@@ -279,7 +282,7 @@ def belspec_yaml2json(yaml_fn: str, json_fn: str) -> str:
             json.dump(spec_dict, f)
 
     except Exception as e:
-        log.error(
+        log.exception(
             f"Warning: BEL Specification {yaml_fn} could not be read. Cannot proceed -- error {str(e)}"
         )
         print("DumpVar:\n", json.dumps(spec_dict, indent=4))
@@ -558,7 +561,7 @@ def get_ebnf_template():
 
     try:
         # Get download url for template file
-        r = requests.get(repo_url, params=params)
+        r = httpx.get(repo_url, params=params)
 
         if r.status_code == 200:
             template_url = r.json()["download_url"]
@@ -567,7 +570,7 @@ def get_ebnf_template():
 
         # Get template file
         try:
-            r = requests.get(template_url, params=params, allow_redirects=True)
+            r = httpx.get(template_url, params=params, allow_redirects=True)
             if r.status_code == 200:
                 open(local_fp, "wt").write(r.text)
             else:

@@ -1,5 +1,7 @@
+# Standard Library
 import logging.config
 
+# Third Party Imports
 from structlog import configure, processors, stdlib, threadlocal
 
 # Found in https://blog.sneawo.com/blog/2017/07/28/json-logging-in-python/
@@ -19,7 +21,7 @@ logging.config.dictConfig(
             "": {"handlers": ["json"], "level": "INFO"},
             "bel": {"level": "INFO"},
             "belapi": {"level": "INFO"},
-            "requests": {"level": "DEBUG"},
+            "httpx": {"level": "DEBUG"},
             "elasticsearch": {"level": "WARNING"},
             "falcon_cors": {"level": "WARNING", "formatter": "json"},
             "urllib3": {"level": "CRITICAL"},

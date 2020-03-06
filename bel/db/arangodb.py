@@ -1,8 +1,11 @@
+# Standard Library
 import re
 
+# Third Party Imports
 import arango
 from structlog import get_logger
 
+# Local Imports
 import bel.utils as utils
 from bel.Config import config
 
@@ -74,7 +77,7 @@ def get_client(host=None, port=None, username=None, password=None, enable_loggin
         return client
 
     except Exception as e:
-        log.warning(f"Cannot access arangodb at {arango_url}")
+        log.error(f"Cannot access arangodb at {arango_url}")
         return None
 
 
@@ -165,14 +168,17 @@ def get_edgestore_handle(
 def get_belns_handle(client, username=None, password=None):
     """Get BEL namespace arango db handle"""
 
-    print("Here", client, "||")
-
     (username, password) = get_user_creds(username, password)
 
     sys_db = client.db("_system", username=username, password=password)
 
     # Create a new database named "belns"
-    try:
+    if sys_db.has_database(belns_db_name):
+        if username and password:
+            belns_db = client.db(belns_db_name, username=username, password=password)
+        else:
+            belns_db = client.db(belns_db_name)
+    else:
         if username and password:
             belns_db = sys_db.create_database(
                 name=belns_db_name,
@@ -180,38 +186,33 @@ def get_belns_handle(client, username=None, password=None):
             )
         else:
             belns_db = sys_db.create_database(name=belns_db_name)
-    except arango.exceptions.DatabaseCreateError:
-        if username and password:
-            belns_db = client.db(belns_db_name, username=username, password=password)
-        else:
-            belns_db = client.db(belns_db_name)
 
-    try:
-        belns_db.create_collection(belns_metadata_name)
-    except Exception:
-        pass
+    if belns_db.has_collection(belns_metadata_name):
+        belns_metadata = belns_db.collection(belns_metadata_name)
+    else:
+        belns_metadata = belns_db.create_collection(belns_metadata_name)
 
-    try:
-        equiv_nodes = belns_db.create_collection(equiv_nodes_name, index_bucket_count=64)
+    if belns_db.has_collection(equiv_nodes_name):
+        equiv_nodes = belns_db.collection(equiv_nodes_name)
+    else:
+        equiv_nodes = belns_db.create_collection(equiv_nodes_name)
         equiv_nodes.add_hash_index(fields=["name"], unique=True)
-    except Exception:
-        pass
 
-    try:
-        belns_db.create_collection(equiv_edges_name, edge=True, index_bucket_count=64)
-    except Exception:
-        pass
+    if belns_db.has_collection(equiv_edges_name):
+        equiv_edges = belns_db.collection(equiv_edges_name)
+    else:
+        equiv_edges = belns_db.create_collection(equiv_edges_name)
 
-    try:
-        ortholog_nodes = belns_db.create_collection(ortholog_nodes_name, index_bucket_count=64)
+    if belns_db.has_collection(ortholog_nodes_name):
+        ortholog_nodes = belns_db.collection(ortholog_nodes_name)
+    else:
+        ortholog_nodes = belns_db.create_collection(ortholog_nodes_name)
         ortholog_nodes.add_hash_index(fields=["name"], unique=True)
-    except Exception:
-        pass
 
-    try:
-        belns_db.create_collection(ortholog_edges_name, edge=True, index_bucket_count=64)
-    except Exception:
-        pass
+    if belns_db.has_collection(ortholog_edges_name):
+        ortholog_edges = belns_db.collection(ortholog_edges_name)
+    else:
+        ortholog_edges = belns_db.create_collection(ortholog_edges_name)
 
     return belns_db
 

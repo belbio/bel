@@ -20,6 +20,7 @@
 
 import os
 import sys
+
 import sphinx_rtd_theme
 
 # To get ReadTheDocs working - autodoc missing modules error

@@ -13,16 +13,16 @@ Notes:
     *
 """
 
-import re
-import json
-import yaml
-import copy
-import gzip
 import collections
-import sys
+import copy
 import csv
+import gzip
+import json
+import re
+import sys
 
 import structlog
+import yaml
 
 log = structlog.getLogger(__name__)
 
@@ -53,9 +53,7 @@ def process_citation(citation_str: str) -> dict:
     citation_obj = {}
 
     citation_list = convert_csv_str_to_list(citation_str)
-    (citation_type, name, doc_id, pub_date, authors, comment, *extra) = (
-        citation_list + [None] * 7
-    )
+    (citation_type, name, doc_id, pub_date, authors, comment, *extra) = citation_list + [None] * 7
     # print(f'citation_type: {citation_type}, name: {name}, doc_id: {doc_id}, pub_date: {pub_date}, authors: {authors}, comment: {comment}')
 
     authors_list = []
