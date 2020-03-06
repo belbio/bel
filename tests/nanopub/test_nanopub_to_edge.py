@@ -1,6 +1,8 @@
+# Standard Library
 import json
 import os
 
+# Local Imports
 import bel.nanopub.nanopubs as nb
 import pytest
 

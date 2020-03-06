@@ -9,14 +9,18 @@
 
 
 """
+# Standard Library
 import copy
 import logging
 import logging.config
 import re
 from typing import Any, List, Mapping, MutableMapping, Optional, Tuple
 
-import bel.lang.bel_specification as bel_specification
+# Third Party Imports
 import structlog
+
+# Local Imports
+import bel.lang.bel_specification as bel_specification
 from bel.Config import config
 from bel.lang.ast import BELAst, Function, NSArg, StrArg
 

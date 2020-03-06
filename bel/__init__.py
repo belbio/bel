@@ -2,8 +2,10 @@
 # BEL FUNCTION IMPORTS #
 ########################
 
+# Standard Library
 import logging
 
+# Local Imports
 import bel.db
 import bel.edge
 import bel.lang

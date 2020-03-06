@@ -5,12 +5,16 @@
 # Migrate BEL from 1 to 2.0.0
 #
 
+# Standard Library
 import json
 
+# Third Party Imports
+import structlog
+
+# Local Imports
 import bel
 import bel.lang.ast
 import bel.lang.partialparse
-import structlog
 from bel import BEL
 from bel.Config import config
 from bel.lang.ast import BELAst, Function, NSArg, StrArg

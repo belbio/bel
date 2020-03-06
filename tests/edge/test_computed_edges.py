@@ -1,3 +1,4 @@
+# Local Imports
 import bel.edge.computed
 import bel.lang.belobj
 from bel.Config import config

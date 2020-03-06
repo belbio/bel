@@ -1,6 +1,8 @@
+# Standard Library
 import json
 import time
 
+# Local Imports
 import bel.nanopub.pubmed
 
 

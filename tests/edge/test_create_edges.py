@@ -1,3 +1,4 @@
+# Local Imports
 import bel.edge.edges
 import pytest
 from bel.Config import config

@@ -1,9 +1,13 @@
+# Standard Library
 import re
 from typing import Tuple
 
+# Third Party Imports
+import structlog
+
+# Local Imports
 import bel.db.elasticsearch
 import bel.lang.belobj
-import structlog
 from bel.Config import config
 
 log = structlog.getLogger(__name__)

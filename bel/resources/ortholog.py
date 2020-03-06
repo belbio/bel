@@ -1,13 +1,17 @@
+# Standard Library
 import gzip
 import json
 from typing import IO
 
-import bel.db.arangodb as arangodb
-import bel.utils
+# Third Party Imports
 import timy
 from arango import ArangoError
-from bel.Config import config
 from structlog import get_logger
+
+# Local Imports
+import bel.db.arangodb as arangodb
+import bel.utils
+from bel.Config import config
 
 log = get_logger()
 

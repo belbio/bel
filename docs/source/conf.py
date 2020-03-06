@@ -18,9 +18,11 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 
+# Standard Library
 import os
 import sys
 
+# Third Party Imports
 import sphinx_rtd_theme
 
 # To get ReadTheDocs working - autodoc missing modules error

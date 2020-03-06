@@ -1,7 +1,9 @@
 # import bel.nanopub.nanopubs as nb
 # import yaml
+# Standard Library
 import os
 
+# Local Imports
 import pytest
 
 local_dir = os.path.dirname(__file__)

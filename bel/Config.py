@@ -10,6 +10,7 @@ Get first belbio_conf.{yml|yaml} and belbio_secrets.{yml|yaml} files in:
     ~/.belbio_{conf|secrets}   (dotfiles in home directory)
 """
 
+# Standard Library
 import collections
 import copy
 import functools
@@ -18,6 +19,7 @@ import os
 import re
 from typing import Any, Mapping, MutableMapping
 
+# Third Party Imports
 import yaml
 
 log = logging.getLogger(__name__)

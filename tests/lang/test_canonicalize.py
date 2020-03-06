@@ -1,3 +1,4 @@
+# Local Imports
 import bel.Config
 import bel.lang.bel_utils
 import bel.lang.belobj

@@ -13,6 +13,7 @@ Notes:
     *
 """
 
+# Standard Library
 import collections
 import copy
 import csv
@@ -21,6 +22,7 @@ import json
 import re
 import sys
 
+# Third Party Imports
 import structlog
 import yaml
 

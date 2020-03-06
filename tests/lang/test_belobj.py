@@ -1,3 +1,4 @@
+# Local Imports
 import bel.db.arangodb
 import bel.lang.ast
 import bel.lang.bel_utils
