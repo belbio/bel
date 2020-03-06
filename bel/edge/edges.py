@@ -292,6 +292,7 @@ def generate_assertion_edge_info(
                 causal_edge_type = []
                 if "causal" in bo.spec["relations"]["info"][assertion["relation"]]["categories"]:
                     edge_types.append("causal")
+                    causal_edge_type = ["causal"]
 
                 edge_info = {
                     "edge_types": edge_types,
