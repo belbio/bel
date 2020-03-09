@@ -14,7 +14,6 @@ import sys
 from typing import Any, List, Mapping, MutableSequence
 
 # Third Party Imports
-import httpx
 import structlog
 
 # Local Imports
@@ -23,6 +22,7 @@ import bel.lang.bel_specification
 import bel.lang.belobj
 import bel.utils as utils
 from bel.Config import config
+from bel.utils import http_client
 
 log = structlog.getLogger(__name__)
 
@@ -442,7 +442,7 @@ def orthologize_context(
     """
 
     url = f'{config["bel_api"]["servers"]["api_url"]}/terms/{orthologize_target}'
-    r = httpx.get(url)
+    r = http_client.get(url)
     species_label = r.json().get("label", "unlabeled")
 
     orthologized_from = {}

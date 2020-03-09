@@ -15,7 +15,6 @@ import os.path
 import urllib
 
 # Third Party Imports
-import httpx
 import structlog
 
 # Local Imports
@@ -23,6 +22,7 @@ import bel.db.arangodb as arangodb
 import bel.edge.edges
 import bel.nanopub.files as files
 import bel.utils as utils
+from bel.utils import http_client
 
 log = structlog.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def process_nanopub(
     if token:
         headers = {"Authorization": f"Bearer {token}"}
 
-    r = httpx.get(nanopub_url, headers=headers)
+    r = http_client.get(nanopub_url, headers=headers)
 
     nanopub = r.json()
 

@@ -20,6 +20,15 @@ from structlog import get_logger
 log = get_logger()
 
 
+def get_http_client():
+    """Client for http requests"""
+
+    return httpx.Client(verify=False)
+
+
+http_client = get_http_client()
+
+
 def timespan(start_time):
     """Return time in milliseconds from start_time"""
 
@@ -31,7 +40,7 @@ def timespan(start_time):
 def download_file(url):
     """Download file"""
 
-    response = httpx.get(url, stream=True)
+    response = http_client.get(url, stream=True)
     fp = tempfile.NamedTemporaryFile()
     for chunk in response.iter_content(chunk_size=1024):
         if chunk:  # filter out keep-alive new chunks
