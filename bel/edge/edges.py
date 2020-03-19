@@ -118,6 +118,7 @@ def nanopub_to_edges(nanopub: dict = {}, rules: List[str] = [], orthologize_targ
     master_annotations = copy.deepcopy(nanopub["nanopub"]["annotations"])
     master_metadata = copy.deepcopy(nanopub["nanopub"]["metadata"])
     master_metadata.pop("gd_abstract", None)
+    master_metadata.pop("gd_validation", None)
 
     nanopub_type = nanopub["nanopub"]["metadata"].get("nanopub_type")
     nanopub_status = ""

@@ -71,7 +71,7 @@ def process_nanopub(
     if token:
         headers = {"Authorization": f"Bearer {token}"}
 
-    r = http_client.get(nanopub_url, headers=headers)
+    r = http_client.get(nanopub_url, headers=headers, verify=False)
 
     nanopub = r.json()
 
@@ -244,14 +244,18 @@ def edge_iterator(edges=[], edges_fn=None):
 
         # Create edge _key
         relation_hash = copy.deepcopy(relation)
-        relation_hash.pop("edge_dt", None)
-        relation_hash.pop("edge_hash", None)
-        relation_hash.pop("nanopub_dt", None)
-        relation_hash.pop("nanopub_url", None)
-        relation_hash.pop("subject_canon", None)
-        relation_hash.pop("object_canon", None)
-        relation_hash.pop("public_flag", None)
-        relation_hash.pop("metadata", None)
+        keep = [
+            "citation",
+            "species_id",
+            "subject_canon",
+            "relation",
+            "object_canon",
+            "annotations",
+            "edge_types",
+        ]
+        for key in relation_hash:
+            if key not in keep:
+                relation_hash.pop(key, None)
 
         relation_id = str(utils._create_hash_from_doc(relation_hash))
         relation["_key"] = relation_id
