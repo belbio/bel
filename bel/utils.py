@@ -40,14 +40,15 @@ def timespan(start_time):
 def download_file(url):
     """Download file"""
 
-    response = http_client.get(url, stream=True)
-    fp = tempfile.NamedTemporaryFile()
-    for chunk in response.iter_content(chunk_size=1024):
-        if chunk:  # filter out keep-alive new chunks
-            fp.write(chunk)
+    with http_client.stream("GET", url) as response:
 
-    # log.info(f'Download file - tmp file: {fp.name}  size: {fp.tell()}')
-    return fp
+        fp = tempfile.NamedTemporaryFile()
+        for chunk in response.iter_bytes():
+            if chunk:  # filter out keep-alive new chunks
+                fp.write(chunk)
+
+        # log.info(f'Download file - tmp file: {fp.name}  size: {fp.tell()}')
+        return fp
 
 
 def url_path_param_quoting(param):

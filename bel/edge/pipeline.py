@@ -71,7 +71,7 @@ def process_nanopub(
     if token:
         headers = {"Authorization": f"Bearer {token}"}
 
-    r = http_client.get(nanopub_url, headers=headers, verify=False)
+    r = http_client.get(nanopub_url, headers=headers)
 
     nanopub = r.json()
 
@@ -253,7 +253,7 @@ def edge_iterator(edges=[], edges_fn=None):
             "annotations",
             "edge_types",
         ]
-        for key in relation_hash:
+        for key in list(relation_hash.keys()):
             if key not in keep:
                 relation_hash.pop(key, None)
 
