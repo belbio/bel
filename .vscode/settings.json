@@ -2,6 +2,7 @@
     "peacock.color": "#81ec64",
     "workbench.colorCustomizations": {
         "activityBar.background": "#a6f291",
+        "activityBar.activeBackground": "#a6f291",
         "activityBar.activeBorder": "#708cee",
         "activityBar.foreground": "#15202b",
         "activityBar.inactiveForeground": "#15202b99",

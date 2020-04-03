@@ -5,12 +5,11 @@ import re
 from typing import List, Tuple
 
 # Third Party Imports
-import httpx
 import structlog
 
 # Local Imports
 from bel.lang.ast import BELAst, Function, NSArg, StrArg
-from bel.utils import url_path_param_quoting
+from bel.utils import http_client, url_path_param_quoting
 
 log = structlog.getLogger()
 
@@ -37,7 +36,10 @@ def validate(bo, error_level: str = "WARNING") -> Tuple[bool, List[Tuple[str, st
             bo = validate_arg_values(bo.ast, bo)  # validates NSArg and StrArg values
 
     else:
-        bo.validation_messages.append(("ERROR", "Invalid BEL Statement - cannot parse"))
+        # Don't show general error if more specific error is already added
+        errors = [error for error in bo.validation_messages if error[0] == "ERROR"]
+        if not errors:
+            bo.validation_messages.append(("ERROR", "Invalid BEL Statement - cannot parse"))
 
     for msg in bo.validation_messages:
         if msg[0] == "ERROR":
@@ -275,7 +277,7 @@ def validate_arg_values(ast, bo):
         else:
             request_url = bo.api_url + "/terms/{}".format(url_path_param_quoting(term_id))
             log.info(f"Validate Arg Values url {request_url}")
-            r = httpx.get(request_url)
+            r = http_client.get(request_url)
             if r and r.status_code == 200:
                 result = r.json()
                 # function signature term value_types doesn't match up with API term entity_types

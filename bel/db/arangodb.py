@@ -29,6 +29,8 @@ belns_metadata_name = "resources_metadata"  # BEL Resources metadata
 belapi_settings_name = "settings"  # BEL API settings and configuration
 belapi_statemgmt_name = "state_mgmt"  # BEL API state mgmt
 
+bel_validations_name = "validations"  # BEL Assertion/Annotation validations
+
 
 # TODO - update get db and get collections using same pattern as in userstore/common/db.py
 #        I made the mistake below of edgestore_db = sys_db.create_database()
@@ -225,29 +227,40 @@ def get_belapi_handle(client, username=None, password=None):
     sys_db = client.db("_system", username=username, password=password)
 
     # Create a new database named "belapi"
-    try:
-        if username and password:
-            belapi_db = sys_db.create_database(
-                name=belapi_db_name,
-                users=[{"username": username, "password": password, "active": True}],
-            )
-        else:
-            belapi_db = sys_db.create_database(name=belapi_db_name)
-    except arango.exceptions.DatabaseCreateError:
+    if sys_db.has_database(belapi_db_name):
         if username and password:
             belapi_db = client.db(belapi_db_name, username=username, password=password)
         else:
             belapi_db = client.db(belapi_db_name)
+    else:
+        if username and password:
+            sys_db.create_database(
+                name=belapi_db_name,
+                users=[{"username": username, "password": password, "active": True}],
+            )
+        else:
+            sys_db.create_database(name=belapi_db_name)
 
-    try:
-        belapi_db.create_collection(belapi_settings_name)
-    except Exception:
-        pass
+        belapi_db = client.db(belapi_db_name)
 
-    try:
-        belapi_db.create_collection(belapi_statemgmt_name)
-    except Exception:
-        pass
+    if belapi_db.has_collection(belapi_settings_name):
+        belapi_settings_coll = belapi_db.collection(belapi_settings_name)
+    else:
+        belapi_settings_coll = belapi_db.create_collection(
+            belapi_settings_name, index_bucket_count=64
+        )
+
+    if belapi_db.has_collection(belapi_statemgmt_name):
+        belapi_statemgmt_coll = belapi_db.collection(belapi_statemgmt_name)
+    else:
+        belapi_statemgmt_coll = belapi_db.create_collection(
+            belapi_statemgmt_name, index_bucket_count=64
+        )
+
+    if belapi_db.has_collection(bel_validations_name):
+        bel_validations = belapi_db.collection(bel_validations_name)
+    else:
+        bel_validations = belapi_db.create_collection(bel_validations_name, index_bucket_count=64)
 
     return belapi_db
 

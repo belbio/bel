@@ -4,7 +4,6 @@ import logging
 from typing import Any, Iterable, List, Mapping, Tuple
 
 # Third Party Imports
-import httpx
 import jsonschema
 from cityhash import CityHash64
 
@@ -12,6 +11,7 @@ from cityhash import CityHash64
 import bel.edge.edges
 import bel.lang.belobj
 from bel.Config import config
+from bel.utils import http_client
 
 log = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ class Nanopub(object):
 
         url = f'{self.endpoint}/terms/{context["id"]}'
 
-        res = httpx.get(url)
+        res = http_client.get(url)
         if res.status_code == 200:
             return (True, [])
         else:

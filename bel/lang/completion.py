@@ -15,14 +15,13 @@ import re
 from typing import Any, List, Mapping, Optional, Tuple
 
 # Third Party Imports
-import httpx
 from structlog import get_logger
 
 # Local Imports
 import bel.lang.bel_specification as bel_specification
 import bel.lang.partialparse as pparse
 from bel.Config import config
-from bel.utils import url_path_param_quoting
+from bel.utils import http_client, url_path_param_quoting
 
 log = get_logger()
 
@@ -215,7 +214,7 @@ def nsarg_completions(
         }
         log.info("NSArg completion", api_url=config["bel_api"]["servers"]["api_url"], url=url)
 
-        r = httpx.get(url, params=params)
+        r = http_client.get(url, params=params)
 
         if r.status_code == 200:
             ns_completions = r.json()

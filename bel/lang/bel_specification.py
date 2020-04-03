@@ -22,7 +22,6 @@ import sys
 from typing import Any, List, Mapping
 
 # Third Party Imports
-import httpx
 import jinja2
 import structlog
 import tatsu
@@ -30,6 +29,7 @@ import yaml
 
 # Local Imports
 from bel.Config import config
+from bel.utils import http_client
 
 log = structlog.getLogger(__name__)
 
@@ -222,7 +222,7 @@ def github_belspec_files(spec_dir, force: bool = False):
     if github_access_token:
         params = {"access_token": github_access_token}
 
-    r = httpx.get(repo_url, params=params)
+    r = http_client.get(repo_url, params=params)
     if r.status_code == 200:
         results = r.json()
         for f in results:
@@ -232,7 +232,7 @@ def github_belspec_files(spec_dir, force: bool = False):
             if "yaml" not in fn and "yml" in fn:
                 fn = fn.replace("yml", "yaml")
 
-            r = httpx.get(url, params=params, allow_redirects=True)
+            r = http_client.get(url, params=params, allow_redirects=True)
             if r.status_code == 200:
                 open(f"{spec_dir}/{fn}", "wb").write(r.content)
             else:
@@ -561,7 +561,7 @@ def get_ebnf_template():
 
     try:
         # Get download url for template file
-        r = httpx.get(repo_url, params=params)
+        r = http_client.get(repo_url, params=params)
 
         if r.status_code == 200:
             template_url = r.json()["download_url"]
@@ -570,7 +570,7 @@ def get_ebnf_template():
 
         # Get template file
         try:
-            r = httpx.get(template_url, params=params, allow_redirects=True)
+            r = http_client.get(template_url, params=params, allow_redirects=True)
             if r.status_code == 200:
                 open(local_fp, "wt").write(r.text)
             else:

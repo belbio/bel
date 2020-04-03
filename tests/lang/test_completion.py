@@ -165,7 +165,10 @@ def test_completion_arg_fn_5():
 
 def test_completion_arg_ns_prefix():
 
-    if bel.httpx.get(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code != 200:
+    if (
+        bel.http_client.get(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code
+        != 200
+    ):
         pytest.xfail("BEL.bio API Test environment is not setup")
 
     completions = bel.lang.completion.bel_completion(
@@ -181,7 +184,10 @@ def test_completion_arg_ns_prefix():
 
 def test_completion_arg_ns_val():
 
-    if bel.httpx.get(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code != 200:
+    if (
+        bel.http_client.get(f"{config['bel_api']['servers']['api_url']}/simple_status").status_code
+        != 200
+    ):
         pytest.xfail("BEL.bio API Test environment is not setup")
 
     completions = bel.lang.completion.bel_completion(
