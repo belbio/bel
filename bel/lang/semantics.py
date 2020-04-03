@@ -36,7 +36,10 @@ def validate(bo, error_level: str = "WARNING") -> Tuple[bool, List[Tuple[str, st
             bo = validate_arg_values(bo.ast, bo)  # validates NSArg and StrArg values
 
     else:
-        bo.validation_messages.append(("ERROR", "Invalid BEL Statement - cannot parse"))
+        # Don't show general error if more specific error is already added
+        errors = [error for error in bo.validation_messages if error[0] == "ERROR"]
+        if not errors:
+            bo.validation_messages.append(("ERROR", "Invalid BEL Statement - cannot parse"))
 
     for msg in bo.validation_messages:
         if msg[0] == "ERROR":
