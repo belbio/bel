@@ -39,7 +39,7 @@ def validate(bo, error_level: str = "WARNING") -> Tuple[bool, List[Tuple[str, st
         # Don't show general error if more specific error is already added
         errors = [error for error in bo.validation_messages if error[0] == "ERROR"]
         if not errors:
-            bo.validation_messages.append(("ERROR", "Invalid BEL Statement - cannot parse"))
+            bo.validation_messages.append(("ERROR", "Invalid BEL Assertion - cannot parse"))
 
     for msg in bo.validation_messages:
         if msg[0] == "ERROR":
@@ -79,7 +79,7 @@ def validate_functions(ast: BELAst, bo):
             bo.validation_messages.append(
                 (
                     "ERROR",
-                    "Invalid BEL Statement function {} - problem with function signatures: {}".format(
+                    "Invalid BEL Assertion function {} - problem with function signatures: {}".format(
                         ast.to_string(), message
                     ),
                 )
@@ -289,14 +289,14 @@ def validate_arg_values(ast, bo):
                 # Check that entity types match
                 if len(set(ast.value_types).intersection(result.get("entity_types", []))) == 0:
                     log.debug(
-                        "Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}".format(
+                        "Invalid Term - Assertion term {} allowable entity types: {} do not match API term entity types: {}".format(
                             term_id, ast.value_types, result.get("entity_types", [])
                         )
                     )
                     bo.validation_messages.append(
                         (
                             "WARNING",
-                            "Invalid Term - statement term {} allowable entity types: {} do not match API term entity types: {}".format(
+                            "Invalid Term - Assertion term {} allowable entity types: {} do not match API term entity types: {}".format(
                                 term_id, ast.value_types, result.get("entity_types", [])
                             ),
                         )
