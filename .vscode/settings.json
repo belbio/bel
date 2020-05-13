@@ -14,7 +14,9 @@
         "titleBar.inactiveForeground": "#15202b99",
         "statusBar.background": "#81ec64",
         "statusBarItem.hoverBackground": "#5ce637",
-        "statusBar.foreground": "#15202b"
+        "statusBar.foreground": "#15202b",
+        "statusBar.border": "#81ec64",
+        "titleBar.border": "#81ec64"
     },
     "python.pythonPath": ".venv/bin/python",
     "python.analysis.openFilesOnly": false,

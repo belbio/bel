@@ -23,7 +23,7 @@ log = get_logger()
 def get_http_client():
     """Client for http requests"""
 
-    return httpx.Client(verify=False)
+    return httpx.Client()
 
 
 http_client = get_http_client()

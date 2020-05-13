@@ -75,6 +75,9 @@ def process_nanopub(
 
     nanopub = r.json()
 
+    # Fix Collections metadata
+    if nanopub["nanopub"]["metadata"].get("collections", False) in [None, [], [""]]:
+        nanopub["nanopub"]["metadata"].pop("collections", "")
     end_time1 = datetime.datetime.now()
     delta_ms = f"{(end_time1 - start_time).total_seconds() * 1000:.1f}"
     log.debug("Timing - Get nanopub", delta_ms=delta_ms, nanopub=nanopub)

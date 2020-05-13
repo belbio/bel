@@ -212,7 +212,16 @@ def nsarg_completions(
             "namespaces": namespaces,
             "species": species,
         }
-        log.info("NSArg completion", api_url=config["bel_api"]["servers"]["api_url"], url=url)
+
+        if "Species" in entity_types:
+            params.pop("species", "")
+
+        log.info(
+            "NSArg completion",
+            api_url=config["bel_api"]["servers"]["api_url"],
+            url=url,
+            params=params,
+        )
 
         r = http_client.get(url, params=params)
 

@@ -148,13 +148,13 @@ def validate_assertion(assertion, validation_level: str, error_level: str):
 
     else:
         try:
-            messages.append(
+            messages.extend(
                 bo.parse(assertion_str)
                 .semantic_validation(error_level=error_level)
                 .validation_messages
             )
         except:
-            messages = [("ERROR", f"Could not parse {assertion_str}")]
+            messages.append(("ERROR", f"Could not parse {assertion_str}"))
             log.exception(f"Could not parse: {assertion_str}")
 
     validation = {"status": "good", "errors": [], "warnings": []}
@@ -162,6 +162,8 @@ def validate_assertion(assertion, validation_level: str, error_level: str):
     for message in messages:
         if message == []:
             continue
+
+        log.info("Validation message", message_=message)
 
         (level, msg) = message
         if level == "ERROR":
@@ -179,7 +181,7 @@ def validate_assertion(assertion, validation_level: str, error_level: str):
             )
 
         elif level == "WARNING":
-            if validation["status"] == "good":
+            if validation["status"] != "error":
                 validation["status"] = "warning"
             validation["warnings"].append(
                 {

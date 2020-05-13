@@ -50,7 +50,6 @@ sphinx-rtd-theme = "*"
 pep8 = "*"
 pylint = "*"
 pre-commit = "^1.21.0"
-isort = {extras = ["pyproject"], version = "^4.3.21"}
 detect-secrets = "^0.13.0"
 flake8 = "^3.7.9"
 
