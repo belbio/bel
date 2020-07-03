@@ -202,7 +202,7 @@ def load_edges_into_db(
     log.debug("Timing - Collect edges and nodes", delta_ms=delta_ms)
 
     try:
-        results = edgestore_db.collection(edges_coll_name).import_bulk(
+        edgestore_db.collection(edges_coll_name).import_bulk(
             edge_list, on_duplicate="replace", halt_on_error=False
         )
 
@@ -214,7 +214,7 @@ def load_edges_into_db(
     log.debug("Timing - Load edges into edgestore", delta_ms=delta_ms)
 
     try:
-        results = edgestore_db.collection(nodes_coll_name).import_bulk(
+        edgestore_db.collection(nodes_coll_name).import_bulk(
             node_list, on_duplicate="replace", halt_on_error=False
         )
     except Exception as e:

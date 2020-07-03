@@ -435,7 +435,7 @@ class NSArg(Arg):
         self.value = value
 
     def update_nsval(self, *, nsval: str = None, ns: str = None, val: str = None) -> None:
-        """Update Namespace and valueast.
+        """Update Namespace and value ast.
 
         Args:
             nsval: e.g. HGNC:AKT1
@@ -470,6 +470,7 @@ class NSArg(Arg):
         return quoting_nsarg(nsarg_value)
 
     def canonicalize(self):
+        log.info(f"Canonicalize: {self.canonical}  {self.decanonical}")
         if isinstance(self, NSArg):
             self.update_nsval(nsval=self.canonical)
         return self
@@ -847,6 +848,9 @@ def populate_ast_nsarg_defaults(ast, belast, species_id=None):
         given_term_id = "{}:{}".format(ast.namespace, ast.value)
 
         r = bel.terms.terms.get_normalized_terms(given_term_id)
+
+        log.info(f"Normalization results {r}  term_id: {given_term_id}")
+
         ast.canonical = r["canonical"]
         ast.decanonical = r["decanonical"]
 

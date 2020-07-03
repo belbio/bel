@@ -123,16 +123,48 @@ def validate_assertion(assertion, validation_level: str, error_level: str):
     else:
         assertion_str = assertion.get("str", "")
         assertion_hash = assertion.get("hash", "")
-    try:
-        messages = (
-            bo.parse(assertion_str).semantic_validation(error_level=error_level).validation_messages
+
+    messages: List[Tuple] = []
+
+    log.info("Assertion", assertion=assertion)
+
+    if (
+        assertion.get("subject", False) in [False, "", None]
+        and assertion.get("relation", False) in [False, "", None]
+        and assertion.get("object", False) in [False, "", None]
+    ):
+        messages.append(("ERROR", "Missing Assertion subject, relation and object"))
+
+    elif not assertion.get("subject", False):
+        messages.append(("ERROR", "Missing Assertion subject"))
+
+    elif assertion.get("relation", False) and assertion.get("object", False) in [False, "", None]:
+        messages.append(
+            (
+                "ERROR",
+                "Missing Assertion object - if you have a subject and relation - you must have an object.",
+            )
         )
-    except:
-        messages = [("ERROR", f"Could not parse {assertion_str}")]
-        log.exception(f"Could not parse: {assertion_str}")
+
+    else:
+        try:
+            messages.extend(
+                bo.parse(assertion_str)
+                .semantic_validation(error_level=error_level)
+                .validation_messages
+            )
+        except:
+            messages.append(("ERROR", f"Could not parse {assertion_str}"))
+            log.exception(f"Could not parse: {assertion_str}")
 
     validation = {"status": "good", "errors": [], "warnings": []}
+
     for message in messages:
+        if message == []:
+            continue
+
+        log.info("Validation message", message_=message)
+
         (level, msg) = message
         if level == "ERROR":
             if validation["status"] != "error":
@@ -149,7 +181,7 @@ def validate_assertion(assertion, validation_level: str, error_level: str):
             )
 
         elif level == "WARNING":
-            if validation["status"] != "good":
+            if validation["status"] != "error":
                 validation["status"] = "warning"
             validation["warnings"].append(
                 {
@@ -164,8 +196,8 @@ def validate_assertion(assertion, validation_level: str, error_level: str):
     assertion["validation"] = copy.deepcopy(validation)
     save_validation_by_hash(assertion_hash, validation, assertion_str)
 
-    assertion_str = assertion.pop("str")
-    assertion_hash = assertion.pop("hash")
+    assertion_str = assertion.pop("str", "")
+    assertion_hash = assertion.pop("hash", "")
 
     return assertion
 

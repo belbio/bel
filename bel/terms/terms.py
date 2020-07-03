@@ -69,13 +69,19 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
     try:
         errors = []
         terms = get_terms(term_id)
+
         if len(terms) == 0:
             return {"equivalents": [], "errors": errors}
         elif len(terms) > 1:
-            errors.append(
-                f'Too many primary IDs returned. Given term_id: {term_id} matches these term_ids: {[term["id"] for term in terms]}'
-            )
-            return {"equivalents": [], "errors": errors}
+
+            terms = [term for term in terms if term_id not in term["obsolete_ids"]]
+            if len(terms) > 1:
+                errors.append(
+                    f'Too many primary IDs returned. Given term_id: {term_id} matches these term_ids: {[term["id"] for term in terms]}'
+                )
+                return {"equivalents": [], "errors": errors}
+            else:
+                term_id = terms[0]["id"]
         else:
             term_id = terms[0]["id"]
 
@@ -106,6 +112,7 @@ def get_equivalents(term_id: str) -> List[Mapping[str, Union[str, bool]]]:
 
     except Exception as e:
         log.exception(f"Problem getting term equivalents for {term_id} msg: {e}")
+
         return {"equivalents": [], "errors": [f"Unexpected error {e}"]}
 
 
@@ -149,13 +156,15 @@ def get_normalized_terms(term_id: str) -> dict:
     decanonical_namespace_targets = config["bel"]["lang"]["decanonical"]
     results = get_equivalents(term_id)
     equivalents = results["equivalents"]
+    errors = results["errors"]
 
-    # log.debug(f'Equivalents: {equivalents}')
+    if equivalents == []:
+        log.info(f"Equivalents errors: {errors}")
 
     if equivalents:
         canonical = get_normalized_term(term_id, equivalents, canonical_namespace_targets)
         decanonical = get_normalized_term(canonical, equivalents, decanonical_namespace_targets)
 
-    # log.debug(f'canonical: {canonical}, decanonical: {decanonical}, original: {term_id}')
+    log.info(f"canonical: {canonical}, decanonical: {decanonical}, original: {term_id}")
 
     return {"canonical": canonical, "decanonical": decanonical, "original": term_id}

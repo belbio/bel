@@ -148,7 +148,7 @@ class BEL(object):
         # Check to see if empty string for bel statement
         if len(self.bel_stmt) == 0:
             self.validation_messages.append(
-                ("ERROR", "Please include a valid BEL statement - found empty string.")
+                ("ERROR", "Please include a valid BEL Assertion - found empty string.")
             )
             return self
 
