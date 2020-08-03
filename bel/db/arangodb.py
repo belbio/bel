@@ -195,7 +195,7 @@ def get_belns_handle(client, username=None, password=None):
         belns_metadata = belns_db.create_collection(belns_metadata_name)
 
     if belns_db.has_collection(equiv_nodes_name):
-        equiv_nodes = belns_db.collection(equiv_nodes_name)
+        belns_db.collection(equiv_nodes_name)
     else:
         equiv_nodes = belns_db.create_collection(equiv_nodes_name)
         equiv_nodes.add_hash_index(fields=["name"], unique=True)
@@ -203,10 +203,10 @@ def get_belns_handle(client, username=None, password=None):
     if belns_db.has_collection(equiv_edges_name):
         equiv_edges = belns_db.collection(equiv_edges_name)
     else:
-        equiv_edges = belns_db.create_collection(equiv_edges_name)
+        equiv_edges = belns_db.create_collection(equiv_edges_name, edge=True)
 
     if belns_db.has_collection(ortholog_nodes_name):
-        ortholog_nodes = belns_db.collection(ortholog_nodes_name)
+        belns_db.collection(ortholog_nodes_name)
     else:
         ortholog_nodes = belns_db.create_collection(ortholog_nodes_name)
         ortholog_nodes.add_hash_index(fields=["name"], unique=True)
@@ -214,7 +214,7 @@ def get_belns_handle(client, username=None, password=None):
     if belns_db.has_collection(ortholog_edges_name):
         ortholog_edges = belns_db.collection(ortholog_edges_name)
     else:
-        ortholog_edges = belns_db.create_collection(ortholog_edges_name)
+        ortholog_edges = belns_db.create_collection(ortholog_edges_name, edge=True)
 
     return belns_db
 
