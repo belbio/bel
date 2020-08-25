@@ -1,0 +1,106 @@
+[tool.poetry]
+name = "bel"
+version = "0.1.0"
+description = ""
+authors = ["William Hayes <william.s.hayes@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+python-arango = "^5.4.0"
+jinja2 = "^2.11.2"
+structlog = "^20.1.0"
+pyyaml = "^5.3.1"
+ulid-py = "^0.0.12"
+lxml = "^4.5.0"
+cityhash = "^0.2.3"
+python-dateutil = "^2.8.1"
+elasticsearch = "^7.6.0"
+cachetools = "^4.1.0"
+httpx = "^0.12.1"
+redis = "^3.4.1"
+boltons = "^20.1.0"
+pydantic = "^1.5"
+typer = "^0.1.1"
+semver = "^2.9.1"
+python-dotenv = "^0.13.0"
+python-json-logger = "^0.1.11"
+jsonpickle = "^1.4.1"
+loguru = "^0.5.1"
+pytest = "^6.0.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6"
+pytest-pep8 = "^1.0.6"
+pytest-sugar = "^0.9.3"
+pytest-cache = "^1.0"
+pytest-cov = "^2.10.0"
+pytest-env = "^0.6.2"
+pytest-mypy = "^0.6.2"
+pylint = "^2.5.3"
+pydocstyle = "^5.0.2"
+colorama = "^0.4.3"
+
+[tool.black]
+line-length = 100
+target-version = ['py37', 'py38']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  # The following are specific to Black, you probably don't want those.
+  | blib2to3
+  | tests/data
+  | profiling
+)/
+'''
+
+[tool.isort]
+multi_line_output=3
+include_trailing_comma=true
+force_grid_wrap=false
+use_parentheses=true
+line_length=100
+import_heading_stdlib="Standard Library"
+import_heading_thirdparty="Third Party Imports"
+import_heading_firstparty="Local Imports"
+known_third_party = ["arango", "boltons", "dramatiq", "elasticapm", "elasticsearch", "fastapi", "loguru", "pydantic", "pythonjsonlogger", "redis", "requests", "sentry_sdk", "starlette", "starlette_prometheus", "structlog", "tenacity", "ulid", "urllib3", "xxhash", "yaml"]
+
+[tool.coverage.run]
+source = ["bel"]
+
+[tool.coverage.report]
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self.debug",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+]
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+
+# Ignore E501=line too long, W391=end of file blank lines  E128 continuation line under-indented
+pep8ignore = "*.py E501 W391 E128 W503 E402"

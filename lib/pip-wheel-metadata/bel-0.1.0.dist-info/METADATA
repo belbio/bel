@@ -1,0 +1,27 @@
+Metadata-Version: 2.1
+Name: bel
+Version: 0.1.0
+Summary: 
+Author: William Hayes
+Author-email: william.s.hayes@gmail.com
+Requires-Python: >=3.7,<4.0
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Dist: boltons (>=20.1.0,<21.0.0)
+Requires-Dist: cachetools (>=4.1.0,<5.0.0)
+Requires-Dist: cityhash (>=0.2.3,<0.3.0)
+Requires-Dist: elasticsearch (>=7.6.0,<8.0.0)
+Requires-Dist: httpx (>=0.12.1,<0.13.0)
+Requires-Dist: jinja2 (>=2.11.2,<3.0.0)
+Requires-Dist: lxml (>=4.5.0,<5.0.0)
+Requires-Dist: pydantic (>=1.5,<2.0)
+Requires-Dist: python-arango (>=5.4.0,<6.0.0)
+Requires-Dist: python-dateutil (>=2.8.1,<3.0.0)
+Requires-Dist: python-dotenv (>=0.13.0,<0.14.0)
+Requires-Dist: pyyaml (>=5.3.1,<6.0.0)
+Requires-Dist: redis (>=3.4.1,<4.0.0)
+Requires-Dist: semver (>=2.9.1,<3.0.0)
+Requires-Dist: structlog (>=20.1.0,<21.0.0)
+Requires-Dist: typer (>=0.1.1,<0.2.0)
+Requires-Dist: ulid-py (>=0.0.12,<0.0.13)

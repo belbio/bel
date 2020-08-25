@@ -1,0 +1,86 @@
+settings:
+  analysis:
+    filter:
+      autocomplete_filter:
+        type: edge_ngram
+        min_gram: 1
+        max_gram: 20
+    analyzer:
+      autocomplete:
+        type: custom
+        tokenizer: autocomplete_tokenizer
+        filter:
+          - lowercase
+          - autocomplete_filter
+      autocomplete_search:
+        type: custom
+        tokenizer: autocomplete_tokenizer
+        filter:
+          - lowercase
+
+    # Added simple pattern split to allow SP:H4_HUMAN in alt_keys to be matched
+    # This will also allow IL-6 to be completed against.  The standard tokenizer/analyzer
+    # broke it into IL and 6
+    tokenizer:
+      autocomplete_tokenizer:
+        type: simple_pattern_split
+        pattern: ' |:'
+    normalizer:
+      lowercase:
+        type: custom
+        char_filter: []
+        filter:
+          - lowercase
+
+mappings:
+  term:
+    properties:
+      autocomplete:
+        type: text
+        store: true
+        analyzer: autocomplete
+        search_analyzer: autocomplete_search
+      key:
+        type: keyword
+        copy_to: autocomplete
+      namespace:
+        type: keyword
+      id:
+        type: keyword
+        copy_to: autocomplete
+      label:
+        type: text
+        copy_to: autocomplete
+      name:
+        type: text
+        copy_to: autocomplete
+      description:
+        type: text
+      synonyms:
+        type: text
+        copy_to: autocomplete
+
+      alt_keys:
+        type: keyword
+        copy_to: autocomplete
+      obsolete_keys:
+        type: keyword
+        copy_to: autocomplete
+
+      entity_types:
+        type: keyword
+      annotation_types:
+        type: keyword
+
+      species_key:
+        type: keyword
+      species_label:
+        type: keyword
+
+      taxonomy_rank:
+        type: keyword
+      taxonomy_tree:
+        type: keyword
+      taxonomy_names:
+        type: object
+        enabled: false

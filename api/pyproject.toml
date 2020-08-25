@@ -1,0 +1,85 @@
+[tool.poetry]
+name = "api"
+version = "0.1.0"
+description = ""
+authors = ["William Hayes <william.s.hayes@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+structlog = "^20.1.0"
+aiofiles = "^0.5.0"
+starlette_prometheus = "^0.6.0"
+uvicorn = "^0.11.3"
+dramatiq = {extras = ["redis"], version = "^1.8.1"}
+python-multipart = "^0.0.5"
+fastapi = "^0.55.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+bel = {path = "../lib"}
+pytest-cache = "*"
+pytest-cov = "*"
+pytest-flakes = "*"
+pytest-mock = "*"
+pytest-pep8 = "*"
+pytest-pythonpath = "*"
+pytest-watch = "*"
+pytest-sugar = "^0.9.3"
+
+[tool.black]
+line-length = 100
+target-version = ['py37', 'py38']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  # The following are specific to Black, you probably don't want those.
+  | blib2to3
+  | tests/data
+  | profiling
+)/
+'''
+
+[tool.isort]
+multi_line_output=3
+include_trailing_comma=true
+force_grid_wrap=false
+use_parentheses=true
+line_length=100
+import_heading_stdlib="Standard Library"
+import_heading_thirdparty="Third Party Imports"
+import_heading_firstparty="Local Imports"
+known_third_party = ["fastapi", "structlog", "starlette_prometheus"]
+
+[tool.coverage.run]
+source = ["app"]
+
+[tool.coverage.report]
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self.debug",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if __name__ == .__main__.:",
+]
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
