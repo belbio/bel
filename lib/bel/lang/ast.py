@@ -299,9 +299,6 @@ class Function(object):
     def subcomponents(self, subcomponents):
         """Generate subcomponents of the BEL subject or object
 
-        These subcomponents are used for matching parts of a BEL
-        subject or Object in the Edgestore.
-
         Args:
             AST
             subcomponents:  Pass an empty list to start a new subcomponents request

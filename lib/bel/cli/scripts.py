@@ -1,30 +1,25 @@
 # Standard Library
 import gzip
 import json
-from loguru import logger
-from loguru import logger.config
 import re
 import sys
+from typing import List
 
 # Third Party Imports
-from typing import List
-import typer
-from typer import Argument, Option
 import yaml
+from loguru import logger, logger.config
 
 # Local Imports
 import bel.core.settings as settings
+import bel.core.utils as utils
 import bel.db.arangodb
 import bel.db.elasticsearch
-import bel.edge.edges
 import bel.nanopub.belscripts
 import bel.nanopub.files as bnf
 import bel.nanopub.nanopubs as bnn
-import bel.core.utils as utils
+import typer
 from bel.lang.belobj import BEL
-
-
-
+from typer import Argument, Option
 
 # TODO finish updating to use typer!!!!!!!!!!!!!
 # https://typer.tiangolo.com
@@ -66,14 +61,14 @@ def nanopub():
     "--output_fn",
     type=click.File("wt"),
     default="-",
-    help="BEL Edges JSON output filename - defaults to STDOUT",
+    help="Validate nanopub",
 )
 @click.argument("input_fn")
 @pass_context
 def nanopub_validate(ctx, input_fn, output_fn):
     """Validate nanopubs"""
 
-    pass
+    print("TODO")
 
 
 @nanopub.command(name="belscript", context_settings=CONTEXT_SETTINGS)
@@ -330,43 +325,6 @@ def orthologize(ctx, assertion_str, species, version):
             print("No problems found")
 
 
-@stmt.command()
-@click.option("--species", help="Species ID format TAX:<tax_id_number>")
-@click.option(
-    "--namespace_targets",
-    help='Target namespaces for canonicalizing BEL, e.g. {"HGNC": ["EG", "SP"], "CHEMBL": ["CHEBI"]}',
-)
-@click.option("--version", help="BEL language version")
-@click.argument("assertion_str")
-@pass_context
-def edges(ctx, assertion_str, species, version):
-    """Create BEL Edges from BEL Statement"""
-
-    species = [a for a in species.split(",") if a]
-
-    version = bel.belspec.crud.check_version(version)
-
-    print("------------------------------")
-    print(f"BEL version: {version}")
-    print("------------------------------")
-
-    bo = BEL(assertion_str, version=version)
-    if species:
-        edges = bo.orthologize(species).canonicalize().computed_edges()
-    else:
-        edges = bo.canonicalize().computed_edges()
-
-    if edges is None:
-        print(bo.original_bel_stmt)
-        print(bo.parse_visualize_error)
-        print(bo.validation_messages)
-    else:
-        print(json.dumps(edges, indent=4))
-
-        if bo.validation_messages:
-            print(bo.validation_messages)
-        else:
-            print("No problems found")
 
 
 @belc.group()
@@ -415,4 +373,4 @@ def arangodb(delete, db_name):
         bel.db.arangodb.delete_database(arango_client, db_name)
 
     if db_name == "belns":
-        bel.db.arangodb.get_belns_handle(client)
+        bel.db.arangodb.get_belns_handle(arango_client)

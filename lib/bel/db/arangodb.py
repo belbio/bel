@@ -16,14 +16,9 @@ import bel.core.settings as settings
 from bel.core.utils import _create_hash
 
 
-edgestore_db_name = settings.EDGESTORE_DB  # Edgestore
 resources_db_name = settings.RESOURCES_DB  # BEL Resources (Namespaces, etc)
 bel_db_name = settings.BEL_DB  # Misc BEL
 
-# Collection names
-edgestore_nodes_name = "nodes"  # edgestore node collection name
-edgestore_edges_name = "edges"  # edgestore edge collection name
-edgestore_pipeline_name = "pipeline"  # edgestore pipeline state collection name
 
 # BEL Resources
 equiv_nodes_name = "equivalence_nodes"  # equivalence node collection name
@@ -39,17 +34,6 @@ bel_namespaces_name = "bel_namespaces"  # BEL namespaces
 bel_validations_name = "validations"  # BEL Assertion/Annotation validations
 
 
-# TODO - update get db and get collections using same pattern as in userstore/common/db.py
-#        I made the mistake below of edgestore_db = sys_db.create_database()
-#        instead of
-#           sys_db.create_database('edgestore')
-#           edgestore_db = client.db('edgestore')
-#           if edgestore_db.has_collection('xxx'):
-#               xxx_coll = edgestore_db.collection('xxx')
-#           else:
-#               xxx_coll = edgestore_db.create_collection('xxx')
-
-
 def get_user_credentials(username, password):
     """Get username/password
 
@@ -62,7 +46,7 @@ def get_user_credentials(username, password):
 
 
 def get_client(url=None, port=None, username=None, password=None):
-    """Get arango client and edgestore db handle"""
+    """Get arango client db handle"""
 
     url = boltons.iterutils.first([url, settings.ARANGO_URL, "http://localhost:8529"])
     (username, password) = get_user_credentials(username, password)
@@ -165,91 +149,6 @@ def update_index_state(collection, desired_indexes: List[IndexDefinition]):
 
 
 # Index mgmt ##################################################################################
-
-
-def get_edgestore_handles(
-    client: arango.client.ArangoClient, username=None, password=None,
-) -> dict:
-    """Get Edgestore arangodb database handles
-
-    Args:
-        client (arango.client.ArangoClient): Description
-        username (None, optional): Description
-        password (None, optional): Description
-    """
-
-    (username, password) = get_user_credentials(username, password)
-
-    # client is created when module is first imported
-    sys_db = client.db("_system", username=username, password=password)
-
-    # Create a new database for Edgestore
-    if sys_db.has_database(edgestore_db_name):
-        if username and password:
-            edgestore_db = client.db(edgestore_db_name, username=username, password=password)
-        else:
-            edgestore_db = client.db(edgestore_db_name)
-    else:
-        if username and password:
-            sys_db.create_database(
-                name=edgestore_db_name,
-                users=[{"username": username, "password": password, "active": True}],
-            )
-        else:
-            sys_db.create_database(name=edgestore_db_name)
-        edgestore_db = client.db(edgestore_db_name)
-
-    # Add edges collection
-    if edgestore_db.has_collection(edgestore_edges_name):
-        edges_coll = edgestore_db.collection(edgestore_edges_name)
-    else:
-        edges_coll = edgestore_db.create_collection(
-            edgestore_edges_name, edge=True, index_bucket_count=64
-        )
-
-    # Add nodes collection
-    if edgestore_db.has_collection(edgestore_nodes_name):
-        nodes_coll = edgestore_db.collection(edgestore_nodes_name)
-    else:
-        nodes_coll = edgestore_db.create_collection(edgestore_nodes_name, index_bucket_count=64)
-
-    # Add pipeline_info collection
-    if edgestore_db.has_collection(edgestore_pipeline_name):
-        pipeline_coll = edgestore_db.collection(edgestore_pipeline_name)
-    else:
-        pipeline_coll = edgestore_db.create_collection(
-            edgestore_pipeline_name, index_bucket_count=64
-        )
-
-    # Update indexes
-    update_index_state(
-        edges_coll,
-        [
-            IndexDefinition(type="hash", fields=["relation"], unique=False),
-            IndexDefinition(type="hash", fields=["edge_types"], unique=False),
-            IndexDefinition(type="hash", fields=["nanopub_id"], unique=False),
-            IndexDefinition(type="hash", fields=["metadata.project"], unique=False),
-            IndexDefinition(type="hash", fields=["annotations[*].id"], unique=False),
-        ],
-    )
-    update_index_state(
-        nodes_coll,
-        [
-            IndexDefinition(type="hash", fields=["names"], unique=False),
-            IndexDefinition(type="hash", fields=["components"], unique=False),
-        ],
-    )
-    update_index_state(
-        pipeline_coll, [IndexDefinition(type="persistent", fields=["processed_ts"], unique=False),],
-    )
-
-    return {
-        "edgestore_db": edgestore_db,
-        "nodes_coll": nodes_coll,
-        "edges_coll": edges_coll,
-        "pipeline_coll": pipeline_coll,
-    }
-
 
 def get_resources_handles(client, username=None, password=None):
     """Get BEL Resources arangodb handle"""
@@ -381,13 +280,6 @@ def get_bel_handles(client, username=None, password=None):
 #     and provide db and collection handles
 # #############################################################################
 client = get_client()
-
-# Edgestore db
-edgestore_handles = get_edgestore_handles(client)
-edgestore_db = edgestore_handles["edgestore_db"]
-nodes_coll = edgestore_handles["nodes_coll"]
-edges_coll = edgestore_handles["edges_coll"]
-pipeline_coll = edgestore_handles["pipeline_coll"]
 
 # Resources db
 resources_handles = get_resources_handles(client)

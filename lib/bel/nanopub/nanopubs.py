@@ -1,144 +1,16 @@
 # Standard Library
 import gzip
-from loguru import logger
-from typing import Any, Iterable, List, Mapping, Tuple, Optional
+from typing import Any, Iterable, List, Mapping, Optional, Tuple
 
 # Third Party Imports
-from cityhash import CityHash64
+from loguru import logger
 
 # Local Imports
-import bel.edge.edges
-import bel.lang.belobj
 import bel.core.settings as settings
-from bel.schemas.nanopubs import Nanopub
+import bel.lang.belobj
 from bel.core.utils import http_client
-
-
-# TODO is this code being used?  We also have bel.nanopub.validate.validate(nanopub, error_level) for validation
-
-
-# class Nanopub(object):
-#     """Nanopub object to manage Nanopub processing"""
-
-#     def __init__(self, nanopub: Optional[Nanopub] = None):
-#         """ Initialize Nanopub
-
-#         Args:
-#             nanopub
-#         """
-
-#         self.nanopub = nanopub
-
-
-#     def validate(
-#         self, nanopub: Nanopub = None
-#     ) -> Tuple[bool, List[Tuple[str, str]]]:
-#         """Validates using the nanopub schema
-
-#         Args:
-#             nanopub (Mapping[str, Any]): nanopub dict
-
-#         Returns:
-#             Tuple[bool, List[Tuple[str, str]]]:
-#                 bool: Is valid?  Yes = True, No = False
-#                 List[Tuple[str, str]]: Validation issues, empty if valid, tuple is ('ERROR|WARNING', msg)
-#                     e.g. [('WARNING', "Context ID not found")]        """
-
-#         # Validate nanopub
-#         (is_valid, messages) = validate_to_schema(nanopub, self.nanopub_schema)
-#         if not is_valid:
-#             return messages
-
-#         # Extract BEL Version
-#         if nanopub["nanopub"]["type"]["name"].upper() == "BEL":
-#             bel_version = nanopub["nanopub"]["type"]["version"]
-#         else:
-#             is_valid = False
-#             return (
-#                 is_valid,
-#                 f"Not a BEL Nanopub according to nanopub.type.name: {nanopub['nanopub']['type']['name']}",
-#             )
-
-#         all_messages = []
-#         # Validate BEL Statements
-#         bel_obj = bel.lang.belobj.BEL(bel_version, self.endpoint)
-#         for edge in nanopub["nanopub"]["edges"]:
-#             bel_statement = f"{edge['subject']} {edge['relation']} {edge['object']}"
-#             parse_obj = bel_obj.parse(bel_statement)
-#             if not parse_obj.valid:
-#                 all_messages.extend(
-#                     (
-#                         "ERROR",
-#                         f"BEL statement parse error {parse_obj.error}, {parse_obj.err_visual}",
-#                     )
-#                 )
-
-#         # Validate nanopub.context
-#         for context in nanopub["nanopub"]["context"]:
-#             (is_valid, messages) = self.validate_context(context)
-#             all_messages.extend(messages)
-
-#         is_valid = True
-#         for _type, msg in all_messages:
-#             if _type == "ERROR":
-#                 is_valid = False
-
-#         return (is_valid, all_messages)
-
-#     def validate_context(
-#         self, context: Mapping[str, Any]
-#     ) -> Tuple[bool, List[Tuple[str, str]]]:
-#         """ Validate context
-
-#         Args:
-#             context (Mapping[str, Any]): context dictionary of type, id and label
-
-#         Returns:
-#             Tuple[bool, List[Tuple[str, str]]]:
-#                 bool: Is valid?  Yes = True, No = False
-#                 List[Tuple[str, str]]: Validation issues, empty if valid, tuple is ('ERROR|WARNING', msg)
-#                     e.g. [('WARNING', "Context ID not found")]
-#         """
-
-#         url = f'{self.endpoint}/terms/{context["id"]}'
-
-#         res = http_client.get(url)
-#         if res.status_code == 200:
-#             return (True, [])
-#         else:
-#             return (False, [("WARNING", f'Context {context["id"]} not found at {url}')])
-
-#     def bel_edges(
-#         self,
-#         nanopub: Mapping[str, Any],
-#         namespace_targets: Mapping[str, List[str]] = {},
-#         rules: List[str] = [],
-#         orthologize_target: str = None,
-#     ) -> List[Mapping[str, Any]]:
-#         """Create BEL Edges from BEL nanopub
-
-#         Args:
-#             nanopub (Mapping[str, Any]): bel nanopub
-#             namespace_targets (Mapping[str, List[str]]): what namespaces to canonicalize
-#             rules (List[str]): which computed edge rules to process, default is all,
-#                look at BEL Specification yaml file for computed edge signature keys,
-#                e.g. degradation, if any rule in list is 'skip', then skip computing edges
-#                just return primary_edge
-#             orthologize_target (str): species to convert BEL into, e.g. TAX:10090 for mouse, default option does not orthologize
-
-#         Returns:
-#             List[Mapping[str, Any]]: edge list with edge attributes (e.g. context)
-#         """
-
-#         edges = bel.edge.edges.create_edges(
-#             nanopub,
-#             self.endpoint,
-#             namespace_targets=namespace_targets,
-#             rules=rules,
-#             orthologize_target=orthologize_target,
-#         )
-
-#         return edges
+from bel.schemas.nanopubs import Nanopub
+from cityhash import CityHash64
 
 
 # Following is used in nanopub-tools codebase

@@ -34,21 +34,7 @@ class BEL(object):
     """BEL Language object
 
     This object handles BEL statement/triple processing, parsing, (de)canonicalization,
-    orthologization, computing BEL Edges and (TODO) statement completion.
-
-    # TODO fix description below after BEL2 refactor
-
-    To convert BEL Statement to BEL Edges:
-
-        statement = "p(HGNC:AKT1) increases p(HGNC:EGF)"
-        bel_obj = bel.lang.belobj.BEL(version="latest")
-        bel_obj.parse(assertion_str)  # Adds ast to bel_obj
-        bel_obj.orthologize('TAX:10090')  # Run orthologize before canonicalize if needed, updates bel_obj.ast and returns self
-        bel_obj.canonicalize()  # updates bel_obj.ast and returns self
-
-        computed_edges = bel_obj.computed()
-
-    primary_edge = bel_obj.ast.to_triple()
+    orthologization and other purposes.
     """
 
     def __init__(self, assertion: AssertionStr = None, version: str = "latest") -> None:
@@ -143,44 +129,6 @@ class BEL(object):
 
         return self
 
-    def computed_edges(
-        self, rules: List[str] = None, return_ast=False, fmt="medium"
-    ) -> List[Union[BELAst, str]]:
-        """Computed edges from primary BEL statement
-
-        Takes an AST and generates all computed edges based on BEL Specification YAML computed signatures.
-        Will run only the list of computed edge rules if given.
-
-        Args:
-            rules (list): a list of rules to filter; only the rules in this list will be applied to computed
-            fmt (str): short, medium or long version of BEL Edge (function and relation names)
-        Returns:
-            BEL Edges in medium format - list of BELAst or str 
-        """
-
-        if not self.ast and self.assertion.entire:
-            self.parse(assertion=self.assertion)
-
-        elif not self.ast:
-            return []
-
-        edges = bel.edge.computed.computed_edges(self.ast)
-
-        # Return AST instead of
-        if return_ast:
-            return edges
-
-        edges_str: List[str] = []
-        for ast in edges:
-            edges_str.append(
-                {
-                    "subject": ast.subject.to_string(fmt=fmt),
-                    "relation": ast.relation.to_string(fmt=fmt),
-                    "object": ast.object.to_string(fmt=fmt),
-                }
-            )
-
-        return edges_str
 
     def to_string(self, fmt: str = "medium") -> str:
         """Convert AST object to string

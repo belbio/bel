@@ -85,8 +85,6 @@ ARANGO_PASSWORD = os.getenv("ARANGO_PASSWORD", default="Set a password, please")
 
 BEL_DB = os.getenv("BEL_DB", default="bel")
 RESOURCES_DB = os.getenv("RESOURCES_DB", default="bel")
-EDGESTORE_DB = os.getenv("EDGESTORE_DB", default="edgestore")
-HISTORY_COLL = os.getenv("HISTORY_COLL", default="history")  # Arangodb nanopub history collection
 
 
 # BEL Language Settings
