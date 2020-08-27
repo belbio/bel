@@ -15,13 +15,14 @@ from starlette_prometheus import PrometheusMiddleware, metrics
 import bel.core.settings as settings
 from __version__ import __version__ as version
 from core.middleware import StatsMiddleware
-from endpoints.bel import router as bel_router
-from endpoints.belspec import router as belspec_router
-from endpoints.info import router as info_router
-from endpoints.nanopubs import router as nanopubs_router
-from endpoints.orthology import router as orthology_router
-from endpoints.pubmed import router as pubmed_router
-from endpoints.terms import router as terms_router
+from bel.api.endpoints.bel import router as bel_router
+from bel.api.endpoints.belspec import router as belspec_router
+from bel.api.endpoints.info import router as info_router
+from bel.api.endpoints.nanopubs import router as nanopubs_router
+from bel.api.endpoints.orthology import router as orthology_router
+from bel.api.endpoints.pubmed import router as pubmed_router
+from bel.api.endpoints.terms import router as terms_router
+
 from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware

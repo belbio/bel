@@ -1,7 +1,0 @@
-{
-  "python.pythonPath": ".venv/bin/python",
-  "python.envFile": "${workspaceFolder}/.env",
-  "python.testing.cwd": "${workspaceFolder}",
-  "python.testing.pytestEnabled": true,
-  "window.title": "${activeEditorShort}${separator}BEL2 API"
-}
