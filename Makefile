@@ -35,11 +35,8 @@ clean_pyc:  ## Remove python bytecode
 
 
 # Run all tests - failing or not
-test_lib: clean_pyc  ## Run BEL library tests
-	BELTEST='Local' cd ${CWD}/lib && poetry run py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc --color=yes --durations=10 tests
-
-test_api: clean_pyc  ## Run BEL API tests
-	BELTEST='Local' cd ${CWD}/api && poetry run py.test -rs --cov=./app --cov-report html --cov-config .coveragerc --color=yes --durations=10 tests
+tests: clean_pyc  ## Run BEL tests
+	BELTEST='Local' poetry run py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc --color=yes --durations=10 tests
 
 
 # Push updated bel library to S3 bucket
@@ -48,26 +45,27 @@ push_lib:  ## Push bel libraries to S3 bucket
 	aws s3 cp ${CWD}/dist/bel-2.0.0.tar.gz s3://resources.bel.bio/packages
 
 
-docker_pushdev:
-    @echo Deploying docker DEV image to dockerhub $(VERSION)
+# docker_pushdev:  ## 
 
-    docker build -t belbio/belapi:dev -t belbio/belapi:$(VERSION) -f ./docker/Dockerfile.prod .
-    docker push belbio/belapi:dev
-    docker push belbio/belapi:$(VERSION)
+# 	@echo Deploying docker DEV image to dockerhub $(VERSION)
 
-    ssh thor "cd docker && docker-compose pull belapi"
-    ssh thor "cd docker && docker-compose stop belapi"
-    ssh thor "cd docker && docker-compose rm -f belapi"
-    ssh thor "cd docker && docker-compose up -d belapi"
+#     docker build -t belbio/belapi:dev -t belbio/belapi:$(VERSION) -f ./docker/Dockerfile.prod .
+#     docker push belbio/belapi:dev
+#     docker push belbio/belapi:$(VERSION)
 
-    @say -v Karen "Finished the BEL A P I docker deployment"
+#     ssh thor "cd docker && docker-compose pull belapi"
+#     ssh thor "cd docker && docker-compose stop belapi"
+#     ssh thor "cd docker && docker-compose rm -f belapi"
+#     ssh thor "cd docker && docker-compose up -d belapi"
+
+#     @say -v Karen "Finished the BEL A P I docker deployment"
 
 
-docker_pushprod:
-	@echo Deploying docker PROD image to dockerhub $(VERSION)
+# docker_pushprod:
+# 	@echo Deploying docker PROD image to dockerhub $(VERSION)
 
-    docker build -t belbio/belapi:latest -t belbio/belapi:$(VERSION) -f ./docker/Dockerfile.prod .
-    docker push belbio/belapi:latest
-    docker push belbio/belapi:$(VERSION)
+#     docker build -t belbio/belapi:latest -t belbio/belapi:$(VERSION) -f ./docker/Dockerfile.prod .
+#     docker push belbio/belapi:latest
+#     docker push belbio/belapi:$(VERSION)
 
-    @say -v Karen "Finished publishing the production BEL A P I docker image"
+#     @say -v Karen "Finished publishing the production BEL A P I docker image"
