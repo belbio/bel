@@ -49,12 +49,16 @@ def max_semantic_version(version_strings) -> str:
 
     versions = []
     for version_str in version_strings:
+        if version_str == "latest":
+            continue
+
         try:
             versions.append(semver.VersionInfo.parse(version_str))
         except:
             pass  # Skip non-semantic versioned belspecs for latest version
 
     max_version = str(max(versions))
+
     return max_version
 
 
@@ -70,7 +74,7 @@ def update_belspec_versions():
         RETURN doc.orig_belspec.version  
     """
 
-    version_strings = list(bel_db.aql.execute(query))
+    version_strings = sorted(list(bel_db.aql.execute(query)), reverse=True)
     latest = max_semantic_version(version_strings)
 
     doc = {
@@ -98,21 +102,65 @@ def get_belspec_versions() -> dict:
         return {}
 
 
-def check_version(version: str = "latest") -> str:
+def get_best_match(query_str, belspec_versions: BelSpecVersions):
+    """Get best match to query version in versions or return latest"""
+
+    query = semver.VersionInfo.parse(query_str)
+
+    versions = []
+    for version_str in sorted(belspec_versions["versions"], reverse=True):
+        if version_str == "latest":
+            continue
+        try:
+            versions.append(semver.VersionInfo.parse(version_str))
+        except Exception:
+            pass  # Skip non-semantic versioned belspecs for latest version
+
+    match = None
+    matches = 0
+    for version in versions:
+        if (
+            query.major == version.major
+            and query.minor == version.minor
+            and query.patch == version.patch
+        ):
+            if matches < 3:
+                match = version
+            matches = 3
+
+        elif query.major == version.major and query.minor == version.minor:
+            if matches < 2:
+                match = version
+            matches = 2
+
+        elif query.major == version.major:
+            if matches < 1:
+                match = version
+            matches = 1
+            
+    if not match:
+        return belspec_versions["latest"]
+
+    return str(match)
+
+
+def check_version(version: str = "latest", versions: BelSpecVersions = None) -> str:
     """ Check if version is valid and if not return default or latest """
 
     if not version:
         version = settings.BEL_DEFAULT_VERSION
 
-    bel_versions = get_belspec_versions()
+    if versions is None:
+        versions = get_belspec_versions()
 
     if version == "latest":
-        version = bel_versions["latest"]
-    elif version not in bel_versions["versions"]:
+        version = versions["latest"]
+
+    elif version not in versions["versions"]:
         logger.warning(
-            f"Cannot validate with invalid version: {version} which is not in BEL Versions: {bel_versions} - using latest version instead"
+            f"Cannot validate with invalid version: {version} which is not in BEL Versions: {versions} - using latest version instead"
         )
-        version = bel_versions["latest"]
+        version = get_best_match(version, versions)
 
     return version
 
@@ -214,11 +262,7 @@ def update_belhelp(belhelp: dict):
 
     version = belhelp["version"]
 
-    doc = {
-        "_key": f"belspec_{version}",
-        "doc_type": "belhelp",
-        "belhelp": belhelp,
-    }
+    doc = {"_key": f"belspec_{version}", "doc_type": "belhelp", "belhelp": belhelp}
 
     bel_config_coll.insert(doc, overwrite=True)
 

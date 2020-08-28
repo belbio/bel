@@ -3,7 +3,7 @@
 # Third Party Imports
 import fastapi
 from loguru import logger
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 
 # Local Imports
@@ -15,30 +15,54 @@ router = APIRouter()
 
 # TODO Add response_model for api documentation -- response_model=BelSpec (from bel library schemas)
 @router.get("/belspec")
-def get_belspec_version(version: str = "latest"):
-    """Get BEL Specification"""
+def get_belspec_version(
+    version: str = "latest",
+    exact_match: str = Query(
+        False, description="Requires exact match to the BEL Specification version specified"
+    ),
+):
+    """Get BEL Specification
+    
+    This will intelligently select the best version available from the loaded BEL Specifications
+    based on semantic version major.minor.patch matches.
 
-    if version == "latest":
-        version = bel.belspec.crud.get_latest_version()
+    Examples:
+        Given available versions of [2.0.10, 2.2.3]
+        
+        Requested version of 2.0.0 results in 2.0.10 
+        Requested version of 2.2.10 or 2.4.0 results in 2.2.3
+    """
 
-    return bel.belspec.crud.get_enhanced_belspec(version)
+    if not exact_match:
+        version = bel.belspec.crud.check_version(version)
+
+    belspec = bel.belspec.crud.get_enhanced_belspec(version)
+    if not belspec:
+        raise HTTPException(status_code=404, detail=f"No BEL specification for version {version}")
+
+    return belspec
 
 
 # TODO Add response_model for api documentation -- response_model=EnhancedBelSpec (from bel library schemas)
 @router.get("/belspec/enhanced")
-def get_enhanced_belspec(version: str = "latest"):
+def get_enhanced_belspec(
+    version: str = "latest",
+    exact_match: str = Query(
+        False, description="Requires exact match to the BEL Specification version specified"
+    ),
+):
     """Get Enhanced BEL Specification"""
 
+    version = bel.belspec.crud.check_version(version)
+
     enhanced_belspec = bel.belspec.crud.get_enhanced_belspec(version)
+
     if not enhanced_belspec:
         raise HTTPException(
-            status_code=404, detail=f"No enhanced bel specification for version {version}",
+            status_code=404, detail=f"No enhanced BEL specification for version {version}"
         )
-    else:
-        return enhanced_belspec
 
-
-# TODO needs testing
+    return enhanced_belspec
 
 
 @router.get("/belspec/ebnf", response_class=PlainTextResponse)
@@ -54,13 +78,17 @@ def get_ebnf(version: str = "latest"):
     and parsing error reporting/feedback to the library users.
     """
 
+    version = bel.belspec.crud.check_version(version)
+
     return bel.belspec.crud.get_ebnf(version)
 
 
 @router.get("/belspec/help")
 def get_latest_belhelp(version: str = "latest"):
     """Get latest BEL help for BEL functions and relations"""
-    version = bel.belspec.crud.get_latest_version()
+
+    version = bel.belspec.crud.check_version(version)
+
     return bel.belspec.crud.get_belhelp(version)
 
 
@@ -68,8 +96,7 @@ def get_latest_belhelp(version: str = "latest"):
 def get_belhelp(version: str = "latest"):
     """Get BEL Help for BEL functions and relations"""
 
-    if version == "latest":
-        version = bel.belspec.crud.get_latest_version()
+    version = bel.belspec.crud.check_version(version)
 
     return bel.belspec.crud.get_belhelp(version)
 
@@ -94,8 +121,8 @@ def delete_belhelp(version: str):
 @router.get("/belspec/versions", response_model=BelSpecVersions)
 def get_belspec_versions():
     """Get list of all BEL Specification versions - but not the actual specifications"""
-    versions = ["latest"] + bel.belspec.crud.get_belspec_versions()
-    return versions
+
+    return bel.belspec.crud.get_belspec_versions()
 
 
 @router.post("/belspec")
