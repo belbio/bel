@@ -13,6 +13,8 @@ import bel.lang.belobj
 from bel.belspec.crud import get_latest_version
 from bel.db.arangodb import bel_db, bel_validations_coll, bel_validations_name
 from bel.db.elasticsearch import es
+from bel.schemas.nanopubs import NanopubR
+from bel.schemas.bel import AssertionStr
 
 
 def convert_msg_to_html(msg: str):
@@ -107,7 +109,7 @@ def validate_assertion(assertion, *, version: str, validation_level: str, error_
 
     assertion_str = f"{assertion['subject']} {assertion['relation']} {assertion['object']}"
 
-    bo = bel.lang.belobj.BEL(assertion_str, version=version)
+    bo = bel.lang.belobj.BEL(AssertionStr(entire=assertion_str), version=version)
 
     if not assertion.get("hash", False):
         assertion_str = get_assertion_str(assertion)
@@ -130,11 +132,7 @@ def validate_assertion(assertion, *, version: str, validation_level: str, error_
     elif not assertion.get("subject", False):
         messages.append(("ERROR", "Missing Assertion subject"))
 
-    elif assertion.get("relation", False) and assertion.get("object", False) in [
-        False,
-        "",
-        None,
-    ]:
+    elif assertion.get("relation", False) and assertion.get("object", False) in [False, "", None]:
         messages.append(
             (
                 "ERROR",
@@ -150,7 +148,7 @@ def validate_assertion(assertion, *, version: str, validation_level: str, error_
                 .validation_messages
             )
         except Exception:
-            messages.append(("ERROR", f"Could not parse {assertion_str}",))
+            messages.append(("ERROR", f"Could not parse {assertion_str}"))
             logger.exception(f"Could not parse: {assertion_str}")
 
     validation = {"status": "good", "errors": [], "warnings": []}
@@ -385,7 +383,7 @@ def validate_annotations(annotations: List[dict], validation_level: str):
     return annotations
 
 
-def validate(nanopub: dict, error_level: str = "WARNING", validation_level: str = "complete"):
+def validate(nanopub: NanopubR, error_level: str = "WARNING", validation_level: str = "complete"):
     """Validate Nanopub
 
     Error Levels are similar to log levels - selecting WARNING includes both
@@ -406,6 +404,8 @@ def validate(nanopub: dict, error_level: str = "WARNING", validation_level: str 
         list(tuples): [{'level': 'Warning', 'section': 'Assertion', 'label': 'Warning-Assertion', 'index': 0, 'msg': <msg>}]
 
     """
+
+    nanopub = nanopub.dict()
 
     # Validation results
     validation_results = []

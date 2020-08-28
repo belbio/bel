@@ -9,8 +9,10 @@ from fastapi import APIRouter, Depends, Query
 
 # Local Imports
 from loguru import logger
+import bel.belspec.crud
 
 router = APIRouter()
+
 
 @router.get("/versions")
 def get_bel_versions():
