@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 # TODO Add response_model for api documentation -- response_model=BelSpec (from bel library schemas)
-@router.get("/belspec", tags=["BEL Specification"])
+@router.get("/belspec")
 def get_belspec_version(version: str = "latest"):
     """Get BEL Specification"""
 
@@ -25,7 +25,7 @@ def get_belspec_version(version: str = "latest"):
 
 
 # TODO Add response_model for api documentation -- response_model=EnhancedBelSpec (from bel library schemas)
-@router.get("/belspec/enhanced", tags=["BEL Specification"])
+@router.get("/belspec/enhanced")
 def get_enhanced_belspec(version: str = "latest"):
     """Get Enhanced BEL Specification"""
 
@@ -41,7 +41,7 @@ def get_enhanced_belspec(version: str = "latest"):
 # TODO needs testing
 
 
-@router.get("/belspec/ebnf", tags=["BEL Specification"], response_class=PlainTextResponse)
+@router.get("/belspec/ebnf", response_class=PlainTextResponse)
 def get_ebnf(version: str = "latest"):
     """Get EBNF BEL Grammar file
     
@@ -57,14 +57,14 @@ def get_ebnf(version: str = "latest"):
     return bel.belspec.crud.get_ebnf(version)
 
 
-@router.get("/belspec/help", tags=["BEL Specification"])
+@router.get("/belspec/help")
 def get_latest_belhelp(version: str = "latest"):
     """Get latest BEL help for BEL functions and relations"""
     version = bel.belspec.crud.get_latest_version()
     return bel.belspec.crud.get_belhelp(version)
 
 
-@router.get("/belspec/help/{version}", tags=["BEL Specification"])
+@router.get("/belspec/help/{version}")
 def get_belhelp(version: str = "latest"):
     """Get BEL Help for BEL functions and relations"""
 
@@ -74,14 +74,14 @@ def get_belhelp(version: str = "latest"):
     return bel.belspec.crud.get_belhelp(version)
 
 
-@router.post("/belspec/help", tags=["BEL Specification"])
+@router.post("/belspec/help")
 def post_belhelp(belhelp: dict):
     """Create or Update BEL Help"""
 
     bel.belspec.crud.update_belhelp(belhelp)
 
 
-@router.delete("/belspec/help/{version}", tags=["BEL Specification"])
+@router.delete("/belspec/help/{version}")
 def delete_belhelp(version: str):
     """Delete BEL Help"""
 
@@ -91,14 +91,14 @@ def delete_belhelp(version: str):
     bel.belspec.crud.delete_belhelp(version)
 
 
-@router.get("/belspec/versions", tags=["BEL Specification"], response_model=BelSpecVersions)
+@router.get("/belspec/versions", response_model=BelSpecVersions)
 def get_belspec_versions():
     """Get list of all BEL Specification versions - but not the actual specifications"""
     versions = ["latest"] + bel.belspec.crud.get_belspec_versions()
     return versions
 
 
-@router.post("/belspec", tags=["BEL Specification"])
+@router.post("/belspec")
 def post_belspec(belspec: BelSpec):
     """Create or Update BEL Specification
 
@@ -110,7 +110,7 @@ def post_belspec(belspec: BelSpec):
     return {"msg": "ok"}
 
 
-@router.delete("/belspec/{version}", tags=["BEL Specification"])
+@router.delete("/belspec/{version}")
 def delete_belspec(version: str):
 
     if version == "latest":

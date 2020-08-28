@@ -12,7 +12,7 @@ import bel.nanopub.pubmed
 router = APIRouter()
 
 
-@router.get("/pubmed/{pmid}", tags=["Pubmed"])
+@router.get("/pubmed/{pmid}")
 def get_pubmed_info(
     pmid: str,
     pubmed_only: bool = Query(

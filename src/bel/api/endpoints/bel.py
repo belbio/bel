@@ -12,8 +12,7 @@ from loguru import logger
 
 router = APIRouter()
 
-
-@router.get("/bel/versions", tags=["BEL"])
+@router.get("/versions")
 def get_bel_versions():
     """Get supported BEL versions"""
 
@@ -21,7 +20,7 @@ def get_bel_versions():
 
 
 # TODO
-@router.get("/bel/canonicalize/{belstr}", tags=["BEL"])
+@router.get("/canonicalize/{belstr}")
 def get_bel_canonicalize(belstr: str, version: str = "latest"):
     """Get Canonicalized Assertion"""
 
@@ -40,7 +39,7 @@ def get_bel_canonicalize(belstr: str, version: str = "latest"):
 
 
 # TODO
-@router.get("/bel/decanonicalize/{belstr}", tags=["BEL"])
+@router.get("/decanonicalize/{belstr}")
 def get_bel_decanonicalize(belstr: str, version: str = "latest"):
     """Get De-canonicalized Assertion"""
 

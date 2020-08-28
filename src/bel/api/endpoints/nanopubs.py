@@ -15,7 +15,7 @@ from bel.schemas.nanopubs import NanopubR
 router = APIRouter()
 
 
-@router.post("/nanopubs/validation", tags=["Nanopubs"])
+@router.post("/nanopubs/validation")
 def nanopub_validation(
     nanopub: NanopubR, validation_level: str = "complete", error_level: str = "warning"
 ):
@@ -54,12 +54,3 @@ def nanopub_validation(
         return nanopub
 
     raise HTTPException(400, detail=f"No nanopub provided, error: {str(e)}")
-
-
-@router.post("/nanopubs/edges", tags=["Nanopubs"])
-def nanopub_to_edges(nanopub: NanopubR, orthologize_targets: str):
-    """Convert Nanopub to Edges"""
-
-    orthologize_targets = [ot.strip() for ot in orthologize_targets.split(",")]
-
-    # TODO - finish this endpoint

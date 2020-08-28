@@ -335,12 +335,15 @@ def enhance_pubmed_annotations(pubmed: MutableMapping[str, Any]) -> Mapping[str,
 
     annotations = {}
 
-    for nsarg in pubmed["annotations"]:
+    for nsarg in pubmed.get("annotations", []):
         terms = bel.terms.terms.get_terms(nsarg)
 
         if terms:
             term = terms[0]
-            new_nsarg = bel.terms.terms.get_normalized_terms(term["id"])["decanonical"]
+
+            normalized_term = bel.terms.terms.get_normalized_terms(term["id"])
+            new_nsarg = normalized_term.get("decanonical", "")
+
             pubmed["annotations"][nsarg]["name"] = term["name"]
             pubmed["annotations"][nsarg]["label"] = term["label"]
             pubmed["annotations"][nsarg]["entity_types"] = list(

@@ -15,8 +15,8 @@ import bel.terms.orthologs
 router = APIRouter()
 
 
-@router.get("/orthologs/{gene_id}", tags=["Orthologs"])
-@router.get("/orthologs/{gene_id}/{species}", tags=["Orthologs"])
+@router.get("/orthologs/{gene_id}")
+@router.get("/orthologs/{gene_id}/{species}")
 def get_orthologs(gene_id: str, species: str = ""):
 
     species = [item for item in species.split(",") if item]
@@ -26,7 +26,7 @@ def get_orthologs(gene_id: str, species: str = ""):
     return {"orthologs": orthologs}
 
 
-@router.post("/orthologs/import_file", tags=["Orthologs"], include_in_schema=False)
+@router.post("/orthologs/import_file", include_in_schema=False)
 def import_orthologs(
     email: str = Query("", description="Notification email"), orthologs_file: UploadFile = File(...)
 ):

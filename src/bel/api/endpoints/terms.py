@@ -15,7 +15,7 @@ from bel.schemas.terms import Term, TermCompletionResponse
 router = APIRouter()
 
 
-@router.get("/terms/types", tags=["Terms"])
+@router.get("/terms/types")
 def get_term_types():
     """Get Term"""
 
@@ -23,7 +23,7 @@ def get_term_types():
 
 
 # TODO add response_model=TermCompletionResponse to improve API docs
-@router.get("/terms/completions/{completion_str}", tags=["Terms"])
+@router.get("/terms/completions/{completion_str}")
 def get_term_completions(
     completion_str: str = Query(..., description="String to use for completion"),
     size: int = Query(21, description="Number of completions to return"),
@@ -57,7 +57,7 @@ def get_term_completions(
     return {"completion_text": completion_str, "completions": completions}
 
 
-@router.get("/terms/{term_id}", tags=["Terms"], response_model=List[Term])
+@router.get("/terms/{term_id}", response_model=List[Term])
 def get_terms(term_id: str):
     """Get Term"""
 
@@ -69,7 +69,7 @@ def get_terms(term_id: str):
     return terms
 
 
-@router.get("/terms/{term_id}/equivalents", tags=["Terms"])
+@router.get("/terms/{term_id}/equivalents")
 def get_term_equivalents(term_id: str):
     """Get Term Equivalents"""
 
@@ -81,7 +81,7 @@ def get_term_equivalents(term_id: str):
     return equivalents
 
 
-@router.get("/terms/{term_id}/canonicalized", tags=["Terms"])
+@router.get("/terms/{term_id}/canonicalized")
 def get_term_canonicalization(term_id: str):
     """Canonicalize term"""
 
@@ -89,7 +89,7 @@ def get_term_canonicalization(term_id: str):
     return {"term_id": canonical_id}
 
 
-@router.get("/terms/{term_id}/decanonicalized", tags=["Terms"])
+@router.get("/terms/{term_id}/decanonicalized")
 def get_term_decanonicalization(term_id: str):
     """De-canonicalize term"""
 
@@ -97,7 +97,7 @@ def get_term_decanonicalization(term_id: str):
     return {"term_id": decanonical_id}
 
 
-@router.get("/terms/{term_key}/normalized", tags=["Terms"])
+@router.get("/terms/{term_key}/normalized")
 def get_term_normalization(term_key: str):
     """Normalize term"""
 
@@ -105,7 +105,7 @@ def get_term_normalization(term_key: str):
     return results
 
 
-@router.post("/terms/import_file", tags=["Terms"], include_in_schema=False)
+@router.post("/terms/import_file", include_in_schema=False)
 def import_terms(
     email: str = Query("", description="Notification email"), terms_file: UploadFile = File(...)
 ):
