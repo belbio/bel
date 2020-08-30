@@ -13,7 +13,7 @@ from starlette_prometheus import PrometheusMiddleware, metrics
 
 # Local Imports
 import bel.core.settings as settings
-from __version__ import __version__ as version
+from bel.__version__ import __version__ as version
 from core.middleware import StatsMiddleware
 from bel.api.endpoints.bel import router as bel_router
 from bel.api.endpoints.belspec import router as belspec_router
@@ -66,12 +66,12 @@ rootdir = os.path.split(__file__)[0]
 app.mount("/static", StaticFiles(directory=f"{rootdir}/static"), name="static")
 
 app.include_router(info_router)
-app.include_router(bel_router)
-app.include_router(belspec_router)
+app.include_router(bel_router, prefix="/bel", tags=["BEL"])
 app.include_router(nanopubs_router)
-app.include_router(orthology_router)
-app.include_router(pubmed_router)
-app.include_router(terms_router)
+app.include_router(pubmed_router, tags=["Pubmed"])
+app.include_router(terms_router, prefix="/bel", tags=["BEL Terms"])
+app.include_router(orthology_router, prefix="/bel", tags=["Orthology"])
+app.include_router(belspec_router, tags=["BEL Specifications"])
 
 
 ###############################################################################

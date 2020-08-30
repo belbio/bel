@@ -10,7 +10,7 @@ from loguru import logger
 # Local Imports
 import bel.core.settings as settings
 import cachetools
-from bel.core.utils import split_key_label
+from bel.core.utils import split_key_label, asyncify
 from bel.db.arangodb import arango_id_to_key, resources_db, terms_coll_name
 from bel.db.elasticsearch import es
 from bel.resources.namespace import get_namespace_metadata
@@ -159,9 +159,11 @@ def get_normalized_terms(
     # TODO - make sure that the results are consistent for terms like:
     #     HGNC:IFNA1 and HGNC:IFNA13 - get collapsed together due to their SP entry - https://www.uniprot.org/uniprot/P01562
     #     HGNC:DEFB4A and HGNC:DEFB4B - get collapsed together due to their SP entry - https://www.uniprot.org/uniprot/O15263
-    #   
+    #
     #     1. Sort each namespace and take first term_key
-    #  
+    #
+
+    # Normalized term is the official term - e.g. HGNC:207 (normalized) vs HGNC:AKT1 (original but not normalized)
     normalized_term_key = term_key
     if not term:
         term = get_term(term_key)
@@ -170,12 +172,21 @@ def get_normalized_terms(
     else:
         normalized_term_key = term.key
 
+    label, entity_types, annotation_types = "", [], []
+    if term:
+        label = term.label
+        entity_types = term.entity_types
+        annotation_types = term.annotation_types
+
     if normalized_term_key:
         normalized = {
             "normalized": normalized_term_key,
             "original": term_key,
             "canonical": normalized_term_key,
             "decanonical": normalized_term_key,
+            "label": label,
+            "entity_types": entity_types,
+            "annotation_types": annotation_types,
         }
     else:
         normalized = {
@@ -183,6 +194,9 @@ def get_normalized_terms(
             "original": term_key,
             "canonical": term_key,
             "decanonical": term_key,
+            "label": label,
+            "entity_types": entity_types,
+            "annotation_types": annotation_types,
         }
 
     ns = term_key.split(":")[0]
@@ -212,6 +226,17 @@ def get_normalized_terms(
         break
 
     return normalized
+
+
+@asyncify
+def async_get_normalized_terms(
+    term_key: Key,
+    canonical_targets: Mapping[str, List[str]] = settings.BEL_CANONICALIZE,
+    decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
+    term: Optional[Term] = None,
+) -> Mapping[str, str]:
+
+    return get_normalized_terms(term_key, canonical_targets, decanonical_targets, term)
 
 
 def get_term_completions(

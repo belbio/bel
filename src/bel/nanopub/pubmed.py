@@ -13,9 +13,12 @@ import copy
 import datetime
 import re
 from typing import Any, Mapping, MutableMapping
+import asyncio
 
 # Third Party Imports
 from loguru import logger
+import cachetools
+import httpx
 
 # Local Imports
 import bel.core.settings as settings
@@ -29,8 +32,10 @@ PUBMED_TMPL = (
     "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID"
 )
 
-PUBTATOR_TMPL = (
-    "https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/RESTful/tmTool.cgi/BioConcept/PMID/JSON"
+# https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/biocjson?pmids=28483577,28483578,28483579
+
+PUBTATOR_URL = (
+    "https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/biocjson?pmids="
 )
 
 pubtator_ns_convert = {
@@ -40,11 +45,8 @@ pubtator_ns_convert = {
     "Chemical": "MESH",
     "Disease": "MESH",
 }
-pubtator_entity_convert = {
-    "Chemical": "Abundance",
-    "Gene": "Gene",
-    "Disease": "Pathology",
-}
+
+pubtator_entity_convert = {"Chemical": "Abundance", "Gene": "Gene", "Disease": "Pathology"}
 pubtator_annotation_convert = {"Disease": "Pathology"}
 pubtator_known_types = [key for key in pubtator_ns_convert.keys()]
 
@@ -62,74 +64,68 @@ def node_text(node):
     return result
 
 
+@cachetools.cached(cachetools.TTLCache(maxsize=200, ttl=3600))
+def get_pubtator_url(pmid):
+    """Get pubtator content from url"""
+
+    pubtator = None
+
+    url = f"{PUBTATOR_URL}{pmid}"
+
+    r = http_client.get(url, timeout=10)
+
+    if r and r.status_code == 200:
+        pubtator = r.json()
+
+    else:
+        logger.error(f"Cannot access Pubtator, status: {r.status_code} url: {url}")
+
+    return pubtator
+
+
+def pubtator_convert_to_key(annotation: dict) -> str:
+    """Convert pubtator annotation info to key (NS:ID)"""
+
+    ns = pubtator_ns_convert.get(annotation["infons"]["type"], None)
+    id_ = annotation["infons"]["identifier"]
+    id_ = id_.replace("MESH:", "")
+
+    if ns is None:
+        logger.warning("")
+    return f"{ns}:{id_}"
+
+
 def get_pubtator(pmid):
     """Get Pubtator Bioconcepts from Pubmed Abstract
 
     Re-configure the denotations into an annotation dictionary format
     and collapse duplicate terms so that their spans are in a list.
     """
-    r = http_client.get(PUBTATOR_TMPL.replace("PMID", pmid), timeout=10)
-    if r and r.status_code == 200:
-        pubtator = r.json()[0]
-    else:
-        logger.error(
-            f"Cannot access Pubtator, status: {r.status_code} url: {PUBTATOR_TMPL.replace('PMID', pmid)}"
-        )
-        return None
+
+    annotations = []
+
+    pubtator = get_pubtator_url(pmid)
+    if pubtator is None:
+        return annotations
 
     known_types = ["CHEBI", "Chemical", "Disease", "Gene", "Species"]
 
-    for idx, anno in enumerate(pubtator["denotations"]):
-        s_match = re.match(r"(\w+):(\w+)", anno["obj"])
-        c_match = re.match(r"(\w+):(\w+):(\w+)", anno["obj"])
-        if c_match:
-            (ctype, namespace, cid) = (
-                c_match.group(1),
-                c_match.group(2),
-                c_match.group(3),
+    for passage in pubtator["passages"]:
+        for annotation in passage["annotations"]:
+            if annotation["infons"]["type"] not in known_types:
+                continue
+
+            key = pubtator_convert_to_key(annotation)
+
+            annotations.append(
+                {
+                    "key": key,
+                    "text": annotation["text"],
+                    "locations": copy.copy(annotation["locations"]),
+                }
             )
 
-            if ctype not in known_types:
-                logger.debug(f"{ctype} not in known_types for Pubtator")
-            if namespace not in known_types:
-                logger.debug(f"{namespace} not in known_types for Pubtator")
-
-            pubtator["denotations"][idx][
-                "obj"
-            ] = f'{pubtator_ns_convert.get(namespace, "UNKNOWN")}:{cid}'
-            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(ctype, None)
-            pubtator["denotations"][idx]["annotation_type"] = pubtator_annotation_convert.get(
-                ctype, None
-            )
-        elif s_match:
-            (ctype, cid) = (s_match.group(1), s_match.group(2))
-
-            if ctype not in known_types:
-                logger.debug(f"{ctype} not in known_types for Pubtator")
-
-            pubtator["denotations"][idx][
-                "obj"
-            ] = f'{pubtator_ns_convert.get(ctype, "UNKNOWN")}:{cid}'
-            pubtator["denotations"][idx]["entity_type"] = pubtator_entity_convert.get(ctype, None)
-            pubtator["denotations"][idx]["annotation_type"] = pubtator_annotation_convert.get(
-                ctype, None
-            )
-
-    annotations = {}
-    for anno in pubtator["denotations"]:
-        logger.debug(anno)
-        if anno["obj"] not in annotations:
-            annotations[anno["obj"]] = {"spans": [anno["span"]]}
-            annotations[anno["obj"]]["entity_types"] = [anno.get("entity_type", [])]
-            annotations[anno["obj"]]["annotation_types"] = [anno.get("annotation_type", [])]
-
-        else:
-            annotations[anno["obj"]]["spans"].append(anno["span"])
-
-    del pubtator["denotations"]
-    pubtator["annotations"] = copy.deepcopy(annotations)
-
-    return pubtator
+    return annotations
 
 
 def process_pub_date(year, mon, day, medline_date):
@@ -241,17 +237,43 @@ def parse_journal_article_record(doc: dict, root) -> dict:
     doc["compounds"] = []
     for chem in root.xpath("//ChemicalList/Chemical/NameOfSubstance"):
         chem_id = chem.get("UI")
-        doc["compounds"].append({"id": f"MESH:{chem_id}", "name": chem.text})
+        doc["compounds"].append({"key": f"MESH:{chem_id}", "label": chem.text})
 
-    compounds = [cmpd["id"] for cmpd in doc["compounds"]]
+    compounds = [cmpd["key"] for cmpd in doc["compounds"]]
     doc["mesh"] = []
     for mesh in root.xpath("//MeshHeading/DescriptorName"):
         mesh_id = f"MESH:{mesh.get('UI')}"
         if mesh_id in compounds:
             continue
-        doc["mesh"].append({"id": mesh_id, "name": mesh.text})
+        doc["mesh"].append({"key": mesh_id, "label": mesh.text})
 
     return doc
+
+
+@cachetools.cached(cachetools.TTLCache(maxsize=200, ttl=3600))
+def get_pubmed_url(pmid):
+    """Get pubmed url"""
+
+    root = None
+
+    try:
+        pubmed_url = PUBMED_TMPL.replace("PMID", str(pmid))
+        logger.info(f"Getting Pubmed URL {pubmed_url}")
+        r = http_client.get(pubmed_url)
+        content = r.content
+        root = etree.fromstring(content)
+
+    except Exception as e:
+        status_code = None
+        if r:
+            status_code = r.status_code
+
+        logger.warning(
+            f"Bad Pubmed request, status: {status_code} error: {str(e)}",
+            url=f'{PUBMED_TMPL.replace("PMID", pmid)}',
+        )
+
+    return root
 
 
 def get_pubmed(pmid: str) -> Mapping[str, Any]:
@@ -282,24 +304,9 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
         "mesh": [],
     }
 
-    r = None
-    try:
-        pubmed_url = PUBMED_TMPL.replace("PMID", str(pmid))
-        r = http_client.get(pubmed_url)
-        content = r.content
-        logger.info(f"Getting Pubmed URL {pubmed_url}")
-        root = etree.fromstring(content)
-
-    except Exception as e:
-        status_code = None
-        if r:
-            status_code = r.status_code
-
-        logger.exception(
-            f"Bad Pubmed request, status: {status_code} error: {str(e)}",
-            url=f'{PUBMED_TMPL.replace("PMID", pmid)}',
-        )
-        return {"doc": {}, "message": f"Cannot get PMID: {pubmed_url}"}
+    root = get_pubmed_url(pmid)
+    if root is None:
+        return None
 
     doc["pmid"] = root.xpath("//PMID/text()")[0]
 
@@ -314,60 +321,52 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
     return doc
 
 
-def enhance_pubmed_annotations(pubmed: MutableMapping[str, Any]) -> Mapping[str, Any]:
-    """Enhance Pubmed object
+async def async_get_normalized_terms_for_annotations(term_keys):
+    """Async collection of normalized terms for annotations"""
 
-    Add additional entity and annotation types to annotations
-    Use preferred id for namespaces as needed
-    Add strings from Title, Abstract matching Pubtator BioConcept spans
+    normalized = asyncio.gather(
+        *[bel.terms.terms.async_get_normalized_terms(term_key) for term_key in term_keys]
+    )
 
-    NOTE - basically duplicated code with bel:bel.nanopub.pubmed - just uses
-            internal function calls instead of bel_api calls
+    return normalized
 
-    Args:
-        pubmed
 
-    Returns:
-        pubmed object
+def get_normalized_terms_for_annotations(term_keys):
+
+    return [bel.terms.terms.get_normalized_terms(term_key) for term_key in term_keys]
+
+
+def add_annotations(pubmed):
+    """Add nanopub annotations to pubmed doc
+    
+    Enhance MESH terms etc as full-fledged nanopub annotations for use by the BEL Nanopub editor
     """
 
-    text = pubmed["title"] + pubmed["abstract"]
+    term_keys = (
+        [entry["key"] for entry in pubmed.get("compounds", [])]
+        + [entry["key"] for entry in pubmed.get("mesh", [])]
+        + [entry["key"] for entry in pubmed.get("pubtator", [])]
+    )
+    term_keys = list(set(term_keys))
 
-    annotations = {}
+    # loop = asyncio.get_event_loop()
+    # normalized = loop.run_until_complete(async_get_normalized_terms_for_annotations(term_keys))
 
-    for nsarg in pubmed.get("annotations", []):
-        terms = bel.terms.terms.get_terms(nsarg)
+    normalized = get_normalized_terms_for_annotations(term_keys)
 
-        if terms:
-            term = terms[0]
+    normalized = sorted(normalized, key=lambda x: x["annotation_types"], reverse=True)
 
-            normalized_term = bel.terms.terms.get_normalized_terms(term["id"])
-            new_nsarg = normalized_term.get("decanonical", "")
+    pubmed["annotations"] = []
 
-            pubmed["annotations"][nsarg]["name"] = term["name"]
-            pubmed["annotations"][nsarg]["label"] = term["label"]
-            pubmed["annotations"][nsarg]["entity_types"] = list(
-                set(pubmed["annotations"][nsarg]["entity_types"] + term.get("entity_types", []))
-            )
-            pubmed["annotations"][nsarg]["annotation_types"] = list(
-                set(
-                    pubmed["annotations"][nsarg]["annotation_types"]
-                    + term.get("annotation_types", [])
-                )
-            )
-
-            if new_nsarg != nsarg:
-                annotations[new_nsarg] = copy.deepcopy(pubmed["annotations"][nsarg])
-            else:
-                annotations[nsarg] = copy.deepcopy(pubmed["annotations"][nsarg])
-
-    for nsarg in annotations:
-        for idx, span in enumerate(annotations[nsarg]["spans"]):
-            string = text[span["begin"] - 1 : span["end"] - 1]
-            annotations[nsarg]["spans"][idx]["text"] = string
-
-    pubmed["annotations"] = copy.deepcopy(annotations)
-
+    for annotation in normalized:
+        pubmed["annotations"].append(
+            {
+                "key": annotation["decanonical"],
+                "label": annotation["label"],
+                "annotation_types": annotation["annotation_types"],
+            }
+        )
+        
     return pubmed
 
 
@@ -383,12 +382,14 @@ def get_pubmed_for_beleditor(pmid: str, pubmed_only: bool = False) -> Mapping[st
 
     pubmed = get_pubmed(pmid)
 
+    if pubmed is None:
+        return pubmed
+
     if not pubmed_only:
-        pubtator = get_pubtator(pmid)
-        pubmed["annotations"] = copy.deepcopy(pubtator["annotations"])
+        pubmed["pubtator"] = get_pubtator(pmid)
 
     # Add entity types and annotation types to annotations
-    pubmed = enhance_pubmed_annotations(pubmed)
+    pubmed = add_annotations(pubmed)
 
     return pubmed
 
