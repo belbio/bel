@@ -72,7 +72,8 @@ def get_term(term_key: Key) -> Optional[Term]:
     terms = get_terms(term_key)
     time2 = time.perf_counter()
 
-    logger.info("Get terms timing", term_key=term_key, duration=f"{time2 - time1:.5f}")
+    duration = f"{time2 - time1:.5f}"
+    logger.info(f"Get terms timing {duration} for {term_key}", term_key=term_key, duration=duration)
 
     if len(terms) > 1:
 

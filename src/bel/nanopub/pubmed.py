@@ -349,24 +349,50 @@ def add_annotations(pubmed):
     )
     term_keys = list(set(term_keys))
 
+    terms = {}
+
+    for entry in pubmed.get("pubtator", []):
+        terms[entry["key"]] = {"key": entry["key"], "label": entry["text"]}
+
+    for entry in pubmed.get("compounds", []):
+        terms[entry["key"]] = {"key": entry["key"], "label": entry["label"]}
+
+    for entry in pubmed.get("mesh", []):
+        terms[entry["key"]] = {"key": entry["key"], "label": entry["label"]}
+
     # loop = asyncio.get_event_loop()
     # normalized = loop.run_until_complete(async_get_normalized_terms_for_annotations(term_keys))
 
-    normalized = get_normalized_terms_for_annotations(term_keys)
+    normalized = get_normalized_terms_for_annotations(terms.keys())
 
     normalized = sorted(normalized, key=lambda x: x["annotation_types"], reverse=True)
 
     pubmed["annotations"] = []
 
     for annotation in normalized:
-        pubmed["annotations"].append(
-            {
-                "key": annotation["decanonical"],
-                "label": annotation["label"],
-                "annotation_types": annotation["annotation_types"],
-            }
-        )
-        
+
+        # HACK - only show first annotation type
+        if len(annotation["annotation_types"]) > 0:
+            annotation_type = annotation["annotation_types"][0]
+        else:
+            annotation_type = ""
+
+        if annotation.get("label", False):
+            terms[annotation["original"]]["key"] = annotation["decanonical"]
+            terms[annotation["original"]]["label"] = annotation["label"]
+            terms[annotation["original"]]["annotation_types"] = [annotation_type]
+    
+    pubmed["annotations"] = copy.deepcopy(sorted(terms.values(), key=lambda x: x.get("annotation_types", []), reverse=True))
+
+    # Add missing
+    for idx, annotation in enumerate(pubmed["annotations"]):
+        if annotation["label"] == "":
+            pubmed["annotations"][idx]["label"] = annotation["key"]
+
+    import json
+    print('DumpVar:\n', json.dumps(pubmed["annotations"], indent=4))
+
+
     return pubmed
 
 
