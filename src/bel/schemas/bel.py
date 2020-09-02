@@ -89,15 +89,30 @@ class Pair(BaseModel):
 
 class ErrorLevelEnum(str, enum.Enum):
 
-    ERROR = "ERROR"
-    WARNING = "WARNING"
+    Error = "Error"
+    Warning = "Warning"
+    Good = "Good"
+    Processing = "Processing"
 
+class ValidationErrorType(str, enum.Enum):
 
-class AssertionErrors(BaseModel):
-    """Assertion Errors"""
+    Nanopub = "Nanopub"
+    Assertion = "Assertion"
+    Annotation = "Annotation"
+    
 
-    __root__: List[Tuple[ErrorLevelEnum, str]]
+class ValidationError(BaseModel):
+    type: ValidationErrorType
+    severity: ErrorLevelEnum
+    msg: str
+    visual: Optional[str] = Field(None, description="Visualization of the location of the error in the Assertion string or Annotation using html span tags")
+    visual_pairs: Optional[List[Tuple[int, int]]] = Field(None, description="Used when the Assertion string isn't available. You can then post-process these pairs to create the visual field.")
+    index: int = Field(0, description="Index to sort validation errors - e.g. for multiple errors in Assertions - start at the beginning of the string.")
 
+class ValidationErrors(BaseModel):
+    status: Optional[ErrorLevelEnum] = Field("Good", description="Indicates if there are any errors or warnings in Validation results")
+    errors: List[ValidationError] = []
+    validation_target: Optional[str]
 
 class AssertionStr(BaseModel):
     """Assertion string object - to handle either SRO format or simple string of full assertion"""

@@ -8,6 +8,7 @@ from bel.schemas.bel import Pair
 
 
 def test_ordered_pairs():
+    """Matching left, right pairs of characters"""
 
     left = [10, 20, 40, 50, 70]
     right = [11, 21, 31, 51, 71, 81, 91, 101]

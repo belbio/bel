@@ -1,4 +1,3 @@
-
 # Standard Library
 import json
 
@@ -37,7 +36,7 @@ def test_validate_nanopub():
                 "gd_internal_comments": "",
                 "gd_rev": "_Z92MJja---",
                 "gd_status": "draft",
-                "gd_updateTS": "2020-02-01T00:02:19.634Z"
+                "gd_updateTS": "2020-02-01T00:02:19.634Z",
             },
             "schema_uri": "https://raw.githubusercontent.com/graphdati/schemas/master/nanopub_graphdati-1.0.0.json",
             "type": {"name": "BEL", "version": "2.1.1"},
@@ -47,13 +46,10 @@ def test_validate_nanopub():
 
     nanopub = bel.nanopub.validate.validate(nanopub, validation_level="force")
 
+    print("DumpVar:\n", json.dumps(nanopub, indent=4))
 
-    print('DumpVar:\n', json.dumps(nanopub, indent=4))
+    assert nanopub["nanopub"]["assertions"][0]["validation"]["status"] == "Error"
+    assert nanopub["nanopub"]["assertions"][0]["validation"]["errors"][0]["msg"] == "Too many close parentheses at index 25"
+    assert nanopub["nanopub"]["assertions"][0]["validation"]["errors"][0]["visual"] == "act(p(SP:AKT1_HUMAN), ma)<span class=\"accentuate\">)</span> increases act(p(SPX:AKT1_HUMAN)"
 
-    assert any([error for assertion in nanopub["nanopub"]["assertions"] for error in assertion["validation"]["errors"] if error["msg"] == "Too many close parentheses at index 25"])
-    
-    assert any([error for assertion in nanopub["nanopub"]["assertions"] for error in assertion["validation"]["errors"] if error["msg"] == "No matching close parenthesis to open parenthesis at index 40"])
-
-    assert any([error for assertion in nanopub["nanopub"]["assertions"] for error in assertion["validation"]["errors"] if error["msg"] == "Invalid BEL Assertion function act(p(SP:AKT1_HUMAN), ma) - problem with function signatures: Missing position_dependent arguments for activity signature: 0"])
-
-    assert any([warning for assertion in nanopub["nanopub"]["assertions"] for warning in assertion["validation"]["warnings"] if warning["msg"] == "Invalid Term - Assertion term SPX:AKT1_HUMAN allowable entity types: ['Protein'] do not match API term entity types: []"])
+    assert False

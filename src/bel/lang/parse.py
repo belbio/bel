@@ -17,9 +17,9 @@ from pydantic import BaseModel, Field
 import bel.belspec.specifications
 import cachetools
 from bel.belspec.specifications import additional_computed_relations
-from bel.core.utils import nsarg_pattern
+from bel.core.utils import nsarg_pattern, html_wrap_span
 from bel.lang.ast import Arg, BELAst, Function, NSArg, Relation, StrArg
-from bel.schemas.bel import AssertionErrors, FunctionSpan, NsArgSpan, Pair, Span
+from bel.schemas.bel import ValidationError, FunctionSpan, NsArgSpan, Pair, Span
 
 
 def mask(string: str, start: int, end: int, replacement_char="#"):
@@ -109,8 +109,8 @@ def ordered_pairs(a: List[int], b: List[int]) -> List[Union[int, None]]:
 
 
 def find_matching_quotes(
-    assertion_str: str, errors: AssertionErrors = []
-) -> Tuple[List[Pair], AssertionErrors]:
+    assertion_str: str, errors: List[ValidationError]
+) -> Tuple[List[Pair], List[ValidationError]]:
     """Find matching quotes using BEL Assertion syntax"""
 
     quote_matches_left = re.compile(r"[\,\:\!\(]+\s*(\")")
@@ -127,24 +127,42 @@ def find_matching_quotes(
     for idx, pair in enumerate(matched_quotes):
         if pair.start is None and idx == 0:
             errors.append(
-                ("ERROR", f"Missing left quote before right quote at position {pair.end}")
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Missing left quote before right quote at position {pair.end}",
+                    visual=html_wrap_span(assertion_str, [(pair.end, pair.end + 1)]),
+                    index=pair.end,
+                )
             )
         elif pair.start is None:
             errors.append(
-                (
-                    "ERROR",
-                    f"Missing left quote between right quotes at positions {matched_quotes[idx-1].end} and {pair.end}",
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Missing left quote between right quotes at positions {matched_quotes[idx-1].end} and {pair.end}",
+                    visual=html_wrap_span(assertion_str, [(matched_quotes[idx-1].end, pair.end + 1)]),
+                    index=matched_quotes[idx-1].end,
                 )
             )
         elif pair.end is None and idx == len(matched_quotes):
             errors.append(
-                ("ERROR", f"Missing right quote after left quote at position {pair.start}")
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Missing right quote after left quote at position {pair.start}",
+                    visual=html_wrap_span(assertion_str, [(pair.start, pair.start + 1)]),
+                    index=pair.start,
+                )
             )
         elif pair.end is None:
             errors.append(
-                (
-                    "ERROR",
-                    f"Missing right quote between left quotes at positions {pair.start} and {matched_quotes[idx+1].start}",
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Missing right quote between left quotes at positions {pair.start} and {matched_quotes[idx+1].start}",
+                    visual=html_wrap_span(assertion_str, [(pair.start, matched_quotes[idx+1].start)]),
+                    index=pair.start,
                 )
             )
 
@@ -152,9 +170,12 @@ def find_matching_quotes(
 
 
 def find_commas(
-    assertion_str: str, matched_quotes: List[Span], errors: AssertionErrors
-) -> Tuple[List[int], AssertionErrors]:
+    assertion_str: str, matched_quotes: List[Span], errors: List[ValidationError]
+) -> Tuple[List[int], List[ValidationError]]:
     """Find commas in chars list that are not in quoted strings"""
+
+    if errors is None:
+        errors = []
 
     commas: List[int] = []
 
@@ -168,8 +189,8 @@ def find_commas(
 
 
 def find_matching_parens(
-    assertion_str, matched_quotes, errors: AssertionErrors
-) -> Tuple[List[Pair], AssertionErrors]:
+    assertion_str, matched_quotes, errors: List[ValidationError]
+) -> Tuple[List[Pair], List[ValidationError]]:
     """ Find and return the location of the matching parentheses pairs in s.
 
     Given a string, s, return a dictionary of start: end pairs giving the
@@ -189,11 +210,25 @@ def find_matching_parens(
             try:
                 matched_parens.append(Pair(start=stack.pop(), end=idx))
             except IndexError:
-                errors.append(("ERROR", f"Too many close parentheses at index {idx}"))
+                errors.append(
+                    ValidationError(
+                        type="Assertion",
+                        severity="Error",
+                        msg=f"Too many close parentheses at index {idx}",
+                        visual=html_wrap_span(assertion_str, [(idx, idx + 1)]),
+                        index=idx,
+                    )
+                )
     if stack:
         for idx in stack:
             errors.append(
-                ("ERROR", f"No matching close parenthesis to open parenthesis at index {idx}")
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"No matching close parenthesis for open parenthesis at index {idx}",
+                    visual=html_wrap_span(assertion_str, [(idx, idx + 1)]),
+                    index=idx,
+                )
             )
 
     return (sorted(matched_parens, key=lambda e: e.start), errors)
@@ -212,8 +247,8 @@ def get_relations_regex(version: str = "latest"):
 
 
 def find_relations(
-    assertion_str: str, matched_quotes: List[Pair], errors: AssertionErrors, version: str
-) -> Tuple[List[Span], AssertionErrors]:
+    assertion_str: str, matched_quotes: List[Pair], errors: List[ValidationError], version: str
+) -> Tuple[List[Span], List[ValidationError]]:
     """Find relation(s) e.g. handle nested objects as well
 
     Returns:
@@ -224,8 +259,8 @@ def find_relations(
 
     # Regex match all potential relations TODO make \S more specific to relation chars
     potential_relations = re.compile(f"\\s({relations_regex})\\s")
-    iter = re.finditer(potential_relations, assertion_str)
-    pre_spans = [m.span(1) for m in iter]
+    iterator = re.finditer(potential_relations, assertion_str)
+    pre_spans = [m.span(1) for m in iterator]
 
     # Filter quoted strings - can't have a relation in a quoted string
     relations = [
@@ -238,6 +273,16 @@ def find_relations(
         error_str = ", ".join([f"{r.span_str}[{r.start}:{r.end}]" for r in relations])
         errors.append(("ERROR", f"Too many relationships: {error_str}"))
 
+        errors.append(
+            ValidationError(
+                type="Assertion",
+                severity="Error",
+                msg=f"Too many relationships: {error_str}",
+                visual=html_wrap_span(assertion_str, [(idx, idx + 1)]),
+                index=idx,
+            )
+        )
+
     return (sorted(relations, key=lambda e: e.start), errors)
 
 
@@ -245,9 +290,9 @@ def find_functions(
     assertion_str: str,
     matched_quotes: List[Pair],
     matched_parens: List[Pair],
-    errors: AssertionErrors,
+    errors: List[ValidationError],
     version: str,
-) -> Tuple[List[FunctionSpan], AssertionErrors]:
+) -> Tuple[List[FunctionSpan], List[ValidationError]]:
     """Find function(s)
 
     Returns:

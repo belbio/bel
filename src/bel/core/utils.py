@@ -8,7 +8,7 @@ import json
 import re
 import tempfile
 from timeit import default_timer
-from typing import Any, Mapping
+from typing import Any, Mapping, List, Tuple, Optional
 from functools import wraps, partial
 import asyncio
 
@@ -202,4 +202,50 @@ def asyncify(func):
             loop = asyncio.get_event_loop()
         pfunc = partial(func, *args, **kwargs)
         return await loop.run_in_executor(executor, pfunc)
+
     return run
+
+
+def html_wrap_span(
+    string: str, pairs: List[Tuple[int, int]], css_class: Optional[str] = "accentuate"
+) -> str:
+    """Wrap targeted area of Assertion with html highlighting
+    
+    to visualize where the error or warning is targeted
+
+    Args:
+        string: string to insert html span - wrapping the accentuated content
+        pairs: list of tuples of start/end locations in the string to wrap
+        css_class: optional class to insert into the span html tag - defaults to 'accentuate'
+    
+    Returns:
+        string with html spans around accentuated text
+    """
+
+    start_html_span = f'<span class="{css_class}">'
+    end_html_span = "</span>"
+    last_right_section = ""
+
+    result_str = ""
+    for idx, pair in enumerate(pairs):
+        (left, right) = pair
+
+        if idx == 0:
+            result_str += string[0:left]
+        else:
+            result_str += last_right_section
+
+        result_str += start_html_span
+        result_str += string[left:right]
+        result_str += end_html_span
+
+        if idx < len(pairs) - 1:
+            next_left = pairs[idx + 1][0]
+            right_section = string[right:next_left]
+            last_right_section = right_section
+        else:
+            right_section = string[right:]
+
+        result_str += right_section
+
+    return result_str

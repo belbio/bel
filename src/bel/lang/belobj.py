@@ -65,22 +65,6 @@ class BEL(object):
 
         return self
 
-    def semantic_validation(self, error_level: str = "WARNING") -> "BEL":
-        """Semantically validate parsed BEL statement
-
-        Run semantics validation - and decorate AST with nsarg entity_type and arg optionality
-
-        Args:
-            error_level:  WARNING or ERROR
-
-        Returns:
-            BEL: return self
-        """
-
-        bel.lang.semantics.validate(self, error_level)
-
-        return self
-
     def canonicalize(self) -> "BEL":
         """
         Takes an AST and returns a canonicalized BEL statement string.
