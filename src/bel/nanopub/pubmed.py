@@ -28,9 +28,7 @@ import bel.terms.terms
 
 
 # Replace PMID
-PUBMED_TMPL = (
-    "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID"
-)
+PUBMED_TMPL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id="
 
 # https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/biocjson?pmids=28483577,28483578,28483579
 
@@ -257,7 +255,8 @@ def get_pubmed_url(pmid):
     root = None
 
     try:
-        pubmed_url = PUBMED_TMPL.replace("PMID", str(pmid))
+        pubmed_url = f"{PUBMED_TMPL}{str(pmid)}"
+
         logger.info(f"Getting Pubmed URL {pubmed_url}")
         r = http_client.get(pubmed_url)
         content = r.content
@@ -305,13 +304,18 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
     }
 
     root = get_pubmed_url(pmid)
+    logger.info(f"Root is {root}")
+
     if root is None:
         return None
 
-    doc["pmid"] = root.xpath("//PMID/text()")[0]
+    try:
+        doc["pmid"] = root.xpath("//PMID/text()")[0]
+    except Exception as e:
+        return None
 
     if doc["pmid"] != pmid:
-        logger.error("Requested PMID doesn't match record PMID", url=pubmed_url)
+        logger.error(f"Requested PMID {doc['pmid']}doesn't match record PMID {pmid}")
 
     if root.find("PubmedArticle") is not None:
         doc = parse_journal_article_record(doc, root)
@@ -381,8 +385,10 @@ def add_annotations(pubmed):
             terms[annotation["original"]]["key"] = annotation["decanonical"]
             terms[annotation["original"]]["label"] = annotation["label"]
             terms[annotation["original"]]["annotation_types"] = [annotation_type]
-    
-    pubmed["annotations"] = copy.deepcopy(sorted(terms.values(), key=lambda x: x.get("annotation_types", []), reverse=True))
+
+    pubmed["annotations"] = copy.deepcopy(
+        sorted(terms.values(), key=lambda x: x.get("annotation_types", []), reverse=True)
+    )
 
     # Add missing
     for idx, annotation in enumerate(pubmed["annotations"]):

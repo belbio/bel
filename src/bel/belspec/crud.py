@@ -54,7 +54,7 @@ def max_semantic_version(version_strings) -> str:
 
         try:
             versions.append(semver.VersionInfo.parse(version_str))
-        except:
+        except Exception:
             pass  # Skip non-semantic versioned belspecs for latest version
 
     max_version = str(max(versions))
@@ -105,7 +105,11 @@ def get_belspec_versions() -> dict:
 def get_best_match(query_str, belspec_versions: BelSpecVersions):
     """Get best match to query version in versions or return latest"""
 
-    query = semver.VersionInfo.parse(query_str)
+    try:
+        query = semver.VersionInfo.parse(query_str)
+    except Exception as e:
+        logger.warning(f"Could not parse belspec version {query_str} - returning latest version instead")
+        return belspec_versions["latest"]
 
     versions = []
     for version_str in sorted(belspec_versions["versions"], reverse=True):
@@ -137,7 +141,7 @@ def get_best_match(query_str, belspec_versions: BelSpecVersions):
             if matches < 1:
                 match = version
             matches = 1
-            
+
     if not match:
         return belspec_versions["latest"]
 

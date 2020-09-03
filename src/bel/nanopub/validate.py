@@ -66,14 +66,18 @@ def get_cached_assertion_validations(assertions, validation_level):
     hashes = []
     for idx, assertion in enumerate(assertions):
 
+        logger.info(f"Assertion index {idx}  Assertion dict: {assertion}")
+
         if (
             not assertion.get("validation", False)
-            or assertion["validation"]["status"] == "processing"
+            or assertion["validation"]["status"] == "Processing"
         ):
 
             assertion["str"] = get_assertion_str(assertion)
             assertion["hash"] = get_hash(assertion["str"])
             hashes.append(assertion["hash"])
+
+    logger.info(f"Get assertion validation caches using hashes {hashes}")
 
     val_by_hashkey = get_validation_for_hashes(hashes)
 
@@ -83,6 +87,7 @@ def get_cached_assertion_validations(assertions, validation_level):
 
             assertion.pop("str", "")
             assertion.pop("hash", "")
+            assertion["validation"].pop("validation_target", "")
 
             assertions[idx] = copy.deepcopy(assertion)
 
@@ -98,7 +103,7 @@ def save_validation_by_hash(hash_key: str, validation: ValidationErrors) -> None
         src (str): source string that was validated (annotation or assertion)
     """
 
-    doc = {"_key": hash_key, "validation": validation.dict()}
+    doc = {"_key": hash_key, "validation": validation.dict(), "created_dt": bel.core.utils.dt_utc_formatted()}
 
     bel_validations_coll.insert(doc, overwrite=True, silent=True)
 
@@ -110,6 +115,7 @@ def validate_assertion(assertion, *, version: str, validation_level: str):
         subject=assertion["subject"], relation=assertion["relation"], object=assertion["object"]
     )
 
+    # Add hash in order to cache validation
     assertion_hash = assertion.get("hash", None)
     if assertion_hash is None:
         assertion_hash = get_hash(assertion_obj.entire)
@@ -159,10 +165,10 @@ def validate_assertions(
                             cached - only return cached/pre-generated validations
     """
 
+    logger.info(f"Assertions1 {assertions}")
+
     for idx, assertion in enumerate(assertions):
-        if not assertion.get("validation", False):
-            assertions[idx]["validation"] = {"status": "Processing"}
-        if not assertion["validation"].get("status", False):
+        if not assertion.get("validation", False) or not assertion["validation"].get("status", False):
             assertions[idx]["validation"] = {"status": "Processing"}
 
     # Process missing validations only
@@ -315,7 +321,6 @@ def validate_annotations(annotations: List[dict], validation_level: str):
 def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
     """Validate Nanopub sections"""
 
-    print("Here 1 --------", type(nanopub))
     if not isinstance(nanopub, dict):
         nanopub = nanopub.dict()
 
