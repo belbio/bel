@@ -257,7 +257,6 @@ def get_pubmed_url(pmid):
     try:
         pubmed_url = f"{PUBMED_TMPL}{str(pmid)}"
 
-        logger.info(f"Getting Pubmed URL {pubmed_url}")
         r = http_client.get(pubmed_url)
         content = r.content
         root = etree.fromstring(content)
@@ -304,7 +303,6 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
     }
 
     root = get_pubmed_url(pmid)
-    logger.info(f"Root is {root}")
 
     if root is None:
         return None

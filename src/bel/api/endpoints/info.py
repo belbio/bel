@@ -11,7 +11,7 @@ import re
 # Local Imports
 import bel.core.settings as settings
 import bel.terms.terms
-from bel.__version__ import __version__ as bel_version
+from bel.__version__ import __version__ as bel_lib_version
 from bel.schemas.info import Status, Version
 
 
@@ -24,7 +24,7 @@ def get_status():
 
     status = {
         "state": "OK",
-        "bel_version": bel_version,
+        "bel_lib_version": bel_lib_version,
         "fastapi_version": fastapi.__version__,
         # "settings": settings.show_settings(),
         # "elasticsearch_stats": bel.terms.terms.namespace_term_counts(),
@@ -37,7 +37,7 @@ def get_status():
 def get_version():
     """Get Version"""
 
-    return {"version": version}
+    return {"version": bel_lib_version}
 
 
 # @router.get("/settings", tags=["Info"], response_model=dict)
@@ -70,8 +70,6 @@ def get_settings():
 
     - Only show UPPER_CASED settings that do not have ['SECRET', 'TOKEN', 'PASSWORD', 'PASSWD'] in the name
     """
-
-    logger.info("testing", here=1)
 
     skip_list = ["SECRET", "TOKEN", "PASSWD", "PASSWORD"]
     try:

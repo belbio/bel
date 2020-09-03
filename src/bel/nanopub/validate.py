@@ -66,8 +66,6 @@ def get_cached_assertion_validations(assertions, validation_level):
     hashes = []
     for idx, assertion in enumerate(assertions):
 
-        logger.info(f"Assertion index {idx}  Assertion dict: {assertion}")
-
         if (
             not assertion.get("validation", False)
             or assertion["validation"]["status"] == "Processing"
@@ -76,8 +74,6 @@ def get_cached_assertion_validations(assertions, validation_level):
             assertion["str"] = get_assertion_str(assertion)
             assertion["hash"] = get_hash(assertion["str"])
             hashes.append(assertion["hash"])
-
-    logger.info(f"Get assertion validation caches using hashes {hashes}")
 
     val_by_hashkey = get_validation_for_hashes(hashes)
 
@@ -164,8 +160,6 @@ def validate_assertions(
                             force - redo all validations
                             cached - only return cached/pre-generated validations
     """
-
-    logger.info(f"Assertions1 {assertions}")
 
     for idx, assertion in enumerate(assertions):
         if not assertion.get("validation", False) or not assertion["validation"].get("status", False):
