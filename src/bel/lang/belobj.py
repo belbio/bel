@@ -11,7 +11,6 @@ from loguru import logger
 # Local Imports
 import bel.belspec.crud
 import bel.core.settings as settings
-import bel.lang.semantics
 import bel.terms.terms
 from bel.lang.ast import BELAst
 from bel.schemas.bel import AssertionStr, Key

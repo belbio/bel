@@ -41,7 +41,7 @@ def test_validate_nanopub():
             "schema_uri": "https://raw.githubusercontent.com/graphdati/schemas/master/nanopub_graphdati-1.0.0.json",
             "type": {"name": "BEL", "version": "2.1.1"},
         },
-        "owners": ["auth0|5b0ec2d2157859716f2b2449"],
+        "owners": [{"user_id": "auth0|5b0ec2d2157859716f2b2449", "first_name": "William", "last_name": "Hayes", "full_name": "William Hayes"],
     }
 
     nanopub = bel.nanopub.validate.validate(nanopub, validation_level="force")

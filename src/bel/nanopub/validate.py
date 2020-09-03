@@ -123,7 +123,9 @@ def validate_assertion(assertion, *, version: str, validation_level: str):
     # Add error visuals from visual_pairs
     for idx, error in enumerate(errors):
         if error.visual_pairs is not None:
-            errors[idx].visual = bel.core.utils.html_wrap_span(assertion_obj.entire, error.visual_pairs)
+            errors[idx].visual = bel.core.utils.html_wrap_span(
+                assertion_obj.entire, error.visual_pairs
+            )
             errors[idx].visual_pairs = None
 
     # Create Validation object
@@ -137,7 +139,9 @@ def validate_assertion(assertion, *, version: str, validation_level: str):
         elif error.severity == "Warning" and validation.status != "Error":
             validation.status = "Warning"
 
-    assertion["validation"] = validation.dict(exclude={"validation_target"}, exclude_unset=True, exclude_none=True)
+    assertion["validation"] = validation.dict(
+        exclude={"validation_target"}, exclude_unset=True, exclude_none=True
+    )
     save_validation_by_hash(assertion_hash, validation)
 
     return assertion
@@ -311,7 +315,8 @@ def validate_annotations(annotations: List[dict], validation_level: str):
 def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
     """Validate Nanopub sections"""
 
-    if isinstance(nanopub, NanopubR):
+    print("Here 1 --------", type(nanopub))
+    if not isinstance(nanopub, dict):
         nanopub = nanopub.dict()
 
     # Validation results
@@ -320,11 +325,13 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
     # Structural checks ####################################################################
     # Missing nanopub key in nanopub object
     if "nanopub" not in nanopub:
-    
+
         validation.status = "Error"
-        validation.errors.append(ValidationError(
-            type="Nanopub", severity="Error", msg="Must have top-level nanopub key in object"
-        ))
+        validation.errors.append(
+            ValidationError(
+                type="Nanopub", severity="Error", msg="Must have top-level nanopub key in object"
+            )
+        )
 
         nanopub["nanopub"]["metadata"]["gd_validation"] = validation.dict()
 
@@ -364,7 +371,6 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
                 msg='nanopub["nanopub"]["citation"] must have either a uri, database or reference key.',
             )
         )
-
     # Assertion checks ############################################################################
     if "assertions" in nanopub["nanopub"]:
         nanopub["nanopub"]["assertions"] = validate_assertions(
@@ -387,7 +393,10 @@ def validate(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
 
     try:
         nanopub = validate_sections(nanopub, validation_level)
+
     except Exception as e:
-        logger.warning(f"Could not validate nanopub: {nanopub.get('_key', 'Unknown')}")
-    
+        logger.warning(
+            f"Could not validate nanopub: {nanopub.get('_key', 'Unknown')}  error: {str(e)}"
+        )
+
     return nanopub
