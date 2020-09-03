@@ -389,10 +389,6 @@ def add_annotations(pubmed):
         if annotation["label"] == "":
             pubmed["annotations"][idx]["label"] = annotation["key"]
 
-    import json
-    print('DumpVar:\n', json.dumps(pubmed["annotations"], indent=4))
-
-
     return pubmed
 
 
