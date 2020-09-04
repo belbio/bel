@@ -387,6 +387,7 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
     return nanopub
 
 
+@logger.catch
 def validate(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
     """Validate Nanopub - wrapper for try/except"""
 

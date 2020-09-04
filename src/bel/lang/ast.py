@@ -933,7 +933,7 @@ def check_str_arg(value: str, check_values: List[str]) -> Optional[str]:
 def validate_function(fn: Function, errors: List[ValidationError] = None) -> List[ValidationError]:
     """Validate function"""
 
-    logger.debug(f"Validating function name {fn.name}, len: {len(fn.args)}")
+    # logger.debug(f"Validating function name {fn.name}, len: {len(fn.args)}")
 
     if errors is None:
         errors = []

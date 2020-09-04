@@ -52,9 +52,7 @@ class Span(BaseModel):
     """
 
     start: int = Field(..., title="Span Start")
-    end: int = Field(
-        ..., title="Span End",
-    )
+    end: int = Field(..., title="Span End")
 
     span_str: str = ""
 
@@ -82,37 +80,60 @@ class Pair(BaseModel):
     """
 
     start: Union[int, None] = Field(..., description="index of first in paired chars")
-    end: Union[int, None] = Field(
-        ..., description="Index of second of paired chars",
-    )
+    end: Union[int, None] = Field(..., description="Index of second of paired chars")
 
 
 class ErrorLevelEnum(str, enum.Enum):
 
+    Good = "Good"
     Error = "Error"
     Warning = "Warning"
-    Good = "Good"
     Processing = "Processing"
+
 
 class ValidationErrorType(str, enum.Enum):
 
     Nanopub = "Nanopub"
     Assertion = "Assertion"
     Annotation = "Annotation"
-    
+
 
 class ValidationError(BaseModel):
     type: ValidationErrorType
     severity: ErrorLevelEnum
+    label: str = Field(
+        "",
+        description="Label used in search - combination of type and severity, e.g. Assertion-Warning",
+    )
     msg: str
-    visual: Optional[str] = Field(None, description="Visualization of the location of the error in the Assertion string or Annotation using html span tags")
-    visual_pairs: Optional[List[Tuple[int, int]]] = Field(None, description="Used when the Assertion string isn't available. You can then post-process these pairs to create the visual field.")
-    index: int = Field(0, description="Index to sort validation errors - e.g. for multiple errors in Assertions - start at the beginning of the string.")
+    visual: Optional[str] = Field(
+        None,
+        description="Visualization of the location of the error in the Assertion string or Annotation using html span tags",
+    )
+    visual_pairs: Optional[List[Tuple[int, int]]] = Field(
+        None,
+        description="Used when the Assertion string isn't available. You can then post-process these pairs to create the visual field.",
+    )
+    index: int = Field(
+        0,
+        description="Index to sort validation errors - e.g. for multiple errors in Assertions - start at the beginning of the string.",
+    )
+
+    @root_validator(pre=True)
+    def set_label(cls, values):
+        label, type_, severity = (values.get("label"), values.get("type"), values.get("severity"))
+
+        if not label:
+            label = f"{type_}-{severity}"
+            values["label"] = label.strip()
+        return values
+
 
 class ValidationErrors(BaseModel):
-    status: Optional[ErrorLevelEnum] = Field("Good", description="Indicates if there are any errors or warnings in Validation results")
-    errors: List[ValidationError] = []
+    status: Optional[ErrorLevelEnum]
+    errors: Optional[List[ValidationError]] = []
     validation_target: Optional[str]
+
 
 class AssertionStr(BaseModel):
     """Assertion string object - to handle either SRO format or simple string of full assertion"""
@@ -143,9 +164,7 @@ class AssertionStr(BaseModel):
 class NsVal(object):
     """Namespaced value"""
 
-    def __init__(
-        self, key_label: str = "", namespace: str = "", id: str = "", label: str = "",
-    ):
+    def __init__(self, key_label: str = "", namespace: str = "", id: str = "", label: str = ""):
         """Preferentially use key_label to extract namespace:id!Optional[label]"""
 
         if key_label:
@@ -231,7 +250,7 @@ class BelEntity(object):
                 self.species_key = self.term.species_key
 
             self.nsval: NsVal = NsVal(
-                namespace=self.term.namespace, id=self.term.id, label=self.term.label,
+                namespace=self.term.namespace, id=self.term.id, label=self.term.label
             )
             self.original_nsval = self.nsval
         elif nsval:
@@ -407,9 +426,7 @@ class BelEntity(object):
 
         return self
 
-    def orthologize(
-        self, species_key: Key,
-    ):
+    def orthologize(self, species_key: Key):
         """Orthologize BEL entity - results in canonical form"""
 
         self.add_entity_types()
@@ -439,7 +456,7 @@ class BelEntity(object):
 
         return self
 
-    def orthologizable(self, species_key: Key,) -> bool:
+    def orthologizable(self, species_key: Key) -> bool:
         """Is this BEL Entity/NSArg orthologizable?"""
 
         self.add_entity_types()
