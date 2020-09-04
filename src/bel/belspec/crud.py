@@ -161,10 +161,9 @@ def check_version(version: str = "latest", versions: BelSpecVersions = None) -> 
         version = versions["latest"]
 
     elif version not in versions["versions"]:
-        logger.warning(
-            f"Cannot validate with invalid version: {version} which is not in BEL Versions: {versions} - using latest version instead"
-        )
+        original_version = version
         version = get_best_match(version, versions)
+        logger.info(f"BEL version {original_version} out of date using {version}")
 
     return version
 

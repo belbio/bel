@@ -99,7 +99,11 @@ def save_validation_by_hash(hash_key: str, validation: ValidationErrors) -> None
         src (str): source string that was validated (annotation or assertion)
     """
 
-    doc = {"_key": hash_key, "validation": validation.dict(), "created_dt": bel.core.utils.dt_utc_formatted()}
+    doc = {
+        "_key": hash_key,
+        "validation": validation.dict(),
+        "created_dt": bel.core.utils.dt_utc_formatted(),
+    }
 
     bel_validations_coll.insert(doc, overwrite=True, silent=True)
 
@@ -131,18 +135,27 @@ def validate_assertion(assertion, *, version: str, validation_level: str):
             errors[idx].visual_pairs = None
 
     # Create Validation object
-    validation = ValidationErrors(validation_target=assertion_obj.entire, errors=errors)
+    
 
     # Add status to validation object to make it easy to highlight errors/warnings in the UI
+    validation_status = "Good"
     for error in bo.ast.errors:
-        if error.severity == "Error" and validation.status != "Error":
-            validation.status = "Error"
+        if error.severity == "Error" and validation_status != "Error":
+            validation_status = "Error"
 
-        elif error.severity == "Warning" and validation.status != "Error":
-            validation.status = "Warning"
+        elif error.severity == "Warning" and validation_status != "Error":
+            validation_status = "Warning"
+
+    if not validation_status:
+        validation_status = "Good"
+
+    if errors == []:
+            errors = None
+
+    validation = ValidationErrors(status=validation_status, validation_target=assertion_obj.entire, errors=errors)
 
     assertion["validation"] = validation.dict(
-        exclude={"validation_target"}, exclude_unset=True, exclude_none=True
+        exclude={"validation_target"}, exclude_none=True
     )
     save_validation_by_hash(assertion_hash, validation)
 
@@ -162,7 +175,9 @@ def validate_assertions(
     """
 
     for idx, assertion in enumerate(assertions):
-        if not assertion.get("validation", False) or not assertion["validation"].get("status", False):
+        if not assertion.get("validation", False) or not assertion["validation"].get(
+            "status", False
+        ):
             assertions[idx]["validation"] = {"status": "Processing"}
 
     # Process missing validations only
@@ -212,10 +227,10 @@ def get_cached_annotation_validations(annotations):
         if annotation.get("hash", "") in cached_validations:
             annotation["validation"] = copy.deepcopy(cached_validations[annotation["hash"]])
 
-            annotation.pop("hash", "")
-            annotation.pop("annotation_str", "")
-
             annotations[idx] = copy.deepcopy(annotation)
+        
+        annotation.pop("hash", "")
+        annotation.pop("str", "")
 
     return annotations
 
@@ -242,7 +257,7 @@ def validate_annotation(annotation):
         "query": {"term": {"key": annotation["id"]}},
     }
 
-    validation = ValidationErrors()
+    validation = ValidationErrors(status="Good")
 
     results = es.search(
         index=settings.TERMS_INDEX, doc_type=settings.TERMS_DOCUMENT_TYPE, body=search_body
@@ -252,6 +267,8 @@ def validate_annotation(annotation):
         result = results["hits"]["hits"][0]["_source"]
         if annotation["type"] not in result["annotation_types"]:
             validation.status = "Warning"
+            if validation.errors is None:
+                validation.errors = []
             validation.errors.append(
                 ValidationError(
                     type="Annotation",
@@ -261,6 +278,8 @@ def validate_annotation(annotation):
             )
     else:
         validation.status = "Warning"
+        if validation.errors is None:
+            validation.errors = []
         validation.errors.append(
             ValidationError(
                 type="Annotation",
@@ -271,7 +290,7 @@ def validate_annotation(annotation):
 
     save_validation_by_hash(annotation_hash, validation)
 
-    annotation["validation"] = validation.dict(exclude={"validation_target"}, exclude_unset=True)
+    annotation["validation"] = validation.dict(exclude={"validation_target"}, exclude_none=True)
 
     return annotation
 
@@ -316,7 +335,7 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
     """Validate Nanopub sections"""
 
     if not isinstance(nanopub, dict):
-        nanopub = nanopub.dict()
+        nanopub = nanopub.dict(exclude_unset=True, exclude_none=True)
 
     # Validation results
     validation = ValidationErrors()
@@ -326,6 +345,9 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
     if "nanopub" not in nanopub:
 
         validation.status = "Error"
+        if validation.errors is None:
+            validation.errors = []
+
         validation.errors.append(
             ValidationError(
                 type="Nanopub", severity="Error", msg="Must have top-level nanopub key in object"
@@ -338,6 +360,8 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
 
     assertions = nanopub["nanopub"].get("assertions", [])
     if not assertions:
+        if validation.errors is None:
+            validation.errors = []
         validation.errors.append(
             ValidationError(
                 type="Nanopub",
@@ -346,11 +370,15 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
             )
         )
 
-    version = nanopub["nanopub"].get("type", {}).get("version", "latest")
-    version = bel.belspec.crud.check_version(version)
+    original_version = nanopub["nanopub"].get("type", {}).get("version", "latest")
+    version = bel.belspec.crud.check_version(original_version)
+    if original_version != "latest" and original_version != version:
+        nanopub["nanopub"]["type"]["version"] = version
 
     # Check Citation object ####################################################################
     if not nanopub["nanopub"].get("citation", {}):
+        if validation.errors is None:
+            validation.errors = []
         validation.errors.append(
             ValidationError(
                 type="Nanopub",
@@ -363,6 +391,8 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
         if key in nanopub["nanopub"].get("citation", {}).keys():
             break
     else:
+        if validation.errors is None:
+            validation.errors = []
         validation.errors.append(
             ValidationError(
                 type="Nanopub",

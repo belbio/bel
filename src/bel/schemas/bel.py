@@ -131,7 +131,7 @@ class ValidationError(BaseModel):
 
 class ValidationErrors(BaseModel):
     status: Optional[ErrorLevelEnum]
-    errors: Optional[List[ValidationError]] = []
+    errors: Optional[List[ValidationError]]
     validation_target: Optional[str]
 
 
