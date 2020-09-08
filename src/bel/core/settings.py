@@ -24,7 +24,7 @@ Examples
 LOG_LEVEL = os.getenv("LOGGING", default="INFO")
 LOG_SERIALIZE = False
 SERVER_MODE = os.getenv("SERVER_MODE", default="PROD")
-
+HOST_NAME = os.getenv("HOST_NAME", default="not.set")
 
 def getenv_boolean(var_name, default=False):
     result = default

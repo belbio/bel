@@ -28,5 +28,11 @@
     "python.linting.pycodestyleEnabled": false,
     "python.sortImports.path": "/Users/william/.virtualenvs/bel-wvk-0dh9/bin/isort",
     "autoDocstring.docstringFormat": "google",
-    "python.formatting.blackPath": "/usr/local/bin/black"
+    "python.formatting.blackPath": "/usr/local/bin/black",
+    "cSpell.ignoreWords": [
+        "equivalenced",
+        "schem",
+        "scomp",
+        "zfin"
+    ]
 }

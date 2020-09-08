@@ -1117,7 +1117,7 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                     ValidationError(
                         type="Assertion",
                         severity="Warning",
-                        msg=f"Wrong entity type for namespace argument {fn.args[position].entity.entity_types} at position {position} for function {fn.name} - should be {argument['values']}",
+                        msg=f"Wrong entity type for namespace argument at position {position} for function {fn.name} - expected {argument['values']}, actual: entity_types: {fn.args[position].entity.entity_types}",
                         visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
                         index=fn.args[position].span.start,
                     )

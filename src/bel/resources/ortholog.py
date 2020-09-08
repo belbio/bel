@@ -1,7 +1,8 @@
 # Standard Library
 import gzip
 import json
-from typing import IO
+from typing import IO, Mapping
+import copy
 
 # Third Party Imports
 from arango import ArangoError
@@ -18,7 +19,7 @@ from bel.db.arangodb import (
     resources_metadata_coll,
 )
 
-()
+from collections import defaultdict
 
 
 def load_orthologs(fo: IO, metadata: dict):
@@ -29,21 +30,18 @@ def load_orthologs(fo: IO, metadata: dict):
         metadata: dict containing the metadata for orthologs
     """
 
+    result = {"success": True, "messages": []}
+
+    statistics = {"entities_count": 0, "orthologous_pairs": defaultdict(lambda: defaultdict(int))}
+
     version = metadata["version"]
     source = metadata["name"]
 
-    # LOAD ORTHOLOGS INTO ArangoDB
-
-    arango_client = arangodb.get_client()
-    if not arango_client:
-        print("Cannot load orthologs without ArangoDB access")
-        quit()
-
-    arangodb.batch_load_docs(resources_db, orthologs_iterator(fo, version), on_duplicate="update")
-
-    logger.info(
-        "Load orthologs", source=source,
+    arangodb.batch_load_docs(
+        resources_db, orthologs_iterator(fo, version, statistics), on_duplicate="update"
     )
+
+    logger.info("Load orthologs", source=source)
 
     # Clean up old entries
     remove_old_ortholog_edges = f"""
@@ -63,11 +61,18 @@ def load_orthologs(fo: IO, metadata: dict):
 
     # Add metadata to resource metadata collection
     metadata["_key"] = arangodb.arango_id_to_key(source)
+    metadata["statistics"] = copy.deepcopy(statistics)
     resources_metadata_coll.insert(metadata, overwrite=True)
 
+    result["messages"].append(f'Loaded {statistics["entities_count"]} ortholog sets into arangodb')
+    return result
 
-def orthologs_iterator(fo, version):
-    """Ortholog node and edge iterator"""
+
+def orthologs_iterator(fo, version, statistics: Mapping):
+    """Ortholog node and edge iterator
+    
+    NOTE: the statistics dict works as a side effect since it is passed as a reference!!! 
+    """
 
     species_list = settings.BEL_FILTER_SPECIES
 
@@ -146,5 +151,9 @@ def orthologs_iterator(fo, version):
                 "source": source,
                 "version": version,
             }
+
+            statistics["entities_count"] += 1
+            statistics["orthologous_pairs"][subject_species_key][object_species_key] += 1
+            statistics["orthologous_pairs"][object_species_key][subject_species_key] += 1
 
             yield (arangodb.ortholog_edges_name, arango_edge)

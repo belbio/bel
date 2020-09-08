@@ -104,14 +104,3 @@ def get_term_normalization(term_key: str):
     results = bel.terms.terms.get_normalized_terms(term_key)
     return results
 
-
-@router.post("/terms/import_file", include_in_schema=False)
-def import_terms(
-    email: str = Query("", description="Notification email"), terms_file: UploadFile = File(...)
-):
-    """Import terms
-    
-    Add an email if you would like to be notified when the terms upload is completed.
-    """
-
-    return "Not implemented"

@@ -187,6 +187,20 @@ def test_validate_pmod_function(test_input, expected):
     assert ast.errors == expected
 
 
+def test_validate_path_and_namespace():
+    """Validate path()"""
+
+    assertion = AssertionStr(entire='path(DO:COVID-19)')
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+
 #####################################################################################
 # Canonicalization tests                                                        #####
 #####################################################################################

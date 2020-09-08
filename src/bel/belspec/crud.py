@@ -151,6 +151,7 @@ def get_best_match(query_str, belspec_versions: BelSpecVersions):
 def check_version(version: str = "latest", versions: BelSpecVersions = None) -> str:
     """ Check if version is valid and if not return default or latest """
 
+    logger.info(f"Version {version}")
     if not version:
         version = settings.BEL_DEFAULT_VERSION
 
