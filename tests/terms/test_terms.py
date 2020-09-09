@@ -52,7 +52,9 @@ def test_get_normalized_terms():
 
     print("Terms", results)
 
-    assert results == expected
+    assert results["normalized"] == expected["normalized"]
+    assert results["decanonical"] == expected["decanonical"]
+    assert results["entity_types"] == ["Gene", "RNA", "Protein"]
 
 
 def test_obsolete_term():
@@ -76,6 +78,9 @@ def test_obsolete_term():
         "normalized": "HGNC:24712",
         "canonical": "EG:54855",
         "decanonical": "HGNC:24712",
+        "label": "TENT5C",
+        "annotation_types": [],
+        "entity_types": ["Gene", "RNA", "Protein"],
     }
 
     assert results == expected
@@ -124,6 +129,9 @@ def test_collapsed_terms():
         "original": "HGNC:IFNA1",
         "canonical": "EG:3439",
         "decanonical": "HGNC:5417",
+        "label": "IFNA1",
+        "entity_types": ["Gene", "RNA", "Protein"],
+        "annotation_types": [],
     }
 
     results = bel.terms.terms.get_normalized_terms(term_key)
@@ -137,6 +145,9 @@ def test_collapsed_terms():
         "original": "HGNC:IFNA13",
         "canonical": "EG:3447",
         "decanonical": "HGNC:5419",
+        "label": "IFNA13",
+        "entity_types": ["Gene", "RNA", "Protein"],
+        "annotation_types": [],
     }
 
     results = bel.terms.terms.get_normalized_terms(term_key)
@@ -150,6 +161,9 @@ def test_collapsed_terms():
         "original": "HGNC:DEFB4A",
         "canonical": "EG:1673",
         "decanonical": "HGNC:2767",
+        "label": "DEFB4A",
+        "entity_types": ["Gene", "RNA", "Protein"],
+        "annotation_types": [],
     }
 
     results = bel.terms.terms.get_normalized_terms(term_key)
@@ -163,6 +177,9 @@ def test_collapsed_terms():
         "original": "HGNC:DEFB4B",
         "canonical": "EG:100289462",
         "decanonical": "HGNC:30193",
+        "label": "DEFB4B",
+        "entity_types": ["Gene", "RNA", "Protein"],
+        "annotation_types": [],
     }
 
     results = bel.terms.terms.get_normalized_terms(term_key)

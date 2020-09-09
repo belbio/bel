@@ -270,15 +270,16 @@ def find_relations(
     ]
 
     if len(relations) > 2:
+        intervals = [(r.start, r.end) for r in relations]
+        idx = relations[0].start
         error_str = ", ".join([f"{r.span_str}[{r.start}:{r.end}]" for r in relations])
-        errors.append(("ERROR", f"Too many relationships: {error_str}"))
 
         errors.append(
             ValidationError(
                 type="Assertion",
                 severity="Error",
                 msg=f"Too many relationships: {error_str}",
-                visual=html_wrap_span(assertion_str, [(idx, idx + 1)]),
+                visual=html_wrap_span(assertion_str, intervals),
                 index=idx,
             )
         )

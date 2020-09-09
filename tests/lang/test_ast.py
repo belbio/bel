@@ -1,7 +1,7 @@
 # Local Imports
 import bel.lang.ast
 import pytest
-from bel.schemas.bel import AssertionStr
+from bel.schemas.bel import AssertionStr, ValidationError
 
 # cSpell:disable
 
@@ -104,7 +104,8 @@ def test_validate_missing_namespace():
 
     print("Errors", ast.errors)
 
-    assert ast.errors == [('WARNING', "Unknown namespace 'missing' at position 0 for function proteinAbundance")]
+    assert ast.errors[0].msg == "Unknown namespace 'missing' for the proteinAbundance function at position 2"
+    assert ast.errors[0].severity == "Warning"
 
 
 def test_validate_empty_function():
@@ -118,7 +119,8 @@ def test_validate_empty_function():
 
     print("Errors", ast.errors)
 
-    assert ast.errors == [("ERROR", "No arguments in function: proteinAbundance")]
+    assert ast.errors[0].msg == "No arguments in function: proteinAbundance"
+    assert ast.errors[0].severity == "Error"
 
 
 def test_validate_empty_modifier():
@@ -132,7 +134,8 @@ def test_validate_empty_modifier():
 
     print("Errors", ast.errors)
 
-    assert ast.errors == [("ERROR", "No arguments in function: fragment")]
+    assert ast.errors[0].msg == "No arguments in function: fragment"
+    assert ast.errors[0].severity == "Error"
 
 
 def test_validate_frag_function():
@@ -167,8 +170,6 @@ def test_validate_deg_function():
     "test_input,expected",
     [
         ("p(HGNC:HRAS, pmod(Ac))", []),
-        ("p(HGNC:HRAS, pmod(Ac, , 473))", [('ERROR', "String Argument 473 not found in ['AminoAcid'] default BEL namespaces")]),
-        ("p(HGNC:HRAS, pmod(,,473))", [('ERROR', "String Argument 473 not found in ['ProteinModification'] default BEL namespaces")]),
         ("p(HGNC:HRAS, pmod(Ac, S, 473))", []),
         ("p(HGNC:HRAS, pmod(Ac, Ser, 473))", []),
     ],
@@ -187,6 +188,27 @@ def test_validate_pmod_function(test_input, expected):
     assert ast.errors == expected
 
 
+@pytest.mark.parametrize(
+    "test_input,expected",
+    [
+        ("p(HGNC:HRAS, pmod(Ac, , 473))", "String Argument 473 not found in ['AminoAcid'] default BEL namespaces"),
+        ("p(HGNC:HRAS, pmod(,,473))", "String Argument 473 not found in ['ProteinModification'] default BEL namespaces"),
+    ],
+)
+def test_validate_pmod_function_errors(test_input, expected):
+    """Accept Single or three letter Amino Acid code"""
+
+    assertion = AssertionStr(entire=test_input)
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
+
+
 def test_validate_path_and_namespace():
     """Validate path()"""
 
@@ -198,7 +220,8 @@ def test_validate_path_and_namespace():
 
     print("Errors", ast.errors)
 
-    assert ast.errors == []
+    assert ast.errors[0].msg == "Wrong entity type for namespace argument at position 0 for function pathology - expected ['Pathology'], actual: entity_types: []"
+    assert ast.errors[0].severity == "Warning"
 
 
 #####################################################################################

@@ -3,8 +3,10 @@ import json
 
 # Local Imports
 import bel.nanopub.validate
+from bel.schemas.nanopubs import NanopubR
 import pytest
 
+# cSpell:disable
 
 # @pytest.mark.skip(reason="Not finished with this test")
 def test_validate_nanopub():
@@ -41,10 +43,11 @@ def test_validate_nanopub():
             "schema_uri": "https://raw.githubusercontent.com/graphdati/schemas/master/nanopub_graphdati-1.0.0.json",
             "type": {"name": "BEL", "version": "2.1.1"},
         },
-        "owners": [{"user_id": "auth0|5b0ec2d2157859716f2b2449", "first_name": "William", "last_name": "Hayes", "full_name": "William Hayes"],
+        "owners": [{"user_id": "auth0|5b0ec2d2157859716f2b2449", "first_name": "William", "last_name": "Hayes", "full_name": "William Hayes"}],
     }
 
-    nanopub = bel.nanopub.validate.validate(nanopub, validation_level="force")
+    nanopub = bel.nanopub.validate.validate(NanopubR(**nanopub), validation_level="force")
+
 
     print("DumpVar:\n", json.dumps(nanopub, indent=4))
 
@@ -52,4 +55,3 @@ def test_validate_nanopub():
     assert nanopub["nanopub"]["assertions"][0]["validation"]["errors"][0]["msg"] == "Too many close parentheses at index 25"
     assert nanopub["nanopub"]["assertions"][0]["validation"]["errors"][0]["visual"] == "act(p(SP:AKT1_HUMAN), ma)<span class=\"accentuate\">)</span> increases act(p(SPX:AKT1_HUMAN)"
 
-    assert False

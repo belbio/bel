@@ -32,7 +32,9 @@ def test_matching_quotes():
     print("Errors", errors)
     print("Quotes", matched_quotes)
 
-    assert errors == [('ERROR', 'Missing right quote between left quotes at positions 50 and 74')]
+    assert errors[0].msg == "Missing right quote between left quotes at positions 50 and 74"
+    assert errors[0].severity == "Error"
+
     assert matched_quotes[0].start == 14
     assert matched_quotes[0].end == 34
 
@@ -68,7 +70,9 @@ def test_matching_parens():
     print("Errors", errors)
     print("Quotes", matched_parens)
 
-    assert errors == [('ERROR', 'Too many close parentheses at index 152')]
+    assert errors[0].msg == "Too many close parentheses at index 152"
+    assert errors[0].severity == "Error"
+
     assert matched_parens[0].start == 7
     assert matched_parens[0].end == 90
     assert matched_parens[1].start == 38
@@ -79,8 +83,8 @@ def test_relations():
     
     assertion_str = 'complex(SCOMP:"Test named\" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) equivalentTo p(hgnc : "here I am" ! X)'
 
-
-    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str)
+    errors = []
+    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
     version = "latest"
     (relations, errors) = bel.lang.parse.find_relations(assertion_str, matched_quotes, errors, version)
 
@@ -95,7 +99,8 @@ def test_functions():
 
     assertion_str = r'complex(p(HGNC:AKT1!"Test label", pmod(X))) increases act(p(HGNC:AKT1), ma(kin))'
 
-    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str)
+    errors = []
+    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
     (matched_parens, errors) = bel.lang.parse.find_matching_parens(assertion_str, matched_quotes, errors)
 
     version = "latest"
@@ -146,7 +151,8 @@ def test_find_strings():
 
     assertion_str = 'complex(SCOMP:"Test named complex", p(HGNC:"207"!"AKT1 Test"), p(HGNC:207!"Test"), loc(nucleus)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X) decreases stuff here '
     
-    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str)
+    errors = []
+    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
     (matched_parens, errors) = bel.lang.parse.find_matching_parens(assertion_str, matched_quotes, errors)
     (commas, errors) = bel.lang.parse.find_commas(assertion_str, matched_quotes, errors)
     (relations, errors) = bel.lang.parse.find_relations(assertion_str, matched_quotes, errors, version)
