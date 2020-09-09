@@ -35,6 +35,7 @@ class AnnotationTypesEnum(str, enum.Enum):
     CellLine = "CellLine"
     CellStructure = "CellStructure"
     Disease = "Disease"
+    Evidence = "Evidence"
     Species = "Species"
     All = "All"
 
