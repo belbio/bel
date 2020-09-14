@@ -46,26 +46,28 @@ def remove_old_db_entries(namespace: str, version: str = "", force: bool = False
     if force or version == "":
         filter_version = ""
     else:
-        filter_version = f"""FILTER term.version != "{version}" """
+        filter_version = f"""FILTER doc.version != "{version}" """
 
     # Clean up old entries
     remove_old_terms = f"""
-        FOR term in {terms_coll_name}
-            FILTER term.namespace == "{namespace}"
+        FOR doc in {terms_coll_name}
+            FILTER doc.namespace == "{namespace}"
             {filter_version}
-            REMOVE term IN {terms_coll_name}
+            REMOVE doc IN {terms_coll_name}
     """
+
     remove_old_equivalence_edges = f"""
-        FOR edge in {equiv_edges_name}
-            FILTER edge.source == "{namespace}"
+        FOR doc in {equiv_edges_name}
+            FILTER doc.source == "{namespace}"
             {filter_version}
-            REMOVE edge IN {equiv_edges_name}
+            REMOVE doc IN {equiv_edges_name}
     """
+
     remove_old_equivalence_nodes = f"""
-        FOR node in {equiv_nodes_name}
-            FILTER node.source == "{namespace}"
+        FOR doc in {equiv_nodes_name}
+            FILTER doc.source == "{namespace}"
             {filter_version}
-            REMOVE node IN {equiv_nodes_name}
+            REMOVE doc IN {equiv_nodes_name}
     """
 
     resources_db.aql.execute(remove_old_terms)
@@ -73,7 +75,7 @@ def remove_old_db_entries(namespace: str, version: str = "", force: bool = False
     resources_db.aql.execute(remove_old_equivalence_nodes)
 
 
-def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[str] = None):
+def load_terms(f: IO, metadata: dict, force: bool = False):
     """Load terms into Elasticsearch and ArangoDB
 
     Force will create a new index in Elasticsearch regardless of whether
@@ -99,6 +101,13 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
     metadata_key = f"Namespace_{metadata['namespace']}"
     prior_metadata = resources_metadata_coll.get(metadata_key)
 
+    try:
+        prior_version = prior_metadata.get("version", "")
+        prior_entity_count = prior_metadata["statistics"].get("entities_count", 0)
+    except Exception:
+        prior_entity_count = 0
+        prior_version = ""
+
     namespace = metadata["namespace"]
     version = metadata["version"]
 
@@ -110,15 +119,12 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
     index_name = f"{index_prefix}_{es_version}"
 
     # Create index with mapping
-    if not elasticsearch.index_exists(index_name):
-        elasticsearch.create_terms_index(index_name)
-    elif force:  # force an update to the index
-        es.indices.delete(index_name, ignore_unavailable=True)
+    if prior_version != version or force:
         elasticsearch.create_terms_index(index_name)
     else:
-        result["success"] = False
+        result["success"] = True
         result["messages"].append(
-            f'ERROR: This namespace {namespace} at version {version} is already loaded and the "force" option was not used'
+            f'NOTE: This namespace {namespace} at version {version} is already loaded and the "force" option was not used'
         )
 
         return result
@@ -134,10 +140,6 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
     for name in index_names:
         if name != index_name and index_prefix in name:
             elasticsearch.delete_index(name)
-
-    prior_entity_count = 0
-    if prior_metadata.get("statistics", False):
-        prior_entity_count = prior_metadata["statistics"].get("entities_count", 0)
 
     if not force and prior_entity_count > metadata["statistics"]["entities_count"]:
         logger.error(

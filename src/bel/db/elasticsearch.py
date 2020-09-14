@@ -17,6 +17,7 @@ mappings_terms_fn = f"{cur_dir_name}/es_mappings_terms.yml"
 es = Elasticsearch([settings.ELASTICSEARCH_URL], send_get_body_as="POST")
 logger.info(f"Elasticsearch URL: {settings.ELASTICSEARCH_URL}")
 
+
 def get_all_index_names():
     """Get all index names"""
 
@@ -47,12 +48,15 @@ def delete_index(index_name: str):
         logger.warn("No index name given to delete")
         return None
 
-    result = es.indices.delete(index=index_name)
+    result = es.indices.delete(index=index_name, ignore_unavailable=True)
+
     return result
 
 
 def create_terms_index(index_name: str):
     """Create terms index"""
+
+    es.indices.delete(index_name, ignore_unavailable=True)
 
     with open(mappings_terms_fn, "r") as f:
         mappings_terms = yaml.load(f, Loader=yaml.SafeLoader)

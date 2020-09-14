@@ -82,7 +82,6 @@ def update_resources(url: str = None, force: bool = False, email: str = None):
     else:
         for key in configuration["update_bel_resources"]:
             for url in configuration["update_bel_resources"][key]:
-                logger.info(f"Loading resource: {url}")
                 result = load_resource(resource_url=url, force=force)
                 results[url] = result
 
@@ -90,6 +89,8 @@ def update_resources(url: str = None, force: bool = False, email: str = None):
         subject = f"BEL Resources Update for {settings.HOST_NAME}"
         body = create_msg_body(results)
         bel.core.mail.send_simple_email(email, subject, body)
+
+    logger.info("Finished updating BEL Resources")
 
 
 def load_resource(resource_url: str = None, force: bool = False):
@@ -103,38 +104,45 @@ def load_resource(resource_url: str = None, force: bool = False):
         force: force full update - e.g. don't leave Elasticsearch indexes alone if their version ID matches
     """
 
-    if resource_url:
-        logger.info(f"Loading resource url: {resource_url}")
+    try:
+        if resource_url:
+            logger.info(f"Loading resource url: {resource_url}")
 
-    # Download resource from url
-    if resource_url:
-        fp = bel.core.utils.download_file(resource_url)
-        fp.seek(0)
-        f = gzip.open(fp, "rt")
+        # Download resource from url
+        if resource_url:
+            fp = bel.core.utils.download_file(resource_url)
+            fp.seek(0)
+            f = gzip.open(fp, "rt")
 
-    if not f:
+        if not f:
+            return {
+                "success": False,
+                "messages": [f"Error: Failed to read resource file for {resource_url}"],
+            }
+
+        metadata = json.loads(f.__next__())
+
+    except Exception:
         return {
             "success": False,
-            "messages": [f"Error: Failed to read resource file for {resource_url}"],
+            "messages": [f"Error: Failed download and parse resource file for {resource_url}"],
         }
-
-    metadata = json.loads(f.__next__())
 
     metadata = metadata.get("metadata", None)
     if metadata is None:
         return {
             "success": False,
             "messages": [
-                f"Error: Failed process resource file for {resource_url} - missing metadata"
+                f"Error: Failed to process resource file for {resource_url} - missing metadata"
             ],
         }
 
     # Load resource files
     if metadata["resource_type"] == "namespace":
-        result = bel.resources.namespace.load_terms(f, metadata, force)
+        result = bel.resources.namespace.load_terms(f, metadata, force=force)
 
     elif metadata["resource_type"] == "orthologs":
-        result = bel.resources.ortholog.load_orthologs(f, metadata)
+        result = bel.resources.ortholog.load_orthologs(f, metadata, force=force)
 
     else:
         logger.info(f"Unrecognized resource type: {metadata['metadata']['type']}")

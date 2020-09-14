@@ -28,26 +28,26 @@ def remove_old_db_entries(source, version: str = "", force: bool = False):
     if force or version == "":
         filter_version = ""
     else:
-        filter_version = f'FILTER edge.version != "{version}"'
+        filter_version = f'FILTER doc.version != "{version}"'
 
     # Clean up old entries
     remove_old_ortholog_edges = f"""
-        FOR edge in {ortholog_edges_name}
-            FILTER edge.source == "{source}"
+        FOR doc in {ortholog_edges_name}
+            FILTER doc.source == "{source}"
             {filter_version}
-            REMOVE edge IN {ortholog_edges_name}
+            REMOVE doc IN {ortholog_edges_name}
     """
     remove_old_ortholog_nodes = f"""
-        FOR node in {ortholog_nodes_name}
-            FILTER node.source == "{source}"
+        FOR doc in {ortholog_nodes_name}
+            FILTER doc.source == "{source}"
             {filter_version}
-            REMOVE node IN {ortholog_nodes_name}
+            REMOVE doc IN {ortholog_nodes_name}
     """
     arangodb.aql_query(resources_db, remove_old_ortholog_edges)
     arangodb.aql_query(resources_db, remove_old_ortholog_nodes)
 
 
-def load_orthologs(fo: IO, metadata: dict):
+def load_orthologs(fo: IO, metadata: dict, force: bool = False):
     """Load orthologs into ArangoDB
 
     Args:
@@ -62,6 +62,22 @@ def load_orthologs(fo: IO, metadata: dict):
     version = metadata["version"]
     source = metadata["name"]
 
+    metadata_key = metadata["name"]
+    prior_metadata = resources_metadata_coll.get(metadata_key)
+
+    try:
+        prior_version = prior_metadata.get("version", "")
+        prior_entity_count = prior_metadata["statistics"].get("entities_count", 0)
+
+    except Exception:
+        prior_entity_count = 0
+        prior_version = ""
+
+    if prior_version == version or not force:
+        msg = f"NOTE: This orthology dataset {source} at version {version} is already loaded and the 'force' option was not used"
+        result["messages"] = msg
+        return result
+
     arangodb.batch_load_docs(
         resources_db, orthologs_iterator(fo, version, statistics), on_duplicate="update"
     )
@@ -69,6 +85,12 @@ def load_orthologs(fo: IO, metadata: dict):
     logger.info(
         f"Loaded orthologs, source: {source}  count: {statistics['entities_count']}", source=source
     )
+
+    if prior_entity_count > statistics["entities_count"]:
+        result["success"] = False
+        msg = f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
+        result["messages"] = msg
+        return result
 
     remove_old_db_entries(source, version=version)
 
