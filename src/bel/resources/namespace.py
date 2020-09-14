@@ -320,7 +320,7 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
 
         # Collect statistics
         statistics["entities_count"] += 1
-        statistics["synonyms_count"] += len(term["synonyms"])
+        statistics["synonyms_count"] += len(term.get("synonyms", []))
         for entity_type in term.get("entity_types", []):
             statistics["entity_types"][entity_type] += 1
         for annotation_type in term.get("annotation_types", []):
@@ -341,9 +341,9 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
 
         term["alt_keys"] = list(all_term_keys)
 
-        del term["child_keys"]
-        del term["parent_keys"]
-        del term["equivalence_keys"]
+        term.pop("child_keys", "")
+        term.pop("parent_keys", "")
+        term.pop("equivalence_keys", "")
 
         record = {
             "_op_type": "index",
