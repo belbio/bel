@@ -135,18 +135,18 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
         if name != index_name and index_prefix in name:
             elasticsearch.delete_index(name)
 
-    if (
-        not force
-        and prior_metadata.get("statistics", {"entities_count": 0})["entities_count"]
-        > metadata["statistics"]["entities_count"]
-    ):
+    prior_entity_count = 0
+    if prior_metadata.get("statistics", False):
+        prior_entity_count = prior_metadata["statistics"].get("entities_count", 0)
+
+    if not force and prior_entity_count > metadata["statistics"]["entities_count"]:
         logger.error(
-            f'Problem loading namespace: {namespace}, previous entity count: {prior_metadata["statistics"]["entities_count"]}, current load entity count: {metadata["statistics"]["entities_count"]}, loaded arangodb but not elasticsearch'
+            f'Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
         )
 
         result["success"] = False
         result["messages"].append(
-            f'ERROR: Problem loading namespace: {namespace}, previous entity count: {prior_metadata["statistics"]["entities_count"]}, current load entity count: {metadata["statistics"]["entities_count"]}, loaded arangodb but not elasticsearch'
+            f'ERROR: Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
         )
 
         return result
