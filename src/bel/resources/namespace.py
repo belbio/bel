@@ -166,8 +166,6 @@ def load_terms(f: IO, metadata: dict, force: bool = False):
     # Uses update on duplicate to allow primary on equivalence_nodes to not be overwritten
     batch_load_docs(resources_db, terms_iterator_for_arangodb(f, version), on_duplicate="update")
 
-    logger.info(f"Loaded {namespace} terms and equivalences", namespace=namespace)
-
     # Add metadata to resource metadata collection
     metadata["_key"] = metadata_key
 
@@ -177,12 +175,12 @@ def load_terms(f: IO, metadata: dict, force: bool = False):
         remove_old_db_entries(namespace, version=version)
 
     logger.info(
-        f'Loaded {metadata["statistics"]["entities_count"]} {namespace} terms into elasticsearch {index_name} and alias {settings.TERMS_INDEX}',
+        f'Loaded Namespace: {namespace} with {metadata["statistics"]["entities_count"]} terms into elasticsearch: {settings.TERMS_INDEX}.{index_name} and arangodb collection: {terms_coll_name}',
         namespace=metadata["namespace"],
     )
 
     result["messages"].append(
-        f'Loaded {metadata["statistics"]["entities_count"]} {namespace} terms into elasticsearch {index_name} and alias {settings.TERMS_INDEX}'
+        f'Loaded Namespace: {namespace} with {metadata["statistics"]["entities_count"]} terms into elasticsearch: {settings.TERMS_INDEX}.{index_name} and arangodb collection: {terms_coll_name}'
     )
     return result
 

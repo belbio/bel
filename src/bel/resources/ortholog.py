@@ -87,6 +87,10 @@ def load_orthologs(fo: IO, metadata: dict, force: bool = False):
     )
 
     if prior_entity_count > statistics["entities_count"]:
+        logger.error(
+            f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
+        )
+
         result["success"] = False
         msg = f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
         result["messages"] = msg
