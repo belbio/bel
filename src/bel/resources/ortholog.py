@@ -75,7 +75,7 @@ def load_orthologs(fo: IO, metadata: dict, force: bool = False):
 
     if prior_version == version or not force:
         msg = f"NOTE: This orthology dataset {source} at version {version} is already loaded and the 'force' option was not used"
-        result["messages"] = msg
+        result["messages"].append(msg)
         return result
 
     arangodb.batch_load_docs(
@@ -93,7 +93,7 @@ def load_orthologs(fo: IO, metadata: dict, force: bool = False):
 
         result["success"] = False
         msg = f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
-        result["messages"] = msg
+        result["messages"].append(msg)
         return result
 
     remove_old_db_entries(source, version=version)

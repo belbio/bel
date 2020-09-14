@@ -88,7 +88,7 @@ class Namespace(BaseModel):
     version: Optional[str] = None
 
     source_name: str = Field("", description="Source name for namespace")
-    source_url: HttpUrl = Field("", description="Source url for namespace")
+    source_url: Optional[HttpUrl] = Field(None, description="Source url for namespace")
 
     entity_types: List[EntityTypesEnum] = []
     annotation_types: List[AnnotationTypesEnum] = []

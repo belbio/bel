@@ -4,7 +4,7 @@ from typing import Any, List, Mapping, Optional, Union
 
 # Third Party Imports
 import pydantic
-from pydantic import AnyUrl, BaseModel, Field
+from pydantic import AnyUrl, BaseModel, Field, HttpUrl
 
 from bel.schemas.bel import ValidationErrors
 
@@ -110,7 +110,7 @@ class Nanopub(BaseModel):
 class NanopubR(BaseModel):
     """Nanopub Request/Response model"""
 
-    source_url: Optional[str] = Field("", description="Source URL of Nanopub")
+    source_url: Optional[HttpUrl] = Field(None, description="Source URL of Nanopub")
 
     nanopub: NanopubBody
 

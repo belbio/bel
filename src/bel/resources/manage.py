@@ -18,24 +18,64 @@ import bel.resources.ortholog
 from bel.schemas.config import Configuration
 
 
-def create_msg_body(results):
+def create_email_body_for_update_resources(results):
     """Create email message body for update_resources"""
 
-    body = ""
-    for url in results:
-        body += f"Resource: {url}\n"
-        result = results[url]
-        if result["success"]:
-            body += f"   Successful\n"
-        else:
-            body += f"   FAILED\n"
+    errors = [url for url in results if not results[url]["success"]]
+    successes = [url for url in results if results[url]["success"]]
 
+    num_errors = len(errors)
+
+    logger.warning(f"Number of errors: {num_errors}")
+    body, html_content = "", ""
+
+    # Failures
+    if num_errors:
+        body += f"Failures [{num_errors}]\n\n"
+        html_content += f"<h2>Failures [{num_errors}]</h2>\n\n"
+
+        for url in errors:
+            result = results[url]
+
+            body += f"Resource: {url}\n"
+            html_content += f'<h3 style="color: red;">Resource: {url}</h3>\n'
+
+            html_content += "<ul>\n"
+            for message in result["messages"]:
+                body += f"   {message}\n"
+                html_content += f"<li>{message}</li>\n"
+            html_content += "</ul>\n"
+            body += "\n\n"
+
+    body += f"Successes [{num_errors}]\n\n"
+    html_content += f"<h2>Successes [{len(successes)}]</h2>\n"
+
+    for url in successes:
+        result = results[url]
+
+        body += f"Resource: {url}\n"
+        html_content += f'<h3 style="color: green;">Resource: {url}</h3>\n'
+
+        html_content += "<ul>\n"
         for message in result["messages"]:
             body += f"   {message}\n"
-
+            html_content += f"<li>{message}</li>\n"
+        html_content += "</ul>\n"
         body += "\n\n"
 
-    return body
+    body_html = f"""
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Updated BEL Resources for {settings.HOST_NAME}</title>
+  </head>
+  <body>
+    <div id="content">{html_content}</div>
+  </body>
+</html>
+    """
+
+    return (body, body_html)
 
 
 def clean_configuration(configuration: dict) -> dict:
@@ -87,8 +127,8 @@ def update_resources(url: str = None, force: bool = False, email: str = None):
 
     if email is not None:
         subject = f"BEL Resources Update for {settings.HOST_NAME}"
-        body = create_msg_body(results)
-        bel.core.mail.send_simple_email(email, subject, body)
+        (body, body_html) = create_email_body_for_update_resources(results)
+        bel.core.mail.send_simple_email(email, subject, body, body_html=body_html)
 
     logger.info("Finished updating BEL Resources")
 
