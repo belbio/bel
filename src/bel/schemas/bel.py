@@ -6,6 +6,7 @@ import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party Imports
+from loguru import logger
 from pydantic import BaseModel, Field, root_validator
 
 # Local Imports
@@ -17,7 +18,6 @@ from bel.core.utils import namespace_quoting, split_key_label
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.constants import AnnotationTypesEnum, EntityTypesEnum
 from bel.schemas.terms import Term
-from loguru import logger
 
 Key = str  # Type alias for NsVal Key values
 NamespacePattern = r"[\w\.]+"  # Regex for Entity Namespace
@@ -130,7 +130,7 @@ class ValidationError(BaseModel):
 
 
 class ValidationErrors(BaseModel):
-    status: Optional[ErrorLevelEnum]
+    status: Optional[ErrorLevelEnum] = "Good"
     errors: Optional[List[ValidationError]]
     validation_target: Optional[str]
 

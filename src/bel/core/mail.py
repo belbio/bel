@@ -23,6 +23,9 @@ def send_simple_email(to: List[str], subject: str, body: str):
         },
     )
 
-    logger.info(f"Emailed {to} about {subject}")
+    if r.status_code != 200:
+        logger.error(f"")
+    else:
+        logger.info(f"Emailed {to} about {subject}")
 
     return r

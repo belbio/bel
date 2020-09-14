@@ -60,7 +60,6 @@ class BEL(object):
             self.assertion = assertion
 
         self.ast = BELAst(assertion=assertion, version=self.version)
-        self.validation_messages.extend(self.ast.parse_info.errors)
 
         return self
 

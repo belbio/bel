@@ -27,5 +27,12 @@
   "python.envFile": "${workspaceFolder}/.env",
   "python.linting.pycodestyleEnabled": false,
   "autoDocstring.docstringFormat": "google",
-  "cSpell.ignoreWords": ["equivalenced", "schem", "scomp", "zfin"]
+  "cSpell.ignoreWords": [
+    "arango",
+    "equivalenced",
+    "schem",
+    "scomp",
+    "zfin"
+  ],
+  "python.formatting.provider": "black"
 }

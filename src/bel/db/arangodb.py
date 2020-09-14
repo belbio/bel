@@ -310,7 +310,7 @@ def delete_database(client, db_name, username=None, password=None):
     try:
         return sys_db.delete_database(db_name)
     except Exception:
-        logger.warn("No arango database {db_name} to delete, does not exist")
+        logger.warning(f"No arango database {db_name} to delete, does not exist")
 
 
 def batch_load_docs(db, doc_iterator, on_duplicate: str = "replace"):

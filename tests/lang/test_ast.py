@@ -104,7 +104,10 @@ def test_validate_missing_namespace():
 
     print("Errors", ast.errors)
 
-    assert ast.errors[0].msg == "Unknown namespace 'missing' for the proteinAbundance function at position 2"
+    assert (
+        ast.errors[0].msg
+        == "Unknown namespace 'missing' for the proteinAbundance function at position 2"
+    )
     assert ast.errors[0].severity == "Warning"
 
 
@@ -191,8 +194,14 @@ def test_validate_pmod_function(test_input, expected):
 @pytest.mark.parametrize(
     "test_input,expected",
     [
-        ("p(HGNC:HRAS, pmod(Ac, , 473))", "String Argument 473 not found in ['AminoAcid'] default BEL namespaces"),
-        ("p(HGNC:HRAS, pmod(,,473))", "String Argument 473 not found in ['ProteinModification'] default BEL namespaces"),
+        (
+            "p(HGNC:HRAS, pmod(Ac, , 473))",
+            "String Argument 473 not found in ['AminoAcid'] default BEL namespaces",
+        ),
+        (
+            "p(HGNC:HRAS, pmod(,,473))",
+            "String Argument 473 not found in ['ProteinModification'] default BEL namespaces",
+        ),
     ],
 )
 def test_validate_pmod_function_errors(test_input, expected):
@@ -212,7 +221,7 @@ def test_validate_pmod_function_errors(test_input, expected):
 def test_validate_path_and_namespace():
     """Validate path()"""
 
-    assertion = AssertionStr(entire='path(DO:COVID-19)')
+    assertion = AssertionStr(entire="path(DO:COVID-19)")
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
@@ -220,8 +229,143 @@ def test_validate_path_and_namespace():
 
     print("Errors", ast.errors)
 
-    assert ast.errors[0].msg == "Wrong entity type for namespace argument at position 0 for function pathology - expected ['Pathology'], actual: entity_types: []"
+    assert (
+        ast.errors[0].msg
+        == "Wrong entity type for namespace argument at position 0 for function pathology - expected ['Pathology'], actual: entity_types: []"
+    )
     assert ast.errors[0].severity == "Warning"
+
+
+def test_sfam_namespace():
+    """Validate path()"""
+
+    assertion = AssertionStr(
+        subject='p(SFAM:"TGFB Proteins")', relation="hasMember", object="p(HGNC:11766!TGFB1)"
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert False
+
+
+def test_complex_missing_namespace():
+    """Validate path()"""
+
+    assertion = AssertionStr(subject="complex(UNKNOWN:test)")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert False
+
+
+def test_has_component():
+    """Validate path()"""
+
+    assertion = AssertionStr(
+        subject='a(CHEBI:"low-density lipoprotein")',
+        relation="hasComponent",
+        object="a(CHEBI:cholesterol)",
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert False
+
+
+def test_reaction():
+    """Validate reaction"""
+
+    assertion = AssertionStr(
+        subject='rxn(reactants(a(CHEBI:"vitamin A"), a(CHEBI:NAD)), products(a(SCHEM:Retinaldehyde)))'
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert False
+
+
+def test_tloc():
+    """Validate reaction"""
+
+    assertion = AssertionStr(subject="tloc(p(MGI:Lipe), fromLoc(GO:0005737), toLoc(GO:0005811))")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert False
+
+
+def test_sfam_namespace():
+    """Validate path()"""
+
+    assertion = AssertionStr(subject='p(fus(HGNC:NPM, “1_117", HGNC:ALK, end))')
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert False
+
+
+def test_validate_missing_parts():
+    """Test object only or missing object or relation bel assertion"""
+
+    assertion = AssertionStr(object="p(HGNC:AKT1)")
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    print("Validation messages - object only")
+    for error in ast.errors:
+        print("    ", error.json(), "\n")
+
+    assert ast.errors[0].msg == "Missing Assertion Subject or Relation"
+
+    assertion = AssertionStr(relation="increases")
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    print("Validation messages - relation only")
+    for error in ast.errors:
+        print("    ", error.json(), "\n")
+
+    assert ast.errors[0].msg == "Missing Assertion Object"
+
+    assertion = AssertionStr(relation="increases", object="p(HGNC:AKT1)")
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    print("Validation messages - relation and object")
+    for error in ast.errors:
+        print("    ", error.json(), "\n")
+
+    assert ast.errors[0].msg == "Missing Assertion Subject or Relation"
+
+    assertion = AssertionStr(subject="p(HGNC:AKT1)", object="p(HGNC:AKT1)")
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    print("Validation messages - subject and object")
+    for error in ast.errors:
+        print("    ", error.json(), "\n")
+
+    assert ast.errors[0].msg == "Missing Assertion Subject or Relation"
 
 
 #####################################################################################
@@ -236,15 +380,15 @@ def test_validate_path_and_namespace():
         ("complex(p(HGNC:IL12B), p(HGNC:IL12A))", "complex(p(EG:3592), p(EG:3593))"),
         (
             'complex(loc(GO:"extracellular space"), p(HGNC:IL12A), p(EG:207), p(HGNC:IL12B))',
-            'complex(p(EG:207), p(EG:3592), p(EG:3593), loc(GO:0005615))',
+            "complex(p(EG:207), p(EG:3592), p(EG:3593), loc(GO:0005615))",
         ),
         (
             'complex(p(HGNC:MTOR), a(CHEBI:"phosphatidic acid"), a(CHEBI:sirolimus))',
-            'complex(a(CHEBI:16337), a(CHEBI:9168), p(EG:2475))',
+            "complex(a(CHEBI:16337), a(CHEBI:9168), p(EG:2475))",
         ),
         (
             'rxn(reactants(a(CHEBI:hypoxanthine), a(CHEBI:water), a(CHEBI:dioxygen)), products(a(CHEBI:xanthine), a(CHEBI:"hydrogen peroxide"))',
-            'rxn(reactants(a(CHEBI:15377), a(CHEBI:15379), a(CHEBI:17368)), products(a(CHEBI:15318), a(CHEBI:16240)))',
+            "rxn(reactants(a(CHEBI:15377), a(CHEBI:15379), a(CHEBI:17368)), products(a(CHEBI:15318), a(CHEBI:16240)))",
         ),
         (
             "p(HGNC:MAPK1, pmod(Ph, Thr, 185), pmod(Ph, Tyr, 187), pmod(Ph))",
@@ -266,7 +410,7 @@ def test_validate_path_and_namespace():
 )
 def test_ast_canonicalization(test_input, expected):
     """Test AST canonicalization and sorting function arguments
-    
+
     See issue: https://github.com/belbio/bel/issues/13
     """
 

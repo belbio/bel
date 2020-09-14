@@ -43,6 +43,7 @@ pylint = "^2.5.3"
 pydocstyle = "^5.0.2"
 colorama = "^0.4.3"
 pygments = "^2.6.1"
+black = {version = "^20.8b1", allow-prereleases = true}
 
 [tool.poetry.extras]
 api = ["fastapi^0.61.0", "gunicorn^20.0.4", "uvicorn^0.11.8", "python-multipart^0.0.5", "starlette_prometheus^0.7.0", "aiofiles^0.5.0"]
@@ -79,7 +80,7 @@ line_length=100
 import_heading_stdlib="Standard Library"
 import_heading_thirdparty="Third Party Imports"
 import_heading_firstparty="Local Imports"
-known_third_party = ["arango", "boltons", "dramatiq", "elasticapm", "elasticsearch", "fastapi", "loguru", "pydantic", "pythonjsonlogger", "redis", "requests", "sentry_sdk", "starlette", "starlette_prometheus", "structlog", "tenacity", "ulid", "urllib3", "xxhash", "yaml"]
+known_third_party = ["arango", "boltons", "dramatiq", "elasticapm", "elasticsearch", "fastapi", "loguru", "pydantic", "pytest", "pythonjsonlogger", "redis", "requests", "sentry_sdk", "starlette", "starlette_prometheus", "structlog", "tenacity", "ulid", "urllib3", "xxhash", "yaml"]
 
 [tool.coverage.run]
 source = ["bel"]

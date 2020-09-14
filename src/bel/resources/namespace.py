@@ -6,7 +6,7 @@ import time
 from collections import defaultdict
 from typing import IO, Optional
 
-# Third Party Imports 
+# Third Party Imports
 import cachetools
 from arango import ArangoError
 from loguru import logger
@@ -34,10 +34,16 @@ from bel.schemas.terms import Namespace
 # db_key = key converted to arangodb format
 
 
-def remove_old_db_entries(namespace, version, force: bool = False):
-    """Remove old database entries"""
+def remove_old_db_entries(namespace: str, version: str = "", force: bool = False):
+    """Remove old database entries
 
-    if force:
+    Args:
+        namespace: preferred namespace prefix, e.g. HGNC or DO
+        version: version of last namespace loaded - used to remove older entries from arangodb
+        force: remove ALL namespace database entries
+    """
+
+    if force or version == "":
         filter_version = ""
     else:
         filter_version = f"""FILTER term.version != "{version}" """
@@ -76,7 +82,7 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
     Args:
         fp: file path - terminology file
         metadata: dict containing the metadata for terminology
-        force:  force full update - e.g. remove and re-add elasticsearch index 
+        force:  force full update - e.g. remove and re-add elasticsearch index
                 and delete arangodb namespace records before loading
     """
 
@@ -111,13 +117,16 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
         elasticsearch.create_terms_index(index_name)
     else:
         result["success"] = False
-        result["messages"].append(f'ERROR: This namespace {namespace} at version {version} is already loaded and the "force" option was not used')
+        result["messages"].append(
+            f'ERROR: This namespace {namespace} at version {version} is already loaded and the "force" option was not used'
+        )
 
         return result
 
     terms_iterator = terms_iterator_for_elasticsearch(f, index_name, statistics)
     elasticsearch.bulk_load_docs(terms_iterator)
 
+    # Using side effect to get statistics from terms_iterator_for_elasticsearch on purpose
     metadata["statistics"] = copy.deepcopy(statistics)
 
     # Remove old namespace index
@@ -126,11 +135,19 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
         if name != index_name and index_prefix in name:
             elasticsearch.delete_index(name)
 
-    if not force and prior_metadata.get("statistics", {"entities_count": 0})["entities_count"] > metadata["statistics"]["entities_count"]:
-        logger.error(f'Problem loading namespace: {namespace}, previous entity count: {prior_metadata["statistics"]["entities_count"]}, current load entity count: {metadata["statistics"]["entities_count"]}, loaded arangodb but not elasticsearch')
+    if (
+        not force
+        and prior_metadata.get("statistics", {"entities_count": 0})["entities_count"]
+        > metadata["statistics"]["entities_count"]
+    ):
+        logger.error(
+            f'Problem loading namespace: {namespace}, previous entity count: {prior_metadata["statistics"]["entities_count"]}, current load entity count: {metadata["statistics"]["entities_count"]}, loaded arangodb but not elasticsearch'
+        )
 
         result["success"] = False
-        result["messages"].append(f'ERROR: Problem loading namespace: {namespace}, previous entity count: {prior_metadata["statistics"]["entities_count"]}, current load entity count: {metadata["statistics"]["entities_count"]}, loaded arangodb but not elasticsearch')
+        result["messages"].append(
+            f'ERROR: Problem loading namespace: {namespace}, previous entity count: {prior_metadata["statistics"]["entities_count"]}, current load entity count: {metadata["statistics"]["entities_count"]}, loaded arangodb but not elasticsearch'
+        )
 
         return result
 
@@ -141,13 +158,11 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
     # Arangodb collection loading
     ################################################################################
     if force:
-        remove_old_db_entries(namespace, version, force)
+        remove_old_db_entries(namespace, version=version, force=True)
 
     # LOAD Terms and equivalences INTO ArangoDB
     # Uses update on duplicate to allow primary on equivalence_nodes to not be overwritten
-    batch_load_docs(
-        resources_db, terms_iterator_for_arangodb(f, version), on_duplicate="update"
-    )
+    batch_load_docs(resources_db, terms_iterator_for_arangodb(f, version), on_duplicate="update")
 
     logger.info(f"Loaded {namespace} terms and equivalences", namespace=namespace)
 
@@ -157,15 +172,16 @@ def load_terms(f: IO, metadata: dict, force: bool = False, email_to: Optional[st
     resources_metadata_coll.insert(metadata, overwrite=True)
 
     if not force:
-        remove_old_db_entries(namespace, version)
-
+        remove_old_db_entries(namespace, version=version)
 
     logger.info(
         f'Loaded {metadata["statistics"]["entities_count"]} {namespace} terms into elasticsearch {index_name} and alias {settings.TERMS_INDEX}',
         namespace=metadata["namespace"],
     )
 
-    result["messages"].append(f'Loaded {metadata["statistics"]["entities_count"]} {namespace} terms into elasticsearch {index_name} and alias {settings.TERMS_INDEX}')
+    result["messages"].append(
+        f'Loaded {metadata["statistics"]["entities_count"]} {namespace} terms into elasticsearch {index_name} and alias {settings.TERMS_INDEX}'
+    )
     return result
 
 
@@ -369,3 +385,14 @@ def get_namespace_metadata():
         namespaces[namespace.namespace] = namespace
 
     return namespaces
+
+
+def delete_namespace(namespace):
+    """Remove namespace resources
+
+    Remove Arangodb terms and equivalences and remove Elasticsearch terms index
+    """
+
+    remove_old_db_entries(namespace, force=True)
+
+    es.indices.delete(index=f"{settings.TERMS_INDEX}_{namespace.lower()}_*", ignore=[400, 404])

@@ -12,6 +12,7 @@ from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party Imports
 import yaml
+from loguru import logger
 from pydantic import BaseModel, Field
 
 # Local Imports
@@ -20,9 +21,8 @@ import bel.db.arangodb
 import bel.terms.orthologs
 import bel.terms.terms
 from bel.belspec.crud import get_enhanced_belspec
-from bel.core.utils import http_client, url_path_param_quoting, html_wrap_span
+from bel.core.utils import html_wrap_span, http_client, url_path_param_quoting
 from bel.schemas.bel import (
-    ValidationError,
     AssertionStr,
     BelEntity,
     FunctionSpan,
@@ -31,9 +31,9 @@ from bel.schemas.bel import (
     NsVal,
     Pair,
     Span,
+    ValidationError,
 )
 from bel.schemas.constants import strarg_validation_lists
-from loguru import logger
 
 
 #########################
@@ -523,7 +523,7 @@ class ParseInfo:
 class BELAst(object):
     def __init__(
         self,
-        assertion: AssertionStr = "",
+        assertion: AssertionStr = None,
         subject: Optional[Function] = None,
         relation: Optional[Relation] = None,
         object: Optional[Union[Function, "BELAst"]] = None,
@@ -544,7 +544,15 @@ class BELAst(object):
 
         self.errors: List[ValidationError] = []
 
-        if self.assertion and not self.args:
+        if assertion.subject or assertion.relation or assertion.object:
+            if assertion.relation and not assertion.object:
+                msg = "Missing Assertion Object"
+                self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))
+            elif assertion.object and (not assertion.subject or not assertion.relation):
+                msg = "Missing Assertion Subject or Relation"
+                self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))            
+
+        if not self.errors and self.assertion is not None and not self.args:
             self.parse()  # parse assertion into BEL AST
 
     def parse(self):

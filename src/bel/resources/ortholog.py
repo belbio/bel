@@ -22,6 +22,31 @@ from bel.db.arangodb import (
 from collections import defaultdict
 
 
+def remove_old_db_entries(source, version: str = "", force: bool = False):
+    """Remove older ortholog data entries"""
+
+    if force or version == "":
+        filter_version = ""
+    else:
+        filter_version = f'FILTER edge.version != "{version}"'
+
+    # Clean up old entries
+    remove_old_ortholog_edges = f"""
+        FOR edge in {ortholog_edges_name}
+            FILTER edge.source == "{source}"
+            {filter_version}
+            REMOVE edge IN {ortholog_edges_name}
+    """
+    remove_old_ortholog_nodes = f"""
+        FOR node in {ortholog_nodes_name}
+            FILTER node.source == "{source}"
+            {filter_version}
+            REMOVE node IN {ortholog_nodes_name}
+    """
+    arangodb.aql_query(resources_db, remove_old_ortholog_edges)
+    arangodb.aql_query(resources_db, remove_old_ortholog_nodes)
+
+
 def load_orthologs(fo: IO, metadata: dict):
     """Load orthologs into ArangoDB
 
@@ -41,27 +66,18 @@ def load_orthologs(fo: IO, metadata: dict):
         resources_db, orthologs_iterator(fo, version, statistics), on_duplicate="update"
     )
 
-    logger.info("Load orthologs", source=source)
+    logger.info(
+        f"Loaded orthologs, source: {source}  count: {statistics['entities_count']}", source=source
+    )
 
-    # Clean up old entries
-    remove_old_ortholog_edges = f"""
-        FOR edge in {ortholog_edges_name}
-            FILTER edge.source == "{source}"
-            FILTER edge.version != "{version}"
-            REMOVE edge IN {ortholog_edges_name}
-    """
-    remove_old_ortholog_nodes = f"""
-        FOR node in {ortholog_nodes_name}
-            FILTER node.source == "{source}"
-            FILTER node.version != "{version}"
-            REMOVE node IN {ortholog_nodes_name}
-    """
-    arangodb.aql_query(resources_db, remove_old_ortholog_edges)
-    arangodb.aql_query(resources_db, remove_old_ortholog_nodes)
+    remove_old_db_entries(source, version=version)
 
     # Add metadata to resource metadata collection
     metadata["_key"] = arangodb.arango_id_to_key(source)
+
+    # Using side effect to get statistics from orthologs_iterator on purpose
     metadata["statistics"] = copy.deepcopy(statistics)
+
     resources_metadata_coll.insert(metadata, overwrite=True)
 
     result["messages"].append(f'Loaded {statistics["entities_count"]} ortholog sets into arangodb')
@@ -70,8 +86,8 @@ def load_orthologs(fo: IO, metadata: dict):
 
 def orthologs_iterator(fo, version, statistics: Mapping):
     """Ortholog node and edge iterator
-    
-    NOTE: the statistics dict works as a side effect since it is passed as a reference!!! 
+
+    NOTE: the statistics dict works as a side effect since it is passed as a reference!!!
     """
 
     species_list = settings.BEL_FILTER_SPECIES
@@ -157,3 +173,12 @@ def orthologs_iterator(fo, version, statistics: Mapping):
             statistics["orthologous_pairs"][object_species_key][subject_species_key] += 1
 
             yield (arangodb.ortholog_edges_name, arango_edge)
+
+
+def delete_ortholog_resource(source):
+    """Remove ortholog resource
+
+    Remove Arangodb terms and equivalences and remove Elasticsearch terms index
+    """
+
+    remove_old_db_entries(source, force=True)
