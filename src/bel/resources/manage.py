@@ -26,7 +26,6 @@ def create_email_body_for_update_resources(results):
 
     num_errors = len(errors)
 
-    logger.warning(f"Number of errors: {num_errors}")
     body, html_content = "", ""
 
     # Failures

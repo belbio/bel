@@ -49,6 +49,7 @@ class BEL(object):
         self.validation_messages = []
 
         self.ast: Optional[BELAst] = None
+
         if self.assertion:
             self.ast = BELAst(assertion=assertion, version=version)
 
@@ -107,7 +108,6 @@ class BEL(object):
             self.ast.orthologize(species_key)
 
         return self
-
 
     def to_string(self, fmt: str = "medium") -> str:
         """Convert AST object to string

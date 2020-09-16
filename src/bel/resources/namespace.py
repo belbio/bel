@@ -381,6 +381,9 @@ def get_namespace_metadata():
         if namespace.get("resource_type", None) != "namespace":
             continue
 
+        if namespace["source_url"] == "":
+            namespace["source_url"] = None
+
         namespace = Namespace(**namespace)
         namespaces[namespace.namespace] = namespace
 
