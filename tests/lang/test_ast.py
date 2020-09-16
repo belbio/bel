@@ -236,23 +236,7 @@ def test_validate_path_and_namespace():
     assert ast.errors[0].severity == "Warning"
 
 
-def test_sfam_namespace():
-    """Validate path()"""
-
-    assertion = AssertionStr(
-        subject='p(SFAM:"TGFB Proteins")', relation="hasMember", object="p(HGNC:11766!TGFB1)"
-    )
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    ast.validate()
-
-    print("Errors", ast.errors)
-
-    assert False
-
-
-def test_complex_missing_namespace():
+def test_validate_complex_missing_namespace():
     """Validate path()"""
 
     assertion = AssertionStr(subject="complex(UNKNOWN:test)")
@@ -266,7 +250,7 @@ def test_complex_missing_namespace():
     assert False
 
 
-def test_has_component():
+def test_validate_has_component():
     """Validate path()"""
 
     assertion = AssertionStr(
@@ -284,7 +268,7 @@ def test_has_component():
     assert False
 
 
-def test_reaction():
+def test_validate_reaction():
     """Validate reaction"""
 
     assertion = AssertionStr(
@@ -300,7 +284,7 @@ def test_reaction():
     assert False
 
 
-def test_tloc():
+def test_validation_tloc():
     """Validate reaction"""
 
     assertion = AssertionStr(subject="tloc(p(MGI:Lipe), fromLoc(GO:0005737), toLoc(GO:0005811))")
@@ -314,7 +298,7 @@ def test_tloc():
     assert False
 
 
-def test_sfam_namespace():
+def test_validate_fus():
     """Validate path()"""
 
     assertion = AssertionStr(subject='p(fus(HGNC:NPM, “1_117", HGNC:ALK, end))')

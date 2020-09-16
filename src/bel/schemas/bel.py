@@ -41,8 +41,8 @@ class SpanTypesEnum(str, enum.Enum):
 
 class Span(BaseModel):
     """Used for collecting string spans
-    
-    The spans are collect by the index of the first char of the span and the non-inclusive 
+
+    The spans are collect by the index of the first char of the span and the non-inclusive
     end of the last span character.
 
     For example:
@@ -154,10 +154,17 @@ class AssertionStr(BaseModel):
             values.get("relation"),
             values.get("object"),
         )
+        if subject is None:
+            subject = ""
+        if relation is None:
+            relation = ""
+        if object_ is None:
+            object_ = ""
 
         if not entire:
             entire = f"{subject} {relation} {object_}"
             values["entire"] = entire.strip()
+
         return values
 
 
@@ -224,7 +231,7 @@ class BelEntity(object):
 
     def __init__(self, term_key: Key = "", nsval: Optional[NsVal] = None):
         """Create BelEntity via a term_key or a NsVal object
-        
+
         You cannot provide a term_key_label string (e.g. NS:ID:LABEL) as a term_key
         """
 
@@ -353,8 +360,8 @@ class BelEntity(object):
         decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
     ):
         """Canonicalize BEL Entity
-        
-        Must set both targets if not using defaults as the underlying normalization handles 
+
+        Must set both targets if not using defaults as the underlying normalization handles
         both canonical and decanonical forms in the same query
         """
 
@@ -376,8 +383,8 @@ class BelEntity(object):
         decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
     ):
         """Decanonicalize BEL Entity
-        
-        Must set both targets if not using defaults as the underlying normalization handles 
+
+        Must set both targets if not using defaults as the underlying normalization handles
         both canonical and decanonical forms in the same query
         """
 
