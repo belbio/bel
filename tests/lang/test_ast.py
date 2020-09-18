@@ -2,6 +2,7 @@
 import bel.lang.ast
 import pytest
 from bel.schemas.bel import AssertionStr, ValidationError
+import pprint
 
 # cSpell:disable
 
@@ -45,13 +46,13 @@ def test_ast_orthologization():
         ast.orthologize("TAX:10090")
 
         print("Orthologized to mouse", ast.to_string())
-        assert ast.to_string() == "p(EG:11651)"
+        assert ast.to_string() == "p(EG:11651!Akt1)"
 
         ast.decanonicalize()
 
         print("Orthologized and decanonicalized to mouse", ast.to_string())
 
-        assert ast.to_string() == "p(SP:P31750)"
+        assert ast.to_string() == "p(SP:P31750!Akt1)"
 
     else:
         assert False, "Not orthologizable"
@@ -106,7 +107,7 @@ def test_validate_missing_namespace():
 
     assert (
         ast.errors[0].msg
-        == "Unknown namespace 'missing' for the proteinAbundance function at position 2"
+        == "Unknown namespace value 'missing:AKT1' for the proteinAbundance function at position 2"
     )
     assert ast.errors[0].severity == "Warning"
 
@@ -240,32 +241,34 @@ def test_validate_complex_missing_namespace():
     """Validate path()"""
 
     assertion = AssertionStr(subject="complex(UNKNOWN:test)")
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    ast.validate()
-
-    print("Errors", ast.errors)
-
-    assert False
-
-
-def test_validate_has_component():
-    """Validate path()"""
-
-    assertion = AssertionStr(
-        subject='a(CHEBI:"low-density lipoprotein")',
-        relation="hasComponent",
-        object="a(CHEBI:cholesterol)",
+    expected = (
+        "Unknown namespace value UNKNOWN:test - cannot determine if this matches function signature"
     )
-
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
     ast.validate()
 
     print("Errors", ast.errors)
 
-    assert False
+    assert ast.errors[0].msg == expected
+
+
+# def test_validate_has_component():
+#     """Validate path()"""
+
+#     assertion = AssertionStr(
+#         subject='a(CHEBI:"low-density lipoprotein")',
+#         relation="hasComponent",
+#         object="a(CHEBI:cholesterol)",
+#     )
+
+#     ast = bel.lang.ast.BELAst(assertion=assertion)
+
+#     ast.validate()
+
+#     print("Errors", ast.errors)
+
+#     assert False
 
 
 def test_validate_reaction():
@@ -279,9 +282,11 @@ def test_validate_reaction():
 
     ast.validate()
 
-    print("Errors", ast.errors)
+    print("Errors")
+    for error in ast.errors:
+        print("    ", error.json(), "\n")
 
-    assert False
+    assert ast.errors == []
 
 
 def test_validation_tloc():
@@ -295,13 +300,14 @@ def test_validation_tloc():
 
     print("Errors", ast.errors)
 
-    assert False
+    assert ast.errors == []
 
 
 def test_validate_fus():
     """Validate path()"""
 
-    assertion = AssertionStr(subject='p(fus(HGNC:NPM, “1_117", HGNC:ALK, end))')
+    assertion = AssertionStr(subject='p(fus(HGNC:NPM, "1_117", HGNC:ALK, end))')
+    expected = "Wrong entity type for namespace argument at position 0 for function fusion - expected ['Gene', 'RNA', 'Micro_RNA', 'Protein'], actual: entity_types: []"
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
@@ -309,7 +315,21 @@ def test_validate_fus():
 
     print("Errors", ast.errors)
 
-    assert False
+    assert ast.errors[0].msg == expected
+
+
+def test_validate_fus():
+    """Validate path()"""
+
+    assertion = AssertionStr(subject="path(DO:COVID-19)")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
 
 
 def test_validate_missing_parts():
@@ -360,35 +380,35 @@ def test_validate_missing_parts():
 @pytest.mark.parametrize(
     "test_input,expected",
     [
-        ("p(HGNC:AKT1)", "p(EG:207)"),
-        ("complex(p(HGNC:IL12B), p(HGNC:IL12A))", "complex(p(EG:3592), p(EG:3593))"),
+        ("p(HGNC:AKT1)", "p(EG:207!AKT1)"),
+        ("complex(p(HGNC:IL12B), p(HGNC:IL12A))", "complex(p(EG:3592!IL12A), p(EG:3593!IL12B))"),
         (
             'complex(loc(GO:"extracellular space"), p(HGNC:IL12A), p(EG:207), p(HGNC:IL12B))',
-            "complex(p(EG:207), p(EG:3592), p(EG:3593), loc(GO:0005615))",
+            'complex(p(EG:207!AKT1), p(EG:3592!IL12A), p(EG:3593!IL12B), loc(GO:0005615!"extracellular space"))',
         ),
         (
             'complex(p(HGNC:MTOR), a(CHEBI:"phosphatidic acid"), a(CHEBI:sirolimus))',
-            "complex(a(CHEBI:16337), a(CHEBI:9168), p(EG:2475))",
+            'complex(a(CHEBI:16337!"phosphatidic acid"), a(CHEBI:9168!sirolimus), p(EG:2475!MTOR))',
         ),
         (
             'rxn(reactants(a(CHEBI:hypoxanthine), a(CHEBI:water), a(CHEBI:dioxygen)), products(a(CHEBI:xanthine), a(CHEBI:"hydrogen peroxide"))',
-            "rxn(reactants(a(CHEBI:15377), a(CHEBI:15379), a(CHEBI:17368)), products(a(CHEBI:15318), a(CHEBI:16240)))",
+            'rxn(reactants(a(CHEBI:15377!water), a(CHEBI:15379!dioxygen), a(CHEBI:17368!hypoxanthine)), products(a(CHEBI:15318!xanthine), a(CHEBI:16240!"hydrogen peroxide")))',
         ),
         (
             "p(HGNC:MAPK1, pmod(Ph, Thr, 185), pmod(Ph, Tyr, 187), pmod(Ph))",
-            "p(EG:5594, pmod(Ph), pmod(Ph, Thr, 185), pmod(Ph, Tyr, 187))",
+            "p(EG:5594!MAPK1, pmod(Ph), pmod(Ph, Thr, 185), pmod(Ph, Tyr, 187))",
         ),
         (
             "p(HGNC:KRAS, pmod(Palm, Cys), pmod(Ph, Tyr, 32))",
-            "p(EG:3845, pmod(Palm, Cys), pmod(Ph, Tyr, 32))",
+            "p(EG:3845!KRAS, pmod(Palm, Cys), pmod(Ph, Tyr, 32))",
         ),
         (
             "p(HGNC:TP53, var(p.His168Arg), var(p.Arg249Ser))",
-            "p(EG:7157, var(p.Arg249Ser), var(p.His168Arg))",
+            "p(EG:7157!TP53, var(p.Arg249Ser), var(p.His168Arg))",
         ),
         (
             "p(HGNC:NFE2L2, pmod(Ac, Lys, 596), pmod(Ac, Lys, 599), loc(GO:nucleus))",
-            "p(EG:4780, loc(GO:0005634), pmod(Ac, Lys, 596), pmod(Ac, Lys, 599))",
+            "p(EG:4780!NFE2L2, loc(GO:0005634!nucleus), pmod(Ac, Lys, 596), pmod(Ac, Lys, 599))",
         ),
     ],
 )
@@ -403,5 +423,7 @@ def test_ast_canonicalization(test_input, expected):
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
     ast.canonicalize()
+
+    print("Canonicalized", ast.to_string())
 
     assert ast.to_string() == expected

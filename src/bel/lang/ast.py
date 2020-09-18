@@ -132,12 +132,12 @@ class Function(object):
             self.function_type = ""
 
     def is_primary(self):
-        if self.function_type == "primary":
+        if self.function_type == "Primary":
             return True
         return False
 
     def is_modifier(self):
-        if self.function_type == "modifier":
+        if self.function_type == "Modifier":
             return True
         return False
 
@@ -195,7 +195,7 @@ class Function(object):
 
     def orthologize(self, species_key):
         """Orthologize Assertion
-        
+
         Check if fully orthologizable() before orthologizing, otherwise
         you may get a partially orthologized Assertion
         """
@@ -211,7 +211,7 @@ class Function(object):
 
     def orthologizable(self, species_key: Key) -> Optional[bool]:
         """Is this Assertion fully orthologizable?
-        
+
         Is it possible to orthologize every gene/protein/RNA NSArg to the target species?
         """
 
@@ -233,12 +233,19 @@ class Function(object):
         if errors is None:
             errors = []
 
-        # Process AST top-level args or Function args
-        errors.extend(validate_function(self))
-
+        # Collect term info for NSArgs before validation
         if hasattr(self, "args"):
             for arg in self.args:
-                if arg and arg.type in ["Function"]:
+                if arg and arg.type == "NSArg":
+                    arg.entity.add_term()
+
+        # Validate function (or top-level args)
+        errors.extend(validate_function(self))
+
+        # Recursively validate args that are functions
+        if hasattr(self, "args"):
+            for arg in self.args:
+                if arg and arg.type == "Function":
                     arg.validate(errors=errors)
 
         return errors
@@ -365,10 +372,6 @@ class NSArg(Arg):
         self.entity = entity
 
         self.type = "NSArg"
-        self.value_types = []
-
-    def add_value_types(self, value_types):
-        self.value_types = value_types
 
     def canonicalize(
         self,
@@ -425,16 +428,12 @@ class StrArg(Arg):
         Arg.__init__(self, parent, span)
         self.value = value
         self.type = "StrArg"
-        self.value_types = []
 
     def update(self, value: str):
         """Update to new BEL Entity"""
 
         self.value = value
         self.span = None
-
-    def add_value_types(self, value_types):
-        self.value_types = value_types
 
     def to_string(self, fmt: str = "medium") -> str:
         """Convert AST object to string
@@ -461,7 +460,7 @@ class StrArg(Arg):
 
 class ParseInfo:
     """BEL Assertion Parse Information
-    
+
     Matching quotes need to be gathered first
     """
 
@@ -550,7 +549,7 @@ class BELAst(object):
                 self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))
             elif assertion.object and (not assertion.subject or not assertion.relation):
                 msg = "Missing Assertion Subject or Relation"
-                self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))            
+                self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))
 
         if not self.errors and self.assertion is not None and not self.args:
             self.parse()  # parse assertion into BEL AST
@@ -691,8 +690,8 @@ class BELAst(object):
         decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
     ):
         """Canonicalize BEL Assertion
-        
-        Must set both targets if not using defaults as the underlying normalization handles 
+
+        Must set both targets if not using defaults as the underlying normalization handles
         both canonical and decanonical forms in the same query
         """
 
@@ -719,8 +718,8 @@ class BELAst(object):
         decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
     ):
         """Decanonicalize BEL Assertion
-        
-        Must set both targets if not using defaults as the underlying normalization handles 
+
+        Must set both targets if not using defaults as the underlying normalization handles
         both canonical and decanonical forms in the same query
         """
 
@@ -756,8 +755,8 @@ class BELAst(object):
 
     def orthologizable(self, species_key: Key):
         """Is this Assertion fully orthologizable?
-        
-        This method will detect if the orthologization will result 
+
+        This method will detect if the orthologization will result
         in a partially orthologized Assertion.
         """
 
@@ -896,7 +895,12 @@ def match_signatures(args, signatures):
     """Which signature to use"""
 
     for signature in signatures:
-        if args[0].type == signature["arguments"][0]["type"]:
+        if (
+            args[0].type == "Function"
+            and args[0].function_type == signature["arguments"][0]["type"]
+        ):
+            return signature
+        elif args[0].type == signature["arguments"][0]["type"]:
             return signature
 
 
@@ -988,26 +992,48 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                     )
                 )
 
-            elif fn.args[position] and fn.args[position].type not in argument["type"]:
-                errors.append(
-                    ValidationError(
-                        type="Assertion",
-                        severity="Error",
-                        msg=f"Incorrect argument type '{fn.args[position].type}' at position: {position} for function: {fn.name}, should be one of {argument['type']}",
-                        visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
-                        index=fn.args[position].span.start,
-                    )
-                )
+            # elif (
+            #     fn.args[position]
+            #     and fn.args[position].type == "Function"
+            #     and fn.args[position].function_type not in argument["type"]
+            # ):
+            #     errors.append(
+            #         ValidationError(
+            #             type="Assertion",
+            #             severity="Error",
+            #             msg=f"Incorrect function type '{fn.args[position].type}' at position: {position} for function: {fn.name}, should be one of {argument['type']}",
+            #             visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
+            #             index=fn.args[position].span.start,
+            #         )
+            #     )
 
             # Function name mis-match
-            elif fn.args[position].type == "Function" and not (
-                fn.args[position].name in argument["values"]
+            elif (
+                fn.args[position]
+                and fn.args[position].type == "Function"
+                and not (fn.args[position].name in argument["values"])
             ):
                 errors.append(
                     ValidationError(
                         type="Assertion",
                         severity="Error",
                         msg=f"Incorrect function for argument '{fn.args[position].name}' at position: {position} for function: {fn.name}",
+                        visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
+                        index=fn.args[position].span.start,
+                    )
+                )
+
+            # Wrong [non-function] argument type
+            elif (
+                fn.args[position]
+                and fn.args[position].type != "Function"
+                and fn.args[position].type not in argument["type"]
+            ):
+                errors.append(
+                    ValidationError(
+                        type="Assertion",
+                        severity="Error",
+                        msg=f"Incorrect argument type '{fn.args[position].type}' at position: {position} for function: {fn.name}, should be one of {argument['type']}",
                         visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
                         index=fn.args[position].span.start,
                     )
@@ -1060,28 +1086,41 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
 
     # Third pass - non-positional (primary/modifier) args that don't show up in opt_args or mult_args
     opt_and_mult_args = opt_args + signature["mult_args"]
-    problem_args = set()
     for fn_arg in fn.args[post_positional:]:
         if fn_arg.type == "Function" and fn_arg.name not in opt_and_mult_args:
-            problem_args.add(fn_arg.name)
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Function {fn_arg.name} is not allowed as an optional or multiple argument",
+                    visual_pairs=[(fn.span.start, fn.span.end)],
+                    index=fn.span.start,
+                )
+            )
 
+        elif fn_arg.type == "NSArg" and fn_arg.entity.term is None:
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Warning",
+                    msg=f"Unknown namespace value {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
+                    visual_pairs=[(fn.span.start, fn.span.end)],
+                    index=fn.span.start,
+                )
+            )
         # This handles complex(NSArg, p(X)) validation
         elif fn_arg.type == "NSArg" and not intersect(
             fn_arg.entity.entity_types, opt_and_mult_args
         ):
-            problem_args.add(fn_arg.entity)
-
-    problem_args = list(problem_args)
-    if len(problem_args) > 0:
-        errors.append(
-            ValidationError(
-                type="Assertion",
-                severity="Error",
-                msg=f"Not allowed as optional or multiple arguments {problem_args}",
-                visual_pairs=[(fn.span.start, fn.span.end)],
-                index=fn.span.start,
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Namespace value: {fn_arg.entity.nsval} with entity_types {fn_arg.entity.entity_types} are not allowed for function {fn_arg.parent.name} as an optional or multiple argument",
+                    visual_pairs=[(fn.span.start, fn.span.end)],
+                    index=fn.span.start,
+                )
             )
-        )
 
     # Fourth pass - positional NSArg entity_types checks
     for argument in signature["arguments"]:
@@ -1100,7 +1139,7 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                     ValidationError(
                         type="Assertion",
                         severity="Warning",
-                        msg=f"Unknown namespace '{fn.args[position].entity.nsval.namespace}' for the {fn.name} function at position {fn.args[position].span.namespace.start}",
+                        msg=f"Unknown namespace value '{fn.args[position].entity.nsval.key_label}' for the {fn.name} function at position {fn.args[position].span.namespace.start}",
                         visual_pairs=[
                             (
                                 fn.args[position].span.namespace.start,
@@ -1157,7 +1196,7 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
 
     # Modifier function with wrong parent function
     if (
-        fn.function_signature["func_type"] == "modifier"
+        fn.function_signature["func_type"] == "Modifier"
         and fn.parent
         and fn.parent.name not in fn.function_signature["primary_function"]
     ):
@@ -1243,7 +1282,7 @@ def sort_function_args(fn: Function):
             # TODO use https://github.com/biocommons/hgvs to sort by variant position
             fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, str(fn_arg))
 
-        elif fn_arg.function_type == "modifier":
+        elif fn_arg.function_type == "Modifier":
             fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, str(fn_arg))
 
         elif fn_arg.type == "Function":

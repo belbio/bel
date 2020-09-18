@@ -85,12 +85,12 @@ def intersect(pos: int, spans: List[Optional[Span]]) -> bool:
         return False
 
 
-def ordered_pairs(a: List[int], b: List[int]) -> List[Union[int, None]]:
-    """Return ordered pairs such that every a, b pair has a < b"""
+def ordered_pairs(left: List[int], right: List[int]) -> List[Union[int, None]]:
+    """Return ordered pairs such that every left, right pair has left < right"""
 
-    alt = {"a": "b", "b": "a"}
+    alt = {"left": "right", "right": "left"}
 
-    pairs = [("a", item) for item in a] + [("b", item) for item in b]
+    pairs = [("left", item) for item in left] + [("right", item) for item in right]
     pairs.sort(key=lambda x: x[1])
 
     new_pairs = []
@@ -141,8 +141,10 @@ def find_matching_quotes(
                     type="Assertion",
                     severity="Error",
                     msg=f"Missing left quote between right quotes at positions {matched_quotes[idx-1].end} and {pair.end}",
-                    visual=html_wrap_span(assertion_str, [(matched_quotes[idx-1].end, pair.end + 1)]),
-                    index=matched_quotes[idx-1].end,
+                    visual=html_wrap_span(
+                        assertion_str, [(matched_quotes[idx - 1].end, pair.end + 1)]
+                    ),
+                    index=matched_quotes[idx - 1].end,
                 )
             )
         elif pair.end is None and idx == len(matched_quotes):
@@ -161,7 +163,9 @@ def find_matching_quotes(
                     type="Assertion",
                     severity="Error",
                     msg=f"Missing right quote between left quotes at positions {pair.start} and {matched_quotes[idx+1].start}",
-                    visual=html_wrap_span(assertion_str, [(pair.start, matched_quotes[idx+1].start)]),
+                    visual=html_wrap_span(
+                        assertion_str, [(pair.start, matched_quotes[idx + 1].start)]
+                    ),
                     index=pair.start,
                 )
             )
@@ -191,7 +195,7 @@ def find_commas(
 def find_matching_parens(
     assertion_str, matched_quotes, errors: List[ValidationError]
 ) -> Tuple[List[Pair], List[ValidationError]]:
-    """ Find and return the location of the matching parentheses pairs in s.
+    """Find and return the location of the matching parentheses pairs in s.
 
     Given a string, s, return a dictionary of start: end pairs giving the
     indexes of the matching parentheses in s. Suitable exceptions are
@@ -362,7 +366,7 @@ def find_functions(
 
 def find_nsargs(assertion_str: str) -> List[Optional[NsArgSpan]]:
     """Namespace argument parsing
-    
+
     Namespace IDs and Labels are NOT allowed to have internal double quotes.
 
     IDs or Labels with commas or end parenthesis in them must be quoted.

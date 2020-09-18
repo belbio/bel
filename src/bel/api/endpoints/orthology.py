@@ -21,6 +21,6 @@ def get_orthologs(gene_id: str, species: str = ""):
 
     species = [item for item in species.split(",") if item]
 
-    orthologs = bel.terms.orthologs(gene_id, species)
+    orthologs = bel.terms.orthologs.get_orthologs(gene_id, species)
 
     return {"orthologs": orthologs}

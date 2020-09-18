@@ -179,11 +179,15 @@ class NsVal(object):
 
         self.namespace: str = namespace
         self.id: str = namespace_quoting(id)
+
         self.label = ""
         if label:
             self.label: str = namespace_quoting(label)
 
         self.key: Key = f"{self.namespace}:{self.id}"  # used for dict keys and entity searches
+
+        # Add key_label to NsVal
+        self.key_label()
 
     def add_label(self):
         if not self.label:
@@ -194,7 +198,7 @@ class NsVal(object):
     def update_label(self):
         term = bel.terms.terms.get_term(self.key)
         if term and term.label:
-            self.label = term.label
+            self.label = namespace_quoting(term.label)
 
         return self
 
@@ -209,9 +213,11 @@ class NsVal(object):
         self.add_label()
 
         if self.label:
-            return f"{self.namespace}:{self.id}!{self.label}"
+            self.key_label = f"{self.namespace}:{self.id}!{self.label}"
         else:
-            return f"{self.namespace}:{self.id}"
+            self.key_label = f"{self.namespace}:{self.id}"
+
+        return self.key_label
 
     def __str__(self):
 
@@ -268,22 +274,26 @@ class BelEntity(object):
 
         self.namespace_metadata = get_namespace_metadata().get(self.nsval.namespace, None)
 
+    def add_term(self):
+        """Add term info"""
+
+        if self.namespace_metadata and self.namespace_metadata.namespace_type == "complete":
+            self.term = bel.terms.terms.get_term(self.nsval.key)
+
+        return self
+
     def add_species(self):
         """Add species if not already set"""
 
         if self.species_key:
             return self
 
-        if self.term:
+        if not self.term:
+            self.add_term()
+
+        if self.term.species_key:
             self.species_key = self.term.species_key
-            return self
-
-        if self.namespace_metadata and self.namespace_metadata.namespace_type == "complete":
-            self.term = bel.terms.terms.get_term(self.nsval.key)
-            if self.term:
-                self.species_key = self.term.species_key
-
-        elif self.namespace_metadata and self.namespace_metadata.species_key:
+        elif self.namespace_metadata.species_key:
             self.species_key = self.namespace_metadata.species_key
 
         return self

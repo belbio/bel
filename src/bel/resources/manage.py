@@ -15,8 +15,6 @@ import bel.db.elasticsearch as elasticsearch
 import bel.resources.namespace
 import bel.resources.ortholog
 
-from bel.schemas.config import Configuration
-
 
 def create_email_body_for_update_resources(results):
     """Create email message body for update_resources"""
@@ -77,22 +75,12 @@ def create_email_body_for_update_resources(results):
     return (body, body_html)
 
 
-def clean_configuration(configuration: dict) -> dict:
-    """Dedupe and sort list of bel resources to update"""
-
-    for key in configuration["update_bel_resources"]:
-        configuration["update_bel_resources"][key] = sorted(
-            list(set(configuration["update_bel_resources"][key]))
-        )
-
-    return configuration
-
-
 def update_resources(url: str = None, force: bool = False, email: str = None):
     """Update bel resources
 
-    Reads the arangodb bel.bel_config.configuration.update_bel_resources object
-    to figure out what bel resource urls to process
+    Reads the arangodb resources_metadata objects to figure out what bel resource urls to process
+    unless a url is provided to download (at which point it will be added to resources_metadata on
+    successful load)
 
     Args:
         url: url to bel resource file as *.jsonl.gz
@@ -100,29 +88,19 @@ def update_resources(url: str = None, force: bool = False, email: str = None):
 
     results = {}
 
-    bel_config_coll = arangodb.bel_config_coll
-
-    configuration = bel_config_coll.get("configuration")
-
     # Load provided url if available
     if url is not None:
-        result = load_resource(resource_url=url, force=force)
-        results[url] = result
+        results[url] = load_resource(resource_url=url, force=force)
 
-        # Update Configuration
-        key = "namespaces"
-        if "ortholog" in url:
-            key = "orthologs"
-        configuration["update_bel_resources"][key].append(url)
-        configuration = clean_configuration(configuration)
-        bel_config_coll.replace(configuration)
-
-    # Load stored Resource URLs from Configuration
+    # Load stored Resource URLs from belconfig.configuration doc
     else:
-        for key in configuration["update_bel_resources"]:
-            for url in configuration["update_bel_resources"][key]:
-                result = load_resource(resource_url=url, force=force)
-                results[url] = result
+        resources = bel.resources.namespace.get_bel_resource_metadata()
+
+        for resource in resources:
+            if "resource_download_url" not in resource:
+                continue
+        url = resource["resource_download_url"]
+        results[url] = load_resource(resource_url=url, force=force)
 
     if email is not None:
         subject = f"BEL Resources Update for {settings.HOST_NAME}"
@@ -174,14 +152,19 @@ def load_resource(resource_url: str = None, force: bool = False):
             "messages": [
                 f"Error: Failed to process resource file for {resource_url} - missing metadata"
             ],
+            "resource_type": None,
         }
 
     # Load resource files
     if metadata["resource_type"] == "namespace":
-        result = bel.resources.namespace.load_terms(f, metadata, force=force)
+        result = bel.resources.namespace.load_terms(
+            f, metadata, force=force, resource_download_url=resource_url
+        )
 
     elif metadata["resource_type"] == "orthologs":
-        result = bel.resources.ortholog.load_orthologs(f, metadata, force=force)
+        result = bel.resources.ortholog.load_orthologs(
+            f, metadata, force=force, resource_download_url=resource_url
+        )
 
     else:
         logger.info(f"Unrecognized resource type: {metadata['metadata']['type']}")
@@ -191,6 +174,9 @@ def load_resource(resource_url: str = None, force: bool = False):
         }
 
     f.close
+
+    result["resource_type"] = metadata["resource_type"]
+
     return result
 
 

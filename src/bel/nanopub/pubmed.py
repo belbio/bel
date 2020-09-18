@@ -127,8 +127,7 @@ def get_pubtator(pmid):
 
 
 def process_pub_date(year, mon, day, medline_date):
-    """Create pub_date from what Pubmed provides in Journal PubDate entry
-    """
+    """Create pub_date from what Pubmed provides in Journal PubDate entry"""
 
     if medline_date:
         year = "0000"
@@ -258,16 +257,18 @@ def get_pubmed_url(pmid):
         pubmed_url = f"{PUBMED_TMPL}{str(pmid)}"
 
         r = http_client.get(pubmed_url)
-        content = r.content
-        root = etree.fromstring(content)
+
+        logger.info(f"Status {r.status_code}  URL: {pubmed_url}")
+
+        if r.status_code == 200:
+            content = r.content
+            root = etree.fromstring(content)
+        else:
+            logger.warning(f"Could not download pubmed url: {pubmed_url}")
 
     except Exception as e:
-        status_code = None
-        if r:
-            status_code = r.status_code
-
         logger.warning(
-            f"Bad Pubmed request, status: {status_code} error: {str(e)}",
+            f"Bad Pubmed request, error: {str(e)}",
             url=f'{PUBMED_TMPL.replace("PMID", pmid)}',
         )
 
@@ -340,7 +341,7 @@ def get_normalized_terms_for_annotations(term_keys):
 
 def add_annotations(pubmed):
     """Add nanopub annotations to pubmed doc
-    
+
     Enhance MESH terms etc as full-fledged nanopub annotations for use by the BEL Nanopub editor
     """
 

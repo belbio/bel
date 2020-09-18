@@ -90,6 +90,10 @@ class Namespace(BaseModel):
     source_name: str = Field("", description="Source name for namespace")
     source_url: Optional[HttpUrl] = Field(None, description="Source url for namespace")
 
+    resource_download_url: Optional[HttpUrl] = Field(
+        None, description="Download url for the resource as a *.jsonl.gz file"
+    )
+
     entity_types: List[EntityTypesEnum] = []
     annotation_types: List[AnnotationTypesEnum] = []
     species_key: Key = Field("", description="Species key for this namespace")

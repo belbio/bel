@@ -34,6 +34,10 @@ from bel.schemas.terms import Namespace
 # db_key = key converted to arangodb format
 
 
+namespace_metadata_cache = cachetools.TTLCache(maxsize=1, ttl=600)
+bel_resource_metadata_cache = cachetools.TTLCache(maxsize=1, ttl=600)
+
+
 def remove_old_db_entries(namespace: str, version: str = "", force: bool = False):
     """Remove old database entries
 
@@ -75,7 +79,9 @@ def remove_old_db_entries(namespace: str, version: str = "", force: bool = False
     resources_db.aql.execute(remove_old_equivalence_nodes)
 
 
-def load_terms(f: IO, metadata: dict, force: bool = False):
+def load_terms(
+    f: IO, metadata: dict, force: bool = False, resource_download_url: Optional[str] = None
+):
     """Load terms into Elasticsearch and ArangoDB
 
     Force will create a new index in Elasticsearch regardless of whether
@@ -169,7 +175,11 @@ def load_terms(f: IO, metadata: dict, force: bool = False):
     # Add metadata to resource metadata collection
     metadata["_key"] = metadata_key
 
+    if resource_download_url is not None:
+        metadata["resource_download_url"] = resource_download_url
+
     resources_metadata_coll.insert(metadata, overwrite=True)
+    clear_resource_metadata_cache()
 
     if not force:
         remove_old_db_entries(namespace, version=version)
@@ -372,7 +382,20 @@ def lowercase_term_id(term_key: str) -> str:
     return term_key
 
 
-@cachetools.cached(cachetools.TTLCache(maxsize=1, ttl=600))
+def clear_resource_metadata_cache():
+    """Clear the namespace metadata cache
+
+    Called when we update the namespace metadata
+    """
+
+    namespace_metadata_cache.clear()
+    bel_resource_metadata_cache.clear()
+
+
+# TODO - refactor get_namespace_metadata and get_bel_resource_metadata into one function
+
+
+@cachetools.cached(namespace_metadata_cache)
 def get_namespace_metadata():
     """Get namespace metadata"""
 
@@ -388,6 +411,21 @@ def get_namespace_metadata():
         namespaces[namespace.namespace] = namespace
 
     return namespaces
+
+
+@cachetools.cached(bel_resource_metadata_cache)
+def get_bel_resource_metadata():
+    """Get BEL resource metadata"""
+
+    resources = {}
+    for resource in resources_metadata_coll:
+
+        if resource["source_url"] == "":
+            resource["source_url"] = None
+
+        resources[resource["_key"]] = resource
+
+    return resources
 
 
 def delete_namespace(namespace):

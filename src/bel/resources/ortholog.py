@@ -1,7 +1,7 @@
 # Standard Library
 import gzip
 import json
-from typing import IO, Mapping
+from typing import IO, Mapping, Optional
 import copy
 
 # Third Party Imports
@@ -47,7 +47,9 @@ def remove_old_db_entries(source, version: str = "", force: bool = False):
     arangodb.aql_query(resources_db, remove_old_ortholog_nodes)
 
 
-def load_orthologs(fo: IO, metadata: dict, force: bool = False):
+def load_orthologs(
+    fo: IO, metadata: dict, force: bool = False, resource_download_url: Optional[str] = None
+):
     """Load orthologs into ArangoDB
 
     Args:
@@ -103,6 +105,12 @@ def load_orthologs(fo: IO, metadata: dict, force: bool = False):
 
     # Using side effect to get statistics from orthologs_iterator on purpose
     metadata["statistics"] = copy.deepcopy(statistics)
+
+    if resource_download_url is not None:
+        metadata["resource_download_url"] = resource_download_url
+
+    resources_metadata_coll.insert(metadata, overwrite=True)
+    clear_resource_metadata_cache()
 
     resources_metadata_coll.insert(metadata, overwrite=True)
 
