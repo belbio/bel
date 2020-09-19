@@ -1,3 +1,6 @@
-from bel.resources.manage import update_resources, delete_resource
-import bel.db.arangodb as arangodb
+# Standard Library
 import json
+
+# Third Party
+import bel.db.arangodb as arangodb
+from bel.resources.manage import delete_resource, update_resources

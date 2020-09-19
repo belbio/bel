@@ -2,11 +2,11 @@
 import enum
 from typing import Any, List, Mapping, Optional, Union
 
+# Third Party
 # Third Party Imports
 import pydantic
-from pydantic import AnyUrl, BaseModel, Field, HttpUrl
-
 from bel.schemas.bel import ValidationErrors
+from pydantic import AnyUrl, BaseModel, Field, HttpUrl
 
 
 class NanopubType(BaseModel):

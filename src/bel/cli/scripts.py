@@ -5,10 +5,7 @@ import re
 import sys
 from typing import List
 
-# Third Party Imports
-import yaml
-from loguru import logger, logger.config
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.core.utils as utils
@@ -18,7 +15,11 @@ import bel.nanopub.belscripts
 import bel.nanopub.files as bnf
 import bel.nanopub.nanopubs as bnn
 import typer
+
+# Third Party Imports
+import yaml
 from bel.lang.belobj import BEL
+from loguru import logger
 from typer import Argument, Option
 
 # TODO finish updating to use typer!!!!!!!!!!!!!
@@ -38,7 +39,7 @@ from typer import Argument, Option
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def belc():
-    """ BEL commands
+    """BEL commands
 
     Uses first file found to load in default configuration:
 
@@ -95,9 +96,12 @@ def convert_belscript(ctx, input_fn, output_fn):
 
     try:
 
-        (out_fh, yaml_flag, jsonl_flag, json_flag,) = bel.nanopub.files.create_nanopubs_fh(
-            output_fn
-        )
+        (
+            out_fh,
+            yaml_flag,
+            jsonl_flag,
+            json_flag,
+        ) = bel.nanopub.files.create_nanopubs_fh(output_fn)
         if yaml_flag or json_flag:
             docs = []
 
@@ -146,9 +150,12 @@ def reformat(ctx, input_fn, output_fn):
 
     try:
 
-        (out_fh, yaml_flag, jsonl_flag, json_flag,) = bel.nanopub.files.create_nanopubs_fh(
-            output_fn
-        )
+        (
+            out_fh,
+            yaml_flag,
+            jsonl_flag,
+            json_flag,
+        ) = bel.nanopub.files.create_nanopubs_fh(output_fn)
         if yaml_flag or json_flag:
             docs = []
 
@@ -220,7 +227,8 @@ def stmt():
 @stmt.command(name="validate", context_settings=CONTEXT_SETTINGS)
 @click.option("--version", help="BEL language version")
 @click.option(
-    "--config_fn", help="BEL Pipeline configuration file - overrides default configuration files",
+    "--config_fn",
+    help="BEL Pipeline configuration file - overrides default configuration files",
 )
 @click.argument("statement")
 @pass_context
@@ -254,7 +262,8 @@ def stmt_validate(ctx, assertion_str, version):
 )
 @click.option("--version", help="BEL language version")
 @click.option(
-    "--config_fn", help="BEL Pipeline configuration file - overrides default configuration files",
+    "--config_fn",
+    help="BEL Pipeline configuration file - overrides default configuration files",
 )
 @click.argument("statement")
 @pass_context
@@ -325,8 +334,6 @@ def orthologize(ctx, assertion_str, species, version):
             print("No problems found")
 
 
-
-
 @belc.group()
 def db():
     """Database specific commands"""
@@ -336,7 +343,9 @@ def db():
 @db.command()
 @click.option("--delete/--no-delete", default=False, help="Remove indexes and re-create them")
 @click.option(
-    "--index_name", default="terms_blue", help='Use this name for index. Default is "terms_blue"',
+    "--index_name",
+    default="terms_blue",
+    help='Use this name for index. Default is "terms_blue"',
 )
 def elasticsearch(delete, index_name):
     """Setup Elasticsearch namespace indexes

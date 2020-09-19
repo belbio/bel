@@ -4,11 +4,12 @@ import copy
 import re
 from typing import Any, List, Mapping
 
-# Third Party Imports
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
+
+# Third Party Imports
+from loguru import logger
 
 
 def create_enhanced_specification(specification) -> dict:
@@ -304,9 +305,12 @@ def enhance_function_signatures(specification: Mapping[str, Any]) -> Mapping[str
 def create_ebnf_parser(specification):
     """Create EBNF file from BEL Specification"""
 
-    import jinja2
-    import itertools
+    # Standard Library
     import datetime
+    import itertools
+
+    # Third Party
+    import jinja2
 
     ebnf_template_dir = f"{settings.appdir}/belspec"
     ebnf_template_fn = "bel.ebnf.j2"

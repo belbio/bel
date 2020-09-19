@@ -6,15 +6,15 @@ import time
 from collections import defaultdict
 from typing import IO, Optional
 
-# Third Party Imports
-import cachetools
-from arango import ArangoError
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.mail
 import bel.core.settings as settings
 import bel.db.elasticsearch as elasticsearch
+
+# Third Party Imports
+import cachetools
+from arango import ArangoError
 from bel.db.arangodb import (
     arango_id_to_key,
     batch_load_docs,
@@ -27,6 +27,7 @@ from bel.db.arangodb import (
 )
 from bel.db.elasticsearch import es
 from bel.schemas.terms import Namespace
+from loguru import logger
 
 # key = ns:id
 # main_key = preferred key, e.g. ns:<primary_id> not the alt_key or obsolete key or even an equivalence key which could be an alt_key

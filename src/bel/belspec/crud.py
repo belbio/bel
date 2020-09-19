@@ -1,9 +1,7 @@
 # Standard Library
 from typing import Mapping
 
-# Third Party Imports
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb as arangodb
@@ -11,6 +9,9 @@ import cachetools
 import semver
 from bel.belspec.enhance import create_ebnf_parser, create_enhanced_specification
 from bel.schemas.belspec import BelSpec, BelSpecVersions
+
+# Third Party Imports
+from loguru import logger
 
 # ArangoDB handles
 bel_db = arangodb.bel_db
@@ -70,7 +71,7 @@ def update_belspec_versions():
     query = f"""
     FOR doc IN {bel_config_name}
         FILTER doc.doc_type == "belspec"
-        RETURN doc.orig_belspec.version  
+        RETURN doc.orig_belspec.version
     """
 
     version_strings = sorted(list(bel_db.aql.execute(query)), reverse=True)

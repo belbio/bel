@@ -5,10 +5,7 @@ import json
 import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
-# Third Party Imports
-from loguru import logger
-from pydantic import BaseModel, Field, root_validator
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb
@@ -18,6 +15,10 @@ from bel.core.utils import namespace_quoting, split_key_label
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.constants import AnnotationTypesEnum, EntityTypesEnum
 from bel.schemas.terms import Term
+
+# Third Party Imports
+from loguru import logger
+from pydantic import BaseModel, Field, root_validator
 
 Key = str  # Type alias for NsVal Key values
 NamespacePattern = r"[\w\.]+"  # Regex for Entity Namespace
@@ -273,6 +274,8 @@ class BelEntity(object):
             self.nsval = None
 
         self.namespace_metadata = get_namespace_metadata().get(self.nsval.namespace, None)
+        if self.namespace_metadata is not None and self.namespace_metadata.entity_types:
+            self.entity_types = self.namespace_metadata.entity_types
 
     def add_term(self):
         """Add term info"""

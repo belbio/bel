@@ -3,15 +3,17 @@
 # Standard Library
 from typing import List, Optional
 
-# Third Party Imports
-import fastapi
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from loguru import logger
+# Third Party
+import bel.resources.manage
 
 # Local Imports
 import bel.terms.terms
+
+# Third Party Imports
+import fastapi
 from bel.schemas.terms import Term, TermCompletionResponse
-import bel.resources.manage
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from loguru import logger
 
 router = APIRouter()
 

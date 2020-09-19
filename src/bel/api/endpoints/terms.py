@@ -3,14 +3,15 @@
 # Standard Library
 from typing import List
 
-# Third Party Imports
-import fastapi
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.terms.terms
+
+# Third Party Imports
+import fastapi
 from bel.schemas.terms import Term, TermCompletionResponse
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from loguru import logger
 
 router = APIRouter()
 
@@ -28,7 +29,8 @@ def get_term_completions(
     completion_str: str = Query(..., description="String to use for completion"),
     size: int = Query(21, description="Number of completions to return"),
     entity_types: str = Query(
-        "", description="Entity types for completion request, concatenated using a comma",
+        "",
+        description="Entity types for completion request, concatenated using a comma",
     ),
     annotation_types: str = Query(
         "",
@@ -103,4 +105,3 @@ def get_term_normalization(term_key: str):
 
     results = bel.terms.terms.get_normalized_terms(term_key)
     return results
-

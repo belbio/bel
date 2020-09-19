@@ -2,18 +2,20 @@
 Informational endpoints
 """
 
-# Third Party Imports
-import fastapi
-from loguru import logger
-from fastapi import APIRouter, Depends
+# Standard Library
 import re
 
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.terms.terms
+
+# Third Party Imports
+import fastapi
 from bel.__version__ import __version__ as bel_lib_version
 from bel.schemas.info import Status, Version
-
+from fastapi import APIRouter, Depends
+from loguru import logger
 
 router = APIRouter()
 
@@ -61,7 +63,7 @@ def ping() -> dict:
 
 @router.get("/settings", tags=["Info"], response_model=dict)
 def get_settings():
-    """ Settings
+    """Settings
 
     Only show UPPER_CASED settings that do not have ['SECRET', 'TOKEN', 'PASSWORD', 'PASSWD'] in the name
     """

@@ -1,6 +1,7 @@
+# Third Party
 import bel.lang.belobj
-from bel.lang.belobj import AssertionStr
 import pytest
+from bel.lang.belobj import AssertionStr
 
 bo = bel.lang.belobj.BEL()
 

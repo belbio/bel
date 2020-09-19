@@ -1,8 +1,11 @@
 # Local Imports
+# Standard Library
+import pprint
+
+# Third Party
 import bel.lang.ast
 import pytest
 from bel.schemas.bel import AssertionStr, ValidationError
-import pprint
 
 # cSpell:disable
 
@@ -219,24 +222,6 @@ def test_validate_pmod_function_errors(test_input, expected):
     assert ast.errors[0].msg == expected
 
 
-def test_validate_path_and_namespace():
-    """Validate path()"""
-
-    assertion = AssertionStr(entire="path(DO:COVID-19)")
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    ast.validate()
-
-    print("Errors", ast.errors)
-
-    assert (
-        ast.errors[0].msg
-        == "Wrong entity type for namespace argument at position 0 for function pathology - expected ['Pathology'], actual: entity_types: []"
-    )
-    assert ast.errors[0].severity == "Warning"
-
-
 def test_validate_complex_missing_namespace():
     """Validate path()"""
 
@@ -318,7 +303,7 @@ def test_validate_fus():
     assert ast.errors[0].msg == expected
 
 
-def test_validate_fus():
+def test_validate_nsarg():
     """Validate path()"""
 
     assertion = AssertionStr(subject="path(DO:COVID-19)")
@@ -328,6 +313,26 @@ def test_validate_fus():
     ast.validate()
 
     print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+
+def test_validate_rxn1():
+    """Validate path()"""
+
+    assertion = AssertionStr(
+        subject="rxn(reactants(complex(reactome:R-HSA-1112584.1, p(SP:O14543, loc(GO:0005829)))), products(complex(reactome:R-HSA-1112584.1, p(SP:O14543), loc(GO:0005829))))"
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Parse Info", ast.parse_info)
+
+    print("Errors")
+    for error in ast.errors:
+        print("Error", error.json())
 
     assert ast.errors == []
 

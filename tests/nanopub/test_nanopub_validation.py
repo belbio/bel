@@ -1,10 +1,11 @@
 # Standard Library
 import json
 
+# Third Party
 # Local Imports
 import bel.nanopub.validate
-from bel.schemas.nanopubs import NanopubR
 import pytest
+from bel.schemas.nanopubs import NanopubR
 
 # cSpell:disable
 

@@ -72,15 +72,12 @@ exclude = '''
 '''
 
 [tool.isort]
-multi_line_output=3
-include_trailing_comma=true
-force_grid_wrap=false
-use_parentheses=true
-line_length=100
-import_heading_stdlib="Standard Library"
-import_heading_thirdparty="Third Party Imports"
-import_heading_firstparty="Local Imports"
-known_third_party = ["arango", "boltons", "dramatiq", "elasticapm", "elasticsearch", "fastapi", "loguru", "pydantic", "pytest", "pythonjsonlogger", "redis", "requests", "sentry_sdk", "starlette", "starlette_prometheus", "structlog", "tenacity", "ulid", "urllib3", "xxhash", "yaml"]
+profile = "black"
+src_paths = ["./app"]
+import_heading_stdlib = "Standard Library"
+import_heading_thirdparty = "Third Party"
+import_heading_firstparty = "Local"
+
 
 [tool.coverage.run]
 source = ["bel"]

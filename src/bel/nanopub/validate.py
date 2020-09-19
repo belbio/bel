@@ -3,9 +3,7 @@ import copy
 import re
 from typing import List, Tuple
 
-# Third Party Imports
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.core.utils
@@ -13,8 +11,11 @@ import bel.lang.belobj
 from bel.belspec.crud import get_latest_version
 from bel.db.arangodb import bel_db, bel_validations_coll, bel_validations_name
 from bel.db.elasticsearch import es
-from bel.schemas.nanopubs import NanopubR
 from bel.schemas.bel import AssertionStr, ValidationError, ValidationErrors
+from bel.schemas.nanopubs import NanopubR
+
+# Third Party Imports
+from loguru import logger
 
 
 def convert_msg_to_html(msg: str):
@@ -135,7 +136,6 @@ def validate_assertion(assertion, *, version: str, validation_level: str):
             errors[idx].visual_pairs = None
 
     # Create Validation object
-    
 
     # Add status to validation object to make it easy to highlight errors/warnings in the UI
     validation_status = "Good"
@@ -150,13 +150,13 @@ def validate_assertion(assertion, *, version: str, validation_level: str):
         validation_status = "Good"
 
     if errors == []:
-            errors = None
+        errors = None
 
-    validation = ValidationErrors(status=validation_status, validation_target=assertion_obj.entire, errors=errors)
-
-    assertion["validation"] = validation.dict(
-        exclude={"validation_target"}, exclude_none=True
+    validation = ValidationErrors(
+        status=validation_status, validation_target=assertion_obj.entire, errors=errors
     )
+
+    assertion["validation"] = validation.dict(exclude={"validation_target"}, exclude_none=True)
     save_validation_by_hash(assertion_hash, validation)
 
     return assertion
@@ -165,7 +165,7 @@ def validate_assertion(assertion, *, version: str, validation_level: str):
 def validate_assertions(
     assertions: List[dict], *, version: str = "latest", validation_level: str = "complete"
 ):
-    """ Validate assertions
+    """Validate assertions
 
     Args:
         assertions (List[dict]): List of assertion objects
@@ -228,7 +228,7 @@ def get_cached_annotation_validations(annotations):
             annotation["validation"] = copy.deepcopy(cached_validations[annotation["hash"]])
 
             annotations[idx] = copy.deepcopy(annotation)
-        
+
         annotation.pop("hash", "")
         annotation.pop("str", "")
 
@@ -296,7 +296,7 @@ def validate_annotation(annotation):
 
 
 def validate_annotations(annotations: List[dict], validation_level: str):
-    """ Validate annotations
+    """Validate annotations
 
     Args:
         annotations (List[dict]): List of annotation objects

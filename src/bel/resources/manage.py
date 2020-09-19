@@ -3,17 +3,19 @@ import copy
 import gzip
 import json
 
-# Third Party Imports
-from loguru import logger
+# Third Party
+import bel.core.mail
 
 # Local Imports
 import bel.core.settings as settings
 import bel.core.utils
-import bel.core.mail
 import bel.db.arangodb as arangodb
 import bel.db.elasticsearch as elasticsearch
 import bel.resources.namespace
 import bel.resources.ortholog
+
+# Third Party Imports
+from loguru import logger
 
 
 def create_email_body_for_update_resources(results):

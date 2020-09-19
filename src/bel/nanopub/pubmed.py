@@ -9,23 +9,23 @@ or enhancing BEL Nanopubs
 """
 
 # Standard Library
+import asyncio
 import copy
 import datetime
 import re
 from typing import Any, Mapping, MutableMapping
-import asyncio
+
+# Third Party
+# Local Imports
+import bel.core.settings as settings
+import bel.terms.terms
+import cachetools
+import httpx
+from bel.core.utils import http_client, url_path_param_quoting
 
 # Third Party Imports
 from loguru import logger
-import cachetools
-import httpx
-
-# Local Imports
-import bel.core.settings as settings
-from bel.core.utils import http_client, url_path_param_quoting
 from lxml import etree
-import bel.terms.terms
-
 
 # Replace PMID
 PUBMED_TMPL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id="

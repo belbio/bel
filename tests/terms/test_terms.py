@@ -1,4 +1,5 @@
 # Local Imports
+# Third Party
 import bel.schemas
 import bel.terms.terms
 import pytest
@@ -108,6 +109,7 @@ def test_obsolete_equivalencing():
 
     results = bel.terms.terms.get_equivalents(term_key)
 
+    # Standard Library
     import json
 
     print("Results:\n", json.dumps(results, indent=4))
@@ -117,7 +119,7 @@ def test_obsolete_equivalencing():
 
 def test_collapsed_terms():
     """Terms collapsed together due to Swissprot
-    
+
     HGNC:IFNA1 and HGNC:IFNA13 - get collapsed together due to their SP entry - https://www.uniprot.org/uniprot/P01562
 
     HGNC:DEFB4A and HGNC:DEFB4B - get collapsed together due to their SP entry - https://www.uniprot.org/uniprot/O15263

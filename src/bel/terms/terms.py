@@ -3,18 +3,19 @@ import re
 import time
 from typing import Any, List, Mapping, Optional, Union
 
-# Third Party Imports
-import elasticsearch
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import cachetools
-from bel.core.utils import split_key_label, asyncify
+
+# Third Party Imports
+import elasticsearch
+from bel.core.utils import asyncify, split_key_label
 from bel.db.arangodb import arango_id_to_key, resources_db, terms_coll_name
 from bel.db.elasticsearch import es
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.terms import Term
+from loguru import logger
 
 Key = str  # namespace:id
 
@@ -64,7 +65,7 @@ def get_terms(term_key: Key) -> List[Term]:
 
 def get_term(term_key: Key) -> Optional[Term]:
     """Expect one term to match term_key
-    
+
     Term Key can match the main key, alt_keys or obsolete_keys
     """
 
@@ -97,7 +98,7 @@ def get_equivalents(term_key: str) -> Mapping[str, List[Mapping[str, Any]]]:
     """Get equivalents given term key
 
     Args:
-        term_key: namespace:id - may be a primary, alt_key, or obsolete_key 
+        term_key: namespace:id - may be a primary, alt_key, or obsolete_key
 
     Returns:
         Mapping[str, List[Mapping[str, Any]]]: e.g. {"equivalents": [{'term_key': 'HGNC:5', 'namespace': 'HGNC', 'primary': False}]}
@@ -147,7 +148,7 @@ def get_normalized_terms(
     term: Optional[Term] = None,
 ) -> Mapping[str, str]:
     """Get canonical and decanonical form for term
-    
+
     This is effectively cached as the get_term and get_cached_equivalents calls
     are cached.
 

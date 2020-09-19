@@ -1,9 +1,10 @@
+# Standard Library
 import re
 
 
 def test_status(client):
     """Status details on API"""
-    
+
     response = client.get("/status")
     print("Response", response.json())
 

@@ -5,9 +5,7 @@ import os
 import sys
 from typing import Any, List, Mapping, Optional, Union
 
-# Third Party Imports
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.belspec.crud
 import bel.core.settings as settings
@@ -15,6 +13,8 @@ import bel.terms.terms
 from bel.lang.ast import BELAst
 from bel.schemas.bel import AssertionStr, Key
 
+# Third Party Imports
+from loguru import logger
 
 sys.path.append("../")
 
@@ -158,10 +158,11 @@ class BEL(object):
     def dump(self) -> str:
         """Dump out the BEL object"""
 
+        # Standard Library
         import textwrap
 
         s = f"""
-            BEL Object dump: 
+            BEL Object dump:
                 version: {self.version}
                 assertion: {self.assertion.entire}
                 species: {self.ast.species}

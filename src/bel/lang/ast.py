@@ -10,16 +10,15 @@ import sys
 import traceback
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
-# Third Party Imports
-import yaml
-from loguru import logger
-from pydantic import BaseModel, Field
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb
 import bel.terms.orthologs
 import bel.terms.terms
+
+# Third Party Imports
+import yaml
 from bel.belspec.crud import get_enhanced_belspec
 from bel.core.utils import html_wrap_span, http_client, url_path_param_quoting
 from bel.schemas.bel import (
@@ -34,6 +33,8 @@ from bel.schemas.bel import (
     ValidationError,
 )
 from bel.schemas.constants import strarg_validation_lists
+from loguru import logger
+from pydantic import BaseModel, Field
 
 
 #########################
@@ -482,6 +483,7 @@ class ParseInfo:
             self.get_parse_info(assertion=self.assertion)
 
     def get_parse_info(self, assertion: str = "", version: str = "latest"):
+        # Third Party
         from bel.lang.parse import parse_info
 
         if assertion:
@@ -1098,25 +1100,28 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                 )
             )
 
-        elif fn_arg.type == "NSArg" and fn_arg.entity.term is None:
-            errors.append(
-                ValidationError(
-                    type="Assertion",
-                    severity="Warning",
-                    msg=f"Unknown namespace value {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
-                    visual_pairs=[(fn.span.start, fn.span.end)],
-                    index=fn.span.start,
-                )
-            )
-        # This handles complex(NSArg, p(X)) validation
-        elif fn_arg.type == "NSArg" and not intersect(
-            fn_arg.entity.entity_types, opt_and_mult_args
+        # This handles complex(NSArg, p(X)) validation and virtual namespaces
+        elif (
+            fn_arg.type == "NSArg"
+            and fn_arg.entity.entity_types
+            and not intersect(fn_arg.entity.entity_types, opt_and_mult_args)
         ):
             errors.append(
                 ValidationError(
                     type="Assertion",
                     severity="Error",
                     msg=f"Namespace value: {fn_arg.entity.nsval} with entity_types {fn_arg.entity.entity_types} are not allowed for function {fn_arg.parent.name} as an optional or multiple argument",
+                    visual_pairs=[(fn.span.start, fn.span.end)],
+                    index=fn.span.start,
+                )
+            )
+
+        elif fn_arg.type == "NSArg" and fn_arg.entity.entity_types is None:
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Warning",
+                    msg=f"Unknown namespace value {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
                     visual_pairs=[(fn.span.start, fn.span.end)],
                     index=fn.span.start,
                 )

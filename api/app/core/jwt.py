@@ -1,8 +1,9 @@
-import jwt
+# Standard Library
 from datetime import datetime, timedelta
 
+# Third Party
+import jwt
 from bel.Config import config
-
 from loguru import logger
 
 jwt_algorithm = "HS256"
@@ -10,8 +11,8 @@ jwt_algorithm = "HS256"
 
 def jwt_create(userid, payload, expiration=None):
     """Create a JSON Web Token
-        payload: dictionary to be added to JWT
-        expiration:  number of seconds from now to expire token -- defaults to 3600 seconds
+    payload: dictionary to be added to JWT
+    expiration:  number of seconds from now to expire token -- defaults to 3600 seconds
 
     """
 
@@ -38,9 +39,9 @@ def jwt_create(userid, payload, expiration=None):
 
 def jwt_validate(token):
     """Validates JSON Web Token
-        Returns:
-            valid:          boolean - true if valid token
-            token_payload:  dict of token payload
+    Returns:
+        valid:          boolean - true if valid token
+        token_payload:  dict of token payload
     """
     try:
         jwt.decode(token, config["secrets"]["bel_api"]["shared_secret"], algorithm=jwt_algorithm)

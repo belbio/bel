@@ -1,4 +1,4 @@
-# BEL library and API 
+# BEL library and API
 
 TODO:  https://github.com/gigamonkey/monorepoize
 

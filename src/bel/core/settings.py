@@ -13,7 +13,7 @@ from typing import List, Mapping
 * Only UPPER CASED settings will be exposed via show_settings()
 
 Examples
-    SMTP_TLS = 
+    SMTP_TLS =
     _boolean("SMTP_TLS", True)
     _SMTP_PORT = os.getenv("SMTP_PORT")
     if _SMTP_PORT is not None:

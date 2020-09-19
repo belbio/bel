@@ -1,25 +1,25 @@
 # Standard Library
+import copy
 import gzip
 import json
+from collections import defaultdict
 from typing import IO, Mapping, Optional
-import copy
 
-# Third Party Imports
-from arango import ArangoError
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.core.utils
 import bel.db.arangodb as arangodb
+
+# Third Party Imports
+from arango import ArangoError
 from bel.db.arangodb import (
-    resources_db,
     ortholog_edges_name,
     ortholog_nodes_name,
+    resources_db,
     resources_metadata_coll,
 )
-
-from collections import defaultdict
+from loguru import logger
 
 
 def remove_old_db_entries(source, version: str = "", force: bool = False):

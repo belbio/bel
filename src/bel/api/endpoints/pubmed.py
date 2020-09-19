@@ -1,13 +1,12 @@
 """pubmed endpoints"""
 
 # Third Party Imports
-import fastapi
-from loguru import logger
-from fastapi import APIRouter, Depends, Query, HTTPException
-
+# Third Party
 # Local Imports
 import bel.nanopub.pubmed
-
+import fastapi
+from fastapi import APIRouter, Depends, HTTPException, Query
+from loguru import logger
 
 router = APIRouter()
 

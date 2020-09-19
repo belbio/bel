@@ -3,14 +3,14 @@
 # Standard Library
 from typing import List
 
-# Third Party Imports
-import fastapi
-from loguru import logger
-from fastapi import APIRouter, Depends, File, Query, UploadFile
-
+# Third Party
 # Local Imports
 import bel.terms.orthologs
 
+# Third Party Imports
+import fastapi
+from fastapi import APIRouter, Depends, File, Query, UploadFile
+from loguru import logger
 
 router = APIRouter()
 

@@ -1,15 +1,15 @@
 # Standard Library
 import os
 
+# Third Party
+# Local Imports
+import bel.core.settings as settings
+
 # Third Party Imports
 import elasticsearch.helpers
 import yaml
 from elasticsearch import Elasticsearch
-
-# Local Imports
-import bel.core.settings as settings
 from loguru import logger
-
 
 cur_dir_name = os.path.dirname(os.path.realpath(__file__))
 mappings_terms_fn = f"{cur_dir_name}/es_mappings_terms.yml"

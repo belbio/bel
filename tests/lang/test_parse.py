@@ -1,4 +1,5 @@
 # Local Imports
+# Third Party
 import bel.lang.parse
 import pytest
 from bel.lang.ast import BELAst
@@ -13,7 +14,17 @@ def test_ordered_pairs():
     left = [10, 20, 40, 50, 70]
     right = [11, 21, 31, 51, 71, 81, 91, 101]
 
-    correct = [Pair(start=10, end=11), Pair(start=20, end=21), Pair(start=None, end=31), Pair(start=40, end=None), Pair(start=50, end=51), Pair(start=70, end=71), Pair(start=None, end=81), Pair(start=None, end=91), Pair(start=None, end=101),]
+    correct = [
+        Pair(start=10, end=11),
+        Pair(start=20, end=21),
+        Pair(start=None, end=31),
+        Pair(start=40, end=None),
+        Pair(start=50, end=51),
+        Pair(start=70, end=71),
+        Pair(start=None, end=81),
+        Pair(start=None, end=91),
+        Pair(start=None, end=101),
+    ]
 
     result = bel.lang.parse.ordered_pairs(left, right)
 
@@ -24,7 +35,7 @@ def test_ordered_pairs():
 
 def test_matching_quotes():
 
-    assertion_str = 'complex(SCOMP:"Test named\" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)'
+    assertion_str = 'complex(SCOMP:"Test named" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)'
 
     errors = []
     (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
@@ -47,7 +58,7 @@ def test_matching_quotes():
 
 def test_commas():
 
-    assertion_str = 'complex(SCOMP:"Test named\" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)'
+    assertion_str = 'complex(SCOMP:"Test named" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)'
 
     errors = []
 
@@ -61,11 +72,13 @@ def test_commas():
 
 def test_matching_parens():
 
-    assertion_str = 'complex(SCOMP:"Test named\" complex", p(HGNC:"207"!"AKT1 Test"), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) equivalentTo p(hgnc : "here I am" ! X))'
+    assertion_str = 'complex(SCOMP:"Test named" complex", p(HGNC:"207"!"AKT1 Test"), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) equivalentTo p(hgnc : "here I am" ! X))'
 
     errors = []
     (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
-    (matched_parens, errors) = bel.lang.parse.find_matching_parens(assertion_str, matched_quotes, errors)
+    (matched_parens, errors) = bel.lang.parse.find_matching_parens(
+        assertion_str, matched_quotes, errors
+    )
 
     print("Errors", errors)
     print("Quotes", matched_parens)
@@ -80,13 +93,15 @@ def test_matching_parens():
 
 
 def test_relations():
-    
-    assertion_str = 'complex(SCOMP:"Test named\" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) equivalentTo p(hgnc : "here I am" ! X)'
+
+    assertion_str = 'complex(SCOMP:"Test named" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) equivalentTo p(hgnc : "here I am" ! X)'
 
     errors = []
     (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
     version = "latest"
-    (relations, errors) = bel.lang.parse.find_relations(assertion_str, matched_quotes, errors, version)
+    (relations, errors) = bel.lang.parse.find_relations(
+        assertion_str, matched_quotes, errors, version
+    )
 
     print("Relations", relations)
 
@@ -97,17 +112,23 @@ def test_relations():
 
 def test_functions():
 
-    assertion_str = r'complex(p(HGNC:AKT1!"Test label", pmod(X))) increases act(p(HGNC:AKT1), ma(kin))'
+    assertion_str = (
+        r'complex(p(HGNC:AKT1!"Test label", pmod(X))) increases act(p(HGNC:AKT1), ma(kin))'
+    )
 
     errors = []
     (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
-    (matched_parens, errors) = bel.lang.parse.find_matching_parens(assertion_str, matched_quotes, errors)
+    (matched_parens, errors) = bel.lang.parse.find_matching_parens(
+        assertion_str, matched_quotes, errors
+    )
 
     version = "latest"
-    (functions, errors) = bel.lang.parse.find_functions(assertion_str, matched_quotes, matched_parens, errors, version)
+    (functions, errors) = bel.lang.parse.find_functions(
+        assertion_str, matched_quotes, matched_parens, errors, version
+    )
 
     for fn in functions:
-        print('FN', fn, "\n")
+        print("FN", fn, "\n")
 
     assert functions[0].span_str == 'complex(p(HGNC:AKT1!"Test label", pmod(X)))'
     assert functions[0].start == 0
@@ -117,7 +138,6 @@ def test_functions():
     assert functions[5].span_str == "ma(kin)"
     assert functions[3].start == 54
     assert functions[3].end == 80
-
 
 
 def test_find_nsargs():
@@ -133,12 +153,12 @@ def test_find_nsargs():
     assert ns_arg_spans[0].start == 8
     assert ns_arg_spans[0].end == 34
     assert ns_arg_spans[0].span_str == 'SCOMP:"Test named complex"'
-    assert ns_arg_spans[0].type == 'ns_arg'
+    assert ns_arg_spans[0].type == "ns_arg"
 
     assert ns_arg_spans[3].start == 103
     assert ns_arg_spans[3].end == 111
-    assert ns_arg_spans[3].span_str == 'HGNC:EGF'
-    assert ns_arg_spans[3].type == 'ns_arg'
+    assert ns_arg_spans[3].span_str == "HGNC:EGF"
+    assert ns_arg_spans[3].type == "ns_arg"
     assert ns_arg_spans[3].namespace.span_str == "HGNC"
     assert ns_arg_spans[3].label is None
 
@@ -150,13 +170,19 @@ def test_find_strings():
     # assertion_str = "  stuff  "
 
     assertion_str = 'complex(SCOMP:"Test named complex", p(HGNC:"207"!"AKT1 Test"), p(HGNC:207!"Test"), loc(nucleus)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X) decreases stuff here '
-    
+
     errors = []
     (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
-    (matched_parens, errors) = bel.lang.parse.find_matching_parens(assertion_str, matched_quotes, errors)
+    (matched_parens, errors) = bel.lang.parse.find_matching_parens(
+        assertion_str, matched_quotes, errors
+    )
     (commas, errors) = bel.lang.parse.find_commas(assertion_str, matched_quotes, errors)
-    (relations, errors) = bel.lang.parse.find_relations(assertion_str, matched_quotes, errors, version)
-    (functions, errors) = bel.lang.parse.find_functions(assertion_str, matched_quotes, matched_parens, errors, version)
+    (relations, errors) = bel.lang.parse.find_relations(
+        assertion_str, matched_quotes, errors, version
+    )
+    (functions, errors) = bel.lang.parse.find_functions(
+        assertion_str, matched_quotes, matched_parens, errors, version
+    )
     nsargs = bel.lang.parse.find_nsargs(assertion_str)
 
     components = relations + functions + nsargs

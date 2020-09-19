@@ -2,12 +2,13 @@
 import copy
 from typing import Any, List, Mapping
 
-# Third Party Imports
-import yaml
-
+# Third Party
 # Local Imports
 import bel.belspec.crud
 import cachetools
+
+# Third Party Imports
+import yaml
 from bel.core.utils import http_client
 
 additional_computed_relations = [
@@ -77,6 +78,7 @@ def _dump_belspec(belspec):
     use cold folding on the YAML version of the spec dictionary.
     """
 
+    # Third Party
     import yaml
 
     with open("spec.yaml", "w") as f:

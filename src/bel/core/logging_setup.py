@@ -1,6 +1,9 @@
 # Local Imports
-from loguru import logger
+# Standard Library
 import sys
+
+# Third Party
+from loguru import logger
 
 logger.add(
     sys.stderr,
@@ -21,7 +24,7 @@ logger.add(
 # # Third Party Imports
 # from loguru import logger
 # from loguru import logger._frames
-# from 
+# from
 #  import jsonlogger
 
 # # Local Imports

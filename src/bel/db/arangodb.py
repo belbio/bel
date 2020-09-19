@@ -3,18 +3,18 @@ import re
 from dataclasses import dataclass
 from typing import List, Mapping, Optional
 
+# Third Party
 # Third Party Imports
 import arango
 import arango.client
 import arango.database
 import arango.exceptions
-import boltons.iterutils
-from loguru import logger
 
 # Local Imports
 import bel.core.settings as settings
+import boltons.iterutils
 from bel.core.utils import _create_hash
-
+from loguru import logger
 
 resources_db_name = settings.RESOURCES_DB  # BEL Resources (Namespaces, etc)
 bel_db_name = settings.BEL_DB  # Misc BEL
@@ -40,7 +40,10 @@ def get_user_credentials(username, password):
     Use provided username and password OR in config OR blank in that order
     """
     username = boltons.iterutils.first([username, settings.ARANGO_USER], default="")
-    password = boltons.iterutils.first([password, settings.ARANGO_PASSWORD], default="",)
+    password = boltons.iterutils.first(
+        [password, settings.ARANGO_PASSWORD],
+        default="",
+    )
 
     return username, password
 
@@ -149,6 +152,7 @@ def update_index_state(collection, desired_indexes: List[IndexDefinition]):
 
 
 # Index mgmt ##################################################################################
+
 
 def get_resources_handles(client, username=None, password=None):
     """Get BEL Resources arangodb handle"""
@@ -299,9 +303,7 @@ bel_validations_coll = bel_handles["bel_validations_coll"]
 
 
 def delete_database(client, db_name, username=None, password=None):
-    """Delete Arangodb database
-
-    """
+    """Delete Arangodb database"""
 
     (username, password) = get_user_credentials(username, password)
 
@@ -387,7 +389,7 @@ def arango_id_to_key(_id):
 
 def aql_query(db, query, batch_size=20, ttl=300):
     """Run AQL query
-    
+
     Default batch_size = 20
     Default time to live for the query is 300
 

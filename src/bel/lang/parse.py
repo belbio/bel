@@ -8,18 +8,19 @@ import json
 import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
-# Third Party Imports
-import boltons.iterutils
-from loguru import logger
-from pydantic import BaseModel, Field
-
+# Third Party
 # Local Imports
 import bel.belspec.specifications
+
+# Third Party Imports
+import boltons.iterutils
 import cachetools
 from bel.belspec.specifications import additional_computed_relations
-from bel.core.utils import nsarg_pattern, html_wrap_span
+from bel.core.utils import html_wrap_span, nsarg_pattern
 from bel.lang.ast import Arg, BELAst, Function, NSArg, Relation, StrArg
-from bel.schemas.bel import ValidationError, FunctionSpan, NsArgSpan, Pair, Span
+from bel.schemas.bel import FunctionSpan, NsArgSpan, Pair, Span, ValidationError
+from loguru import logger
+from pydantic import BaseModel, Field
 
 
 def mask(string: str, start: int, end: int, replacement_char="#"):
