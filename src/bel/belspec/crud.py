@@ -2,16 +2,15 @@
 from typing import Mapping
 
 # Third Party Imports
+import cachetools
+import semver
 from loguru import logger
 
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb as arangodb
-import cachetools
-import semver
 from bel.belspec.enhance import create_ebnf_parser, create_enhanced_specification
 from bel.schemas.belspec import BelSpec, BelSpecVersions
-
 
 # ArangoDB handles
 bel_db = arangodb.bel_db
@@ -64,14 +63,14 @@ def max_semantic_version(version_strings) -> str:
 
 def update_belspec_versions():
     """Update BEL Spec versions record
-    
+
     And adding the latest version
     """
 
     query = f"""
     FOR doc IN {bel_config_name}
         FILTER doc.doc_type == "belspec"
-        RETURN doc.orig_belspec.version  
+        RETURN doc.orig_belspec.version
     """
 
     version_strings = sorted(list(bel_db.aql.execute(query)), reverse=True)
@@ -137,7 +136,7 @@ def get_best_match(query_str, belspec_versions: BelSpecVersions):
             if matches < 1:
                 match = version
             matches = 1
-            
+
     if not match:
         return belspec_versions["latest"]
 

@@ -12,9 +12,9 @@ import bel.core.settings as settings
 import bel.core.utils
 import bel.db.arangodb as arangodb
 from bel.db.arangodb import (
-    resources_db,
     ortholog_edges_name,
     ortholog_nodes_name,
+    resources_db,
     resources_metadata_coll,
 )
 
@@ -41,9 +41,7 @@ def load_orthologs(fo: IO, metadata: dict):
 
     arangodb.batch_load_docs(resources_db, orthologs_iterator(fo, version), on_duplicate="update")
 
-    logger.info(
-        "Load orthologs", source=source,
-    )
+    logger.info("Load orthologs", source=source)
 
     # Clean up old entries
     remove_old_ortholog_edges = f"""

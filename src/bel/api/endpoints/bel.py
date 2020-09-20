@@ -6,9 +6,9 @@ from typing import List, Optional
 # Third Party Imports
 import fastapi
 from fastapi import APIRouter, Depends, Query
+from loguru import logger
 
 # Local Imports
-from loguru import logger
 import bel.belspec.crud
 
 router = APIRouter()

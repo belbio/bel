@@ -7,12 +7,12 @@ Usage: $ {1: program}.py
 
 # Local Imports
 import bel.core.settings as settings
+
 settings.ELASTICSEARCH_URL = "http://thor:9200"
 import bel.resources.resource  # isort:skip
 
 settings.TERMS_INDEX = "terms2"
 settings.ARANGO_URL = "http://thor:8529"
-
 
 
 def db_setup():
@@ -42,9 +42,7 @@ def main():
         "inchikey",
     ]
 
-    orthologs = [
-           "eg_hmrz"
-    ]
+    orthologs = ["eg_hmrz"]
 
     for namespace in namespaces:
         fn = f"/Users/william/belres/namespaces/{namespace}.jsonl.gz"

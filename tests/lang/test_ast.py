@@ -104,7 +104,9 @@ def test_validate_missing_namespace():
 
     print("Errors", ast.errors)
 
-    assert ast.errors == [('WARNING', "Unknown namespace 'missing' at position 0 for function proteinAbundance")]
+    assert ast.errors == [
+        ("WARNING", "Unknown namespace 'missing' at position 0 for function proteinAbundance")
+    ]
 
 
 def test_validate_empty_function():
@@ -167,8 +169,19 @@ def test_validate_deg_function():
     "test_input,expected",
     [
         ("p(HGNC:HRAS, pmod(Ac))", []),
-        ("p(HGNC:HRAS, pmod(Ac, , 473))", [('ERROR', "String Argument 473 not found in ['AminoAcid'] default BEL namespaces")]),
-        ("p(HGNC:HRAS, pmod(,,473))", [('ERROR', "String Argument 473 not found in ['ProteinModification'] default BEL namespaces")]),
+        (
+            "p(HGNC:HRAS, pmod(Ac, , 473))",
+            [("ERROR", "String Argument 473 not found in ['AminoAcid'] default BEL namespaces")],
+        ),
+        (
+            "p(HGNC:HRAS, pmod(,,473))",
+            [
+                (
+                    "ERROR",
+                    "String Argument 473 not found in ['ProteinModification'] default BEL namespaces",
+                )
+            ],
+        ),
         ("p(HGNC:HRAS, pmod(Ac, S, 473))", []),
         ("p(HGNC:HRAS, pmod(Ac, Ser, 473))", []),
     ],
@@ -199,15 +212,15 @@ def test_validate_pmod_function(test_input, expected):
         ("complex(p(HGNC:IL12B), p(HGNC:IL12A))", "complex(p(EG:3592), p(EG:3593))"),
         (
             'complex(loc(GO:"extracellular space"), p(HGNC:IL12A), p(EG:207), p(HGNC:IL12B))',
-            'complex(p(EG:207), p(EG:3592), p(EG:3593), loc(GO:0005615))',
+            "complex(p(EG:207), p(EG:3592), p(EG:3593), loc(GO:0005615))",
         ),
         (
             'complex(p(HGNC:MTOR), a(CHEBI:"phosphatidic acid"), a(CHEBI:sirolimus))',
-            'complex(a(CHEBI:16337), a(CHEBI:9168), p(EG:2475))',
+            "complex(a(CHEBI:16337), a(CHEBI:9168), p(EG:2475))",
         ),
         (
             'rxn(reactants(a(CHEBI:hypoxanthine), a(CHEBI:water), a(CHEBI:dioxygen)), products(a(CHEBI:xanthine), a(CHEBI:"hydrogen peroxide"))',
-            'rxn(reactants(a(CHEBI:15377), a(CHEBI:15379), a(CHEBI:17368)), products(a(CHEBI:15318), a(CHEBI:16240)))',
+            "rxn(reactants(a(CHEBI:15377), a(CHEBI:15379), a(CHEBI:17368)), products(a(CHEBI:15318), a(CHEBI:16240)))",
         ),
         (
             "p(HGNC:MAPK1, pmod(Ph, Thr, 185), pmod(Ph, Tyr, 187), pmod(Ph))",
@@ -229,7 +242,7 @@ def test_validate_pmod_function(test_input, expected):
 )
 def test_ast_canonicalization(test_input, expected):
     """Test AST canonicalization and sorting function arguments
-    
+
     See issue: https://github.com/belbio/bel/issues/13
     """
 

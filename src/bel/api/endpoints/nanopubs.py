@@ -4,13 +4,12 @@ from typing import List
 
 # Third Party Imports
 import fastapi
-from loguru import logger
 from fastapi import APIRouter, Depends, HTTPException
+from loguru import logger
 
 # Local Imports
 import bel.nanopub.validate
 from bel.schemas.nanopubs import NanopubR
-
 
 router = APIRouter()
 
@@ -20,12 +19,12 @@ def nanopub_validation(
     nanopub: NanopubR, validation_level: str = "complete", error_level: str = "warning"
 ):
     """Validate Nanopub
-    
+
     Validation caches the BEL Assertion and Annnotation validations to speed up overall validation
-    
+
     validation_level:   complete - fill in any missing assertion/annotation validations
                         force - redo all validations
-                        cached - only return cached/pre-generated validations 
+                        cached - only return cached/pre-generated validations
 
     error_level:    warning - warning and errors to be reported
                     error - only errors to be reported

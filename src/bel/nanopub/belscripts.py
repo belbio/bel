@@ -23,9 +23,8 @@ import re
 import sys
 
 # Third Party Imports
-from loguru import logger
 import yaml
-
+from loguru import logger
 
 # citation fields are document type, a document name, a document reference ID, and an optional publication date, authors list and comment field
 

@@ -5,17 +5,17 @@ import os
 import elasticsearch.helpers
 import yaml
 from elasticsearch import Elasticsearch
+from loguru import logger
 
 # Local Imports
 import bel.core.settings as settings
-from loguru import logger
-
 
 cur_dir_name = os.path.dirname(os.path.realpath(__file__))
 mappings_terms_fn = f"{cur_dir_name}/es_mappings_terms.yml"
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], send_get_body_as="POST")
 logger.info(f"Elasticsearch URL: {settings.ELASTICSEARCH_URL}")
+
 
 def get_all_index_names():
     """Get all index names"""

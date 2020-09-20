@@ -1,23 +1,21 @@
 """Various utilities used throughout the BEL package"""
 
 # Standard Library
+import asyncio
 import collections
 import datetime
 import functools
 import json
 import re
 import tempfile
+from functools import partial, wraps
 from timeit import default_timer
 from typing import Any, Mapping
-from functools import wraps, partial
-import asyncio
 
 # Third Party Imports
-import ulid
-
-# Local Imports
 import dateutil
 import httpx
+import ulid
 from cityhash import CityHash64
 from loguru import logger
 
@@ -39,7 +37,7 @@ nsarg_pattern = re.compile(
         (?P<label>".*?"|\w+)?  # optional label
     )
     [\,\)]?                    # stop match
-    
+
 """,
     re.VERBOSE,
 )
@@ -202,4 +200,5 @@ def asyncify(func):
             loop = asyncio.get_event_loop()
         pfunc = partial(func, *args, **kwargs)
         return await loop.run_in_executor(executor, pfunc)
+
     return run

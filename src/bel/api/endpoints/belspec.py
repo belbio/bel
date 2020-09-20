@@ -2,9 +2,9 @@
 
 # Third Party Imports
 import fastapi
-from loguru import logger
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
+from loguru import logger
 
 # Local Imports
 import bel.belspec.crud
@@ -22,14 +22,14 @@ def get_belspec_version(
     ),
 ):
     """Get BEL Specification
-    
+
     This will intelligently select the best version available from the loaded BEL Specifications
     based on semantic version major.minor.patch matches.
 
     Examples:
         Given available versions of [2.0.10, 2.2.3]
-        
-        Requested version of 2.0.0 results in 2.0.10 
+
+        Requested version of 2.0.0 results in 2.0.10
         Requested version of 2.2.10 or 2.4.0 results in 2.2.3
     """
 
@@ -68,13 +68,13 @@ def get_enhanced_belspec(
 @router.get("/belspec/ebnf", response_class=PlainTextResponse)
 def get_ebnf(version: str = "latest"):
     """Get EBNF BEL Grammar file
-    
-    WARNING: This is not known to be actively used and is therefore not thoroughly tested/validated. 
+
+    WARNING: This is not known to be actively used and is therefore not thoroughly tested/validated.
              We are always happy to accept Pull Requests to improve the EBNF generated from BEL Specifications.
 
     EBNF stands for Extended Backus-Naur Form and is used to describe the grammar for BEL to aid in creating parsers.
-    
-    The BEL.bio BEL library and API depends on a custom character-based parser to allow maximum flexibility in parsing 
+
+    The BEL.bio BEL library and API depends on a custom character-based parser to allow maximum flexibility in parsing
     and parsing error reporting/feedback to the library users.
     """
 

@@ -16,7 +16,6 @@ import bel.terms.terms
 from bel.lang.ast import BELAst
 from bel.schemas.bel import AssertionStr, Key
 
-
 sys.path.append("../")
 
 """BEL object
@@ -126,7 +125,6 @@ class BEL(object):
 
         return self
 
-
     def to_string(self, fmt: str = "medium") -> str:
         """Convert AST object to string
 
@@ -179,7 +177,7 @@ class BEL(object):
         import textwrap
 
         s = f"""
-            BEL Object dump: 
+            BEL Object dump:
                 version: {self.version}
                 assertion: {self.assertion.entire}
                 species: {self.ast.species}

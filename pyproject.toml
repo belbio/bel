@@ -78,7 +78,7 @@ line_length=100
 import_heading_stdlib="Standard Library"
 import_heading_thirdparty="Third Party Imports"
 import_heading_firstparty="Local Imports"
-known_third_party = ["arango", "boltons", "dramatiq", "elasticapm", "elasticsearch", "fastapi", "loguru", "pydantic", "pythonjsonlogger", "redis", "requests", "sentry_sdk", "starlette", "starlette_prometheus", "structlog", "tenacity", "ulid", "urllib3", "xxhash", "yaml"]
+known_third_party = ["arango", "boltons", "cachetools", "cityhash", "click", "core", "dateutil", "elasticsearch", "fastapi", "httpx", "jwt", "loguru", "lxml", "pydantic", "redis", "semver", "starlette", "starlette_prometheus", "typer", "ulid", "yaml"]
 
 [tool.coverage.run]
 source = ["bel"]

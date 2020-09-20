@@ -3,6 +3,7 @@ import gzip
 from typing import Any, Iterable, List, Mapping, Optional, Tuple
 
 # Third Party Imports
+from cityhash import CityHash64
 from loguru import logger
 
 # Local Imports
@@ -10,7 +11,6 @@ import bel.core.settings as settings
 import bel.lang.belobj
 from bel.core.utils import http_client
 from bel.schemas.nanopubs import Nanopub
-from cityhash import CityHash64
 
 
 # Following is used in nanopub-tools codebase

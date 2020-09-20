@@ -28,7 +28,7 @@ def get_term_completions(
     completion_str: str = Query(..., description="String to use for completion"),
     size: int = Query(21, description="Number of completions to return"),
     entity_types: str = Query(
-        "", description="Entity types for completion request, concatenated using a comma",
+        "", description="Entity types for completion request, concatenated using a comma"
     ),
     annotation_types: str = Query(
         "",
@@ -110,7 +110,7 @@ def import_terms(
     email: str = Query("", description="Notification email"), terms_file: UploadFile = File(...)
 ):
     """Import terms
-    
+
     Add an email if you would like to be notified when the terms upload is completed.
     """
 

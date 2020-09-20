@@ -1,9 +1,12 @@
-import jwt
+# Standard Library
 from datetime import datetime, timedelta
 
-from bel.Config import config
-
+# Third Party Imports
+import jwt
 from loguru import logger
+
+# Local Imports
+from bel.Config import config
 
 jwt_algorithm = "HS256"
 
@@ -20,11 +23,7 @@ def jwt_create(userid, payload, expiration=None):
     else:
         exp = datetime.utcnow() + timedelta(seconds=3600)
 
-    additional_payload = {
-        "sub": userid,
-        "exp": exp,
-        "iat": datetime.utcnow(),
-    }
+    additional_payload = {"sub": userid, "exp": exp, "iat": datetime.utcnow()}
 
     logger.debug("UserId: ", userid, " Payload: ", payload)
 

@@ -5,12 +5,11 @@ from typing import List
 
 # Third Party Imports
 import fastapi
-from loguru import logger
 from fastapi import APIRouter, Depends, File, Query, UploadFile
+from loguru import logger
 
 # Local Imports
 import bel.terms.orthologs
-
 
 router = APIRouter()
 
@@ -31,7 +30,7 @@ def import_orthologs(
     email: str = Query("", description="Notification email"), orthologs_file: UploadFile = File(...)
 ):
     """Import orthologs
-    
+
     Add an email if you would like to be notified when the ortholog upload is completed.
     """
 

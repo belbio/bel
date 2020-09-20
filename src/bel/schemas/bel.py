@@ -6,6 +6,7 @@ import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party Imports
+from loguru import logger
 from pydantic import BaseModel, Field, root_validator
 
 # Local Imports
@@ -17,7 +18,6 @@ from bel.core.utils import namespace_quoting, split_key_label
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.constants import AnnotationTypesEnum, EntityTypesEnum
 from bel.schemas.terms import Term
-from loguru import logger
 
 Key = str  # Type alias for NsVal Key values
 NamespacePattern = r"[\w\.]+"  # Regex for Entity Namespace
@@ -41,8 +41,8 @@ class SpanTypesEnum(str, enum.Enum):
 
 class Span(BaseModel):
     """Used for collecting string spans
-    
-    The spans are collect by the index of the first char of the span and the non-inclusive 
+
+    The spans are collect by the index of the first char of the span and the non-inclusive
     end of the last span character.
 
     For example:
@@ -52,9 +52,7 @@ class Span(BaseModel):
     """
 
     start: int = Field(..., title="Span Start")
-    end: int = Field(
-        ..., title="Span End",
-    )
+    end: int = Field(..., title="Span End")
 
     span_str: str = ""
 
@@ -82,9 +80,7 @@ class Pair(BaseModel):
     """
 
     start: Union[int, None] = Field(..., description="index of first in paired chars")
-    end: Union[int, None] = Field(
-        ..., description="Index of second of paired chars",
-    )
+    end: Union[int, None] = Field(..., description="Index of second of paired chars")
 
 
 class ErrorLevelEnum(str, enum.Enum):
@@ -128,9 +124,7 @@ class AssertionStr(BaseModel):
 class NsVal(object):
     """Namespaced value"""
 
-    def __init__(
-        self, key_label: str = "", namespace: str = "", id: str = "", label: str = "",
-    ):
+    def __init__(self, key_label: str = "", namespace: str = "", id: str = "", label: str = ""):
         """Preferentially use key_label to extract namespace:id!Optional[label]"""
 
         if key_label:
@@ -190,7 +184,7 @@ class BelEntity(object):
 
     def __init__(self, term_key: Key = "", nsval: Optional[NsVal] = None):
         """Create BelEntity via a term_key or a NsVal object
-        
+
         You cannot provide a term_key_label string (e.g. NS:ID:LABEL) as a term_key
         """
 
@@ -216,7 +210,7 @@ class BelEntity(object):
                 self.species_key = self.term.species_key
 
             self.nsval: NsVal = NsVal(
-                namespace=self.term.namespace, id=self.term.id, label=self.term.label,
+                namespace=self.term.namespace, id=self.term.id, label=self.term.label
             )
             self.original_nsval = self.nsval
         elif nsval:
@@ -319,8 +313,8 @@ class BelEntity(object):
         decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
     ):
         """Canonicalize BEL Entity
-        
-        Must set both targets if not using defaults as the underlying normalization handles 
+
+        Must set both targets if not using defaults as the underlying normalization handles
         both canonical and decanonical forms in the same query
         """
 
@@ -342,8 +336,8 @@ class BelEntity(object):
         decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
     ):
         """Decanonicalize BEL Entity
-        
-        Must set both targets if not using defaults as the underlying normalization handles 
+
+        Must set both targets if not using defaults as the underlying normalization handles
         both canonical and decanonical forms in the same query
         """
 
@@ -392,9 +386,7 @@ class BelEntity(object):
 
         return self
 
-    def orthologize(
-        self, species_key: Key,
-    ):
+    def orthologize(self, species_key: Key):
         """Orthologize BEL entity - results in canonical form"""
 
         self.add_entity_types()
@@ -424,7 +416,7 @@ class BelEntity(object):
 
         return self
 
-    def orthologizable(self, species_key: Key,) -> bool:
+    def orthologizable(self, species_key: Key) -> bool:
         """Is this BEL Entity/NSArg orthologizable?"""
 
         self.add_entity_types()

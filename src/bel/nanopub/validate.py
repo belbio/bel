@@ -13,8 +13,8 @@ import bel.lang.belobj
 from bel.belspec.crud import get_latest_version
 from bel.db.arangodb import bel_db, bel_validations_coll, bel_validations_name
 from bel.db.elasticsearch import es
-from bel.schemas.nanopubs import NanopubR
 from bel.schemas.bel import AssertionStr
+from bel.schemas.nanopubs import NanopubR
 
 
 def convert_msg_to_html(msg: str):

@@ -9,7 +9,7 @@ import pytest
 root_dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-sys.path.remove('/Users/william/studio/dev/bel2')
+sys.path.remove("/Users/william/studio/dev/bel2")
 print("Here", sys.path)
 
 # Setup environment

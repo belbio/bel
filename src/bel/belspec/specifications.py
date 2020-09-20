@@ -3,11 +3,11 @@ import copy
 from typing import Any, List, Mapping
 
 # Third Party Imports
+import cachetools
 import yaml
 
 # Local Imports
 import bel.belspec.crud
-import cachetools
 from bel.core.utils import http_client
 
 additional_computed_relations = [

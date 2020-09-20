@@ -12,6 +12,7 @@ from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party Imports
 import yaml
+from loguru import logger
 from pydantic import BaseModel, Field
 
 # Local Imports
@@ -33,7 +34,6 @@ from bel.schemas.bel import (
     Span,
 )
 from bel.schemas.constants import strarg_validation_lists
-from loguru import logger
 
 
 #########################
@@ -42,9 +42,7 @@ from loguru import logger
 class String(object):
     """Used for unknown strings"""
 
-    def __init__(
-        self, value: str, span: Span = None,
-    ):
+    def __init__(self, value: str, span: Span = None):
 
         self.value = value
         self.span = span
@@ -69,9 +67,7 @@ class String(object):
 # Relation object #
 ###################
 class Relation(object):
-    def __init__(
-        self, name, version: str = "latest", span: Span = None,
-    ):
+    def __init__(self, name, version: str = "latest", span: Span = None):
 
         self.version = version
         self.belspec = get_enhanced_belspec(self.version)
@@ -164,15 +160,14 @@ class Function(object):
     ):
         if isinstance(self, NSArg):
             self.canonicalize(
-                canonical_targets=canonical_targets, decanonical_targets=decanonical_targets,
+                canonical_targets=canonical_targets, decanonical_targets=decanonical_targets
             )
 
         elif hasattr(self, "args"):
             for arg in self.args:
                 if isinstance(self, (NSArg, Function)):
                     arg.canonicalize(
-                        canonical_targets=canonical_targets,
-                        decanonical_targets=decanonical_targets,
+                        canonical_targets=canonical_targets, decanonical_targets=decanonical_targets
                     )
 
         sort_function_args(self)
@@ -186,22 +181,21 @@ class Function(object):
     ):
         if isinstance(self, NSArg):
             self.decanonicalize(
-                canonical_targets=canonical_targets, decanonical_targets=decanonical_targets,
+                canonical_targets=canonical_targets, decanonical_targets=decanonical_targets
             )
 
         elif hasattr(self, "args"):
             for arg in self.args:
                 if isinstance(self, (NSArg, Function)):
                     arg.decanonicalize(
-                        canonical_targets=canonical_targets,
-                        decanonical_targets=decanonical_targets,
+                        canonical_targets=canonical_targets, decanonical_targets=decanonical_targets
                     )
 
         return self
 
     def orthologize(self, species_key):
         """Orthologize Assertion
-        
+
         Check if fully orthologizable() before orthologizing, otherwise
         you may get a partially orthologized Assertion
         """
@@ -217,7 +211,7 @@ class Function(object):
 
     def orthologizable(self, species_key: Key) -> Optional[bool]:
         """Is this Assertion fully orthologizable?
-        
+
         Is it possible to orthologize every gene/protein/RNA NSArg to the target species?
         """
 
@@ -462,7 +456,7 @@ class StrArg(Arg):
 
 class ParseInfo:
     """BEL Assertion Parse Information
-    
+
     Matching quotes need to be gathered first
     """
 
@@ -680,8 +674,8 @@ class BELAst(object):
         decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
     ):
         """Canonicalize BEL Assertion
-        
-        Must set both targets if not using defaults as the underlying normalization handles 
+
+        Must set both targets if not using defaults as the underlying normalization handles
         both canonical and decanonical forms in the same query
         """
 
@@ -708,8 +702,8 @@ class BELAst(object):
         decanonical_targets: Mapping[str, List[str]] = settings.BEL_DECANONICALIZE,
     ):
         """Decanonicalize BEL Assertion
-        
-        Must set both targets if not using defaults as the underlying normalization handles 
+
+        Must set both targets if not using defaults as the underlying normalization handles
         both canonical and decanonical forms in the same query
         """
 
@@ -745,8 +739,8 @@ class BELAst(object):
 
     def orthologizable(self, species_key: Key):
         """Is this Assertion fully orthologizable?
-        
-        This method will detect if the orthologization will result 
+
+        This method will detect if the orthologization will result
         in a partially orthologized Assertion.
         """
 
@@ -828,11 +822,7 @@ class BELAst(object):
             relation = self.relation.to_string(fmt=fmt)
             object_ = self.object.to_string(fmt=fmt)
 
-            return {
-                "subject": subject,
-                "relation": relation,
-                "object": object_,
-            }
+            return {"subject": subject, "relation": relation, "object": object_}
 
         elif self.subject:
             return {"subject": self.subject.to_string(fmt=fmt)}
@@ -847,7 +837,7 @@ class BELAst(object):
 
     def to_dict(self):
         """Convert to dict"""
-        
+
         return {
             "assertion": self.assertion,
             # "subject": self.subject.to_string(),
@@ -858,7 +848,6 @@ class BELAst(object):
             "version": self.version,
             "parse_info": str(self.parse_info),
         }
-
 
     def print_tree(self):
         """Convert BEL AST args to tree view of BEL AST
@@ -970,7 +959,7 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
 
             # Arg type mis-match
             if position > fn_max_args:
-                errors.append(("ERROR", f"Missing required argument - type: {argument['type']}",))
+                errors.append(("ERROR", f"Missing required argument - type: {argument['type']}"))
 
             elif fn.args[position] and fn.args[position].type not in argument["type"]:
                 errors.append(
@@ -1027,7 +1016,7 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
     problem_opt_args = list(problem_opt_args)
     if len(problem_opt_args) > 0:
         errors.append(
-            ("ERROR", f"Can only have at most one {problem_opt_args} in function arguments",)
+            ("ERROR", f"Can only have at most one {problem_opt_args} in function arguments")
         )
 
     # Third pass - non-positional (primary/modifier) args that don't show up in opt_args or mult_args
@@ -1045,7 +1034,7 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
 
     problem_args = list(problem_args)
     if len(problem_args) > 0:
-        errors.append(("ERROR", f"Not allowed as optional or multiple arguments {problem_args}",))
+        errors.append(("ERROR", f"Not allowed as optional or multiple arguments {problem_args}"))
 
     # Fourth pass - positional NSArg entity_types checks
     for argument in signature["arguments"]:
@@ -1103,7 +1092,7 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
         and fn.parent
         and fn.parent.name not in fn.function_signature["primary_function"]
     ):
-        errors.append(("ERROR", f"Missing parent or wrong parent function for {fn.name}",))
+        errors.append(("ERROR", f"Missing parent or wrong parent function for {fn.name}"))
 
     return errors
 
@@ -1147,7 +1136,9 @@ def sort_function_args(fn: Function):
                     post_positional = position + 1
 
     # non-positional elements
-    primary_func_index = post_positional + 1  # Sort primary functions after non-function post-positional
+    primary_func_index = (
+        post_positional + 1
+    )  # Sort primary functions after non-function post-positional
     modifier_func_index = post_positional + 2  # Sort modifier functions after
     for fn_arg in fn.args[post_positional:]:
         if fn_arg.type == "StrArg":

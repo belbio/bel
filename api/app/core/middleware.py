@@ -2,7 +2,7 @@
 import re
 import time
 
-# Local Imports
+# Third Party Imports
 from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 

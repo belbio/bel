@@ -10,7 +10,6 @@
 import copy
 import gzip
 import json
-from loguru import logger
 import re
 import sys
 from typing import Any, Iterable, List, Mapping, Tuple
@@ -18,6 +17,7 @@ from typing import Any, Iterable, List, Mapping, Tuple
 # Third Party Imports
 import click
 import yaml
+from loguru import logger
 
 
 def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:

@@ -15,7 +15,6 @@ from loguru import logger
 import bel.core.settings as settings
 from bel.core.utils import _create_hash
 
-
 resources_db_name = settings.RESOURCES_DB  # BEL Resources (Namespaces, etc)
 bel_db_name = settings.BEL_DB  # Misc BEL
 
@@ -40,7 +39,7 @@ def get_user_credentials(username, password):
     Use provided username and password OR in config OR blank in that order
     """
     username = boltons.iterutils.first([username, settings.ARANGO_USER], default="")
-    password = boltons.iterutils.first([password, settings.ARANGO_PASSWORD], default="",)
+    password = boltons.iterutils.first([password, settings.ARANGO_PASSWORD], default="")
 
     return username, password
 
@@ -149,6 +148,7 @@ def update_index_state(collection, desired_indexes: List[IndexDefinition]):
 
 
 # Index mgmt ##################################################################################
+
 
 def get_resources_handles(client, username=None, password=None):
     """Get BEL Resources arangodb handle"""
@@ -387,7 +387,7 @@ def arango_id_to_key(_id):
 
 def aql_query(db, query, batch_size=20, ttl=300):
     """Run AQL query
-    
+
     Default batch_size = 20
     Default time to live for the query is 300
 

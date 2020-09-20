@@ -9,23 +9,22 @@ or enhancing BEL Nanopubs
 """
 
 # Standard Library
+import asyncio
 import copy
 import datetime
 import re
 from typing import Any, Mapping, MutableMapping
-import asyncio
 
 # Third Party Imports
-from loguru import logger
 import cachetools
 import httpx
+from loguru import logger
+from lxml import etree
 
 # Local Imports
 import bel.core.settings as settings
-from bel.core.utils import http_client, url_path_param_quoting
-from lxml import etree
 import bel.terms.terms
-
+from bel.core.utils import http_client, url_path_param_quoting
 
 # Replace PMID
 PUBMED_TMPL = (
@@ -338,7 +337,7 @@ def get_normalized_terms_for_annotations(term_keys):
 
 def add_annotations(pubmed):
     """Add nanopub annotations to pubmed doc
-    
+
     Enhance MESH terms etc as full-fledged nanopub annotations for use by the BEL Nanopub editor
     """
 
@@ -366,7 +365,7 @@ def add_annotations(pubmed):
                 "annotation_types": annotation["annotation_types"],
             }
         )
-        
+
     return pubmed
 
 

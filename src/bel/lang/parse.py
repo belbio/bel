@@ -10,12 +10,12 @@ from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party Imports
 import boltons.iterutils
+import cachetools
 from loguru import logger
 from pydantic import BaseModel, Field
 
 # Local Imports
 import bel.belspec.specifications
-import cachetools
 from bel.belspec.specifications import additional_computed_relations
 from bel.core.utils import nsarg_pattern
 from bel.lang.ast import Arg, BELAst, Function, NSArg, Relation, StrArg
@@ -316,7 +316,7 @@ def find_functions(
 
 def find_nsargs(assertion_str: str) -> List[Optional[NsArgSpan]]:
     """Namespace argument parsing
-    
+
     Namespace IDs and Labels are NOT allowed to have internal double quotes.
 
     IDs or Labels with commas or end parenthesis in them must be quoted.

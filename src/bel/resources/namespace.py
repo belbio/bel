@@ -6,13 +6,13 @@ import time
 from typing import IO
 
 # Third Party Imports
+import cachetools
 from arango import ArangoError
 from loguru import logger
 
 # Local Imports
 import bel.core.settings as settings
 import bel.db.elasticsearch as elasticsearch
-import cachetools
 from bel.db.arangodb import (
     arango_id_to_key,
     batch_load_docs,
@@ -25,7 +25,6 @@ from bel.db.arangodb import (
 )
 from bel.db.elasticsearch import es
 from bel.schemas.terms import Namespace
-
 
 # key = ns:id
 # main_key = preferred key, e.g. ns:<primary_id> not the alt_key or obsolete key or even an equivalence key which could be an alt_key
@@ -75,7 +74,7 @@ def load_terms(f: IO, metadata: dict, force: bool):
     Args:
         fp: file path - terminology file
         metadata: dict containing the metadata for terminology
-        force:  force full update - e.g. remove and re-add elasticsearch index 
+        force:  force full update - e.g. remove and re-add elasticsearch index
                 and delete arangodb namespace records before loading
     """
 
@@ -119,9 +118,7 @@ def load_terms(f: IO, metadata: dict, force: bool):
     # Uses update on duplicate to allow primary on equivalence_nodes to not be overwritten
     batch_load_docs(resources_db, terms_iterator_for_arangodb(f, version), on_duplicate="update")
 
-    logger.info(
-        f"Loaded {namespace} terms and equivalences", namespace=namespace,
-    )
+    logger.info(f"Loaded {namespace} terms and equivalences", namespace=namespace)
 
     if not force:
         remove_old_db_entries(namespace, version)

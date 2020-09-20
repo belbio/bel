@@ -9,9 +9,9 @@ from loguru import logger
 
 # Local Imports
 import bel.terms.terms
+from bel.belspec.crud import get_enhanced_belspec
 from bel.core.utils import http_client, url_path_param_quoting
 from bel.lang.ast import BELAst, Function, NSArg, StrArg
-from bel.belspec.crud import get_enhanced_belspec
 
 
 def validate(bo, error_level: str = "WARNING") -> Tuple[bool, List[Tuple[str, str]]]:
@@ -217,10 +217,7 @@ def check_function_args(args, signatures, function_name):
         for arg_idx, arg in enumerate(args):
             logger.debug(f"Arg type {arg.type}")
             for sig_idx, sig_arg in enumerate(signatures[matched_signature_idx]["arguments"]):
-                if arg.type == "Function" or sig_arg["type"] in [
-                    "Function",
-                    "Modifier",
-                ]:
+                if arg.type == "Function" or sig_arg["type"] in ["Function", "Modifier"]:
                     pass  # Skip Function arguments
                 elif sig_arg.get("position", None):
                     if sig_arg["position"] == arg_idx:
@@ -290,7 +287,7 @@ def validate_arg_values(ast, bo):
             # Check that entity types match
             if len(set(ast.value_types).intersection(term.get("entity_types", []))) == 0:
                 logger.debug(
-                    f"Invalid Term - Assertion term {term_id} allowable entity types: {ast.value_types} do not match API term entity types: {term.get('entity_types', [])}",
+                    f"Invalid Term - Assertion term {term_id} allowable entity types: {ast.value_types} do not match API term entity types: {term.get('entity_types', [])}"
                 )
 
                 bo.validation_messages.append(
@@ -302,7 +299,7 @@ def validate_arg_values(ast, bo):
 
                 if term_id in term.get("obsolete_keys", []):
                     bo.validation_messages.append(
-                        ("WARNING", f'Obsolete term: {term_id}  Current term: {term["id"]}',)
+                        ("WARNING", f'Obsolete term: {term_id}  Current term: {term["id"]}')
                     )
 
     # Process StrArgs

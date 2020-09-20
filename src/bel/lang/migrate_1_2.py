@@ -14,10 +14,9 @@ from loguru import logger
 # Local Imports
 import bel.belspec.crud
 import bel.core.settings as settings
-from bel.lang.belobj import BEL
 from bel.belspec.crud import get_enhanced_belspec
 from bel.lang.ast import BELAst, Function, NSArg, StrArg
-
+from bel.lang.belobj import BEL
 
 version = bel.belspec.crud.get_latest_version()
 bo = BEL("", version=version)

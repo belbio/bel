@@ -109,4 +109,4 @@ class Namespace(BaseModel):
         False,
         description="Identifiers.org namespace - if True - this is only a namespace definition without term records",
     )
-    identifiers_org_namespace: str = Field("")
+    identifiers_org_namespace: Optional[str] = Field(None)

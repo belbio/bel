@@ -19,6 +19,7 @@ def test_orthologs():
     orthologs = bel.terms.orthologs.get_orthologs(term_key)
 
     import json
+
     print("Orthologs:\n", json.dumps(orthologs, indent=4))
 
     assert orthologs == expected

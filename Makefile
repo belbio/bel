@@ -45,7 +45,7 @@ push_lib:  ## Push bel libraries to S3 bucket
 	aws s3 cp ${CWD}/dist/bel-2.0.0.tar.gz s3://resources.bel.bio/packages
 
 
-# docker_pushdev:  ## 
+# docker_pushdev:  ##
 
 # 	@echo Deploying docker DEV image to dockerhub $(VERSION)
 

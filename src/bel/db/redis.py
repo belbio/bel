@@ -9,7 +9,6 @@ from loguru import logger
 # Local Imports
 import bel.core.settings as settings
 
-
 redis_db = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
 batch_cnt = 5  # TODO increase after initial testing

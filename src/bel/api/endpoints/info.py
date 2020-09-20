@@ -2,18 +2,19 @@
 Informational endpoints
 """
 
+# Standard Library
+import re
+
 # Third Party Imports
 import fastapi
-from loguru import logger
 from fastapi import APIRouter, Depends
-import re
+from loguru import logger
 
 # Local Imports
 import bel.core.settings as settings
 import bel.terms.terms
 from bel.__version__ import __version__ as bel_version
 from bel.schemas.info import Status, Version
-
 
 router = APIRouter()
 

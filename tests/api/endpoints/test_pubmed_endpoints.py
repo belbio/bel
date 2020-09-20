@@ -11,4 +11,4 @@ def test_pubmed(client):
 
     assert result["pmid"] == "10551823"
 
-    assert 'TAX:9606' in result["annotations"]
+    assert "TAX:9606" in result["annotations"]
