@@ -238,22 +238,20 @@ def test_validate_complex_missing_namespace():
     assert ast.errors[0].msg == expected
 
 
-# def test_validate_has_component():
-#     """Validate path()"""
+def test_abundance_namespace():
+    """Validate path()"""
 
-#     assertion = AssertionStr(
-#         subject='a(CHEBI:"low-density lipoprotein")',
-#         relation="hasComponent",
-#         object="a(CHEBI:cholesterol)",
-#     )
+    assertion = AssertionStr(
+        subject="a(CHEBI:15377!water)",
+    )
 
-#     ast = bel.lang.ast.BELAst(assertion=assertion)
+    ast = bel.lang.ast.BELAst(assertion=assertion)
 
-#     ast.validate()
+    ast.validate()
 
-#     print("Errors", ast.errors)
+    print("Errors", ast.errors)
 
-#     assert False
+    assert False
 
 
 def test_validate_reaction():

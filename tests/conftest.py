@@ -10,8 +10,10 @@ import pytest
 root_dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-sys.path.remove("/Users/william/studio/dev/bel2")
-print("Here", sys.path)
+# TODO - why is this removed?
+# sys.path.remove("/Users/william/studio/dev/bel/src")
+
+sys.path.append("/Users/william/studio/dev/bel/src")
 
 # Setup environment
 files = [f"{root_dir_path}/pytest.env"]

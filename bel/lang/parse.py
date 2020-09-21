@@ -9,10 +9,7 @@ import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party
-# Local Imports
 import bel.belspec.specifications
-
-# Third Party Imports
 import boltons.iterutils
 import cachetools
 from bel.belspec.specifications import additional_computed_relations
