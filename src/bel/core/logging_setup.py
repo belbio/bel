@@ -2,7 +2,7 @@
 # Standard Library
 import sys
 
-# Third Party Imports
+# Third Party
 from loguru import logger
 
 logger.add(

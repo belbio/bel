@@ -3,16 +3,18 @@ import copy
 import gzip
 import json
 import time
-from typing import IO
+from collections import defaultdict
+from typing import IO, Optional
+
+# Third Party
+# Local Imports
+import bel.core.mail
+import bel.core.settings as settings
+import bel.db.elasticsearch as elasticsearch
 
 # Third Party Imports
 import cachetools
 from arango import ArangoError
-from loguru import logger
-
-# Local Imports
-import bel.core.settings as settings
-import bel.db.elasticsearch as elasticsearch
 from bel.db.arangodb import (
     arango_id_to_key,
     batch_load_docs,
@@ -25,6 +27,7 @@ from bel.db.arangodb import (
 )
 from bel.db.elasticsearch import es
 from bel.schemas.terms import Namespace
+from loguru import logger
 
 # key = ns:id
 # main_key = preferred key, e.g. ns:<primary_id> not the alt_key or obsolete key or even an equivalence key which could be an alt_key
@@ -32,32 +35,44 @@ from bel.schemas.terms import Namespace
 # db_key = key converted to arangodb format
 
 
-def remove_old_db_entries(namespace, version, force: bool = False):
-    """Remove old database entries"""
+namespace_metadata_cache = cachetools.TTLCache(maxsize=1, ttl=600)
+bel_resource_metadata_cache = cachetools.TTLCache(maxsize=1, ttl=600)
 
-    if force:
+
+def remove_old_db_entries(namespace: str, version: str = "", force: bool = False):
+    """Remove old database entries
+
+    Args:
+        namespace: preferred namespace prefix, e.g. HGNC or DO
+        version: version of last namespace loaded - used to remove older entries from arangodb
+        force: remove ALL namespace database entries
+    """
+
+    if force or version == "":
         filter_version = ""
     else:
-        filter_version = f"""FILTER term.version != "{version}" """
+        filter_version = f"""FILTER doc.version != "{version}" """
 
     # Clean up old entries
     remove_old_terms = f"""
-        FOR term in {terms_coll_name}
-            FILTER term.namespace == "{namespace}"
+        FOR doc in {terms_coll_name}
+            FILTER doc.namespace == "{namespace}"
             {filter_version}
-            REMOVE term IN {terms_coll_name}
+            REMOVE doc IN {terms_coll_name}
     """
+
     remove_old_equivalence_edges = f"""
-        FOR edge in {equiv_edges_name}
-            FILTER edge.source == "{namespace}"
+        FOR doc in {equiv_edges_name}
+            FILTER doc.source == "{namespace}"
             {filter_version}
-            REMOVE edge IN {equiv_edges_name}
+            REMOVE doc IN {equiv_edges_name}
     """
+
     remove_old_equivalence_nodes = f"""
-        FOR node in {equiv_nodes_name}
-            FILTER node.source == "{namespace}"
+        FOR doc in {equiv_nodes_name}
+            FILTER doc.source == "{namespace}"
             {filter_version}
-            REMOVE node IN {equiv_nodes_name}
+            REMOVE doc IN {equiv_nodes_name}
     """
 
     resources_db.aql.execute(remove_old_terms)
@@ -65,7 +80,9 @@ def remove_old_db_entries(namespace, version, force: bool = False):
     resources_db.aql.execute(remove_old_equivalence_nodes)
 
 
-def load_terms(f: IO, metadata: dict, force: bool):
+def load_terms(
+    f: IO, metadata: dict, force: bool = False, resource_download_url: Optional[str] = None
+):
     """Load terms into Elasticsearch and ArangoDB
 
     Force will create a new index in Elasticsearch regardless of whether
@@ -78,24 +95,52 @@ def load_terms(f: IO, metadata: dict, force: bool):
                 and delete arangodb namespace records before loading
     """
 
+    result = {"success": True, "messages": []}
+
+    statistics = {
+        "entities_count": 0,
+        "synonyms_count": 0,
+        "entity_types": defaultdict(int),
+        "annotation_types": defaultdict(int),
+        "equivalenced_namespaces": defaultdict(int),
+    }
+
+    metadata_key = f"Namespace_{metadata['namespace']}"
+    prior_metadata = resources_metadata_coll.get(metadata_key)
+
+    try:
+        prior_version = prior_metadata.get("version", "")
+        prior_entity_count = prior_metadata["statistics"].get("entities_count", 0)
+    except Exception:
+        prior_entity_count = 0
+        prior_version = ""
+
     namespace = metadata["namespace"]
     version = metadata["version"]
 
+    ################################################################################
+    # Elasticsearch index processing
+    ################################################################################
     es_version = version.replace("T", "").replace("-", "").replace(":", "")
     index_prefix = f"{settings.TERMS_INDEX}_{namespace.lower()}"
     index_name = f"{index_prefix}_{es_version}"
 
     # Create index with mapping
-    if not elasticsearch.index_exists(index_name):
-        elasticsearch.create_terms_index(index_name)
-    elif force:  # force an update to the index
-        es.indices.delete(index_name, ignore_unavailable=True)
+    if prior_version != version or force:
         elasticsearch.create_terms_index(index_name)
     else:
-        return  # Skip loading if not forced and not a new namespace
+        result["success"] = True
+        result["messages"].append(
+            f'NOTE: This namespace {namespace} at version {version} is already loaded and the "force" option was not used'
+        )
 
-    terms_iterator = terms_iterator_for_elasticsearch(f, index_name)
+        return result
+
+    terms_iterator = terms_iterator_for_elasticsearch(f, index_name, statistics)
     elasticsearch.bulk_load_docs(terms_iterator)
+
+    # Using side effect to get statistics from terms_iterator_for_elasticsearch on purpose
+    metadata["statistics"] = copy.deepcopy(statistics)
 
     # Remove old namespace index
     index_names = elasticsearch.get_all_index_names()
@@ -103,32 +148,56 @@ def load_terms(f: IO, metadata: dict, force: bool):
         if name != index_name and index_prefix in name:
             elasticsearch.delete_index(name)
 
+    if not force and prior_entity_count > metadata["statistics"]["entities_count"]:
+        logger.error(
+            f'Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
+        )
+
+        result["success"] = False
+        result["messages"].append(
+            f'ERROR: Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
+        )
+
+        return result
+
     # Add terms alias to this index
     elasticsearch.add_index_alias(index_name, settings.TERMS_INDEX)
 
-    logger.info(
-        f"Loaded {namespace} terms into elasticsearch {index_name} and alias {settings.TERMS_INDEX}",
-        namespace=metadata["namespace"],
-    )
-
+    ################################################################################
+    # Arangodb collection loading
+    ################################################################################
     if force:
-        remove_old_db_entries(namespace, version, force)
+        remove_old_db_entries(namespace, version=version, force=True)
 
     # LOAD Terms and equivalences INTO ArangoDB
     # Uses update on duplicate to allow primary on equivalence_nodes to not be overwritten
     batch_load_docs(resources_db, terms_iterator_for_arangodb(f, version), on_duplicate="update")
 
-    logger.info(f"Loaded {namespace} terms and equivalences", namespace=namespace)
+    # Add metadata to resource metadata collection
+    metadata["_key"] = metadata_key
+
+    if resource_download_url is not None:
+        metadata["resource_download_url"] = resource_download_url
+
+    resources_metadata_coll.insert(metadata, overwrite=True)
+    clear_resource_metadata_cache()
 
     if not force:
-        remove_old_db_entries(namespace, version)
+        remove_old_db_entries(namespace, version=version)
 
-    # Add metadata to resource metadata collection
-    metadata["_key"] = f"Namespace_{metadata['namespace']}"
-    resources_metadata_coll.insert(metadata, overwrite=True)
+    logger.info(
+        f'Loaded Namespace: {namespace} with {metadata["statistics"]["entities_count"]} terms into elasticsearch: {settings.TERMS_INDEX}.{index_name} and arangodb collection: {terms_coll_name}',
+        namespace=metadata["namespace"],
+    )
+
+    result["messages"].append(
+        f'Loaded Namespace: {namespace} with {metadata["statistics"]["entities_count"]} terms into elasticsearch: {settings.TERMS_INDEX}.{index_name} and arangodb collection: {terms_coll_name}'
+    )
+    return result
 
 
 def terms_iterator_for_arangodb(f: IO, version: str):
+    """Generator for loading namespace terms into arangodb"""
 
     species_list = settings.BEL_FILTER_SPECIES
 
@@ -149,7 +218,6 @@ def terms_iterator_for_arangodb(f: IO, version: str):
             continue
 
         # Can't use original key formatted for Arangodb as some keys are longer than allowed (_key < 255 chars)
-
         term_db_key = arango_id_to_key(term_key)
 
         term["_key"] = term_db_key
@@ -247,7 +315,7 @@ def terms_iterator_for_arangodb(f: IO, version: str):
                 yield equiv_edge
 
 
-def terms_iterator_for_elasticsearch(f: IO, index_name: str):
+def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
     """Add index_name to term documents for bulk load"""
 
     species_list = settings.BEL_FILTER_SPECIES
@@ -261,6 +329,17 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str):
             continue
         term = term["term"]
 
+        # Collect statistics
+        statistics["entities_count"] += 1
+        statistics["synonyms_count"] += len(term.get("synonyms", []))
+        for entity_type in term.get("entity_types", []):
+            statistics["entity_types"][entity_type] += 1
+        for annotation_type in term.get("annotation_types", []):
+            statistics["annotation_types"][annotation_type] += 1
+        for equivalence in term.get("equivalence_keys", []):
+            ns, id_ = equivalence.split(":", maxsplit=1)
+            statistics["equivalenced_namespaces"][ns] += 1
+
         # Filter species if enabled in config
         species_key = term.get("species_key", "")
         if species_list and species_key and species_key not in species_list:
@@ -273,9 +352,9 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str):
 
         term["alt_keys"] = list(all_term_keys)
 
-        del term["child_keys"]
-        del term["parent_keys"]
-        del term["equivalence_keys"]
+        term.pop("child_keys", "")
+        term.pop("parent_keys", "")
+        term.pop("equivalence_keys", "")
 
         record = {
             "_op_type": "index",
@@ -304,7 +383,20 @@ def lowercase_term_id(term_key: str) -> str:
     return term_key
 
 
-@cachetools.cached(cachetools.TTLCache(maxsize=1, ttl=600))
+def clear_resource_metadata_cache():
+    """Clear the namespace metadata cache
+
+    Called when we update the namespace metadata
+    """
+
+    namespace_metadata_cache.clear()
+    bel_resource_metadata_cache.clear()
+
+
+# TODO - refactor get_namespace_metadata and get_bel_resource_metadata into one function
+
+
+@cachetools.cached(namespace_metadata_cache)
 def get_namespace_metadata():
     """Get namespace metadata"""
 
@@ -313,7 +405,36 @@ def get_namespace_metadata():
         if namespace.get("resource_type", None) != "namespace":
             continue
 
+        if namespace["source_url"] == "":
+            namespace["source_url"] = None
+
         namespace = Namespace(**namespace)
         namespaces[namespace.namespace] = namespace
 
     return namespaces
+
+
+@cachetools.cached(bel_resource_metadata_cache)
+def get_bel_resource_metadata():
+    """Get BEL resource metadata"""
+
+    resources = {}
+    for resource in resources_metadata_coll:
+
+        if resource["source_url"] == "":
+            resource["source_url"] = None
+
+        resources[resource["_key"]] = resource
+
+    return resources
+
+
+def delete_namespace(namespace):
+    """Remove namespace resources
+
+    Remove Arangodb terms and equivalences and remove Elasticsearch terms index
+    """
+
+    remove_old_db_entries(namespace, force=True)
+
+    es.indices.delete(index=f"{settings.TERMS_INDEX}_{namespace.lower()}_*", ignore=[400, 404])

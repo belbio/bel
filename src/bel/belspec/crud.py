@@ -1,16 +1,17 @@
 # Standard Library
 from typing import Mapping
 
-# Third Party Imports
-import cachetools
-import semver
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb as arangodb
+import cachetools
+import semver
 from bel.belspec.enhance import create_ebnf_parser, create_enhanced_specification
 from bel.schemas.belspec import BelSpec, BelSpecVersions
+
+# Third Party Imports
+from loguru import logger
 
 # ArangoDB handles
 bel_db = arangodb.bel_db
@@ -53,7 +54,7 @@ def max_semantic_version(version_strings) -> str:
 
         try:
             versions.append(semver.VersionInfo.parse(version_str))
-        except:
+        except Exception:
             pass  # Skip non-semantic versioned belspecs for latest version
 
     max_version = str(max(versions))
@@ -104,7 +105,13 @@ def get_belspec_versions() -> dict:
 def get_best_match(query_str, belspec_versions: BelSpecVersions):
     """Get best match to query version in versions or return latest"""
 
-    query = semver.VersionInfo.parse(query_str)
+    try:
+        query = semver.VersionInfo.parse(query_str)
+    except Exception as e:
+        logger.warning(
+            f"Could not parse belspec version {query_str} - returning latest version instead"
+        )
+        return belspec_versions["latest"]
 
     versions = []
     for version_str in sorted(belspec_versions["versions"], reverse=True):
@@ -156,10 +163,9 @@ def check_version(version: str = "latest", versions: BelSpecVersions = None) -> 
         version = versions["latest"]
 
     elif version not in versions["versions"]:
-        logger.warning(
-            f"Cannot validate with invalid version: {version} which is not in BEL Versions: {versions} - using latest version instead"
-        )
+        original_version = version
         version = get_best_match(version, versions)
+        # logger.debug(f"BEL version {original_version} out of date using {version}")
 
     return version
 

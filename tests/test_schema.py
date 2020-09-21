@@ -1,4 +1,5 @@
 # Local Imports
+# Third Party
 from bel.schemas.bel import AssertionStr, BelEntity, NsVal
 
 
@@ -49,7 +50,7 @@ def test_entity():
 
     entity.all()
     assert entity.species_key == "TAX:9606"
-    assert str(entity.orthologs["TAX:10116"]["decanonical"]) == "RGD:2081"
+    assert str(entity.orthologs["TAX:10116"]["decanonical"]) == "RGD:2081!Akt1"
 
 
 def test_entity_fake():

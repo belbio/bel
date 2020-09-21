@@ -3,13 +3,15 @@
 # Standard Library
 from typing import List, Optional
 
+# Third Party
+import bel.belspec.crud
+
 # Third Party Imports
 import fastapi
 from fastapi import APIRouter, Depends, Query
-from loguru import logger
 
 # Local Imports
-import bel.belspec.crud
+from loguru import logger
 
 router = APIRouter()
 

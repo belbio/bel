@@ -15,21 +15,20 @@ import datetime
 import re
 from typing import Any, Mapping, MutableMapping
 
-# Third Party Imports
-import cachetools
-import httpx
-from loguru import logger
-from lxml import etree
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.terms.terms
+import cachetools
+import httpx
 from bel.core.utils import http_client, url_path_param_quoting
 
+# Third Party Imports
+from loguru import logger
+from lxml import etree
+
 # Replace PMID
-PUBMED_TMPL = (
-    "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=PMID"
-)
+PUBMED_TMPL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id="
 
 # https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/biocjson?pmids=28483577,28483578,28483579
 
@@ -128,8 +127,7 @@ def get_pubtator(pmid):
 
 
 def process_pub_date(year, mon, day, medline_date):
-    """Create pub_date from what Pubmed provides in Journal PubDate entry
-    """
+    """Create pub_date from what Pubmed provides in Journal PubDate entry"""
 
     if medline_date:
         year = "0000"
@@ -256,19 +254,21 @@ def get_pubmed_url(pmid):
     root = None
 
     try:
-        pubmed_url = PUBMED_TMPL.replace("PMID", str(pmid))
-        logger.info(f"Getting Pubmed URL {pubmed_url}")
+        pubmed_url = f"{PUBMED_TMPL}{str(pmid)}"
+
         r = http_client.get(pubmed_url)
-        content = r.content
-        root = etree.fromstring(content)
+
+        logger.info(f"Status {r.status_code}  URL: {pubmed_url}")
+
+        if r.status_code == 200:
+            content = r.content
+            root = etree.fromstring(content)
+        else:
+            logger.warning(f"Could not download pubmed url: {pubmed_url}")
 
     except Exception as e:
-        status_code = None
-        if r:
-            status_code = r.status_code
-
         logger.warning(
-            f"Bad Pubmed request, status: {status_code} error: {str(e)}",
+            f"Bad Pubmed request, error: {str(e)}",
             url=f'{PUBMED_TMPL.replace("PMID", pmid)}',
         )
 
@@ -304,13 +304,17 @@ def get_pubmed(pmid: str) -> Mapping[str, Any]:
     }
 
     root = get_pubmed_url(pmid)
+
     if root is None:
         return None
 
-    doc["pmid"] = root.xpath("//PMID/text()")[0]
+    try:
+        doc["pmid"] = root.xpath("//PMID/text()")[0]
+    except Exception as e:
+        return None
 
     if doc["pmid"] != pmid:
-        logger.error("Requested PMID doesn't match record PMID", url=pubmed_url)
+        logger.error(f"Requested PMID {doc['pmid']}doesn't match record PMID {pmid}")
 
     if root.find("PubmedArticle") is not None:
         doc = parse_journal_article_record(doc, root)
@@ -348,23 +352,47 @@ def add_annotations(pubmed):
     )
     term_keys = list(set(term_keys))
 
+    terms = {}
+
+    for entry in pubmed.get("pubtator", []):
+        terms[entry["key"]] = {"key": entry["key"], "label": entry["text"]}
+
+    for entry in pubmed.get("compounds", []):
+        terms[entry["key"]] = {"key": entry["key"], "label": entry["label"]}
+
+    for entry in pubmed.get("mesh", []):
+        terms[entry["key"]] = {"key": entry["key"], "label": entry["label"]}
+
     # loop = asyncio.get_event_loop()
     # normalized = loop.run_until_complete(async_get_normalized_terms_for_annotations(term_keys))
 
-    normalized = get_normalized_terms_for_annotations(term_keys)
+    normalized = get_normalized_terms_for_annotations(terms.keys())
 
     normalized = sorted(normalized, key=lambda x: x["annotation_types"], reverse=True)
 
     pubmed["annotations"] = []
 
     for annotation in normalized:
-        pubmed["annotations"].append(
-            {
-                "key": annotation["decanonical"],
-                "label": annotation["label"],
-                "annotation_types": annotation["annotation_types"],
-            }
-        )
+
+        # HACK - only show first annotation type
+        if len(annotation["annotation_types"]) > 0:
+            annotation_type = annotation["annotation_types"][0]
+        else:
+            annotation_type = ""
+
+        if annotation.get("label", False):
+            terms[annotation["original"]]["key"] = annotation["decanonical"]
+            terms[annotation["original"]]["label"] = annotation["label"]
+            terms[annotation["original"]]["annotation_types"] = [annotation_type]
+
+    pubmed["annotations"] = copy.deepcopy(
+        sorted(terms.values(), key=lambda x: x.get("annotation_types", []), reverse=True)
+    )
+
+    # Add missing
+    for idx, annotation in enumerate(pubmed["annotations"]):
+        if annotation["label"] == "":
+            pubmed["annotations"][idx]["label"] = annotation["key"]
 
     return pubmed
 

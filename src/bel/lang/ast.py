@@ -10,20 +10,18 @@ import sys
 import traceback
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
-# Third Party Imports
-import yaml
-from loguru import logger
-from pydantic import BaseModel, Field
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb
 import bel.terms.orthologs
 import bel.terms.terms
+
+# Third Party Imports
+import yaml
 from bel.belspec.crud import get_enhanced_belspec
-from bel.core.utils import http_client, url_path_param_quoting
+from bel.core.utils import html_wrap_span, http_client, url_path_param_quoting
 from bel.schemas.bel import (
-    AssertionErrors,
     AssertionStr,
     BelEntity,
     FunctionSpan,
@@ -32,8 +30,11 @@ from bel.schemas.bel import (
     NsVal,
     Pair,
     Span,
+    ValidationError,
 )
 from bel.schemas.constants import strarg_validation_lists
+from loguru import logger
+from pydantic import BaseModel, Field
 
 
 #########################
@@ -132,12 +133,12 @@ class Function(object):
             self.function_type = ""
 
     def is_primary(self):
-        if self.function_type == "primary":
+        if self.function_type == "Primary":
             return True
         return False
 
     def is_modifier(self):
-        if self.function_type == "modifier":
+        if self.function_type == "Modifier":
             return True
         return False
 
@@ -227,18 +228,25 @@ class Function(object):
 
         return true_response
 
-    def validate(self, errors: AssertionErrors = None):
+    def validate(self, errors: List[ValidationError] = None):
         """Validate BEL Function"""
 
         if errors is None:
             errors = []
 
-        # Process AST top-level args or Function args
-        errors.extend(validate_function(self))
-
+        # Collect term info for NSArgs before validation
         if hasattr(self, "args"):
             for arg in self.args:
-                if arg and arg.type in ["Function"]:
+                if arg and arg.type == "NSArg":
+                    arg.entity.add_term()
+
+        # Validate function (or top-level args)
+        errors.extend(validate_function(self))
+
+        # Recursively validate args that are functions
+        if hasattr(self, "args"):
+            for arg in self.args:
+                if arg and arg.type == "Function":
                     arg.validate(errors=errors)
 
         return errors
@@ -428,9 +436,6 @@ class StrArg(Arg):
         self.value = value
         self.span = None
 
-    def add_value_types(self, value_types):
-        self.value_types = value_types
-
     def to_string(self, fmt: str = "medium") -> str:
         """Convert AST object to string
 
@@ -472,12 +477,13 @@ class ParseInfo:
         self.functions: List[FunctionSpan] = []
         self.nsargs: List[NsArgSpan]
 
-        self.errors: AssertionErrors = []
+        self.errors: List[ValidationError] = []
 
         if self.assertion:
             self.get_parse_info(assertion=self.assertion)
 
     def get_parse_info(self, assertion: str = "", version: str = "latest"):
+        # Third Party
         from bel.lang.parse import parse_info
 
         if assertion:
@@ -518,13 +524,13 @@ class ParseInfo:
 class BELAst(object):
     def __init__(
         self,
-        assertion: AssertionStr = "",
+        assertion: AssertionStr = None,
         subject: Optional[Function] = None,
         relation: Optional[Relation] = None,
         object: Optional[Union[Function, "BELAst"]] = None,
         version: str = "latest",
     ):
-        self.version = version
+        self.version = bel.belspec.crud.check_version(version)
         self.assertion = assertion
 
         self.subject, self.relation, self.object = subject, relation, object
@@ -537,9 +543,17 @@ class BELAst(object):
 
         self.args = []
 
-        self.errors: AssertionErrors = []
+        self.errors: List[ValidationError] = []
 
-        if self.assertion and not self.args:
+        if assertion.subject or assertion.relation or assertion.object:
+            if assertion.relation and not assertion.object:
+                msg = "Missing Assertion Object"
+                self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))
+            elif assertion.object and (not assertion.subject or not assertion.relation):
+                msg = "Missing Assertion Subject or Relation"
+                self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))
+
+        if not self.errors and self.assertion is not None and not self.args:
             self.parse()  # parse assertion into BEL AST
 
     def parse(self):
@@ -663,7 +677,11 @@ class BELAst(object):
             self.object = BELAst(subject=self.args[2], relation=self.args[3], object=self.args[4])
         else:
             self.errors.append(
-                f"Could not parse Assertion - wrong number {len(self.args)} of components or type of assertion components is wrong {[arg.type for arg in self.args]}"
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Could not parse Assertion - wrong number {len(self.args)} of components or type of assertion components is wrong {[arg.type for arg in self.args]}",
+                )
             )
 
         return self
@@ -879,7 +897,12 @@ def match_signatures(args, signatures):
     """Which signature to use"""
 
     for signature in signatures:
-        if args[0].type == signature["arguments"][0]["type"]:
+        if (
+            args[0].type == "Function"
+            and args[0].function_type == signature["arguments"][0]["type"]
+        ):
+            return signature
+        elif args[0].type == signature["arguments"][0]["type"]:
             return signature
 
 
@@ -892,7 +915,7 @@ def intersect(list1, list2) -> bool:
     return True
 
 
-def check_str_arg(value: str, check_values: List[str]) -> str:
+def check_str_arg(value: str, check_values: List[str]) -> Optional[str]:
     """Check StrArg value"""
 
     regex_flag = False
@@ -914,30 +937,32 @@ def check_str_arg(value: str, check_values: List[str]) -> str:
 
     else:
         if regex_flag:
-            return (
-                "ERROR",
-                f"String Argument {value} doesn't match required format: {repr(check_values)}",
-            )
+            return f"String Argument {value} doesn't match required format: {repr(check_values)}"
         else:
-            return (
-                "ERROR",
-                f"String Argument {value} not found in {check_values} default BEL namespaces",
-            )
+            return f"String Argument {value} not found in {check_values} default BEL namespaces"
 
-    return ""
+    return None
 
 
-def validate_function(fn: Function, errors: AssertionErrors = None) -> AssertionErrors:
+def validate_function(fn: Function, errors: List[ValidationError] = None) -> List[ValidationError]:
     """Validate function"""
 
-    logger.debug(f"Validating function name {fn.name}, len: {len(fn.args)}")
+    # logger.debug(f"Validating function name {fn.name}, len: {len(fn.args)}")
 
     if errors is None:
         errors = []
 
     # Check for completely missing arguments
     if len(fn.args) == 0:
-        errors.append(("ERROR", f"No arguments in function: {fn.name}"))
+        errors.append(
+            ValidationError(
+                type="Assertion",
+                severity="Error",
+                msg=f"No arguments in function: {fn.name}",
+                visual_pairs=[(fn.span.start, fn.span.end)],
+                index=fn.span.start,
+            )
+        )
         return errors
 
     signatures = fn.function_signature["signatures"]
@@ -959,24 +984,60 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
 
             # Arg type mis-match
             if position > fn_max_args:
-                errors.append(("ERROR", f"Missing required argument - type: {argument['type']}"))
-
-            elif fn.args[position] and fn.args[position].type not in argument["type"]:
                 errors.append(
-                    (
-                        "ERROR",
-                        f"Incorrect argument type '{fn.args[position].type}' at position: {position} for function: {fn.name}, should be one of {argument['type']}",
+                    ValidationError(
+                        type="Assertion",
+                        severity="Error",
+                        msg=f"Missing required argument - type: {argument['type']}",
+                        visual_pairs=[(fn.span.start, fn.span.end)],
+                        index=fn.span.start,
                     )
                 )
 
+            # elif (
+            #     fn.args[position]
+            #     and fn.args[position].type == "Function"
+            #     and fn.args[position].function_type not in argument["type"]
+            # ):
+            #     errors.append(
+            #         ValidationError(
+            #             type="Assertion",
+            #             severity="Error",
+            #             msg=f"Incorrect function type '{fn.args[position].type}' at position: {position} for function: {fn.name}, should be one of {argument['type']}",
+            #             visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
+            #             index=fn.args[position].span.start,
+            #         )
+            #     )
+
             # Function name mis-match
-            elif fn.args[position].type == "Function" and not (
-                fn.args[position].name in argument["values"]
+            elif (
+                fn.args[position]
+                and fn.args[position].type == "Function"
+                and not (fn.args[position].name in argument["values"])
             ):
                 errors.append(
-                    (
-                        "ERROR",
-                        f"Incorrect function for argument '{fn.args[position].name}' at position: {position} for function: {fn.name}",
+                    ValidationError(
+                        type="Assertion",
+                        severity="Error",
+                        msg=f"Incorrect function for argument '{fn.args[position].name}' at position: {position} for function: {fn.name}",
+                        visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
+                        index=fn.args[position].span.start,
+                    )
+                )
+
+            # Wrong [non-function] argument type
+            elif (
+                fn.args[position]
+                and fn.args[position].type != "Function"
+                and fn.args[position].type not in argument["type"]
+            ):
+                errors.append(
+                    ValidationError(
+                        type="Assertion",
+                        severity="Error",
+                        msg=f"Incorrect argument type '{fn.args[position].type}' at position: {position} for function: {fn.name}, should be one of {argument['type']}",
+                        visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
+                        index=fn.args[position].span.start,
                     )
                 )
 
@@ -1016,25 +1077,55 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
     problem_opt_args = list(problem_opt_args)
     if len(problem_opt_args) > 0:
         errors.append(
-            ("ERROR", f"Can only have at most one {problem_opt_args} in function arguments")
+            ValidationError(
+                type="Assertion",
+                severity="Error",
+                msg=f"Can only have at most one {problem_opt_args} in function arguments",
+                visual_pairs=[(fn.span.start, fn.span.end)],
+                index=fn.span.start,
+            )
         )
 
     # Third pass - non-positional (primary/modifier) args that don't show up in opt_args or mult_args
     opt_and_mult_args = opt_args + signature["mult_args"]
-    problem_args = set()
     for fn_arg in fn.args[post_positional:]:
         if fn_arg.type == "Function" and fn_arg.name not in opt_and_mult_args:
-            problem_args.add(fn_arg.name)
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Function {fn_arg.name} is not allowed as an optional or multiple argument",
+                    visual_pairs=[(fn.span.start, fn.span.end)],
+                    index=fn.span.start,
+                )
+            )
 
-        # This handles complex(NSArg, p(X)) validation
-        elif fn_arg.type == "NSArg" and not intersect(
-            fn_arg.entity.entity_types, opt_and_mult_args
+        # This handles complex(NSArg, p(X)) validation and virtual namespaces
+        elif (
+            fn_arg.type == "NSArg"
+            and fn_arg.entity.entity_types
+            and not intersect(fn_arg.entity.entity_types, opt_and_mult_args)
         ):
-            problem_args.add(fn_arg.entity)
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Namespace value: {fn_arg.entity.nsval} with entity_types {fn_arg.entity.entity_types} are not allowed for function {fn_arg.parent.name} as an optional or multiple argument",
+                    visual_pairs=[(fn.span.start, fn.span.end)],
+                    index=fn.span.start,
+                )
+            )
 
-    problem_args = list(problem_args)
-    if len(problem_args) > 0:
-        errors.append(("ERROR", f"Not allowed as optional or multiple arguments {problem_args}"))
+        elif fn_arg.type == "NSArg" and fn_arg.entity.entity_types is None:
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Warning",
+                    msg=f"Unknown namespace value {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
+                    visual_pairs=[(fn.span.start, fn.span.end)],
+                    index=fn.span.start,
+                )
+            )
 
     # Fourth pass - positional NSArg entity_types checks
     for argument in signature["arguments"]:
@@ -1050,11 +1141,20 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
                 and not fn.args[position].entity.namespace_metadata
             ):
                 errors.append(
-                    (
-                        "WARNING",
-                        f"Unknown namespace '{fn.args[position].entity.nsval.namespace}' at position {position} for function {fn.name}",
+                    ValidationError(
+                        type="Assertion",
+                        severity="Warning",
+                        msg=f"Unknown namespace value '{fn.args[position].entity.nsval.key_label}' for the {fn.name} function at position {fn.args[position].span.namespace.start}",
+                        visual_pairs=[
+                            (
+                                fn.args[position].span.namespace.start,
+                                fn.args[position].span.namespace.end,
+                            )
+                        ],
+                        index=fn.args[position].span.namespace.start,
                     )
                 )
+
             elif (
                 fn.args[position].type == "NSArg"
                 and argument["type"] in ["NSArg", "StrArgNSArg"]
@@ -1064,11 +1164,14 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
                     )
                 )
             ):
-                print("Entity", fn.args[position].entity)
+
                 errors.append(
-                    (
-                        "WARNING",
-                        f"Wrong entity type for namespace argument {fn.args[position].entity.entity_types} at position {position} for function {fn.name} - should be {argument['values']}",
+                    ValidationError(
+                        type="Assertion",
+                        severity="Warning",
+                        msg=f"Wrong entity type for namespace argument at position {position} for function {fn.name} - expected {argument['values']}, actual: entity_types: {fn.args[position].entity.entity_types}",
+                        visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
+                        index=fn.args[position].span.start,
                     )
                 )
 
@@ -1083,16 +1186,34 @@ def validate_function(fn: Function, errors: AssertionErrors = None) -> Assertion
             if fn.args[position].type == "StrArg" and argument["type"] in ["StrArg", "StrArgNSArg"]:
                 str_error = check_str_arg(fn.args[position].value, argument["values"])
 
-                if str_error:
-                    errors.append(str_error)
+                if str_error is not None:
+                    errors.append(
+                        ValidationError(
+                            type="Assertion",
+                            severity="Error",
+                            msg=str_error,
+                            visual_pairs=[
+                                (fn.args[position].span.start, fn.args[position].span.end)
+                            ],
+                            index=fn.args[position].span.start,
+                        )
+                    )
 
     # Modifier function with wrong parent function
     if (
-        fn.function_signature["func_type"] == "modifier"
+        fn.function_signature["func_type"] == "Modifier"
         and fn.parent
         and fn.parent.name not in fn.function_signature["primary_function"]
     ):
-        errors.append(("ERROR", f"Missing parent or wrong parent function for {fn.name}"))
+        errors.append(
+            ValidationError(
+                type="Assertion",
+                severity="Error",
+                msg=f"Missing parent for modifier function or wrong parent function for {fn.name}",
+                visual_pairs=[(fn.span.start, fn.span.end)],
+                index=fn.span.start,
+            )
+        )
 
     return errors
 
@@ -1166,7 +1287,7 @@ def sort_function_args(fn: Function):
             # TODO use https://github.com/biocommons/hgvs to sort by variant position
             fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, str(fn_arg))
 
-        elif fn_arg.function_type == "modifier":
+        elif fn_arg.function_type == "Modifier":
             fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, str(fn_arg))
 
         elif fn_arg.type == "Function":
@@ -1174,8 +1295,5 @@ def sort_function_args(fn: Function):
 
         else:
             logger.error(f"Adding sort tuples - no sort_tuple added for {fn_arg}")
-
-    for arg in fn.args:
-        print("Arg", arg, "Tuple", arg.sort_tuple)
 
     fn.args = sorted(fn.args, key=lambda x: x.sort_tuple)

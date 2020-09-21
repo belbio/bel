@@ -1,10 +1,13 @@
 # Standard Library
 import json
 
+# Third Party
 # Local Imports
 import bel.nanopub.validate
 import pytest
+from bel.schemas.nanopubs import NanopubR
 
+# cSpell:disable
 
 # @pytest.mark.skip(reason="Not finished with this test")
 def test_validate_nanopub():
@@ -41,56 +44,36 @@ def test_validate_nanopub():
             "schema_uri": "https://raw.githubusercontent.com/graphdati/schemas/master/nanopub_graphdati-1.0.0.json",
             "type": {"name": "BEL", "version": "2.1.1"},
         },
-        "owners": ["auth0|5b0ec2d2157859716f2b2449"],
+        "owners": [
+            {
+                "user_id": "auth0|5b0ec2d2157859716f2b2449",
+                "first_name": "William",
+                "last_name": "Hayes",
+                "full_name": "William Hayes",
+            }
+        ],
     }
 
-    nanopub = bel.nanopub.validate.validate(nanopub, validation_level="force")
+    nanopub = bel.nanopub.validate.validate(NanopubR(**nanopub), validation_level="force")
 
     print("DumpVar:\n", json.dumps(nanopub, indent=4))
 
-    assert any(
-        [
-            error
-            for assertion in nanopub["nanopub"]["assertions"]
-            for error in assertion["validation"]["errors"]
-            if error["msg"] == "Too many close parentheses at index 25"
-        ]
+    assert nanopub["nanopub"]["assertions"][0]["validation"]["status"] == "Error"
+    assert (
+        nanopub["nanopub"]["assertions"][0]["validation"]["errors"][0]["msg"]
+        == "Too many close parentheses at index 25"
     )
-
-    assert any(
-        [
-            error
-            for assertion in nanopub["nanopub"]["assertions"]
-            for error in assertion["validation"]["errors"]
-            if error["msg"] == "No matching close parenthesis to open parenthesis at index 40"
-        ]
-    )
-
-    assert any(
-        [
-            error
-            for assertion in nanopub["nanopub"]["assertions"]
-            for error in assertion["validation"]["errors"]
-            if error["msg"]
-            == "Invalid BEL Assertion function act(p(SP:AKT1_HUMAN), ma) - problem with function signatures: Missing position_dependent arguments for activity signature: 0"
-        ]
-    )
-
-    assert any(
-        [
-            warning
-            for assertion in nanopub["nanopub"]["assertions"]
-            for warning in assertion["validation"]["warnings"]
-            if warning["msg"]
-            == "Invalid Term - Assertion term SPX:AKT1_HUMAN allowable entity types: ['Protein'] do not match API term entity types: []"
-        ]
+    assert (
+        nanopub["nanopub"]["assertions"][0]["validation"]["errors"][0]["visual"]
+        == 'act(p(SP:AKT1_HUMAN), ma)<span class="accentuate">)</span> increases act(p(SPX:AKT1_HUMAN)'
     )
 
 
-def test_validate_nanopub_2():
+def test_validate_nanopub2():
+    """Test nanopub validation using provided nanopub"""
 
     nanopub = {
-        "rev": "_acEDvY----",
+        "rev": "_bFgy2ee--_",
         "owners": [
             {
                 "user_id": "01dyjx9yy6jkkfwsfm15ndnry0",
@@ -99,59 +82,42 @@ def test_validate_nanopub_2():
                 "full_name": "William Hayes",
             }
         ],
-        "is_deleted": false,
-        "is_archived": null,
-        "is_public": false,
-        "source_url": "http://nanopubstore.dev.biodati.test/nanopub/01E7GHNPM8GNEQE2K8XB9EJZKB",
+        "is_deleted": False,
+        "is_public": False,
+        "source_url": "http://nanopubstore.dev.biodati.test/nanopub/01EHQ1SJ1FZW9SZ8QW2TWQG4CN",
         "nanopub": {
             "type": {"name": "BEL", "version": "2.1.2"},
             "citation": {
                 "authors": [
-                    "Palsson-McDermott, Eva M",
-                    "Curtis, Anne M",
-                    "Goel, Gautam",
-                    "Lauterbach, Mario A R",
-                    "Sheedy, Frederick J",
-                    "Gleeson, Laura E",
-                    "van den Bosch, Mirjam W M",
-                    "Quinn, Susan R",
-                    "Domingo-Fernandez, Raquel",
-                    "Johnston, Daniel G W",
-                    "Jiang, Jian-Kang",
-                    "Jiang, Jain-Kang",
-                    "Israelsen, William J",
-                    "Keane, Joseph",
-                    "Thomas, Craig",
-                    "Clish, Clary",
-                    "Vander Heiden, Matthew",
-                    "Vanden Heiden, Matthew",
-                    "Xavier, Ramnik J",
-                    "O'Neill, Luke A J",
+                    "Roucou, Xavier",
+                    "Rostovtseva, Tatiana",
+                    "Montessuit, Sylvie",
+                    "Martinou, Jean-Claude",
+                    "Antonsson, Bruno",
                 ],
-                "database": {"name": "PubMed", "id": "  25565206"},
-                "reference": null,
-                "title": "Pyruvate kinase M2 regulates Hif-1α activity and IL-1β induction and is a critical determinant of the warburg effect in LPS-activated macrophages.",
-                "source_name": "Cell metabolism",
-                "date_published": "2015-01-06",
-                "abstract": "Macrophages activated by the TLR4 agonist LPS undergo dramatic changes in their metabolic activity. We here show that LPS induces expression of the key metabolic regulator Pyruvate Kinase M2 (PKM2). Activation of PKM2 using two well-characterized small molecules, DASA-58 and TEPP-46, inhibited LPS-induced Hif-1α and IL-1β, as well as the expression of a range of other Hif-1α-dependent genes. Activation of PKM2 attenuated an LPS-induced proinflammatory M1 macrophage phenotype while promoting traits typical of an M2 macrophage. We show that LPS-induced PKM2 enters into a complex with Hif-1α, which can directly bind to the IL-1β promoter, an event that is inhibited by activation of PKM2. Both compounds inhibited LPS-induced glycolytic reprogramming and succinate production. Finally, activation of PKM2 by TEPP-46 in vivo inhibited LPS and Salmonella typhimurium-induced IL-1β production, while boosting production of IL-10. PKM2 is therefore a critical determinant of macrophage activation by LPS, promoting the inflammatory response.",
+                "database": {"name": "PubMed", "id": "11964155"},
+                "title": "Bid induces cytochrome c-impermeable Bax channels in liposomes.",
+                "source_name": "The Biochemical journal",
+                "date_published": "2002-05-01",
+                "abstract": "Bax is a proapoptotic member of the Bcl-2 family of proteins. The Bax protein is dormant in the cytosol of normal cells and is activated upon induction of apoptosis. In apoptotic cells, Bax gets translocated to mitochondria, inserts into the outer membrane, oligomerizes and triggers the release of cytochrome c, possibly by channel formation. The BH3 domain-only protein Bid induces a conformational change in Bax before its insertion into the outer membrane. The mechanism by which Bid promotes Bax activation is not understood, and whether Bid is the only protein required for Bax activation is unclear. Here we report that recombinant full-length Bax (Bax(FL)) does not form channels in lipid bilayers when purified as a monomer. In contrast, in the presence of Bid cut with caspase 8 (cut Bid), Bax forms ionic channels in liposomes and planar bilayers. This channel-forming activity requires an interaction between cut Bid and Bax, and is inhibited by Bcl-x(L). Moreover, in the absence of the putative transmembrane C-terminal domain, Bax does not form ionic channels in the presence of cut Bid. Cut Bid does not induce Bax oligomerization in liposomes and the Bax channels formed in the presence of cut Bid are not large enough to permeabilize vesicles to cytochrome c. In conclusion, our results suggest that monomeric Bax(FL) can form channels only in the presence of cut Bid. Cut Bid by itself is unable to induce Bax oligomerization in lipid membranes. It is suggested that another factor that might be present in mitochondria is required for Bax oligomerization.",
+                "comments": " ",
             },
             "assertions": [
+                {"subject": "", "relation": "", "object": "a(MESH:D014867!Water)"},
                 {
-                    "subject": "p(akt)",
-                    "relation": "increases",
-                    "object": "p(akt)",
-                    "validation": {"status": "Processing"},
-                    "str": "p(akt) increases p(akt)",
-                    "hash": "12257757526295164245",
-                }
+                    "subject": "a(CHEBI:15428!glycine)",
+                    "relation": "",
+                    "object": "",
+                    "validation": {"status": "Good", "errors": None},
+                },
             ],
-            "id": "01E7GHNPM8GNEQE2K8XB9EJZKB",
+            "id": "01EHQ1SJ1FZW9SZ8QW2TWQG4CN",
             "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.1.0.yaml",
             "annotations": [
                 {
-                    "type": "Species",
-                    "label": "human",
-                    "id": "TAX:9606",
+                    "type": "",
+                    "label": "Ion Channels",
+                    "id": "MESH:D007473",
                     "validation": {
                         "status": "Warning",
                         "errors": [
@@ -159,34 +125,45 @@ def test_validate_nanopub_2():
                                 "type": "Annotation",
                                 "severity": "Warning",
                                 "label": "Annotation-Warning",
-                                "msg": "Annotation term: TAX:9606 not found in database",
-                                "visual": null,
-                                "visual_pairs": null,
+                                "msg": "Annotation type:  for MESH:D007473 does not match annotation types in database: []",
+                                "visual": None,
+                                "visual_pairs": None,
                                 "index": 0,
                             }
                         ],
-                        "validation_target": null,
+                        "validation_target": None,
                     },
-                    "str": "Species TAX:9606",
+                    "hash": "1759921126727370510",
+                    "str": "MESH:D007473",
+                },
+                {
+                    "type": "Species",
+                    "label": "human",
+                    "id": "TAX:9606",
+                    "validation": {"status": "Good", "errors": None, "validation_target": None},
                     "hash": "7430120383187917444",
-                }
+                    "str": "Species TAX:9606",
+                },
             ],
             "evidence": "",
             "metadata": {
                 "collections": [],
                 "gd_status": "draft",
-                "gd_createTS": "2020-05-04T19:12:45.699Z",
-                "gd_updateTS": "2020-05-04T19:12:45.699Z",
+                "gd_createTS": "2020-09-08T14:26:54.114Z",
+                "gd_updateTS": "2020-09-10T15:49:14.361Z",
                 "gd_validation": {"status": "Good"},
-                "gd_hash": "c6798ab1f7bf62be",
+                "gd_hash": "8637bb93aa2bf8fe",
                 "gd_creator": "01dyjx9yy6jkkfwsfm15ndnry0",
                 "gd_internal_comments": "",
             },
         },
     }
 
-    nanopub = bel.nanopub.validate.validate(nanopub, validation_level="force")
+    nanopub_validated = bel.nanopub.validate.validate(nanopub, validation_level="force")
 
-    print("DumpVar:\n", json.dumps(nanopub, indent=4))
+    print("Validated Nanopub:\n", json.dumps(nanopub_validated, indent=4))
 
-    assert False
+    assert (
+        nanopub["nanopub"]["assertions"][0]["validation"]["errors"][0]["msg"]
+        == "Missing Assertion Subject or Relation"
+    )

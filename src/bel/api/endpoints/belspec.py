@@ -1,14 +1,14 @@
 """belspec endpoints"""
 
 # Third Party Imports
+# Third Party
+# Local Imports
+import bel.belspec.crud
 import fastapi
+from bel.schemas.belspec import BelSpec, BelSpecVersions, EnhancedBelSpec
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 from loguru import logger
-
-# Local Imports
-import bel.belspec.crud
-from bel.schemas.belspec import BelSpec, BelSpecVersions, EnhancedBelSpec
 
 router = APIRouter()
 

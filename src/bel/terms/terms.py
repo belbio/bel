@@ -3,18 +3,19 @@ import re
 import time
 from typing import Any, List, Mapping, Optional, Union
 
-# Third Party Imports
-import cachetools
-import elasticsearch
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
+import cachetools
+
+# Third Party Imports
+import elasticsearch
 from bel.core.utils import asyncify, split_key_label
 from bel.db.arangodb import arango_id_to_key, resources_db, terms_coll_name
 from bel.db.elasticsearch import es
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.terms import Term
+from loguru import logger
 
 Key = str  # namespace:id
 
@@ -72,7 +73,8 @@ def get_term(term_key: Key) -> Optional[Term]:
     terms = get_terms(term_key)
     time2 = time.perf_counter()
 
-    logger.info("Get terms timing", term_key=term_key, duration=f"{time2 - time1:.5f}")
+    duration = f"{time2 - time1:.5f}"
+    # logger.debug(f"Get terms timing {duration} for {term_key}", term_key=term_key, duration=duration)
 
     if len(terms) > 1:
 

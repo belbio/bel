@@ -22,7 +22,7 @@ import json
 import re
 import sys
 
-# Third Party Imports
+# Third Party
 import yaml
 from loguru import logger
 

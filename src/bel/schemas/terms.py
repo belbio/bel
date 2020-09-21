@@ -3,10 +3,10 @@
 import enum
 from typing import Any, List, Mapping, Optional, Union
 
-from pydantic import BaseModel, Field, HttpUrl
-
+# Third Party
 # Local Imports
 from bel.schemas.constants import AnnotationTypesEnum, EntityTypesEnum
+from pydantic import BaseModel, Field, HttpUrl
 
 Key = str  # Type alias for NsVal Key values
 
@@ -88,7 +88,11 @@ class Namespace(BaseModel):
     version: Optional[str] = None
 
     source_name: str = Field("", description="Source name for namespace")
-    source_url: HttpUrl = Field("", description="Source url for namespace")
+    source_url: Optional[HttpUrl] = Field(None, description="Source url for namespace")
+
+    resource_download_url: Optional[HttpUrl] = Field(
+        None, description="Download url for the resource as a *.jsonl.gz file"
+    )
 
     entity_types: List[EntityTypesEnum] = []
     annotation_types: List[AnnotationTypesEnum] = []

@@ -3,17 +3,18 @@ import re
 from dataclasses import dataclass
 from typing import List, Mapping, Optional
 
+# Third Party
 # Third Party Imports
 import arango
 import arango.client
 import arango.database
 import arango.exceptions
-import boltons.iterutils
-from loguru import logger
 
 # Local Imports
 import bel.core.settings as settings
+import boltons.iterutils
 from bel.core.utils import _create_hash
+from loguru import logger
 
 resources_db_name = settings.RESOURCES_DB  # BEL Resources (Namespaces, etc)
 bel_db_name = settings.BEL_DB  # Misc BEL
@@ -39,7 +40,10 @@ def get_user_credentials(username, password):
     Use provided username and password OR in config OR blank in that order
     """
     username = boltons.iterutils.first([username, settings.ARANGO_USER], default="")
-    password = boltons.iterutils.first([password, settings.ARANGO_PASSWORD], default="")
+    password = boltons.iterutils.first(
+        [password, settings.ARANGO_PASSWORD],
+        default="",
+    )
 
     return username, password
 
@@ -299,9 +303,7 @@ bel_validations_coll = bel_handles["bel_validations_coll"]
 
 
 def delete_database(client, db_name, username=None, password=None):
-    """Delete Arangodb database
-
-    """
+    """Delete Arangodb database"""
 
     (username, password) = get_user_credentials(username, password)
 
@@ -310,7 +312,7 @@ def delete_database(client, db_name, username=None, password=None):
     try:
         return sys_db.delete_database(db_name)
     except Exception:
-        logger.warn("No arango database {db_name} to delete, does not exist")
+        logger.warning(f"No arango database {db_name} to delete, does not exist")
 
 
 def batch_load_docs(db, doc_iterator, on_duplicate: str = "replace"):

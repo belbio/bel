@@ -1,14 +1,15 @@
 # Standard Library
 from typing import List, Mapping
 
-# Third Party Imports
-import cachetools
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.db.arangodb
 import bel.terms.terms
+import cachetools
 from bel.db.arangodb import ortholog_edges_name, ortholog_nodes_name, resources_db
+
+# Third Party Imports
+from loguru import logger
 
 Key = str
 

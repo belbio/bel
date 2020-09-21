@@ -24,6 +24,7 @@ Examples
 LOG_LEVEL = os.getenv("LOGGING", default="INFO")
 LOG_SERIALIZE = False
 SERVER_MODE = os.getenv("SERVER_MODE", default="PROD")
+HOST_NAME = os.getenv("HOST_NAME", default="hostname_not_set")
 
 
 def getenv_boolean(var_name, default=False):
@@ -42,7 +43,7 @@ rootdir = pathlib.Path(appdir).parent  # parent to ./lib/bel directory
 
 # Mailgun settings
 MAIL_API = os.getenv("MAIL_API", default=None)
-MAIL_API_TOKEN = os.getenv("MAIL_API_TOKEN")
+MAIL_API_KEY = os.getenv("MAIL_API_KEY")
 MAIL_FROM = os.getenv("MAIL_FROM")
 
 # Auth Settings

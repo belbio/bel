@@ -5,10 +5,7 @@ import json
 import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
-# Third Party Imports
-from loguru import logger
-from pydantic import BaseModel, Field, root_validator
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb
@@ -18,6 +15,10 @@ from bel.core.utils import namespace_quoting, split_key_label
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.constants import AnnotationTypesEnum, EntityTypesEnum
 from bel.schemas.terms import Term
+
+# Third Party Imports
+from loguru import logger
+from pydantic import BaseModel, Field, root_validator
 
 Key = str  # Type alias for NsVal Key values
 NamespacePattern = r"[\w\.]+"  # Regex for Entity Namespace
@@ -85,14 +86,54 @@ class Pair(BaseModel):
 
 class ErrorLevelEnum(str, enum.Enum):
 
-    ERROR = "ERROR"
-    WARNING = "WARNING"
+    Good = "Good"
+    Error = "Error"
+    Warning = "Warning"
+    Processing = "Processing"
 
 
-class AssertionErrors(BaseModel):
-    """Assertion Errors"""
+class ValidationErrorType(str, enum.Enum):
 
-    __root__: List[Tuple[ErrorLevelEnum, str]]
+    Nanopub = "Nanopub"
+    Assertion = "Assertion"
+    Annotation = "Annotation"
+
+
+class ValidationError(BaseModel):
+    type: ValidationErrorType
+    severity: ErrorLevelEnum
+    label: str = Field(
+        "",
+        description="Label used in search - combination of type and severity, e.g. Assertion-Warning",
+    )
+    msg: str
+    visual: Optional[str] = Field(
+        None,
+        description="Visualization of the location of the error in the Assertion string or Annotation using html span tags",
+    )
+    visual_pairs: Optional[List[Tuple[int, int]]] = Field(
+        None,
+        description="Used when the Assertion string isn't available. You can then post-process these pairs to create the visual field.",
+    )
+    index: int = Field(
+        0,
+        description="Index to sort validation errors - e.g. for multiple errors in Assertions - start at the beginning of the string.",
+    )
+
+    @root_validator(pre=True)
+    def set_label(cls, values):
+        label, type_, severity = (values.get("label"), values.get("type"), values.get("severity"))
+
+        if not label:
+            label = f"{type_}-{severity}"
+            values["label"] = label.strip()
+        return values
+
+
+class ValidationErrors(BaseModel):
+    status: Optional[ErrorLevelEnum] = "Good"
+    errors: Optional[List[ValidationError]]
+    validation_target: Optional[str]
 
 
 class AssertionStr(BaseModel):
@@ -114,10 +155,17 @@ class AssertionStr(BaseModel):
             values.get("relation"),
             values.get("object"),
         )
+        if subject is None:
+            subject = ""
+        if relation is None:
+            relation = ""
+        if object_ is None:
+            object_ = ""
 
         if not entire:
             entire = f"{subject} {relation} {object_}"
             values["entire"] = entire.strip()
+
         return values
 
 
@@ -132,11 +180,15 @@ class NsVal(object):
 
         self.namespace: str = namespace
         self.id: str = namespace_quoting(id)
+
         self.label = ""
         if label:
             self.label: str = namespace_quoting(label)
 
         self.key: Key = f"{self.namespace}:{self.id}"  # used for dict keys and entity searches
+
+        # Add key_label to NsVal
+        self.key_label()
 
     def add_label(self):
         if not self.label:
@@ -147,7 +199,7 @@ class NsVal(object):
     def update_label(self):
         term = bel.terms.terms.get_term(self.key)
         if term and term.label:
-            self.label = term.label
+            self.label = namespace_quoting(term.label)
 
         return self
 
@@ -162,9 +214,11 @@ class NsVal(object):
         self.add_label()
 
         if self.label:
-            return f"{self.namespace}:{self.id}!{self.label}"
+            self.key_label = f"{self.namespace}:{self.id}!{self.label}"
         else:
-            return f"{self.namespace}:{self.id}"
+            self.key_label = f"{self.namespace}:{self.id}"
+
+        return self.key_label
 
     def __str__(self):
 
@@ -220,6 +274,16 @@ class BelEntity(object):
             self.nsval = None
 
         self.namespace_metadata = get_namespace_metadata().get(self.nsval.namespace, None)
+        if self.namespace_metadata is not None and self.namespace_metadata.entity_types:
+            self.entity_types = self.namespace_metadata.entity_types
+
+    def add_term(self):
+        """Add term info"""
+
+        if self.namespace_metadata and self.namespace_metadata.namespace_type == "complete":
+            self.term = bel.terms.terms.get_term(self.nsval.key)
+
+        return self
 
     def add_species(self):
         """Add species if not already set"""
@@ -227,16 +291,12 @@ class BelEntity(object):
         if self.species_key:
             return self
 
-        if self.term:
+        if not self.term:
+            self.add_term()
+
+        if self.term.species_key:
             self.species_key = self.term.species_key
-            return self
-
-        if self.namespace_metadata and self.namespace_metadata.namespace_type == "complete":
-            self.term = bel.terms.terms.get_term(self.nsval.key)
-            if self.term:
-                self.species_key = self.term.species_key
-
-        elif self.namespace_metadata and self.namespace_metadata.species_key:
+        elif self.namespace_metadata.species_key:
             self.species_key = self.namespace_metadata.species_key
 
         return self

@@ -1,27 +1,55 @@
 # Standard Library
+import copy
 import gzip
 import json
-from typing import IO
+from collections import defaultdict
+from typing import IO, Mapping, Optional
 
-# Third Party Imports
-from arango import ArangoError
-from loguru import logger
-
+# Third Party
 # Local Imports
 import bel.core.settings as settings
 import bel.core.utils
 import bel.db.arangodb as arangodb
+
+# Third Party Imports
+from arango import ArangoError
 from bel.db.arangodb import (
     ortholog_edges_name,
     ortholog_nodes_name,
     resources_db,
     resources_metadata_coll,
 )
+from loguru import logger
 
-()
+
+def remove_old_db_entries(source, version: str = "", force: bool = False):
+    """Remove older ortholog data entries"""
+
+    if force or version == "":
+        filter_version = ""
+    else:
+        filter_version = f'FILTER doc.version != "{version}"'
+
+    # Clean up old entries
+    remove_old_ortholog_edges = f"""
+        FOR doc in {ortholog_edges_name}
+            FILTER doc.source == "{source}"
+            {filter_version}
+            REMOVE doc IN {ortholog_edges_name}
+    """
+    remove_old_ortholog_nodes = f"""
+        FOR doc in {ortholog_nodes_name}
+            FILTER doc.source == "{source}"
+            {filter_version}
+            REMOVE doc IN {ortholog_nodes_name}
+    """
+    arangodb.aql_query(resources_db, remove_old_ortholog_edges)
+    arangodb.aql_query(resources_db, remove_old_ortholog_nodes)
 
 
-def load_orthologs(fo: IO, metadata: dict):
+def load_orthologs(
+    fo: IO, metadata: dict, force: bool = False, resource_download_url: Optional[str] = None
+):
     """Load orthologs into ArangoDB
 
     Args:
@@ -29,43 +57,72 @@ def load_orthologs(fo: IO, metadata: dict):
         metadata: dict containing the metadata for orthologs
     """
 
+    result = {"success": True, "messages": []}
+
+    statistics = {"entities_count": 0, "orthologous_pairs": defaultdict(lambda: defaultdict(int))}
+
     version = metadata["version"]
     source = metadata["name"]
 
-    # LOAD ORTHOLOGS INTO ArangoDB
+    metadata_key = metadata["name"]
+    prior_metadata = resources_metadata_coll.get(metadata_key)
 
-    arango_client = arangodb.get_client()
-    if not arango_client:
-        print("Cannot load orthologs without ArangoDB access")
-        quit()
+    try:
+        prior_version = prior_metadata.get("version", "")
+        prior_entity_count = prior_metadata["statistics"].get("entities_count", 0)
 
-    arangodb.batch_load_docs(resources_db, orthologs_iterator(fo, version), on_duplicate="update")
+    except Exception:
+        prior_entity_count = 0
+        prior_version = ""
 
-    logger.info("Load orthologs", source=source)
+    if prior_version == version or not force:
+        msg = f"NOTE: This orthology dataset {source} at version {version} is already loaded and the 'force' option was not used"
+        result["messages"].append(msg)
+        return result
 
-    # Clean up old entries
-    remove_old_ortholog_edges = f"""
-        FOR edge in {ortholog_edges_name}
-            FILTER edge.source == "{source}"
-            FILTER edge.version != "{version}"
-            REMOVE edge IN {ortholog_edges_name}
-    """
-    remove_old_ortholog_nodes = f"""
-        FOR node in {ortholog_nodes_name}
-            FILTER node.source == "{source}"
-            FILTER node.version != "{version}"
-            REMOVE node IN {ortholog_nodes_name}
-    """
-    arangodb.aql_query(resources_db, remove_old_ortholog_edges)
-    arangodb.aql_query(resources_db, remove_old_ortholog_nodes)
+    arangodb.batch_load_docs(
+        resources_db, orthologs_iterator(fo, version, statistics), on_duplicate="update"
+    )
+
+    logger.info(
+        f"Loaded orthologs, source: {source}  count: {statistics['entities_count']}", source=source
+    )
+
+    if prior_entity_count > statistics["entities_count"]:
+        logger.error(
+            f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
+        )
+
+        result["success"] = False
+        msg = f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
+        result["messages"].append(msg)
+        return result
+
+    remove_old_db_entries(source, version=version)
 
     # Add metadata to resource metadata collection
     metadata["_key"] = arangodb.arango_id_to_key(source)
+
+    # Using side effect to get statistics from orthologs_iterator on purpose
+    metadata["statistics"] = copy.deepcopy(statistics)
+
+    if resource_download_url is not None:
+        metadata["resource_download_url"] = resource_download_url
+
+    resources_metadata_coll.insert(metadata, overwrite=True)
+    clear_resource_metadata_cache()
+
     resources_metadata_coll.insert(metadata, overwrite=True)
 
+    result["messages"].append(f'Loaded {statistics["entities_count"]} ortholog sets into arangodb')
+    return result
 
-def orthologs_iterator(fo, version):
-    """Ortholog node and edge iterator"""
+
+def orthologs_iterator(fo, version, statistics: Mapping):
+    """Ortholog node and edge iterator
+
+    NOTE: the statistics dict works as a side effect since it is passed as a reference!!!
+    """
 
     species_list = settings.BEL_FILTER_SPECIES
 
@@ -145,4 +202,17 @@ def orthologs_iterator(fo, version):
                 "version": version,
             }
 
+            statistics["entities_count"] += 1
+            statistics["orthologous_pairs"][subject_species_key][object_species_key] += 1
+            statistics["orthologous_pairs"][object_species_key][subject_species_key] += 1
+
             yield (arangodb.ortholog_edges_name, arango_edge)
+
+
+def delete_ortholog_resource(source):
+    """Remove ortholog resource
+
+    Remove Arangodb terms and equivalences and remove Elasticsearch terms index
+    """
+
+    remove_old_db_entries(source, force=True)

@@ -2,12 +2,13 @@
 import json
 from typing import List, Tuple
 
+# Third Party
+# Local Imports
+import bel.core.settings as settings
+
 # Third Party Imports
 import redis
 from loguru import logger
-
-# Local Imports
-import bel.core.settings as settings
 
 redis_db = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
 
