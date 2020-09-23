@@ -131,7 +131,7 @@ if not BEL_DECANONICALIZE:
 # Boost these namespaces in term search results and completions
 BEL_BOOST_NAMESPACES = json.loads(os.getenv("BEL_BOOST_NAMESPACES", default="{}"))
 if not BEL_BOOST_NAMESPACES:
-    BEL_BOOST_NAMESPACES = ["HGNC", "MGI", "RGD", "ZFIN", "CHEBI", "GO"]
+    BEL_BOOST_NAMESPACES = ["HGNC", "MGI", "RGD", "ZFIN", "CHEBI", "GO", "TAX"]
 
 BEL_ORTHOLOGIZE_TARGETS = json.loads(os.getenv("BEL_ORTHOLOGIZE_TARGETS", default="{}"))
 if not BEL_ORTHOLOGIZE_TARGETS:

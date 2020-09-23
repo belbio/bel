@@ -4,29 +4,40 @@
 from typing import List, Optional
 
 # Third Party
+# Third Party Imports
+import fastapi
+from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile
+from loguru import logger
+
+# Local
 import bel.resources.manage
 
 # Local Imports
 import bel.terms.terms
-
-# Third Party Imports
-import fastapi
 from bel.schemas.terms import Term, TermCompletionResponse
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from loguru import logger
 
 router = APIRouter()
 
 
-@router.get("/resources/update")
-def update_resources(url: str = None, force: bool = False, email: str = None):
+@router.post("/resources/update")
+def post_update_resources(
+    url: str = None,
+    urls: List[str] = Body([], description="List of URLs of BEL Resources to add or update"),
+    force: bool = False,
+    email: str = None,
+):
     """Update bel resources
 
     Reads the arangodb bel.bel_config.configuration.update_bel_resources object
-    to figure out what bel resource urls to process
+    to figure out what bel resource urls to process if url or urls not included.
+
+    Will ignore _url_ if _urls_ is provided.
     """
 
-    bel.resources.manage.update_resources(url=url, force=force, email=email)
+    if url and not urls:
+        urls = [url]
+
+    bel.resources.manage.update_resources(urls=urls, force=force, email=email)
 
 
 @router.delete("/resources/{source}")
@@ -45,27 +56,3 @@ def delete_resource(
     """
 
     bel.resources.manage.delete_resource(source, resource_type=resource_type)
-
-
-# @router.post("/resources/terms/import_file")
-# def import_terms(
-#     email: str = Query("", description="Notification email"), terms_file: Optional[UploadFile] = File(None), terms_url: Optional[str] = None
-# ):
-#     """Import terms
-
-#     Add an email if you would like to be notified when the terms upload is completed.
-#     """
-
-#     return "Not implemented"
-
-
-# @router.post("/resources/orthologs/import_file")
-# def import_orthologs(
-#     email: str = Query("", description="Notification email"), orthologs_file: Optional[UploadFile] = File(None), orthologs_url: Optional[str] = ""
-# ):
-#     """Import orthologs
-
-#     Add an email if you would like to be notified when the ortholog upload is completed.
-#     """
-
-#     return "Not implemented"

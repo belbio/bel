@@ -2,8 +2,13 @@
 import copy
 import gzip
 import json
+from typing import List
 
 # Third Party
+# Third Party Imports
+from loguru import logger
+
+# Local
 import bel.core.mail
 
 # Local Imports
@@ -13,9 +18,6 @@ import bel.db.arangodb as arangodb
 import bel.db.elasticsearch as elasticsearch
 import bel.resources.namespace
 import bel.resources.ortholog
-
-# Third Party Imports
-from loguru import logger
 
 
 def create_email_body_for_update_resources(results):
@@ -77,7 +79,7 @@ def create_email_body_for_update_resources(results):
     return (body, body_html)
 
 
-def update_resources(url: str = None, force: bool = False, email: str = None):
+def update_resources(urls: List[str] = None, force: bool = False, email: str = None):
     """Update bel resources
 
     Reads the arangodb resources_metadata objects to figure out what bel resource urls to process
@@ -88,13 +90,17 @@ def update_resources(url: str = None, force: bool = False, email: str = None):
         url: url to bel resource file as *.jsonl.gz
     """
 
+    if urls is None:
+        urls = []
+
     results = {}
 
     # Load provided url if available
-    if url is not None:
-        results[url] = load_resource(resource_url=url, force=force)
+    if urls:
+        for url in urls:
+            results[url] = load_resource(resource_url=url, force=force)
 
-    # Load stored Resource URLs from belconfig.configuration doc
+    # Load using Resource URLs from bel resource metadata
     else:
         resources = bel.resources.namespace.get_bel_resource_metadata()
 

@@ -4,6 +4,10 @@ import re
 from typing import List, Tuple
 
 # Third Party
+# Third Party Imports
+from loguru import logger
+
+# Local
 # Local Imports
 import bel.core.settings as settings
 import bel.core.utils
@@ -13,9 +17,6 @@ from bel.db.arangodb import bel_db, bel_validations_coll, bel_validations_name
 from bel.db.elasticsearch import es
 from bel.schemas.bel import AssertionStr, ValidationError, ValidationErrors
 from bel.schemas.nanopubs import NanopubR
-
-# Third Party Imports
-from loguru import logger
 
 
 def convert_msg_to_html(msg: str):
@@ -109,17 +110,8 @@ def save_validation_by_hash(hash_key: str, validation: ValidationErrors) -> None
     bel_validations_coll.insert(doc, overwrite=True, silent=True)
 
 
-def validate_assertion(assertion, *, version: str, validation_level: str):
+def validate_assertion(assertion_obj: AssertionStr, *, version: str = "latest"):
     """ Validate single assertion """
-
-    assertion_obj = AssertionStr(
-        subject=assertion["subject"], relation=assertion["relation"], object=assertion["object"]
-    )
-
-    # Add hash in order to cache validation
-    assertion_hash = assertion.get("hash", None)
-    if assertion_hash is None:
-        assertion_hash = get_hash(assertion_obj.entire)
 
     bo = bel.lang.belobj.BEL(assertion_obj, version=version)
     bo.ast.validate()
@@ -157,9 +149,12 @@ def validate_assertion(assertion, *, version: str, validation_level: str):
     )
 
     assertion["validation"] = validation.dict(exclude={"validation_target"}, exclude_none=True)
+
+    # Cache validation
+    assertion_hash = get_hash(assertion_obj.entire)
     save_validation_by_hash(assertion_hash, validation)
 
-    return assertion
+    return assertion_obj
 
 
 def validate_assertions(
@@ -184,23 +179,18 @@ def validate_assertions(
     if validation_level != "force":
         assertions = get_cached_assertion_validations(assertions, validation_level)
 
-        if validation_level == "complete":
-            for idx, assertion in enumerate(assertions):
-                if (
-                    not assertion.get("validation", False)
-                    or assertion["validation"]["status"] == "Processing"
-                ):
-                    assertions[idx] = validate_assertion(
-                        assertion, version=version, validation_level=validation_level
-                    )
+    for idx, assertion in enumerate(assertions):
+        assertion_obj = AssertionStr(
+            subject=assertion["subject"],
+            relation=assertion.get("relation", ""),
+            object=assertion.get("object", ""),
+        )
 
-    # Force validation of all assertions
-    else:
-        for idx, assertion in enumerate(assertions):
-
-            assertions[idx] = validate_assertion(
-                assertion, version=version, validation_level=validation_level
-            )
+        if (
+            not assertion.get("validation", False)
+            or assertion["validation"]["status"] == "Processing"
+        ):
+            assertions[idx] = validate_assertion(assertion_obj, version=version)
 
     return assertions
 
@@ -252,31 +242,36 @@ def validate_annotation(annotation):
     else:
         annotation_hash = annotation["hash"]
 
-    search_body = {
-        "_source": ["src_id", "key", "name", "label", "annotation_types"],
-        "query": {"term": {"key": annotation["id"]}},
-    }
-
     validation = ValidationErrors(status="Good")
 
-    results = es.search(
-        index=settings.TERMS_INDEX, doc_type=settings.TERMS_DOCUMENT_TYPE, body=search_body
-    )
+    term_key = annotation["id"]
+    terms = bel.terms.terms.get_terms(term_key)
 
-    if len(results["hits"]["hits"]) > 0:
-        result = results["hits"]["hits"][0]["_source"]
-        if annotation["type"] not in result["annotation_types"]:
-            validation.status = "Warning"
-            if validation.errors is None:
-                validation.errors = []
-            validation.errors.append(
-                ValidationError(
-                    type="Annotation",
-                    severity="Warning",
-                    msg=f'Annotation type: {annotation["type"]} for {annotation["id"]} does not match annotation types in database: {result["annotation_types"]}',
+    matched_term = None
+    for term in terms:
+        if term_key == term.key:
+            matched_term = term
+        elif matched_term is None and term_key in term.alt_keys:
+            matched_term = term
+
+    if matched_term is None:
+        for term in terms:
+            if term_key in term.obsolete_keys:
+                matched_term = term
+
+                validation.status = "Warning"
+                if validation.errors is None:
+                    validation.errors = []
+                validation.errors.append(
+                    ValidationError(
+                        type="Annotation",
+                        severity="Warning",
+                        msg=f"Annotation term {term_key} is obsolete - please replace with {matched_term.key}",
+                    )
                 )
-            )
-    else:
+
+    if matched_term is not None and annotation["type"] not in matched_term.annotation_types:
+
         validation.status = "Warning"
         if validation.errors is None:
             validation.errors = []
@@ -284,7 +279,19 @@ def validate_annotation(annotation):
             ValidationError(
                 type="Annotation",
                 severity="Warning",
-                msg=f"Annotation term: {annotation['id']} not found in database",
+                msg=f'Annotation type: {annotation["type"]} for {term_key} does not match annotation types in database: {matched_term.annotation_types}',
+            )
+        )
+
+    elif matched_term is None:
+        validation.status = "Warning"
+        if validation.errors is None:
+            validation.errors = []
+        validation.errors.append(
+            ValidationError(
+                type="Annotation",
+                severity="Warning",
+                msg=f"Annotation term: {term_key} not found in Namespace database",
             )
         )
 
@@ -414,6 +421,8 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
 
     nanopub["nanopub"]["metadata"]["gd_validation"] = validation.dict(exclude_none=True)
 
+    nanopub = NanopubR(**nanopub)
+
     return nanopub
 
 
@@ -425,8 +434,6 @@ def validate(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
         nanopub = validate_sections(nanopub, validation_level)
 
     except Exception as e:
-        logger.warning(
-            f"Could not validate nanopub: {nanopub.get('_key', 'Unknown')}  error: {str(e)}"
-        )
+        logger.warning(f"Could not validate nanopub: {nanopub.nanopub.id}  error: {str(e)}")
 
     return nanopub

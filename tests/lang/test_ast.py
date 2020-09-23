@@ -3,8 +3,10 @@
 import pprint
 
 # Third Party
-import bel.lang.ast
 import pytest
+
+# Local
+import bel.lang.ast
 from bel.schemas.bel import AssertionStr, ValidationError
 
 # cSpell:disable
@@ -251,7 +253,7 @@ def test_abundance_namespace():
 
     print("Errors", ast.errors)
 
-    assert False
+    assert ast.errors == []
 
 
 def test_validate_reaction():
@@ -315,6 +317,19 @@ def test_validate_nsarg():
     assert ast.errors == []
 
 
+def test_validate_obsolete_nsarg():
+
+    assertion = AssertionStr(subject="p(HGNC:A2MP)")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+
 def test_validate_rxn1():
     """Validate path()"""
 
@@ -331,6 +346,21 @@ def test_validate_rxn1():
     print("Errors")
     for error in ast.errors:
         print("Error", error.json())
+
+    assert ast.errors == []
+
+
+def test_validate_complex_nsarg():
+
+    assertion = AssertionStr(
+        subject='p(HGNC:PTHLH) increases act(complex(SCOMP:"Nfkb Complex"), ma(tscript))'
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
 
     assert ast.errors == []
 

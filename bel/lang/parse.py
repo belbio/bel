@@ -9,15 +9,17 @@ import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party
-import bel.belspec.specifications
 import boltons.iterutils
 import cachetools
+from loguru import logger
+from pydantic import BaseModel, Field
+
+# Local
+import bel.belspec.specifications
 from bel.belspec.specifications import additional_computed_relations
 from bel.core.utils import html_wrap_span, nsarg_pattern
 from bel.lang.ast import Arg, BELAst, Function, NSArg, Relation, StrArg
 from bel.schemas.bel import FunctionSpan, NsArgSpan, Pair, Span, ValidationError
-from loguru import logger
-from pydantic import BaseModel, Field
 
 
 def mask(string: str, start: int, end: int, replacement_char="#"):
@@ -209,9 +211,9 @@ def find_matching_parens(
         if char == "(" and not intersect(idx, matched_quotes):
             stack.append(idx)
         elif char == ")" and not intersect(idx, matched_quotes):
-            try:
+            if len(stack) > 0:
                 matched_parens.append(Pair(start=stack.pop(), end=idx))
-            except IndexError:
+            else:
                 errors.append(
                     ValidationError(
                         type="Assertion",

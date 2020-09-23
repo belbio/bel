@@ -35,7 +35,7 @@ nsarg_pattern = re.compile(
     (?P<ns_arg>
         (?P<ns>[\w\.]+)        # namespace
         \s*:\s*                # ns:id separator
-        (?P<id>".*?"|[^\,\(\)\s]+)      # id
+        (?P<id>".*?"|[^\,\(\)\s\!]+)      # id
         (\s*!\s*)?             # id!label separator
         (?P<label>".*?"|\w+)?  # optional label
     )
