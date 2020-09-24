@@ -33,7 +33,6 @@ clean_pyc:  ## Remove python bytecode
 	find . -name '__pycache__' -exec rm -r -- {} +
 
 
-
 # Run all tests - failing or not
 tests: clean_pyc  ## Run BEL tests
 	BELTEST='Local' poetry run py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc --color=yes --durations=10 tests
