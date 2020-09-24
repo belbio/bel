@@ -78,11 +78,11 @@ class Metadata(BaseModel):
         description="non-crypto hash (xxHash64) to uniquely identify nanopub based on content",
     )
 
-    @validator("gd_validation")
-    def fix_gd_validation(cls, v):
-        if not (isinstance(v, dict)):
-            v = {}
-        return v
+    # @validator("gd_validation")
+    # def fix_gd_validation(cls, v):
+    #     if not (isinstance(v, dict)):
+    #         v = {}
+    #     return v
 
     class Config:
         extra = "allow"
