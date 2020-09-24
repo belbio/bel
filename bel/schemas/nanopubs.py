@@ -5,8 +5,10 @@ from typing import Any, List, Mapping, Optional, Union
 # Third Party
 # Third Party Imports
 import pydantic
-from bel.schemas.bel import ValidationErrors
 from pydantic import AnyUrl, BaseModel, Field, HttpUrl
+
+# Local
+from bel.schemas.bel import ValidationErrors
 
 
 class NanopubType(BaseModel):
@@ -69,7 +71,7 @@ class Metadata(BaseModel):
     gd_status: Optional[str]
     gd_createTS: Optional[str]
     gd_updateTS: Optional[str]
-    gd_validation: Optional[ValidationErrors]
+    gd_validation: Optional[ValidationErrors] = {}
     gd_hash: Optional[str] = Field(
         "",
         title="Nanopub hash",
@@ -110,7 +112,7 @@ class Nanopub(BaseModel):
 class NanopubR(BaseModel):
     """Nanopub Request/Response model"""
 
-    source_url: Optional[HttpUrl] = Field(None, description="Source URL of Nanopub")
+    source_url: Optional[str] = Field(None, description="Source URL of Nanopub")
 
     nanopub: NanopubBody
 

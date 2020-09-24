@@ -148,13 +148,11 @@ def validate_assertion(assertion_obj: AssertionStr, *, version: str = "latest"):
         status=validation_status, validation_target=assertion_obj.entire, errors=errors
     )
 
-    assertion["validation"] = validation.dict(exclude={"validation_target"}, exclude_none=True)
-
     # Cache validation
     assertion_hash = get_hash(assertion_obj.entire)
     save_validation_by_hash(assertion_hash, validation)
 
-    return assertion_obj
+    return validation.dict(exclude={"validation_target"}, exclude_none=True)
 
 
 def validate_assertions(
@@ -190,7 +188,7 @@ def validate_assertions(
             not assertion.get("validation", False)
             or assertion["validation"]["status"] == "Processing"
         ):
-            assertions[idx] = validate_assertion(assertion_obj, version=version)
+            assertions[idx]["validation"] = validate_assertion(assertion_obj, version=version)
 
     return assertions
 
@@ -407,6 +405,11 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
                 msg='nanopub["nanopub"]["citation"] must have either a uri, database or reference key.',
             )
         )
+
+    validation = validation.dict(exclude_none=True)
+
+    nanopub["nanopub"]["metadata"]["gd_validation"] = validation
+
     # Assertion checks ############################################################################
     if "assertions" in nanopub["nanopub"]:
         nanopub["nanopub"]["assertions"] = validate_assertions(
@@ -418,8 +421,6 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
         nanopub["nanopub"]["annotations"] = validate_annotations(
             nanopub["nanopub"]["annotations"], validation_level=validation_level
         )
-
-    nanopub["nanopub"]["metadata"]["gd_validation"] = validation.dict(exclude_none=True)
 
     nanopub = NanopubR(**nanopub)
 
