@@ -5,7 +5,7 @@ from typing import Any, List, Mapping, Optional, Union
 # Third Party
 # Third Party Imports
 import pydantic
-from pydantic import AnyUrl, BaseModel, Field, HttpUrl
+from pydantic import AnyUrl, BaseModel, Field, HttpUrl, validator
 
 # Local
 from bel.schemas.bel import ValidationErrors
@@ -77,6 +77,12 @@ class Metadata(BaseModel):
         title="Nanopub hash",
         description="non-crypto hash (xxHash64) to uniquely identify nanopub based on content",
     )
+
+    # @validator("gd_validation")
+    # def fix_gd_validation(cls, v):
+    #     if not (isinstance(v, dict)):
+    #         v = {}
+    #     return v
 
     class Config:
         extra = "allow"

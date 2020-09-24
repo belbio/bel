@@ -45,6 +45,7 @@ def test_validate_nanopub():
                 "gd_internal_comments": "",
                 "gd_rev": "_Z92MJja---",
                 "gd_status": "draft",
+                "gd_validation": [],
                 "gd_updateTS": "2020-02-01T00:02:19.634Z",
             },
             "schema_uri": "https://raw.githubusercontent.com/graphdati/schemas/master/nanopub_graphdati-1.0.0.json",
