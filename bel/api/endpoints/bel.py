@@ -76,4 +76,4 @@ def validate_assertion(bel_assertion: str):
 
     logger.info(f"Validated: {validated}")
 
-    return validated.json()
+    return validated
