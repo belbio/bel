@@ -319,7 +319,8 @@ def test_validate_nsarg():
 
 def test_validate_obsolete_nsarg():
 
-    assertion = AssertionStr(subject="p(HGNC:A2MP)")
+    assertion = AssertionStr(subject="r(HGNC:A2MP)")
+    expected = "BEL Entity name is obsolete - please update to HGNC:8!A2MP1"
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
@@ -327,7 +328,7 @@ def test_validate_obsolete_nsarg():
 
     print("Errors", ast.errors)
 
-    assert ast.errors == []
+    assert ast.errors[0].msg == expected
 
 
 def test_validate_rxn1():
@@ -363,6 +364,19 @@ def test_validate_complex_nsarg():
     print("Errors", ast.errors)
 
     assert ast.errors == []
+
+
+def test_validate_bad_relation():
+
+    assertion = AssertionStr(subject="p(HGNC:PTHLH) XXXincreases p(HGNC:PTHLH)")
+    expected = "Could not parse Assertion - bad relation: XXXincreases"
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
 
 
 def test_validate_missing_parts():

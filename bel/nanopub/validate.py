@@ -52,9 +52,7 @@ def get_hash(string: str) -> str:
 
 def get_assertion_str(assertion) -> str:
 
-    assertion_str = (
-        f'{assertion.get("subject")} {assertion.get("relation", "")} {assertion.get("object", "")}'
-    )
+    assertion_str = f'{assertion.get("subject", "")} {assertion.get("relation", "")} {assertion.get("object", "")}'
     assertion_str = assertion_str.replace("None", "")
     assertion_str = assertion_str.rstrip()
 
@@ -179,7 +177,7 @@ def validate_assertions(
 
     for idx, assertion in enumerate(assertions):
         assertion_obj = AssertionStr(
-            subject=assertion["subject"],
+            subject=assertion.get("subject", ""),
             relation=assertion.get("relation", ""),
             object=assertion.get("object", ""),
         )

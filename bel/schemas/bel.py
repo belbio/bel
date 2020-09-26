@@ -6,6 +6,11 @@ import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party
+# Third Party Imports
+from loguru import logger
+from pydantic import BaseModel, Field, root_validator
+
+# Local
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb
@@ -15,10 +20,6 @@ from bel.core.utils import namespace_quoting, split_key_label
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.constants import AnnotationTypesEnum, EntityTypesEnum
 from bel.schemas.terms import Term
-
-# Third Party Imports
-from loguru import logger
-from pydantic import BaseModel, Field, root_validator
 
 Key = str  # Type alias for NsVal Key values
 NamespacePattern = r"[\w\.]+"  # Regex for Entity Namespace
@@ -282,6 +283,11 @@ class BelEntity(object):
 
         if self.namespace_metadata and self.namespace_metadata.namespace_type == "complete":
             self.term = bel.terms.terms.get_term(self.nsval.key)
+
+        if self.term.entity_types:
+            self.entity_types = self.term.entity_types
+        if self.term.species_key:
+            self.species_key = self.term.species_key
 
         return self
 

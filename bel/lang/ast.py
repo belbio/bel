@@ -11,14 +11,17 @@ import traceback
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party
+# Third Party Imports
+import yaml
+from loguru import logger
+from pydantic import BaseModel, Field
+
+# Local
 # Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb
 import bel.terms.orthologs
 import bel.terms.terms
-
-# Third Party Imports
-import yaml
 from bel.belspec.crud import get_enhanced_belspec
 from bel.core.utils import html_wrap_span, http_client, url_path_param_quoting
 from bel.schemas.bel import (
@@ -33,8 +36,6 @@ from bel.schemas.bel import (
     ValidationError,
 )
 from bel.schemas.constants import strarg_validation_lists
-from loguru import logger
-from pydantic import BaseModel, Field
 
 
 #########################
@@ -483,7 +484,7 @@ class ParseInfo:
             self.get_parse_info(assertion=self.assertion)
 
     def get_parse_info(self, assertion: str = "", version: str = "latest"):
-        # Third Party
+        # Local
         from bel.lang.parse import parse_info
 
         if assertion:
@@ -675,6 +676,14 @@ class BELAst(object):
             self.subject = self.args[0]
             self.relation = self.args[1]
             self.object = BELAst(subject=self.args[2], relation=self.args[3], object=self.args[4])
+        elif len(self.args) > 1 and self.args[1].type != "Relation":
+            self.errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Could not parse Assertion - bad relation: {self.args[1]}",
+                )
+            )
         else:
             self.errors.append(
                 ValidationError(
@@ -1116,12 +1125,14 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                 )
             )
 
-        elif fn_arg.type == "NSArg" and fn_arg.entity.entity_types is None:
+        elif fn_arg.type == "NSArg" and (
+            fn_arg.entity.entity_types is None or fn_arg.entity.entity_types == []
+        ):
             errors.append(
                 ValidationError(
                     type="Assertion",
                     severity="Warning",
-                    msg=f"Unknown namespace value {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
+                    msg=f"Unknown BEL entity {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
                     visual_pairs=[(fn.span.start, fn.span.end)],
                     index=fn.span.start,
                 )
@@ -1198,6 +1209,23 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                             index=fn.args[position].span.start,
                         )
                     )
+
+    # Check for obsolete namespaces
+    for arg in fn.args:
+        if (
+            arg.type == "NSArg"
+            and arg.entity.term
+            and arg.entity.nsval.key in arg.entity.term.obsolete_keys
+        ):
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Warning",
+                    msg=f"BEL Entity name is obsolete - please update to {arg.entity.term.key}!{arg.entity.term.label}",
+                    visual_pairs=[(arg.span.start, arg.span.end)],
+                    index=fn.args[position].span.start,
+                )
+            )
 
     # Modifier function with wrong parent function
     if (
