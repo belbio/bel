@@ -284,10 +284,10 @@ class BelEntity(object):
         if self.namespace_metadata and self.namespace_metadata.namespace_type == "complete":
             self.term = bel.terms.terms.get_term(self.nsval.key)
 
-        if self.term.entity_types:
-            self.entity_types = self.term.entity_types
-        if self.term.species_key:
-            self.species_key = self.term.species_key
+            if self.term and self.term.entity_types:
+                self.entity_types = self.term.entity_types
+            if self.term and self.term.species_key:
+                self.species_key = self.term.species_key
 
         return self
 
