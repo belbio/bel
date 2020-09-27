@@ -4,18 +4,20 @@ import time
 from typing import Any, List, Mapping, Optional, Union
 
 # Third Party
-# Local Imports
-import bel.core.settings as settings
 import cachetools
 
 # Third Party Imports
 import elasticsearch
+from loguru import logger
+
+# Local
+# Local Imports
+import bel.core.settings as settings
 from bel.core.utils import asyncify, split_key_label
 from bel.db.arangodb import arango_id_to_key, resources_db, terms_coll_name
 from bel.db.elasticsearch import es
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.terms import Term
-from loguru import logger
 
 Key = str  # namespace:id
 
@@ -48,6 +50,7 @@ def get_terms(term_key: Key) -> List[Term]:
             )
         ]
 
+    term_key = term_key.replace("'", "\\'")
     query = f"""
         FOR term in {terms_coll_name}
             FILTER term.key == '{term_key}'  OR '{term_key}' in term.alt_keys OR '{term_key}' in term.obsolete_keys

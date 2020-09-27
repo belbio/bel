@@ -433,6 +433,6 @@ def validate(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
         nanopub = validate_sections(nanopub, validation_level)
 
     except Exception as e:
-        logger.warning(f"Could not validate nanopub: {nanopub.nanopub.id}  error: {str(e)}")
+        logger.exception(f"Could not validate nanopub: {nanopub.nanopub.id}  error: {str(e)}")
 
     return nanopub
