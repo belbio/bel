@@ -331,6 +331,23 @@ def test_validate_obsolete_nsarg():
     assert ast.errors[0].msg == expected
 
 
+def test_validate_nested():
+
+    assertion = AssertionStr(
+        subject="p(HGNC:CCL5)",
+        relation="decreases",
+        object='(p(HGNC:CXCL12) increases bp(GO:"platelet aggregation"))',
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+
 def test_validate_rxn1():
     """Validate path()"""
 

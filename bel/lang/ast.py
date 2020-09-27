@@ -546,7 +546,15 @@ class BELAst(object):
 
         self.errors: List[ValidationError] = []
 
-        if assertion.subject or assertion.relation or assertion.object:
+        if self.subject or self.relation or self.object:
+            if self.relation and not self.object:
+                msg = "Missing Assertion Object"
+                self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))
+            elif self.object and (not self.subject or not self.relation):
+                msg = "Missing Assertion Subject or Relation"
+                self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))
+
+        elif assertion and assertion.subject or assertion.relation or assertion.object:
             if assertion.relation and not assertion.object:
                 msg = "Missing Assertion Object"
                 self.errors.append(ValidationError(type="Assertion", severity="Error", msg=msg))
