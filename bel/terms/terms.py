@@ -88,7 +88,7 @@ def get_term(term_key: Key) -> Optional[Term]:
 
     elif len(terms) > 1:
         logger.warning(
-            f'Too many primary Keys returned. Given term_key: {term_key} matches these terms: {[term["key"] for term in terms]}'
+            f"Too many primary Keys returned. Given term_key: {term_key} matches these terms: {[term.key for term in terms]}"
         )
         return terms[0]
 
