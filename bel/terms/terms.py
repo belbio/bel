@@ -72,25 +72,24 @@ def get_term(term_key: Key) -> Optional[Term]:
     Term Key can match the main key, alt_keys or obsolete_keys
     """
 
-    time1 = time.perf_counter()
+    # time1 = time.perf_counter()
     terms = get_terms(term_key)
-    time2 = time.perf_counter()
+    # time2 = time.perf_counter()
 
-    duration = f"{time2 - time1:.5f}"
+    # duration = f"{time2 - time1:.5f}"
     # logger.debug(f"Get terms timing {duration} for {term_key}", term_key=term_key, duration=duration)
 
-    if len(terms) > 1:
-
-        # Filter out any terms resulting from obsolete ids
+    # Filter out any terms resulting from obsolete ids
+    if len(terms) > 0:
         terms = [term for term in terms if term_key not in term.obsolete_keys]
 
-        if len(terms) > 1:
-            logger.warning(
-                f'Too many primary Keys returned. Given term_key: {term_key} matches these terms: {[term["key"] for term in terms]}'
-            )
-        else:
-            return terms[0]
-    elif len(terms) == 1:
+    if len(terms) == 1:
+        return terms[0]
+
+    elif len(terms) > 1:
+        logger.warning(
+            f'Too many primary Keys returned. Given term_key: {term_key} matches these terms: {[term["key"] for term in terms]}'
+        )
         return terms[0]
 
     else:
