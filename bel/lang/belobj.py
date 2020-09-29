@@ -6,15 +6,16 @@ import sys
 from typing import Any, List, Mapping, Optional, Union
 
 # Third Party
+# Third Party Imports
+from loguru import logger
+
+# Local
 # Local Imports
 import bel.belspec.crud
 import bel.core.settings as settings
 import bel.terms.terms
 from bel.lang.ast import BELAst
 from bel.schemas.bel import AssertionStr, Key
-
-# Third Party Imports
-from loguru import logger
 
 sys.path.append("../")
 
@@ -42,6 +43,9 @@ class BEL(object):
         """
 
         self.assertion = assertion
+
+        self.clean_assertion()
+
         self.version = bel.belspec.crud.check_version(version)
 
         # Validation error/warning messages
@@ -53,12 +57,31 @@ class BEL(object):
         if self.assertion:
             self.ast = BELAst(assertion=assertion, version=version)
 
+    def clean_assertion(self):
+        """Various tasks to clean the assertion component strings"""
+
+        # Remove smart quotes
+        if self.assertion:
+            self.assertion.subject = (
+                self.assertion.subject.replace("“", '"').replace("”", '"').strip()
+            )
+            self.assertion.relation = (
+                self.assertion.relation.replace("“", '"').replace("”", '"').strip()
+            )
+            self.assertion.object = (
+                self.assertion.object.replace("“", '"').replace("”", '"').strip()
+            )
+            self.assertion.entire = (
+                self.assertion.entire.replace("“", '"').replace("”", '"').strip()
+            )
+
     def parse(self, assertion: AssertionStr = None) -> "BEL":
         """Parse BEL Assertion string"""
 
         # Add or override assertion string object in parse method
         if assertion is not None:
             self.assertion = assertion
+            self.clean_assertion()
 
         self.ast = BELAst(assertion=assertion, version=self.version)
 

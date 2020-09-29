@@ -80,6 +80,17 @@ def test_ast_orthologizable():
     assert result == True
 
 
+def test_ast_parse_fus():
+
+    assertion = AssertionStr(entire="act(p(fus(HGNC:EWSR1, start, HGNC:FLI1, end)), ma(tscript))")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    print("To String", ast.to_string())
+
+    assert ast.to_string() == False
+
+
 #####################################################################################
 # Validation tests                                                              #####
 #####################################################################################

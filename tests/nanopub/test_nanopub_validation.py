@@ -85,3 +85,111 @@ def test_validate_nanopub():
         nanopub_validated_dict["nanopub"]["annotations"][1]["validation"]["errors"][1]["msg"]
         == "Annotation type: Disease for HGNC:A2MP does not match annotation types in database: []"
     )
+
+
+def test_validate_nanopub2():
+
+    nanopub = json.loads(
+        """{
+            "rev": "_bLpe16a--_",
+            "owners": [
+                {
+                "user_id": "303928642",
+                "first_name": "Wendy",
+                "last_name": "Zimmerman",
+                "full_name": " Wendy Zimmerman"
+                }
+            ],
+            "is_deleted": false,
+            "is_archived": null,
+            "is_public": false,
+            "source_url": "https://nanopubstore.thor.biodati.com/nanopub/01EAAA7EJZC8B7EF5T78FN53JR",
+            "nanopub": {
+                "type": {
+                "name": "BEL",
+                "version": "2.1.0"
+                },
+                "citation": {
+                "id": null,
+                "authors": [
+                    "Knoop, L L",
+                    "Baker, S J"
+                ],
+                "database": {
+                    "name": "PubMed",
+                    "id": "10827180"
+                },
+                "reference": "J Biol Chem 2000 Aug 11 275(32) 24865-71",
+                "uri": null,
+                "title": "The splicing factor U1C represses EWS/FLI-mediated transactivation.",
+                "source_name": "The Journal of biological chemistry",
+                "date_published": "2000-08-11",
+                "abstract": ""
+                },
+                "assertions": [
+                {
+                    "subject": "p(HGNC:SNRPC)",
+                    "relation": "decreases",
+                    "object": "act(p(fus(HGNC:EWSR1, start, HGNC:FLI1, end)), ma(tscript))",
+                    "validation": null
+                }
+                ],
+                "id": "01EAAA7EJZC8B7EF5T78FN53JR",
+                "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.1.0.yaml",
+                "annotations": [
+                {
+                    "type": "Species",
+                    "label": "human",
+                    "id": "TAX:9606",
+                    "validation": null
+                }
+                ],
+                "evidence": "Importantly, co-expression of U1C represses EWS/FLI-mediated transactivation, demonstrating that this interaction can have functional ramifications.",
+                "metadata": {
+                "collections": [
+                    "corrected",
+                    "Selventa-Full"
+                ],
+                "gd_status": "finalized",
+                "gd_createTS": "2020-06-08T15:54:17.566Z",
+                "gd_updateTS": "2020-06-09T14:21:38.573Z",
+                "gd_validation": {
+                    "status": "Good",
+                    "errors": null,
+                    "validation_target": null
+                },
+                "gd_hash": "73b5b7b36f9bf6a6",
+                "statement_group": "67265439",
+                "gd_abstract": "EWS is an RNA-binding protein involved in human tumor-specific chromosomal translocations. In approximately 85% of Ewing's sarcomas, such translocations give rise to the chimeric gene EWS/FLI. In the resulting fusion protein, the RNA binding domains from the C terminus of EWS are replaced by the DNA-binding domain of the ETS protein FLI-1. EWS/FLI can function as a transcription factor with the same DNA binding specificity as FLI-1. EWS and EWS/FLI can associate with the RNA polymerase II holoenzyme as well as with SF1, an essential splicing factor. Here we report that U1C, one of three human U1 small nuclear ribonucleoprotein-specific proteins, interacts in vitro and in vivo with both EWS and EWS/FLI. U1C interacts with other splicing factors and is important in the early stages of spliceosome formation. Importantly, co-expression of U1C represses EWS/FLI-mediated transactivation, demonstrating that this interaction can have functional ramifications. Our findings demonstrate that U1C, a well characterized splicing protein, can also function in transcriptional regulation. Furthermore, they suggest that EWS and EWS/FLI may function both in transcriptional and post-transcriptional processes.",
+                "gd_creator": "303928642"
+                }
+            }
+            }"""
+    )
+
+    nanopub_validated = bel.nanopub.validate.validate(NanopubR(**nanopub), validation_level="force")
+
+    nanopub_validated_dict = nanopub_validated.dict()
+
+    print("Validated Nanopub2:\n", nanopub_validated.json(indent=4))
+
+    assert False
+
+    # assert nanopub_validated_dict["nanopub"]["assertions"][0]["validation"]["status"] == "Error"
+    # assert (
+    #     nanopub_validated_dict["nanopub"]["assertions"][0]["validation"]["errors"][0]["msg"]
+    #     == "Too many close parentheses at index 25"
+    # )
+    # assert (
+    #     nanopub_validated_dict["nanopub"]["assertions"][0]["validation"]["errors"][0]["visual"]
+    #     == 'act(p(SP:AKT1_HUMAN), ma)<span class="accentuate">)</span> increases act(p(SPX:AKT1_HUMAN)'
+    # )
+
+    # assert (
+    #     nanopub_validated_dict["nanopub"]["annotations"][1]["validation"]["errors"][0]["msg"]
+    #     == "Annotation term HGNC:A2MP is obsolete - please replace with HGNC:8"
+    # )
+    # assert (
+    #     nanopub_validated_dict["nanopub"]["annotations"][1]["validation"]["errors"][1]["msg"]
+    #     == "Annotation type: Disease for HGNC:A2MP does not match annotation types in database: []"
+    # )
