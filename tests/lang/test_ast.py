@@ -88,7 +88,9 @@ def test_ast_parse_fus():
 
     print("To String", ast.to_string())
 
-    assert ast.to_string() == False
+    assert (
+        ast.to_string() == "act(p(fus(HGNC:EWSR1!EWSR1, start, HGNC:FLI1!FLI1, end)), ma(tscript))"
+    )
 
 
 #####################################################################################
@@ -123,7 +125,7 @@ def test_validate_missing_namespace():
 
     assert (
         ast.errors[0].msg
-        == "Unknown namespace value 'missing:AKT1' for the proteinAbundance function at position 2"
+        == "Unknown BEL Entity 'missing:AKT1' for the proteinAbundance function at position 2"
     )
     assert ast.errors[0].severity == "Warning"
 
@@ -240,7 +242,7 @@ def test_validate_complex_missing_namespace():
 
     assertion = AssertionStr(subject="complex(UNKNOWN:test)")
     expected = (
-        "Unknown namespace value UNKNOWN:test - cannot determine if this matches function signature"
+        "Unknown BEL Entity UNKNOWN:test - cannot determine if this matches function signature"
     )
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
@@ -298,12 +300,24 @@ def test_validation_tloc():
 
     assert ast.errors == []
 
+    assertion = AssertionStr(
+        subject='tloc(p(HGNC:NFE2L2), fromLoc(MESH:Cytoplasm), toLoc(MESH:"Cell Nucleus"))'
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
 
 def test_validate_fus():
     """Validate path()"""
 
     assertion = AssertionStr(subject='p(fus(HGNC:NPM, "1_117", HGNC:ALK, end))')
-    expected = "Wrong entity type for namespace argument at position 0 for function fusion - expected ['Gene', 'RNA', 'Micro_RNA', 'Protein'], actual: entity_types: []"
+    expected = "Unknown BEL Entity at argument position 0 for function fusion - cannot determine if correct entity type."
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
@@ -312,6 +326,16 @@ def test_validate_fus():
     print("Errors", ast.errors)
 
     assert ast.errors[0].msg == expected
+
+    assertion = AssertionStr(subject="p(fus(HGNC:EWSR1, start, HGNC:FLI1, end))")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
 
 
 def test_validate_nsarg():
@@ -384,6 +408,16 @@ def test_validate_complex_nsarg():
     assertion = AssertionStr(
         subject='p(HGNC:PTHLH) increases act(complex(SCOMP:"Nfkb Complex"), ma(tscript))'
     )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+    assertion = AssertionStr(subject='complex(GO:"transcription factor AP-1 complex")')
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 

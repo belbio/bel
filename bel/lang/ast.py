@@ -1127,7 +1127,7 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                 ValidationError(
                     type="Assertion",
                     severity="Error",
-                    msg=f"Namespace value: {fn_arg.entity.nsval} with entity_types {fn_arg.entity.entity_types} are not allowed for function {fn_arg.parent.name} as an optional or multiple argument",
+                    msg=f"BEL Entity: {fn_arg.entity.nsval} with entity_types {fn_arg.entity.entity_types} are not allowed for function {fn_arg.parent.name} as an optional or multiple argument",
                     visual_pairs=[(fn.span.start, fn.span.end)],
                     index=fn.span.start,
                 )
@@ -1140,7 +1140,7 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                 ValidationError(
                     type="Assertion",
                     severity="Warning",
-                    msg=f"Unknown BEL entity {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
+                    msg=f"Unknown BEL Entity {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
                     visual_pairs=[(fn.span.start, fn.span.end)],
                     index=fn.span.start,
                 )
@@ -1163,7 +1163,7 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                     ValidationError(
                         type="Assertion",
                         severity="Warning",
-                        msg=f"Unknown namespace value '{fn.args[position].entity.nsval.key_label}' for the {fn.name} function at position {fn.args[position].span.namespace.start}",
+                        msg=f"Unknown BEL Entity '{fn.args[position].entity.nsval.key_label}' for the {fn.name} function at position {fn.args[position].span.namespace.start}",
                         visual_pairs=[
                             (
                                 fn.args[position].span.namespace.start,
@@ -1184,11 +1184,16 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                 )
             ):
 
+                if fn.args[position].entity.term:
+                    error_msg = f"Wrong entity type for BEL Entity at argument position {position} for function {fn.name} - expected {argument['values']}, actual: entity_types: {fn.args[position].entity.entity_types}"
+                else:
+                    error_msg = f"Unknown BEL Entity at argument position {position} for function {fn.name} - cannot determine if correct entity type."
+
                 errors.append(
                     ValidationError(
                         type="Assertion",
                         severity="Warning",
-                        msg=f"Wrong entity type for namespace argument at position {position} for function {fn.name} - expected {argument['values']}, actual: entity_types: {fn.args[position].entity.entity_types}",
+                        msg=error_msg,
                         visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
                         index=fn.args[position].span.start,
                     )

@@ -436,3 +436,9 @@ def validate(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
         logger.exception(f"Could not validate nanopub: {nanopub.nanopub.id}  error: {str(e)}")
 
     return nanopub
+
+
+def remove_validation_cache():
+    """Truncate validation cache"""
+
+    bel_validations_coll.truncate()

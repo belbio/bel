@@ -79,9 +79,11 @@ def get_term(term_key: Key) -> Optional[Term]:
     # duration = f"{time2 - time1:.5f}"
     # logger.debug(f"Get terms timing {duration} for {term_key}", term_key=term_key, duration=duration)
 
-    # Filter out any terms resulting from obsolete ids
-    if len(terms) > 0:
-        terms = [term for term in terms if term_key not in term.obsolete_keys]
+    # Filter out any terms resulting from obsolete ids if more than 1 term
+    if len(terms) > 1:
+        check_terms = [term for term in terms if term_key not in term.obsolete_keys]
+        if len(check_terms) > 0:
+            terms = check_terms
 
     if len(terms) == 1:
         return terms[0]
