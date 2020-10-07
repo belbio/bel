@@ -23,19 +23,18 @@ import bel.resources.ortholog
 def create_email_body_for_update_resources(results):
     """Create email message body for update_resources"""
 
-    errors = [url for url in results if not results[url]["success"]]
-    successes = [url for url in results if results[url]["success"]]
-
-    num_errors = len(errors)
+    failures = [url for url in results if results[url]["state"] == "Failed"]
+    warnings = [url for url in results if results[url]["state"] == "Warning"]
+    successes = [url for url in results if results[url]["state"] == "Succeeded"]
 
     body, html_content = "", ""
 
-    # Failures
-    if num_errors:
-        body += f"Failures [{num_errors}]\n\n"
-        html_content += f"<h2>Failures [{num_errors}]</h2>\n\n"
+    # Failed
+    if failures:
+        body += f"Failed [{len(failures)}]\n\n"
+        html_content += f"<h2>Failed [{len(failures)}]</h2>\n\n"
 
-        for url in errors:
+        for url in failures:
             result = results[url]
 
             body += f"Resource: {url}\n"
@@ -48,21 +47,41 @@ def create_email_body_for_update_resources(results):
             html_content += "</ul>\n"
             body += "\n\n"
 
-    body += f"Successes [{num_errors}]\n\n"
-    html_content += f"<h2>Successes [{len(successes)}]</h2>\n"
+    # Warnings
+    if warnings:
+        body += f"Warnings [{len(warnings)}]\n\n"
+        html_content += f"<h2>Failed [{len(warnings)}]</h2>\n\n"
 
-    for url in successes:
-        result = results[url]
+        for url in warnings:
+            result = results[url]
 
-        body += f"Resource: {url}\n"
-        html_content += f'<h3 style="color: green;">Resource: {url}</h3>\n'
+            body += f"Resource: {url}\n"
+            html_content += f'<h3 style="color: orange;">Resource: {url}</h3>\n'
 
-        html_content += "<ul>\n"
-        for message in result["messages"]:
-            body += f"   {message}\n"
-            html_content += f"<li>{message}</li>\n"
-        html_content += "</ul>\n"
-        body += "\n\n"
+            html_content += "<ul>\n"
+            for message in result["messages"]:
+                body += f"   {message}\n"
+                html_content += f"<li>{message}</li>\n"
+            html_content += "</ul>\n"
+            body += "\n\n"
+
+    # Succeeded
+    if successes:
+        body += f"Succeeded [{len(successes)}]\n\n"
+        html_content += f"<h2>Succeeded [{len(successes)}]</h2>\n"
+
+        for url in successes:
+            result = results[url]
+
+            body += f"Resource: {url}\n"
+            html_content += f'<h3 style="color: green;">Resource: {url}</h3>\n'
+
+            html_content += "<ul>\n"
+            for message in result["messages"]:
+                body += f"   {message}\n"
+                html_content += f"<li>{message}</li>\n"
+            html_content += "</ul>\n"
+            body += "\n\n"
 
     body_html = f"""
 <!DOCTYPE html>
@@ -93,6 +112,9 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
     if urls is None:
         urls = []
 
+    if urls:
+        urls = [url for url in urls if url != "string"]
+
     results = {}
 
     # Load provided url if available
@@ -105,7 +127,9 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
         resources = bel.resources.namespace.get_bel_resource_metadata()
 
         for resource in resources:
+            logger.info(f"Resource {resource}")
             if "resource_download_url" not in resource:
+                logger.info("Continuing")
                 continue
             logger.info(f"Resource {resource}")
             url = resource["resource_download_url"]
@@ -143,7 +167,7 @@ def load_resource(resource_url: str = None, force: bool = False):
 
         if not f:
             return {
-                "success": False,
+                "state": "Failed",
                 "messages": [f"Error: Failed to read resource file for {resource_url}"],
             }
 
@@ -151,14 +175,14 @@ def load_resource(resource_url: str = None, force: bool = False):
 
     except Exception:
         return {
-            "success": False,
+            "state": "Failed",
             "messages": [f"Error: Failed download and parse resource file for {resource_url}"],
         }
 
     metadata = metadata.get("metadata", None)
     if metadata is None:
         return {
-            "success": False,
+            "state": "Failed",
             "messages": [
                 f"Error: Failed to process resource file for {resource_url} - missing metadata"
             ],
@@ -179,7 +203,7 @@ def load_resource(resource_url: str = None, force: bool = False):
     else:
         logger.info(f"Unrecognized resource type: {metadata['metadata']['type']}")
         result = {
-            "success": False,
+            "state": "Failed",
             "messages": [f"Error: Unrecognized resource type: {metadata['metadata']['type']}"],
         }
 

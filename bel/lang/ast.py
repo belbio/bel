@@ -529,6 +529,7 @@ class BELAst(object):
         subject: Optional[Function] = None,
         relation: Optional[Relation] = None,
         object: Optional[Union[Function, "BELAst"]] = None,
+        computed: bool = False,
         version: str = "latest",
     ):
         self.version = bel.belspec.crud.check_version(version)
@@ -541,6 +542,9 @@ class BELAst(object):
         self.belspec = get_enhanced_belspec(version)
 
         self.type = "BELAst"
+
+        # Computed edges are special in that we should only have one in the edgestore no matter the source
+        self.computed = computed
 
         self.args = []
 

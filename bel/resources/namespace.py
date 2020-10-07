@@ -7,14 +7,16 @@ from collections import defaultdict
 from typing import IO, Optional
 
 # Third Party
+# Third Party Imports
+import cachetools
+from arango import ArangoError
+from loguru import logger
+
+# Local
 # Local Imports
 import bel.core.mail
 import bel.core.settings as settings
 import bel.db.elasticsearch as elasticsearch
-
-# Third Party Imports
-import cachetools
-from arango import ArangoError
 from bel.db.arangodb import (
     arango_id_to_key,
     batch_load_docs,
@@ -27,7 +29,6 @@ from bel.db.arangodb import (
 )
 from bel.db.elasticsearch import es
 from bel.schemas.terms import Namespace
-from loguru import logger
 
 # key = ns:id
 # main_key = preferred key, e.g. ns:<primary_id> not the alt_key or obsolete key or even an equivalence key which could be an alt_key
@@ -95,7 +96,7 @@ def load_terms(
                 and delete arangodb namespace records before loading
     """
 
-    result = {"success": True, "messages": []}
+    result = {"state": "Succeeded", "messages": []}
 
     statistics = {
         "entities_count": 0,
@@ -129,7 +130,7 @@ def load_terms(
     if prior_version != version or force:
         elasticsearch.create_terms_index(index_name)
     else:
-        result["success"] = True
+        result["state"] = "Succeeded"
         result["messages"].append(
             f'NOTE: This namespace {namespace} at version {version} is already loaded and the "force" option was not used'
         )
@@ -153,11 +154,16 @@ def load_terms(
             f'Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
         )
 
-        result["success"] = False
+        result["state"] = "Failed"
         result["messages"].append(
             f'ERROR: Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
         )
 
+    elif force and prior_entity_count > metadata["statistics"]["entities_count"]:
+        result["state"] = "Warning"
+        result["messages"].append(
+            f'WARNING: New namespace: {namespace} is smaller, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
+        )
         return result
 
     # Add terms alias to this index

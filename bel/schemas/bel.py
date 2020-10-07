@@ -189,7 +189,7 @@ class NsVal(object):
         self.key: Key = f"{self.namespace}:{self.id}"  # used for dict keys and entity searches
 
         # Add key_label to NsVal
-        self.key_label()
+        self.update_key_label()
 
     def add_label(self):
         if not self.label:
@@ -209,7 +209,7 @@ class NsVal(object):
 
         return bel.db.arangodb.arango_id_to_key(self.key)
 
-    def key_label(self):
+    def update_key_label(self):
         """Return key with label if available"""
 
         self.add_label()
@@ -278,12 +278,17 @@ class BelEntity(object):
         if self.namespace_metadata is not None and self.namespace_metadata.entity_types:
             self.entity_types = self.namespace_metadata.entity_types
 
+        self.add_term()
+
     def add_term(self):
         """Add term info"""
 
         if self.namespace_metadata and self.namespace_metadata.namespace_type == "complete":
             self.term = bel.terms.terms.get_term(self.nsval.key)
-
+            if self.term and self.nsval.key != self.term.key:
+                self.nsval = NsVal(
+                    namespace=self.term.namespace, id=self.term.id, label=self.term.label
+                )
             if self.term and self.term.entity_types:
                 self.entity_types = self.term.entity_types
             if self.term and self.term.species_key:

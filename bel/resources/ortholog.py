@@ -6,20 +6,21 @@ from collections import defaultdict
 from typing import IO, Mapping, Optional
 
 # Third Party
+# Third Party Imports
+from arango import ArangoError
+from loguru import logger
+
+# Local
 # Local Imports
 import bel.core.settings as settings
 import bel.core.utils
 import bel.db.arangodb as arangodb
-
-# Third Party Imports
-from arango import ArangoError
 from bel.db.arangodb import (
     ortholog_edges_name,
     ortholog_nodes_name,
     resources_db,
     resources_metadata_coll,
 )
-from loguru import logger
 
 
 def remove_old_db_entries(source, version: str = "", force: bool = False):
@@ -57,7 +58,7 @@ def load_orthologs(
         metadata: dict containing the metadata for orthologs
     """
 
-    result = {"success": True, "messages": []}
+    result = {"state": "Succeeded", "messages": []}
 
     statistics = {"entities_count": 0, "orthologous_pairs": defaultdict(lambda: defaultdict(int))}
 
@@ -93,7 +94,7 @@ def load_orthologs(
             f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
         )
 
-        result["success"] = False
+        result["state"] = "Failed"
         msg = f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
         result["messages"].append(msg)
         return result
@@ -108,9 +109,6 @@ def load_orthologs(
 
     if resource_download_url is not None:
         metadata["resource_download_url"] = resource_download_url
-
-    resources_metadata_coll.insert(metadata, overwrite=True)
-    clear_resource_metadata_cache()
 
     resources_metadata_coll.insert(metadata, overwrite=True)
 
