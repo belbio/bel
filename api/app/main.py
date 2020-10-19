@@ -7,6 +7,18 @@ import sys
 import time
 
 # Third Party
+# Third Party Imports
+from fastapi import FastAPI
+from fastapi import __version__ as fastapi_version
+from loguru import logger
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
+from starlette.middleware.wsgi import WSGIMiddleware
+from starlette.requests import Request
+from starlette.staticfiles import StaticFiles
+from starlette_prometheus import PrometheusMiddleware, metrics
+
+# Local
 # Local Imports
 import bel.core.settings as settings
 from bel.__version__ import __version__ as version
@@ -18,17 +30,6 @@ from bel.api.endpoints.orthology import router as orthology_router
 from bel.api.endpoints.pubmed import router as pubmed_router
 from bel.api.endpoints.terms import router as terms_router
 from core.middleware import StatsMiddleware
-
-# Third Party Imports
-from fastapi import FastAPI
-from fastapi import __version__ as fastapi_version
-from loguru import logger
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GZipMiddleware
-from starlette.middleware.wsgi import WSGIMiddleware
-from starlette.requests import Request
-from starlette.staticfiles import StaticFiles
-from starlette_prometheus import PrometheusMiddleware, metrics
 
 logger.remove()
 

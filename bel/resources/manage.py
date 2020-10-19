@@ -143,6 +143,8 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
 
     logger.info("Finished updating BEL Resources")
 
+    return results
+
 
 def load_resource(resource_url: str = None, force: bool = False):
     """Load BEL Resource file

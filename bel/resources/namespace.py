@@ -76,9 +76,9 @@ def remove_old_db_entries(namespace: str, version: str = "", force: bool = False
             REMOVE doc IN {equiv_nodes_name}
     """
 
-    resources_db.aql.execute(remove_old_terms)
-    resources_db.aql.execute(remove_old_equivalence_edges)
-    resources_db.aql.execute(remove_old_equivalence_nodes)
+    resources_db.aql.execute(remove_old_terms, ttl=3600)
+    resources_db.aql.execute(remove_old_equivalence_edges, ttl=3600)
+    resources_db.aql.execute(remove_old_equivalence_nodes, ttl=3600)
 
 
 def load_terms(
@@ -158,13 +158,13 @@ def load_terms(
         result["messages"].append(
             f'ERROR: Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
         )
+        return result
 
     elif force and prior_entity_count > metadata["statistics"]["entities_count"]:
         result["state"] = "Warning"
         result["messages"].append(
             f'WARNING: New namespace: {namespace} is smaller, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
         )
-        return result
 
     # Add terms alias to this index
     elasticsearch.add_index_alias(index_name, settings.TERMS_INDEX)

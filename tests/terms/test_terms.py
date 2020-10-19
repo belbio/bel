@@ -1,8 +1,10 @@
 # Local Imports
 # Third Party
+import pytest
+
+# Local
 import bel.schemas
 import bel.terms.terms
-import pytest
 
 
 @pytest.mark.parametrize("test_key, expected", [("HGNC:AKT1", "HGNC:391")])
@@ -188,3 +190,84 @@ def test_collapsed_terms():
     print(f"Results {term_key}", results)
 
     assert results == expected
+
+
+def test_term_completion():
+
+    results = bel.terms.terms.get_term_completions(
+        "mouse",
+        annotation_types=["Species"],
+    )
+
+    first_result_key = results[0]["key"]
+
+    expected = "TAX:10090"
+
+    print("Results", results)
+
+    assert first_result_key == expected
+
+
+# Search body
+# {
+#   "_source": [
+#     "key",
+#     "namespace",
+#     "id",
+#     "label",
+#     "name",
+#     "description",
+#     "species_key",
+#     "species_label",
+#     "entity_types",
+#     "annotation_types",
+#     "synonyms"
+#   ],
+#   "size": 10,
+#   "query": {
+#     "bool": {
+#       "should": [
+#         {
+#           "match": { "key": { "query": "mouse", "boost": 6, "_name": "key" } }
+#         },
+#         {
+#           "match": {
+#             "namespace_value": {
+#               "query": "mouse",
+#               "boost": 8,
+#               "_name": "namespace_value"
+#             }
+#           }
+#         },
+#         {
+#           "match": {
+#             "label": { "query": "human", "boost": 5, "_name": "label" }
+#           }
+#         },
+#         {
+#           "match": {
+#             "synonyms": { "query": "human", "boost": 1, "_name": "synonyms" }
+#           }
+#         },
+#         {
+#           "terms": {
+#             "namespace": ["HGNC", "MGI", "RGD", "ZFIN", "CHEBI", "GO", "TAX"],
+#             "boost": 6
+#           }
+#         }
+#       ],
+#       "must": {
+#         "match": {
+#           "autocomplete": { "query": "mouse", "_name": "autocomplete" }
+#         }
+#       },
+#       "filter": [{ "terms": { "annotation_types": ["Species"] } }]
+#     }
+#   },
+#   "highlight": {
+#     "fields": {
+#       "autocomplete": { "type": "plain" },
+#       "synonyms": { "type": "plain" }
+#     }
+#   }
+# }

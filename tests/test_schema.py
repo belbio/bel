@@ -1,5 +1,5 @@
 # Local Imports
-# Third Party
+# Local
 from bel.schemas.bel import AssertionStr, BelEntity, NsVal
 
 

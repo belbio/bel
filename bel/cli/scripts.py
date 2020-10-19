@@ -6,6 +6,14 @@ import sys
 from typing import List
 
 # Third Party
+import typer
+
+# Third Party Imports
+import yaml
+from loguru import logger
+from typer import Argument, Option
+
+# Local
 # Local Imports
 import bel.core.settings as settings
 import bel.core.utils as utils
@@ -14,13 +22,7 @@ import bel.db.elasticsearch
 import bel.nanopub.belscripts
 import bel.nanopub.files as bnf
 import bel.nanopub.nanopubs as bnn
-import typer
-
-# Third Party Imports
-import yaml
 from bel.lang.belobj import BEL
-from loguru import logger
-from typer import Argument, Option
 
 # TODO finish updating to use typer!!!!!!!!!!!!!
 # https://typer.tiangolo.com

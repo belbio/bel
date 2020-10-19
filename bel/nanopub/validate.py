@@ -112,6 +112,7 @@ def validate_assertion(assertion_obj: AssertionStr, *, version: str = "latest"):
     """ Validate single assertion """
 
     bo = bel.lang.belobj.BEL(assertion_obj, version=version)
+
     bo.ast.validate()
 
     # Sort errors by severity and where in the Assertion it is found
@@ -213,10 +214,10 @@ def get_cached_annotation_validations(annotations):
         if annotation.get("hash", "") in cached_validations:
             annotation["validation"] = copy.deepcopy(cached_validations[annotation["hash"]])
 
-            annotations[idx] = copy.deepcopy(annotation)
+            annotation.pop("hash", "")
+            annotation.pop("str", "")
 
-        annotation.pop("hash", "")
-        annotation.pop("str", "")
+            annotations[idx] = copy.deepcopy(annotation)
 
     return annotations
 

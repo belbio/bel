@@ -93,7 +93,7 @@ species_entity_types = ["Gene", "Protein", "RNA", "Micro_RNA"]
 
 BEL_DEFAULT_VERSION = os.getenv("BEL_DEFAULT_VERSION", default="latest")
 
-BEL_SPECIFICATION_URLS = json.loads(os.getenv("BEL_SPECIFICATION_URLS", default="{}"))
+BEL_SPECIFICATION_URLS = json.loads(os.getenv("BEL_SPECIFICATION_URLS", default="[]"))
 if not BEL_SPECIFICATION_URLS:
     BEL_SPECIFICATION_URLS = [
         "http://resources.bel.bio.s3-us-east-2.amazonaws.com/specifications/bel_latest.yaml"
@@ -129,14 +129,12 @@ if not BEL_DECANONICALIZE:
     BEL_DECANONICALIZE = bel_decanonicalize_default
 
 # Boost these namespaces in term search results and completions
-BEL_BOOST_NAMESPACES = json.loads(os.getenv("BEL_BOOST_NAMESPACES", default="{}"))
+BEL_BOOST_NAMESPACES = json.loads(os.getenv("BEL_BOOST_NAMESPACES", default="[]"))
 if not BEL_BOOST_NAMESPACES:
     BEL_BOOST_NAMESPACES = ["HGNC", "MGI", "RGD", "ZFIN", "CHEBI", "GO", "TAX"]
 
-BEL_ORTHOLOGIZE_TARGETS = json.loads(os.getenv("BEL_ORTHOLOGIZE_TARGETS", default="{}"))
-if not BEL_ORTHOLOGIZE_TARGETS:
-    BEL_ORTHOLOGIZE_TARGETS = []
+BEL_ORTHOLOGIZE_TARGETS = json.loads(
+    os.getenv("BEL_ORTHOLOGIZE_TARGETS", default='["TAX:9606", "TAX:10090", "TAX:10116"]')
+)
 
-BEL_FILTER_SPECIES = json.loads(os.getenv("BEL_FILTER_SPECIES", default="{}"))
-if not BEL_FILTER_SPECIES:
-    BEL_FILTER_SPECIES = []
+BEL_FILTER_SPECIES = json.loads(os.getenv("BEL_FILTER_SPECIES", default="[]"))

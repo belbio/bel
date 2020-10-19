@@ -1,5 +1,6 @@
 # Local Imports
 # Standard Library
+import json
 import pprint
 
 # Third Party
@@ -57,7 +58,7 @@ def test_ast_orthologization():
 
         print("Orthologized and decanonicalized to mouse", ast.to_string())
 
-        assert ast.to_string() == "p(SP:P31750!Akt1)"
+        assert ast.to_string() == "p(MGI:87986!Akt1)"
 
     else:
         assert False, "Not orthologizable"
@@ -89,8 +90,53 @@ def test_ast_parse_fus():
     print("To String", ast.to_string())
 
     assert (
-        ast.to_string() == "act(p(fus(HGNC:EWSR1!EWSR1, start, HGNC:FLI1!FLI1, end)), ma(tscript))"
+        ast.to_string() == "act(p(fus(HGNC:3508!EWSR1, start, HGNC:3749!FLI1, end)), ma(tscript))"
     )
+
+
+def test_get_species():
+    """Collect all NSArg species for Assertion"""
+
+    assertion = AssertionStr(entire="p(HGNC:391!AKT1) increases p(MGI:87986!Akt1)")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    species = ast.get_species_keys()
+
+    print("Species", species)
+
+    assert species == ["TAX:9606", "TAX:10090"]
+
+
+def test_get_orthologs():
+    """Get all orthologs for any NSArgs in Assertion"""
+
+    assertion = AssertionStr(entire="p(MGI:Akt2) increases p(HGNC:391!AKT1)")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    orthologs = ast.get_orthologs(simple_keys_flag=True)
+
+    print("Orthologs")
+    for ortholog in orthologs:
+        print(ortholog)
+
+    orthologs_str = json.dumps(orthologs, sort_keys=True)
+
+    expected = [
+        {
+            "TAX:10090": {"canonical": "EG:11652", "decanonical": "MGI:104874"},
+            "TAX:9606": {"canonical": "EG:208", "decanonical": "HGNC:392"},
+            "TAX:10116": {"canonical": "EG:25233", "decanonical": "RGD:2082"},
+        },
+        {
+            "TAX:9606": {"canonical": "EG:207", "decanonical": "HGNC:391"},
+            "TAX:10116": {"canonical": "EG:24185", "decanonical": "RGD:2081"},
+            "TAX:10090": {"canonical": "EG:11651", "decanonical": "MGI:87986"},
+        },
+    ]
+
+    assert orthologs == expected
 
 
 #####################################################################################
@@ -432,6 +478,19 @@ def test_validate_bad_relation():
 
     assertion = AssertionStr(subject="p(HGNC:PTHLH) XXXincreases p(HGNC:PTHLH)")
     expected = "Could not parse Assertion - bad relation: XXXincreases"
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
+
+
+def test_validate_bad_nsarg():
+
+    assertion = AssertionStr(subject="p(HGNC:)")
+    expected = "Could not match function: proteinAbundance arguments to BEL Specification"
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
     ast.validate()

@@ -4,9 +4,11 @@ import enum
 from typing import Any, List, Mapping, Optional, Union
 
 # Third Party
+from pydantic import BaseModel, Field, HttpUrl
+
+# Local
 # Local Imports
 from bel.schemas.constants import AnnotationTypesEnum, EntityTypesEnum
-from pydantic import BaseModel, Field, HttpUrl
 
 Key = str  # Type alias for NsVal Key values
 

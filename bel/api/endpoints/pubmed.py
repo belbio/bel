@@ -2,11 +2,13 @@
 
 # Third Party Imports
 # Third Party
-# Local Imports
-import bel.nanopub.pubmed
 import fastapi
 from fastapi import APIRouter, Depends, HTTPException, Query
 from loguru import logger
+
+# Local
+# Local Imports
+import bel.nanopub.pubmed
 
 router = APIRouter()
 

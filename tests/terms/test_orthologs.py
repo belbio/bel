@@ -1,8 +1,10 @@
 # Local Imports
 # Third Party
+import pytest
+
+# Local
 import bel.schemas
 import bel.terms.orthologs
-import pytest
 
 
 def test_orthologs():

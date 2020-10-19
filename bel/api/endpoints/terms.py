@@ -4,14 +4,15 @@
 from typing import List
 
 # Third Party
-# Local Imports
-import bel.terms.terms
-
 # Third Party Imports
 import fastapi
-from bel.schemas.terms import Term, TermCompletionResponse
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from loguru import logger
+
+# Local
+# Local Imports
+import bel.terms.terms
+from bel.schemas.terms import Term, TermCompletionResponse
 
 router = APIRouter()
 

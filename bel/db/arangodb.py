@@ -9,12 +9,13 @@ import arango
 import arango.client
 import arango.database
 import arango.exceptions
+import boltons.iterutils
+from loguru import logger
 
+# Local
 # Local Imports
 import bel.core.settings as settings
-import boltons.iterutils
 from bel.core.utils import _create_hash
-from loguru import logger
 
 resources_db_name = settings.RESOURCES_DB  # BEL Resources (Namespaces, etc)
 bel_db_name = settings.BEL_DB  # Misc BEL
@@ -71,7 +72,7 @@ class IndexDefinition:
 
     fields: List[str]  # ordered list of fields to be indexed
     id: Optional[str] = None  # ID is provided by arangodb
-    type: str = "hash"  # primary or edge indexes are ignored
+    type: str = "persistent"  # primary or edge indexes are ignored
     unique: bool = False
     sparse: Optional[bool] = None
     deduplicate: Optional[bool] = None
@@ -82,17 +83,8 @@ class IndexDefinition:
 def add_index(collection, index: IndexDefinition):
     """Add index"""
 
-    # add_hash_index(fields, unique=None, sparse=None, deduplicate=None, name=None, in_background=None)
-    if index.type == "hash":
-        collection.add_hash_index(
-            index.fields,
-            unique=index.unique,
-            sparse=index.sparse,
-            deduplicate=index.deduplicate,
-            name=index.name,
-            in_background=index.in_background,
-        )
-    elif index.type == "persistent":
+    # add_persistent_index(fields, unique=None, sparse=None, deduplicate=None, name=None, in_background=None)
+    if index.type == "persistent":
         collection.add_persistent_index(
             index.fields,
             unique=index.unique,
@@ -120,7 +112,7 @@ def remove_old_indexes(
 def update_index_state(collection, desired_indexes: List[IndexDefinition]):
     """Update index state
 
-    desired_indexes keys = f"{index_type}_{'_'.join(sorted(fields))}", e.g. hash_firstname_lastname
+    desired_indexes keys = f"{index_type}_{'_'.join(sorted(fields))}", e.g. persistent_firstname_lastname
 
     Remove indices that are not specified and add indices that are missing
     """
@@ -208,12 +200,10 @@ def get_resources_handles(client, username=None, password=None):
 
     # Update indexes
     update_index_state(
-        equiv_nodes_coll, [IndexDefinition(type="hash", fields=["key"], unique=True)]
-    )
-    update_index_state(
         terms_coll,
         [
-            IndexDefinition(type="hash", fields=["key"], unique=True),
+            IndexDefinition(type="persistent", fields=["key"], unique=True),
+            IndexDefinition(type="persistent", fields=["namespace"], unique=False),
             IndexDefinition(type="persistent", fields=["alt_keys[*]"], unique=False, sparse=True),
             IndexDefinition(
                 type="persistent", fields=["equivalence_keys[*]"], unique=False, sparse=True
@@ -224,7 +214,17 @@ def get_resources_handles(client, username=None, password=None):
         ],
     )
     update_index_state(
-        ortholog_nodes_coll, [IndexDefinition(type="hash", fields=["key"], unique=True)]
+        equiv_nodes_coll,
+        [
+            IndexDefinition(type="persistent", fields=["key"], unique=True),
+            IndexDefinition(type="persistent", fields=["source"], unique=False),
+        ],
+    )
+    update_index_state(
+        equiv_edges_coll, [IndexDefinition(type="persistent", fields=["source"], unique=False)]
+    )
+    update_index_state(
+        ortholog_nodes_coll, [IndexDefinition(type="persistent", fields=["key"], unique=True)]
     )
 
     return {

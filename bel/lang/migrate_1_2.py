@@ -9,15 +9,16 @@
 import json
 
 # Third Party
+# Third Party Imports
+from loguru import logger
+
+# Local
 # Local Imports
 import bel.belspec.crud
 import bel.core.settings as settings
 from bel.belspec.crud import get_enhanced_belspec
 from bel.lang.ast import BELAst, Function, NSArg, StrArg
 from bel.lang.belobj import BEL
-
-# Third Party Imports
-from loguru import logger
 
 version = bel.belspec.crud.get_latest_version()
 bo = BEL("", version=version)
@@ -240,7 +241,7 @@ def convert_trunc(trunc):
 
 def main():
 
-    # Third Party
+    # Local
     import bel.lang.migrate_1_2
 
     bel1 = "kin(p(HGNC:BRAF))"

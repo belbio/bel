@@ -173,20 +173,28 @@ class AssertionStr(BaseModel):
 class NsVal(object):
     """Namespaced value"""
 
-    def __init__(self, key_label: str = "", namespace: str = "", id: str = "", label: str = ""):
+    def __init__(
+        self, key_label: str = "", namespace: str = "", key: str = "", id: str = "", label: str = ""
+    ):
         """Preferentially use key_label to extract namespace:id!Optional[label]"""
+
+        self.key = key
 
         if key_label:
             (namespace, id, label) = split_key_label(key_label)
 
+        elif key:
+            (namespace, id) = key.split(":")
+
         self.namespace: str = namespace
         self.id: str = namespace_quoting(id)
+
+        if not self.key:
+            self.key = f"{self.namespace}:{self.id}"
 
         self.label = ""
         if label:
             self.label: str = namespace_quoting(label)
-
-        self.key: Key = f"{self.namespace}:{self.id}"  # used for dict keys and entity searches
 
         # Add key_label to NsVal
         self.update_key_label()
@@ -221,6 +229,12 @@ class NsVal(object):
 
         return self.key_label
 
+    def to_string(self):
+        return __str__(self)
+
+    def to_json(self):
+        return self.key_label
+
     def __str__(self):
 
         if self.label:
@@ -249,11 +263,12 @@ class BelEntity(object):
         self.decanonical: Optional[NsVal] = None
 
         self.species_key: Key = None
+
         self.entity_types = []
 
         self.orthologs: Mapping[Key, dict] = {}
         self.orthologized: bool = False
-        self.orthologized_species_key: Optional[Key] = None
+        self.original_species_key: Optional[Key] = None
 
         # NOTE - self.nsval is overridden when orthologized
 
@@ -263,6 +278,7 @@ class BelEntity(object):
 
             if self.term:
                 self.species_key = self.term.species_key
+                self.original_species_key = self.species_key
 
             self.nsval: NsVal = NsVal(
                 namespace=self.term.namespace, id=self.term.id, label=self.term.label
@@ -305,9 +321,9 @@ class BelEntity(object):
         if not self.term:
             self.add_term()
 
-        if self.term.species_key:
+        if self.term and self.term.species_key:
             self.species_key = self.term.species_key
-        elif self.namespace_metadata.species_key:
+        elif self.namespace_metadata and self.namespace_metadata.species_key:
             self.species_key = self.namespace_metadata.species_key
 
         return self
@@ -390,7 +406,7 @@ class BelEntity(object):
         """
 
         if self.orthologized:
-            self.nsval = self.orthologs[self.orthologized_species_key]["canonical"]
+            self.nsval = self.orthologs[self.species_key]["canonical"]
 
         else:
             self.normalize(
@@ -413,7 +429,7 @@ class BelEntity(object):
         """
 
         if self.orthologized:
-            self.nsval = self.orthologs[self.orthologized_species_key]["decanonical"]
+            self.nsval = self.orthologs[self.species_key]["decanonical"]
         else:
             self.normalize(
                 canonical_targets=settings.BEL_CANONICALIZE,
@@ -439,7 +455,7 @@ class BelEntity(object):
         if not list(set(self.entity_types) & set(["Gene", "RNA", "Micro_RNA", "Protein", "all"])):
             return self
 
-        orthologs = bel.terms.orthologs.get_orthologs(self.canonical.key)
+        orthologs = bel.terms.orthologs.get_orthologs(self.canonical.key, species_keys=species_keys)
 
         for ortholog_species_key in orthologs:
 
@@ -449,9 +465,13 @@ class BelEntity(object):
             ortholog_dict = {}
 
             if normalized["canonical"]:
-                ortholog_dict["canonical"] = NsVal(key_label=normalized["canonical"])
+                ortholog_dict["canonical"] = NsVal(
+                    key=normalized["canonical"], label=normalized["label"]
+                )
             if normalized["decanonical"]:
-                ortholog_dict["decanonical"] = NsVal(key_label=normalized["decanonical"])
+                ortholog_dict["decanonical"] = NsVal(
+                    key=normalized["decanonical"], label=normalized["label"]
+                )
 
             self.orthologs[ortholog_species_key] = copy.copy(ortholog_dict)
 
@@ -482,7 +502,7 @@ class BelEntity(object):
             return self
 
         self.orthologized = True
-        self.orthologized_species_key = species_key
+        self.species_key = species_key
         self.nsval = self.orthologs[species_key]["canonical"]
 
         return self

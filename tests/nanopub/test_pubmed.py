@@ -2,7 +2,7 @@
 import json
 import time
 
-# Third Party
+# Local
 # Local Imports
 import bel.nanopub.pubmed
 

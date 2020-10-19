@@ -5,7 +5,7 @@
 Usage: $ {1: program}.py
 """
 
-# Third Party
+# Local
 # Local Imports
 import bel.core.settings as settings
 
@@ -17,7 +17,7 @@ settings.ARANGO_URL = "http://thor:8529"
 
 
 def db_setup():
-    # Third Party
+    # Local
     import bel.db.arangodb
     import bel.db.elasticsearch
     import bel.resources.resource

@@ -229,6 +229,37 @@ class Function(object):
 
         return true_response
 
+    def get_species_keys(self, species_keys: List[str] = None):
+        """Collect species associated with NSArgs
+
+        Can have multiple species related to single Assertion
+        """
+
+        if species_keys is None:
+            species_keys = []
+
+        if hasattr(self, "args"):
+            for arg in self.args:
+                if arg and arg.type in ["NSArg", "Function"]:
+                    species_keys = arg.get_species_keys(species_keys)
+
+        return species_keys
+
+    def get_orthologs(
+        self, orthologs: List[dict] = None, orthologize_targets_keys: List[Key] = None
+    ):
+        """Collect orthologs associated with NSArgs"""
+
+        if orthologs is None:
+            orthologs = []
+
+        if hasattr(self, "args"):
+            for arg in self.args:
+                if arg and arg.type in ["NSArg", "Function"]:
+                    orthologs = arg.get_orthologs(orthologs, orthologize_targets_keys)
+
+        return orthologs
+
     def validate(self, errors: List[ValidationError] = None):
         """Validate BEL Function"""
 
@@ -242,7 +273,17 @@ class Function(object):
                     arg.entity.add_term()
 
         # Validate function (or top-level args)
-        errors.extend(validate_function(self))
+        try:
+            errors.extend(validate_function(self))
+        except Exception as e:
+            logger.error(f"Could not validate function {self.to_string()} -- error: {str(e)}")
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg=f"Could not validate function {self.to_string()} - unknown error",
+                )
+            )
 
         # Recursively validate args that are functions
         if hasattr(self, "args"):
@@ -361,7 +402,7 @@ class Arg(object):
     ):
         return self
 
-    def orthologize(self, species_id: Key):
+    def orthologize(self, species_key: Key):
         return self
 
 
@@ -404,6 +445,28 @@ class NSArg(Arg):
         """Is this function arg fully orthologizable? - every gene/protein/RNA NSArg can be orthologized?"""
 
         return self.entity.orthologizable(species_key)
+
+    def get_species_keys(self, species_keys: List[str]):
+        """Get species from NSArg"""
+
+        if self.entity.species_key is not None:
+            species_keys.append(self.entity.species_key)
+
+        return species_keys
+
+    def get_orthologs(self, orthologs: List[dict], orthologize_targets_keys: List[Key] = None):
+        """Get orthologs from NSArg"""
+
+        if orthologize_targets_keys is None:
+            orthologize_targets_keys = settings.BEL_ORTHOLOGIZE_TARGETS
+
+        if self.entity.species_key and not self.entity.orthologs:
+            self.entity.collect_orthologs(species_keys=orthologize_targets_keys)
+
+        if self.entity.orthologs:
+            orthologs.append(self.entity.orthologs)
+
+        return orthologs
 
     def update(self, entity: BelEntity):
         """Update to new BEL Entity"""
@@ -529,13 +592,18 @@ class BELAst(object):
         subject: Optional[Function] = None,
         relation: Optional[Relation] = None,
         object: Optional[Union[Function, "BELAst"]] = None,
-        computed: bool = False,
+        is_computed: bool = False,
         version: str = "latest",
     ):
         self.version = bel.belspec.crud.check_version(version)
         self.assertion = assertion
 
         self.subject, self.relation, self.object = subject, relation, object
+        self.args = []
+
+        if subject is not None:
+            self.args = [subject, relation, object]
+
         if isinstance(self.relation, str):
             self.relation = Relation(self.relation, version=self.version)
 
@@ -544,9 +612,7 @@ class BELAst(object):
         self.type = "BELAst"
 
         # Computed edges are special in that we should only have one in the edgestore no matter the source
-        self.computed = computed
-
-        self.args = []
+        self.is_computed = is_computed
 
         self.errors: List[ValidationError] = []
 
@@ -795,6 +861,42 @@ class BELAst(object):
 
         return true_response
 
+    def get_orthologs(
+        self,
+        orthologs: List[dict] = None,
+        orthologize_targets_keys: List[Key] = None,
+    ):
+        """Collect orthologs associated with NSArgs
+
+        simple_keys: provide canonical and decanonical values as keys (not key_labels) instead of NsVal objects
+        """
+
+        if orthologs is None:
+            orthologs = []
+
+        if hasattr(self, "args"):
+            for arg in self.args:
+                if arg and arg.type in ["NSArg", "Function"]:
+                    orthologs = arg.get_orthologs(orthologs, orthologize_targets_keys)
+
+        return orthologs
+
+    def get_species_keys(self, species_keys: List[str] = None):
+        """Collect species associated with NSArgs
+
+        Can have multiple species related to single Assertion
+        """
+
+        if species_keys is None:
+            species_keys = []
+
+        if hasattr(self, "args"):
+            for arg in self.args:
+                if arg and arg.type in ["NSArg", "Function"]:
+                    species_keys = arg.get_species_keys(species_keys)
+
+        return list(set(species_keys))
+
     def validate(self):
         """Validate BEL Assertion"""
 
@@ -993,6 +1095,18 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
         signature = match_signatures(fn.args, signatures)
     else:
         signature = signatures[0]
+
+    if not signature:
+        errors.append(
+            ValidationError(
+                type="Assertion",
+                severity="Error",
+                msg=f"Could not match function: {fn.name} arguments to BEL Specification",
+                visual_pairs=[(fn.span.start, fn.span.end)],
+                index=fn.span.start,
+            )
+        )
+        return errors
 
     # 1 past the last positional element (including optional elements if they exist)
     post_positional = 0
@@ -1232,7 +1346,7 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
         if (
             arg.type == "NSArg"
             and arg.entity.term
-            and arg.entity.nsval.key in arg.entity.term.obsolete_keys
+            and arg.entity.original_nsval.key in arg.entity.term.obsolete_keys
         ):
             errors.append(
                 ValidationError(
@@ -1313,17 +1427,30 @@ def sort_function_args(fn: Function):
         elif fn_arg.type == "NSArg":
             fn_arg.sort_tuple = (post_positional, "NSArg", str(fn_arg.entity))
 
+        # Sort by modifier function name, then position of modification and
+        #     then by type of modification if available
         elif fn_arg.name == "proteinModification":
             pmod_args_len = len(fn_arg.args)
-            if 2 < pmod_args_len and fn_arg.args[2]:  # position of modification
+
+            if fn.args[0].type == "NSArg":
+                modification_type_value = str(fn.args[0].entity)
+            else:
+                modification_type_value = fn_arg.args[0].value
+
+            if pmod_args_len == 3:
                 fn_arg.sort_tuple = (
                     modifier_func_index,
                     fn_arg.name,
                     fn_arg.args[2].value,
-                    fn_arg.args[0].value,
+                    modification_type_value,
                 )
-            else:
-                fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, "-1", fn_arg.args[0].value)
+            else:  # Add position of modification = -1
+                fn_arg.sort_tuple = (
+                    modifier_func_index,
+                    fn_arg.name,
+                    "-1",
+                    modification_type_value,
+                )
 
         elif fn_arg.name == "fragment":
             fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, fn_arg.args[0])

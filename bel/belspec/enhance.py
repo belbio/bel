@@ -5,11 +5,12 @@ import re
 from typing import Any, List, Mapping
 
 # Third Party
-# Local Imports
-import bel.core.settings as settings
-
 # Third Party Imports
 from loguru import logger
+
+# Local
+# Local Imports
+import bel.core.settings as settings
 
 
 def create_enhanced_specification(specification) -> dict:

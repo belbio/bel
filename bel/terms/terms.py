@@ -5,15 +5,13 @@ from typing import Any, List, Mapping, Optional, Union
 
 # Third Party
 import cachetools
-
-# Third Party Imports
 import elasticsearch
 from loguru import logger
 
 # Local
 # Local Imports
 import bel.core.settings as settings
-from bel.core.utils import asyncify, split_key_label
+from bel.core.utils import asyncify, namespace_quoting, split_key_label
 from bel.db.arangodb import arango_id_to_key, resources_db, terms_coll_name
 from bel.db.elasticsearch import es
 from bel.resources.namespace import get_namespace_metadata
@@ -98,6 +96,18 @@ def get_term(term_key: Key) -> Optional[Term]:
         return None
 
 
+@cachetools.cached(cachetools.TTLCache(maxsize=5000, ttl=3600))
+def get_term_key_label(term_key: Key) -> str:
+    """Get term key_label"""
+
+    term = get_term(term_key)
+    key_label = term_key
+    if term.label:
+        key_label = f"{term_key}!{namespace_quoting(term.label)}"
+
+    return key_label
+
+
 def get_equivalents(term_key: str) -> Mapping[str, List[Mapping[str, Any]]]:
     """Get equivalents given term key
 
@@ -112,29 +122,29 @@ def get_equivalents(term_key: str) -> Mapping[str, List[Mapping[str, Any]]]:
 
         term = get_term(term_key)
 
-        term_dbkey = arango_id_to_key(term.key)
+        if term:
+            term_dbkey = arango_id_to_key(term.key)
+        else:
+            term_dbkey = None
 
-        # logger.debug("Term", term=term, term_dbkey=term_dbkey)
+        if term_dbkey:
+            query = f"""
+            FOR vertex, edge IN 1..5
+                ANY 'equivalence_nodes/{term_dbkey}' equivalence_edges
+                OPTIONS {{bfs: true, uniqueVertices : 'global'}}
+                RETURN DISTINCT {{
+                    term_key: vertex.key,
+                    namespace: vertex.namespace,
+                    primary: vertex.primary
+                }}
+            """
 
-        query = f"""
-        FOR vertex, edge IN 1..5
-            ANY 'equivalence_nodes/{term_dbkey}' equivalence_edges
-            OPTIONS {{bfs: true, uniqueVertices : 'global'}}
-            RETURN DISTINCT {{
-                term_key: vertex.key,
-                namespace: vertex.namespace,
-                primary: vertex.primary
-            }}
-        """
-
-        docs = list(resources_db.aql.execute(query))
-
-        logger.debug("Get equivalents query", query=query, equivalents=docs)
-
-        return {"equivalents": docs}
+            docs = list(resources_db.aql.execute(query))
+            return {"equivalents": docs}
+        else:
+            return {"equivalents": [], "errors": [f"Unexpected error"]}
 
     except Exception as e:
-
         logger.exception(f"Problem getting term equivalents for {term_key} msg: {e}")
         return {"equivalents": [], "errors": [f"Unexpected error {e}"]}
 
@@ -384,6 +394,8 @@ def get_term_completions(
         index=settings.TERMS_INDEX, doc_type=settings.TERMS_DOCUMENT_TYPE, body=search_body
     )
 
+    # print("search_body", search_body)
+
     # highlight matches
     completions = []
 
@@ -562,7 +574,7 @@ def get_term_search(search_term, size, entity_types, annotation_types, species, 
 
 def get_species_info(species_id):
 
-    logger.debug(species_id)
+    # logger.debug(species_id)
 
     url_template = "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&lvl=3&lin=f&keep=1&srchmode=1&unlock&id=<src_id>"
     search_body = {

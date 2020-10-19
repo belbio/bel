@@ -2,24 +2,26 @@
 from typing import List, Mapping
 
 # Third Party
-# Local Imports
-import bel.db.arangodb
-import bel.terms.terms
 import cachetools
-from bel.db.arangodb import ortholog_edges_name, ortholog_nodes_name, resources_db
 
 # Third Party Imports
 from loguru import logger
 
+# Local
+# Local Imports
+import bel.db.arangodb
+import bel.terms.terms
+from bel.db.arangodb import ortholog_edges_name, ortholog_nodes_name, resources_db
+
 Key = str
 
 
-def get_orthologs(term_key: Key, species: List[Key] = []) -> Mapping[Key, Key]:
+def get_orthologs(term_key: Key, species_keys: List[Key] = []) -> Mapping[Key, Key]:
     """Get orthologs for given gene and species
 
     Args:
         term_key: gene, rna or protein term key for which to retrieve orthologs
-        species: target species keys for ortholog - e.g. TAX:<number>
+        species_keys: target species keys for ortholog - e.g. TAX:<number>
 
     Returns:
         Mapping[Key, Key]: {"TAX:9606": "EG:207"}
@@ -33,8 +35,8 @@ def get_orthologs(term_key: Key, species: List[Key] = []) -> Mapping[Key, Key]:
     orthologs = {}
 
     query_filter = ""
-    if species:
-        query_filter = f"FILTER vertex.tax_id IN {species}"
+    if species_keys:
+        query_filter = f"FILTER vertex.species_key IN {species_keys}"
 
     query = f"""
         LET start = (
@@ -54,7 +56,7 @@ def get_orthologs(term_key: Key, species: List[Key] = []) -> Mapping[Key, Key]:
         RETURN {{ "orthologs": FLATTEN(UNION(start, orthologs)) }}
     """
 
-    logger.debug("Orthologs query", query=query)
+    # logger.debug("Orthologs query", query=query)
 
     results = list(resources_db.aql.execute(query, ttl=60, batch_size=20))[0]["orthologs"]
 

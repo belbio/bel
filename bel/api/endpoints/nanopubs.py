@@ -3,14 +3,15 @@
 from typing import List
 
 # Third Party
-# Local Imports
-import bel.nanopub.validate
-
 # Third Party Imports
 import fastapi
-from bel.schemas.nanopubs import NanopubR
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
+
+# Local
+# Local Imports
+import bel.nanopub.validate
+from bel.schemas.nanopubs import NanopubR
 
 router = APIRouter()
 

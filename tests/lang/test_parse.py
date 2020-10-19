@@ -1,7 +1,9 @@
 # Local Imports
 # Third Party
-import bel.lang.parse
 import pytest
+
+# Local
+import bel.lang.parse
 from bel.lang.ast import BELAst
 from bel.schemas.bel import Pair
 

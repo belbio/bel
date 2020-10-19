@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 
 # Third Party
 import jwt
-from bel.Config import config
 from loguru import logger
+
+# Local
+from bel.Config import config
 
 jwt_algorithm = "HS256"
 

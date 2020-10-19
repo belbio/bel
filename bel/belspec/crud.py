@@ -2,16 +2,18 @@
 from typing import Mapping
 
 # Third Party
-# Local Imports
-import bel.core.settings as settings
-import bel.db.arangodb as arangodb
 import cachetools
 import semver
-from bel.belspec.enhance import create_ebnf_parser, create_enhanced_specification
-from bel.schemas.belspec import BelSpec, BelSpecVersions
 
 # Third Party Imports
 from loguru import logger
+
+# Local
+# Local Imports
+import bel.core.settings as settings
+import bel.db.arangodb as arangodb
+from bel.belspec.enhance import create_ebnf_parser, create_enhanced_specification
+from bel.schemas.belspec import BelSpec, BelSpecVersions
 
 # ArangoDB handles
 bel_db = arangodb.bel_db

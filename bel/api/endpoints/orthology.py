@@ -4,13 +4,14 @@
 from typing import List
 
 # Third Party
-# Local Imports
-import bel.terms.orthologs
-
 # Third Party Imports
 import fastapi
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 from loguru import logger
+
+# Local
+# Local Imports
+import bel.terms.orthologs
 
 router = APIRouter()
 
