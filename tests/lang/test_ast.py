@@ -362,6 +362,7 @@ def test_validation_tloc():
 def test_validate_fus():
     """Validate path()"""
 
+    # HGNC:NPM isn't valid
     assertion = AssertionStr(subject='p(fus(HGNC:NPM, "1_117", HGNC:ALK, end))')
     expected = "Unknown BEL Entity at argument position 0 for function fusion - cannot determine if correct entity type."
 
@@ -374,6 +375,38 @@ def test_validate_fus():
     assert ast.errors[0].msg == expected
 
     assertion = AssertionStr(subject="p(fus(HGNC:EWSR1, start, HGNC:FLI1, end))")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+    assertion = AssertionStr(subject='r(fus(HGNC:TMPRSS2, "?", HGNC:ERG, "?"))')
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+    # HGNC:NPM isn't valid
+    assertion = AssertionStr(subject='p(fus(HGNC:NPM, "1_117", HGNC:ALK, end))')
+    expected = "Unknown BEL Entity at argument position 0 for function fusion - cannot determine if correct entity type."
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
+
+    assertion = AssertionStr(subject='r(fus(HGNC:TMPRSS2, "r.1_79", HGNC:ERG, "r.312_5034"))')
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
