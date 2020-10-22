@@ -359,8 +359,8 @@ def test_validation_tloc():
     assert ast.errors == []
 
 
-def test_validate_fus():
-    """Validate path()"""
+def test_validate_fus1():
+    """Validate fus()"""
 
     # HGNC:NPM isn't valid
     assertion = AssertionStr(subject='p(fus(HGNC:NPM, "1_117", HGNC:ALK, end))')
@@ -373,6 +373,10 @@ def test_validate_fus():
     print("Errors", ast.errors)
 
     assert ast.errors[0].msg == expected
+
+
+def test_validate_fus2():
+    """Validate fus()"""
 
     assertion = AssertionStr(subject="p(fus(HGNC:EWSR1, start, HGNC:FLI1, end))")
 
@@ -384,6 +388,10 @@ def test_validate_fus():
 
     assert ast.errors == []
 
+
+def test_validate_fus3():
+    """Validate fus()"""
+
     assertion = AssertionStr(subject='r(fus(HGNC:TMPRSS2, "?", HGNC:ERG, "?"))')
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
@@ -394,9 +402,13 @@ def test_validate_fus():
 
     assert ast.errors == []
 
-    # HGNC:NPM isn't valid
-    assertion = AssertionStr(subject='p(fus(HGNC:NPM, "1_117", HGNC:ALK, end))')
-    expected = "Unknown BEL Entity at argument position 0 for function fusion - cannot determine if correct entity type."
+
+def test_validate_fus4():
+    """Validate fus()"""
+
+    assertion = AssertionStr(
+        subject='r(fus(HGNC:11876!TMPRSS2, "r.1_79", HGNC:3446!ERG, "r.312_5034"))'
+    )
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
@@ -404,7 +416,11 @@ def test_validate_fus():
 
     print("Errors", ast.errors)
 
-    assert ast.errors[0].msg == expected
+    assert ast.errors == []
+
+
+def test_validate_fus5():
+    """Validate fus()"""
 
     assertion = AssertionStr(subject='r(fus(HGNC:TMPRSS2, "r.1_79", HGNC:ERG, "r.312_5034"))')
 
@@ -415,6 +431,40 @@ def test_validate_fus():
     print("Errors", ast.errors)
 
     assert ast.errors == []
+
+
+def test_validate_sec():
+    """Validate fus()"""
+
+    assertion = AssertionStr(
+        subject='bp(GO:0030168!"platelet activation")',
+        relation="increases",
+        object='sec(a(SCHEM:"Thymosin beta(4)"))',
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+
+def test_validate_missing_quote():
+    """Validate fus()"""
+
+    assertion = AssertionStr(
+        subject='p(HGNC:TLR7, var("Gln710Argfs*18))',
+    )
+    expected = "Missing right quote between left quotes at positions 17 and 34"
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
 
 
 def test_validate_nsarg():
@@ -487,6 +537,24 @@ def test_validate_rxn2():
 
     assertion = AssertionStr(
         subject='rxn(reactants(a(CHEBI:"guanidinoacetic acid"), a(CHEBI:"(S)-S-adenosyl-L-methionine")), products(a(CHEMBL:s-adenosylhomocysteine), a(CHEBI:creatine)))'
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors")
+    for error in ast.errors:
+        print("Error", error.json())
+
+    assert ast.errors == []
+
+
+def test_validate_rxn3():
+    """Validate path()"""
+
+    assertion = AssertionStr(
+        subject='act(p(HGNC:GPT2), ma(cat)) directlyIncreases rxn(reactants(a(CHEBI:alanine), a(SCHEM:"alpha-Ketoglutaric acid")), products(a(SCHEM:"Propanoic acid, 2-oxo-, ion(1-)"), a(CHEBI:"L-glutamic acid")))'
     )
 
     ast = bel.lang.ast.BELAst(assertion=assertion)

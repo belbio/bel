@@ -91,7 +91,8 @@ def ordered_pairs(left: List[int], right: List[int]) -> List[Union[int, None]]:
 
     new_pairs = []
     for idx, pair in enumerate(pairs):
-        if idx + 1 < len(pairs) and pair[0] == pairs[idx + 1][0]:
+        # Trying to match two lefts together: pair[0] == pairs[idx + 1][0]?
+        if idx + 1 >= len(pairs) or pair[0] == pairs[idx + 1][0]:
             new_pairs.append(pair)
             new_pairs.append((alt[pair[0]], None))
         else:
@@ -154,14 +155,19 @@ def find_matching_quotes(
                 )
             )
         elif pair.end is None:
+
+            next_pair_idx = idx + 1
+            if next_pair_idx < len(matched_quotes):
+                span_end = matched_quotes[next_pair_idx].start
+            else:
+                span_end = len(assertion_str)
+
             errors.append(
                 ValidationError(
                     type="Assertion",
                     severity="Error",
-                    msg=f"Missing right quote between left quotes at positions {pair.start} and {matched_quotes[idx+1].start}",
-                    visual=html_wrap_span(
-                        assertion_str, [(pair.start, matched_quotes[idx + 1].start)]
-                    ),
+                    msg=f"Missing right quote between left quotes at positions {pair.start} and {span_end}",
+                    visual=html_wrap_span(assertion_str, [(pair.start, span_end)]),
                     index=pair.start,
                 )
             )
