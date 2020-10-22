@@ -74,15 +74,11 @@ def intersect(pos: int, spans: List[Optional[Span]]) -> bool:
 
     if spans:
         for span in spans:
-            # Skip any spans that have a missing or None start or end
-            if not span.start or not span.end:
-                continue
-            if span.start < pos < span.end:
+
+            if span.start and span.end and span.start < pos < span.end:
                 return True
-            elif pos > span.end:
-                return False
-    else:
-        return False
+
+    return False
 
 
 def ordered_pairs(left: List[int], right: List[int]) -> List[Union[int, None]]:

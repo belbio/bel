@@ -482,6 +482,24 @@ def test_validate_rxn1():
     assert ast.errors == []
 
 
+def test_validate_rxn2():
+    """Validate path()"""
+
+    assertion = AssertionStr(
+        subject='rxn(reactants(a(CHEBI:"guanidinoacetic acid"), a(CHEBI:"(S)-S-adenosyl-L-methionine")), products(a(CHEMBL:s-adenosylhomocysteine), a(CHEBI:creatine)))'
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors")
+    for error in ast.errors:
+        print("Error", error.json())
+
+    assert ast.errors == []
+
+
 def test_validate_complex_nsarg():
 
     assertion = AssertionStr(
