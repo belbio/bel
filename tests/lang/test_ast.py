@@ -451,22 +451,6 @@ def test_validate_sec():
     assert ast.errors == []
 
 
-def test_validate_missing_quote():
-    """Validate fus()"""
-
-    assertion = AssertionStr(
-        subject='p(HGNC:TLR7, var("Gln710Argfs*18))',
-    )
-    expected = "Missing right quote between left quotes at positions 17 and 34"
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    ast.validate()
-
-    print("Errors", ast.errors)
-
-    assert ast.errors[0].msg == expected
-
-
 def test_validate_nsarg():
     """Validate path()"""
 
@@ -606,10 +590,49 @@ def test_validate_bad_relation():
     assert ast.errors[0].msg == expected
 
 
+def test_validate_bad_function():
+
+    assertion = AssertionStr(subject="ppp(HGNC:PTHLH)")
+    expected = "Could not parse Assertion - bad relation: XXXincreases"
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
+
+
 def test_validate_bad_nsarg():
 
     assertion = AssertionStr(subject="p(HGNC:)")
     expected = "Could not match function: proteinAbundance arguments to BEL Specification"
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
+
+
+def test_validate_missing_right_quote():
+
+    assertion = AssertionStr(subject='p(HGNC:"AKT1)')
+    expected = "Missing right quote after left quote at position 7 and before position 13"
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
+
+
+def test_validate_missing_left_quote():
+
+    assertion = AssertionStr(subject='p(HGNC:AKT1")')
+    expected = "Missing left quote before right quote at position 11"
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
     ast.validate()

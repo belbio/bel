@@ -35,7 +35,7 @@ def test_ordered_pairs():
     assert correct == result
 
 
-def test_matching_quotes():
+def test_matching_quotes1():
 
     assertion_str = 'complex(SCOMP:"Test named" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)'
 
@@ -45,7 +45,10 @@ def test_matching_quotes():
     print("Errors", errors)
     print("Quotes", matched_quotes)
 
-    assert errors[0].msg == "Missing right quote between left quotes at positions 50 and 74"
+    assert (
+        errors[0].msg
+        == "Missing right quote after left quote at position 50 and before position 74"
+    )
     assert errors[0].severity == "Error"
 
     assert matched_quotes[0].start == 14
@@ -56,6 +59,34 @@ def test_matching_quotes():
 
     assert matched_quotes[4].start == 132
     assert matched_quotes[4].end == 142
+
+
+def test_matching_quotes2():
+
+    assertion_str = 'p(HGNC:"AKT1'
+
+    errors = []
+    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
+
+    print("Errors", errors)
+    print("Quotes", matched_quotes)
+
+    assert (
+        errors[0].msg == "Missing right quote after left quote at position 7 and before position 12"
+    )
+
+
+def test_matching_quotes3():
+
+    assertion_str = 'p(HGNC:"AKT1")'
+
+    errors = []
+    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
+
+    print("Errors", errors)
+    print("Quotes", matched_quotes)
+
+    assert errors == []
 
 
 def test_commas():

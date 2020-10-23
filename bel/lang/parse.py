@@ -89,12 +89,21 @@ def ordered_pairs(left: List[int], right: List[int]) -> List[Union[int, None]]:
     pairs = [("left", item) for item in left] + [("right", item) for item in right]
     pairs.sort(key=lambda x: x[1])
 
+    # Must have left, right alternation - insert placeholders for left, left or right, right entries
     new_pairs = []
     for idx, pair in enumerate(pairs):
+        next_idx = idx + 1
         # Trying to match two lefts together: pair[0] == pairs[idx + 1][0]?
-        if idx + 1 >= len(pairs) or pair[0] == pairs[idx + 1][0]:
+        if (next_idx < len(pairs) and pair[0] == pairs[idx + 1][0]) or (
+            next_idx >= len(pairs) and pair[0] == "left"
+        ):
             new_pairs.append(pair)
             new_pairs.append((alt[pair[0]], None))
+
+        elif idx == 0 and pair[0] == "right":
+            new_pairs.append((alt[pair[0]], None))
+            new_pairs.append(pair)
+
         else:
             new_pairs.append(pair)
 
@@ -166,7 +175,7 @@ def find_matching_quotes(
                 ValidationError(
                     type="Assertion",
                     severity="Error",
-                    msg=f"Missing right quote between left quotes at positions {pair.start} and {span_end}",
+                    msg=f"Missing right quote after left quote at position {pair.start} and before position {span_end}",
                     visual=html_wrap_span(assertion_str, [(pair.start, span_end)]),
                     index=pair.start,
                 )
