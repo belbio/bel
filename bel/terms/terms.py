@@ -59,6 +59,16 @@ def get_terms(term_key: Key) -> List[Term]:
 
     results = list(resources_db.aql.execute(query))
 
+    if len(results) == 0:
+        (namespace, label) = term_key.split(":")
+        query = f"""
+        for doc in {terms_coll_name}
+            filter doc.namespace == "{namespace}"
+            filter "{label}" in doc.synonyms
+            return doc
+        """
+        results = list(resources_db.aql.execute(query))
+
     results = [Term(**term) for term in results]
 
     return results
@@ -86,11 +96,12 @@ def get_term(term_key: Key) -> Optional[Term]:
     if len(terms) == 1:
         return terms[0]
 
+    # TODO - Is there a better way to handle multiple matching terms?
     elif len(terms) > 1:
         logger.warning(
-            f"Too many primary Keys returned. Given term_key: {term_key} matches these terms: {[term.key for term in terms]}"
+            f"Too many terms returned. Given term_key: {term_key} matches these terms: {[term.key for term in terms]}"
         )
-        return terms[0]
+        return sorted(terms, key=lambda k: k["key"])[0]
 
     else:
         return None

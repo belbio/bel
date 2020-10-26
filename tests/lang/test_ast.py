@@ -299,11 +299,27 @@ def test_validate_complex_missing_namespace():
     assert ast.errors[0].msg == expected
 
 
-def test_abundance_namespace():
-    """Validate path()"""
+def test_validate_abundance_namespace():
+    """Validate abundance namespace"""
 
     assertion = AssertionStr(
         subject="a(CHEBI:15377!water)",
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+
+def test_validate_namespace_using_synonyms():
+    """Validate nsarg that doesn't match alt_keys but does match synonyms"""
+
+    assertion = AssertionStr(
+        subject="p(MGI:Emr4)",
     )
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
