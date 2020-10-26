@@ -63,7 +63,7 @@ class Citation(BaseModel):
 
 class Metadata(BaseModel):
 
-    collections: Optional[List[str]] = Field(
+    collections: Optional[Union[str, List[str]]] = Field(
         [],
         title="Nanopub Collections",
         description="Collections of nanopubs to use for managing sets of nanopubs.",
