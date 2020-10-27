@@ -211,6 +211,7 @@ def get_resources_handles(client, username=None, password=None):
             IndexDefinition(
                 type="persistent", fields=["obsolete_keys[*]"], unique=False, sparse=True
             ),
+            IndexDefinition(type="persistent", fields=["synonyms[*]"], unique=False, sparse=True),
         ],
     )
     update_index_state(

@@ -64,6 +64,24 @@ def test_ast_orthologization():
         assert False, "Not orthologizable"
 
 
+def test_ast_nested_orthologization():
+
+    assertion = AssertionStr(entire="p(HGNC:AKT1) increases (p(HGNC:AKT1) increases p(HGNC:EGF))")
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    orthologizable = ast.orthologizable("TAX:10090")
+    print("Orthologizable", orthologizable)
+
+    ast.orthologize("TAX:10090").decanonicalize()
+
+    expected = ""
+
+    result = ast.to_string()
+    print("Result", result)
+
+    assert result == expected
+
+
 def test_ast_orthologizable():
     """Test AST orthologization"""
 

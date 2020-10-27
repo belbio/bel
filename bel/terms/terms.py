@@ -60,11 +60,14 @@ def get_terms(term_key: Key) -> List[Term]:
     results = list(resources_db.aql.execute(query))
 
     if len(results) == 0:
+        if namespace == "EG":
+            return []
+
         (namespace, label) = term_key.split(":")
         query = f"""
         for doc in {terms_coll_name}
             filter doc.namespace == "{namespace}"
-            filter "{label}" in doc.synonyms
+            filter '{label}' in doc.synonyms
             return doc
         """
         results = list(resources_db.aql.execute(query))
