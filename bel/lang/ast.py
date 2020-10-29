@@ -1340,6 +1340,18 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                             index=fn.args[position].span.start,
                         )
                     )
+    # Sixth pass - non-positional StrArgs are errors
+    for idx, arg in enumerate(fn.args):
+        if arg.type == "StrArg" and signature["arguments"][idx]["position"] is None:
+            errors.append(
+                ValidationError(
+                    type="Assertion",
+                    severity="Error",
+                    msg="String argument not allowed as an optional or multiple argument. Probably missing a namespace.",
+                    visual_pairs=[(arg.span.start, arg.span.end)],
+                    index=arg.span.start,
+                )
+            )
 
     # Check for obsolete namespaces
     for arg in fn.args:

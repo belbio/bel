@@ -194,6 +194,20 @@ def test_validate_missing_namespace():
     assert ast.errors[0].severity == "Warning"
 
 
+def test_validate_strarg():
+
+    assertion = AssertionStr(subject='complex("missing")')
+    expected = ""
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors[0].msg == expected
+
+
 def test_validate_empty_function():
     """Validate empty function"""
 
