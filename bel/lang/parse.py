@@ -316,13 +316,16 @@ def find_functions(
     """
 
     functions_list = bel.belspec.specifications.get_all_functions(version)
-    functions_list.sort(key=len)
-    functions_regex = "|".join(functions_list)
 
-    # matches start and everything but the following
-    potential_functions = re.compile(f"({functions_regex})\\(")
-    iter = re.finditer(potential_functions, assertion_str)
-    name_spans = [m.span(1) for m in iter]
+    iterator = re.finditer("([a-zA-Z]+)\(", assertion_str)
+
+    name_spans = []
+    for m in iterator:
+        matched = m.group(1)
+        if matched not in functions_list:
+            continue
+
+        name_spans.append(m.span(1))
 
     # Filter quoted strings - can't have a relation in a quoted string
     name_spans = [r for r in name_spans if not intersect(r[0], matched_quotes)]

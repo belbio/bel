@@ -759,7 +759,7 @@ class BELAst(object):
                 ValidationError(
                     type="Assertion",
                     severity="Error",
-                    msg=f"Could not parse Assertion - bad relation: {self.args[1]}",
+                    msg=f"Could not parse Assertion - bad relation? {self.args[1]}",
                 )
             )
         else:
