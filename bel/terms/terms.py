@@ -104,7 +104,7 @@ def get_term(term_key: Key) -> Optional[Term]:
         logger.warning(
             f"Too many terms returned. Given term_key: {term_key} matches these terms: {[term.key for term in terms]}"
         )
-        return sorted(terms, key=lambda k: k["key"])[0]
+        return sorted(terms, key=lambda k: k.key)[0]
 
     else:
         return None
