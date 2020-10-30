@@ -63,7 +63,7 @@ def get_terms(term_key: Key) -> List[Term]:
         if namespace == "EG":
             return []
 
-        (namespace, label) = term_key.split(":")
+        (namespace, label) = term_key.split(":", 1)
         query = f"""
         for doc in {terms_coll_name}
             filter doc.namespace == "{namespace}"
@@ -229,7 +229,7 @@ def get_normalized_terms(
             "annotation_types": annotation_types,
         }
 
-    ns = term_key.split(":")[0]
+    ns = term_key.split(":", 1)[0]
     if not ns:
         logger.error(f"Term key is missing namespace {term_key}")
         return normalized

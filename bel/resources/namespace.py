@@ -255,7 +255,7 @@ def terms_iterator_for_arangodb(f: IO, version: str):
                     {
                         "_key": alt_db_key,
                         "key": alt_key,
-                        "namespace": alt_key.split(":")[0],
+                        "namespace": alt_key.split(":", 1)[0],
                         "source": namespace,
                         "version": version,
                     },
@@ -290,7 +290,7 @@ def terms_iterator_for_arangodb(f: IO, version: str):
                     {
                         "_key": eqv_db_key,
                         "key": eqv_key,
-                        "namespace": eqv_key.split(":")[0],
+                        "namespace": eqv_key.split(":", 1)[0],
                         "source": namespace,
                         "version": version,
                     },
@@ -343,7 +343,7 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
         for annotation_type in term.get("annotation_types", []):
             statistics["annotation_types"][annotation_type] += 1
         for equivalence in term.get("equivalence_keys", []):
-            ns, id_ = equivalence.split(":", maxsplit=1)
+            ns, id_ = equivalence.split(":", 1)
             statistics["equivalenced_namespaces"][ns] += 1
 
         # Filter species if enabled in config
@@ -383,7 +383,7 @@ def lowercase_term_id(term_key: str) -> str:
         str: lowercased, e.g. MESH:atherosclerosis
     """
 
-    (ns, val) = term_key.split(":", maxsplit=1)
+    (ns, val) = term_key.split(":", 1)
     term_key = f"{ns}:{val.lower()}"
 
     return term_key

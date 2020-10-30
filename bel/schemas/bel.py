@@ -184,7 +184,7 @@ class NsVal(object):
             (namespace, id, label) = split_key_label(key_label)
 
         elif key:
-            (namespace, id) = key.split(":")
+            (namespace, id) = key.split(":", 1)
 
         self.namespace: str = namespace
         self.id: str = namespace_quoting(id)

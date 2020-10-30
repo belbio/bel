@@ -625,6 +625,22 @@ def test_validate_complex_nsarg():
     assert ast.errors == []
 
 
+def test_validate_complex_nsarg_quoted_colon():
+
+    assertion = AssertionStr(subject='complex(SCOMP:"KLF1:SWI/SNF complex")')
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert (
+        ast.errors[0].msg
+        == 'Unknown BEL Entity SCOMP:"KLF1:SWI/SNF complex" - cannot determine if this matches function signature'
+    )
+
+
 def test_validate_bad_relation():
 
     assertion = AssertionStr(subject="p(HGNC:PTHLH) XXXincreases p(HGNC:PTHLH)")
