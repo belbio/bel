@@ -1342,7 +1342,9 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                     )
     # Sixth pass - non-positional StrArgs are errors
     for idx, arg in enumerate(fn.args):
-        if arg.type == "StrArg" and signature["arguments"][idx]["position"] is None:
+        if arg.type == "StrArg" and (
+            idx > len(signature["arguments"]) - 1 or signature["arguments"][idx]["position"] is None
+        ):
             errors.append(
                 ValidationError(
                     type="Assertion",
