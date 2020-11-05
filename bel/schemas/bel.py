@@ -384,9 +384,11 @@ class BelEntity(object):
             if self.original_nsval.label:
                 self.nsval.label = self.original_nsval.label
 
-        self.canonical = self.nsval
+        self.canonical = copy.deepcopy(self.nsval)
         if normalized["canonical"]:
             self.canonical = NsVal(key_label=normalized["canonical"])
+        self.canonical.label = ""
+        self.canonical.key_label = self.canonical.key
 
         self.decanonical = self.nsval
         if normalized["decanonical"]:

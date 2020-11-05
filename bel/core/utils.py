@@ -37,7 +37,7 @@ nsarg_pattern = re.compile(
         \s*:\s*                # ns:id separator
         (?P<id>".*?"|[^\,\(\)\s\!]+)      # id
         (\s*!\s*)?             # id!label separator
-        (?P<label>".*?"|\w+)?  # optional label
+        (?P<label>".*?"|[^\,\(\)\s\!]+)?  # optional label
     )
     [\,\)]?                    # stop match
 
