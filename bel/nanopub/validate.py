@@ -443,3 +443,15 @@ def remove_validation_cache():
     """Truncate validation cache"""
 
     bel_validations_coll.truncate()
+
+
+def remove_old_validations_from_cache(filter_date):
+    """Remove older validations from cache"""
+
+    query = f"""
+        FOR doc in { bel_validations_name }
+            FILTER doc.created_dt < "{filter_date}"
+            REMOVE doc in { bel_validations_name }
+    """
+
+    results = bel_db.aql.execute(query, ttl=7200)

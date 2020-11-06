@@ -127,7 +127,7 @@ def load_terms(
     index_name = f"{index_prefix}_{es_version}"
 
     # Create index with mapping
-    if prior_version != version or force:
+    if force or prior_version != version:
         elasticsearch.create_terms_index(index_name)
     else:
         result["state"] = "Succeeded"

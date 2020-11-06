@@ -76,14 +76,14 @@ def load_orthologs(
         prior_entity_count = 0
         prior_version = ""
 
-    if prior_version == version or not force:
+    if force or prior_version != version:
+        arangodb.batch_load_docs(
+            resources_db, orthologs_iterator(fo, version, statistics), on_duplicate="update"
+        )
+    else:
         msg = f"NOTE: This orthology dataset {source} at version {version} is already loaded and the 'force' option was not used"
         result["messages"].append(msg)
         return result
-
-    arangodb.batch_load_docs(
-        resources_db, orthologs_iterator(fo, version, statistics), on_duplicate="update"
-    )
 
     logger.info(
         f"Loaded orthologs, source: {source}  count: {statistics['entities_count']}", source=source
