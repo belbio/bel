@@ -124,9 +124,8 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
 
     # Load using Resource URLs from bel resource metadata
     else:
-        resources = bel.resources.namespace.get_bel_resource_metadata()
 
-        for resource in resources:
+        for resource in arangodb.resources_metadata_coll:
             logger.info(f"Resource {resource}")
             if "resource_download_url" not in resource:
                 logger.info("Continuing")
