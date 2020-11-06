@@ -76,7 +76,7 @@ REDIS_QUEUE = os.getenv("NANOPUBSTORE_TYPE", default="belservice")
 
 # Elasticsearch Info
 ELASTICSEARCH_URL = os.getenv("ELASTICSEARCH_URL", default="http://localhost:9200")
-TERMS_INDEX = os.getenv("TERMS_INDEX", default="terms2")  # Elasticsearch terms index
+TERMS_INDEX = os.getenv("TERMS_INDEX", default="terms")  # Elasticsearch terms index
 TERMS_DOCUMENT_TYPE = os.getenv("TERMS_DOCUMENT_TYPE", default="term")
 
 # Arango Databases
