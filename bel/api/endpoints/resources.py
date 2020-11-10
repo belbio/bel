@@ -31,11 +31,13 @@ def post_update_resources(
     Reads the arangodb bel.bel_config.configuration.update_bel_resources object
     to figure out what bel resource urls to process if url or urls not included.
 
-    Will ignore _url_ if _urls_ is provided.
+    Will ignore _urls_ if _url_ query parameter is provided.
     """
 
-    if url and not urls:
+    if url:
         urls = [url]
+
+    urls = [url for url in urls if url != "string"]
 
     bel.resources.manage.update_resources(urls=urls, force=force, email=email)
 

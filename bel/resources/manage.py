@@ -112,9 +112,6 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
     if urls is None:
         urls = []
 
-    if urls:
-        urls = [url for url in urls if url != "string"]
-
     results = {}
 
     # Load provided url if available
@@ -133,7 +130,7 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
             logger.info(f"Resource {resource}")
             url = resource["resource_download_url"]
 
-            results[url] = load_resource(resource_url=url, force=force)
+            # results[url] = load_resource(resource_url=url, force=force)
 
     if email is not None:
         subject = f"BEL Resources Update for {settings.HOST_NAME}"

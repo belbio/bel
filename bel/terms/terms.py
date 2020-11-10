@@ -435,21 +435,22 @@ def get_term_completions(
             startswith_sort = 1
         sort_len = len(matches[0])
 
-        completions.append(
-            {
-                "key": result["_source"]["key"],
-                "name": result["_source"].get("name", "Missing Name"),
-                "namespace": result["_source"].get("namespace", "Missing Namespace"),
-                "id": result["_source"].get("id", "Missing ID"),
-                "label": result["_source"].get("label", ""),
-                "description": result["_source"].get("description", None),
-                "species": species,
-                "entity_types": entity_types,
-                "annotation_types": annotation_types,
-                "highlight": matches,
-                "sort_tuple": (startswith_sort, sort_len),
-            }
-        )
+        if result["_source"].get("key", False):
+            completions.append(
+                {
+                    "key": result["_source"]["key"],
+                    "name": result["_source"].get("name", "Missing Name"),
+                    "namespace": result["_source"].get("namespace", "Missing Namespace"),
+                    "id": result["_source"].get("id", "Missing ID"),
+                    "label": result["_source"].get("label", ""),
+                    "description": result["_source"].get("description", None),
+                    "species": species,
+                    "entity_types": entity_types,
+                    "annotation_types": annotation_types,
+                    "highlight": matches,
+                    "sort_tuple": (startswith_sort, sort_len),
+                }
+            )
 
     return completions
 
