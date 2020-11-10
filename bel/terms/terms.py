@@ -115,7 +115,7 @@ def get_term_key_label(term_key: Key) -> str:
     """Get term key_label"""
 
     term = get_term(term_key)
-    logger.info(f"Getting key_label for key: {key}  term: {term}")
+    logger.info(f"Getting key_label for key: {term_key}  term: {term}")
     key_label = term_key
     if term and term.label:
         key_label = f"{term_key}!{namespace_quoting(term.label)}"
