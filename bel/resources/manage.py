@@ -117,13 +117,14 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
     # Load provided url if available
     if urls:
         for url in urls:
+            logger.info(f"Processing resource url: {url}")
             results[url] = load_resource(resource_url=url, force=force)
 
     # Load using Resource URLs from bel resource metadata
     else:
 
         for resource in arangodb.resources_metadata_coll:
-            logger.info(f"Resource {resource}")
+            logger.info(f"Processing resource: {resource['name']}")
             if "resource_download_url" not in resource:
                 logger.info("Continuing")
                 continue
