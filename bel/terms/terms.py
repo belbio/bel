@@ -116,7 +116,7 @@ def get_term_key_label(term_key: Key) -> str:
 
     term = get_term(term_key)
     key_label = term_key
-    if term.label:
+    if term and term.label:
         key_label = f"{term_key}!{namespace_quoting(term.label)}"
 
     return key_label
