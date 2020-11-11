@@ -34,5 +34,6 @@
     "scomp",
     "zfin"
   ],
-  "python.formatting.provider": "black"
+  "python.formatting.provider": "black",
+  "python.analysis.completeFunctionParens": true
 }

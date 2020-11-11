@@ -354,8 +354,8 @@ def batch_load_docs(db, doc_iterator, on_duplicate: str = "replace"):
                 )
                 docs[collection_name] = []
 
-        if counter % 500000 == 0:
-            logger.info(f"Loaded {counter} docs into arangodb")
+        if counter % 1000000 == 0:
+            logger.info(f"Loaded {counter:,} docs into arangodb")
 
     # Finish loading docs left over after last full batch
     for collection_name in docs:
