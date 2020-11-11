@@ -118,7 +118,12 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
     if urls:
         for url in urls:
             logger.info(f"Processing resource url: {url}")
-            results[url] = load_resource(resource_url=url, force=force)
+            try:
+                results[url] = load_resource(resource_url=url, force=force)
+            except Exception as e:
+                results[url]["state"] = "Failed"
+                results[url]["messages"].append(f"ERROR: Problem loading resource: {url} {str(e)}")
+                logger.exception(f"Problem loading resource: {url} {str(e)}")
 
     # Load using Resource URLs from bel resource metadata
     else:
@@ -130,8 +135,12 @@ def update_resources(urls: List[str] = None, force: bool = False, email: str = N
                 continue
             logger.info(f"Resource {resource}")
             url = resource["resource_download_url"]
-
-            # results[url] = load_resource(resource_url=url, force=force)
+            try:
+                results[url] = load_resource(resource_url=url, force=force)
+            except Exception as e:
+                results[url]["state"] = "Failed"
+                results[url]["messages"].append(f"ERROR: Problem loading resource: {url} {str(e)}")
+                logger.exception(f"Problem loading resource: {url} {str(e)}")
 
     if email is not None:
         subject = f"BEL Resources Update for {settings.HOST_NAME}"
