@@ -224,6 +224,7 @@ def get_resources_handles(client, username=None, password=None):
     update_index_state(
         equiv_edges_coll, [IndexDefinition(type="persistent", fields=["source"], unique=False)]
     )
+
     update_index_state(
         ortholog_nodes_coll, [IndexDefinition(type="persistent", fields=["key"], unique=True)]
     )

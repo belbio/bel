@@ -76,9 +76,9 @@ def remove_old_db_entries(namespace: str, version: str = "", force: bool = False
             REMOVE doc IN {equiv_nodes_name}
     """
 
-    resources_db.aql.execute(remove_old_terms, ttl=3600)
-    resources_db.aql.execute(remove_old_equivalence_edges, ttl=3600)
-    resources_db.aql.execute(remove_old_equivalence_nodes, ttl=3600)
+    resources_db.aql.execute(remove_old_terms, ttl=7200)
+    resources_db.aql.execute(remove_old_equivalence_edges, ttl=7200)
+    resources_db.aql.execute(remove_old_equivalence_nodes, ttl=7200)
 
 
 def load_terms(
