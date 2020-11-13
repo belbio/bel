@@ -338,11 +338,12 @@ def get_term_completions(
     if entity_types:
         grp = [et for et in entity_types if et in settings.species_entity_types]
 
-    if grp and species_keys:
-        if isinstance(species_keys, str):
-            species_keys = [species_keys]
+    if isinstance(species_keys, str):
+        species_keys = [species_keys]
 
-        # Allow non-species specific terms to be found
+    # Allow non-species specific terms to be found along with species=[species_keys]
+    #   grp is set if inside a function and if not entity_types and annotation_types are None
+    if species_keys and (grp or (not entity_types and not annotation_types)):
         filters.append(
             {
                 "bool": {

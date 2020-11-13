@@ -218,9 +218,9 @@ def terms_iterator_for_arangodb(f: IO, version: str):
         term_key = term["key"]
         namespace = term["namespace"]
 
-        species_id = term.get("species_id", None)
-        # Skip if species not listed in species_list
-        if species_list and species_id and species_id not in species_list:
+        # Skip if species not listed in config species_list
+        species_key = term.get("species_key", None)
+        if species_list and species_key and species_key not in species_list:
             continue
 
         # Can't use original key formatted for Arangodb as some keys are longer than allowed (_key < 255 chars)
@@ -346,8 +346,8 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
             ns, id_ = equivalence.split(":", 1)
             statistics["equivalenced_namespaces"][ns] += 1
 
-        # Filter species if enabled in config
-        species_key = term.get("species_key", "")
+        # Skip if species not listed in config species_list
+        species_key = term.get("species_key", None)
         if species_list and species_key and species_key not in species_list:
             continue
 
@@ -361,6 +361,12 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
         term.pop("child_keys", "")
         term.pop("parent_keys", "")
         term.pop("equivalence_keys", "")
+
+        # Must not have species_key attribute to allow naked NSArg queries with filtered species
+        #    but allow non-species terms to be matched as well
+        if term.get("species_key", "") == "":
+            term.pop("species_key")
+            term.pop("species_label")
 
         record = {
             "_op_type": "index",
