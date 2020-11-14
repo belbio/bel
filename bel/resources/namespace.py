@@ -365,8 +365,8 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
         # Must not have species_key attribute to allow naked NSArg queries with filtered species
         #    but allow non-species terms to be matched as well
         if term.get("species_key", "") == "":
-            term.pop("species_key")
-            term.pop("species_label")
+            term.pop("species_key", "")
+            term.pop("species_label", "")
 
         record = {
             "_op_type": "index",
