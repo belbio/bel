@@ -13,6 +13,7 @@ from loguru import logger
 
 # Local
 import bel.belspec.crud
+import bel.lang.ast
 import bel.nanopub.validate
 from bel.schemas.bel import AssertionStr
 
