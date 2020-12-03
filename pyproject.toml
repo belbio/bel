@@ -6,7 +6,6 @@ authors = ["William Hayes <william.s.hayes@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-python-arango = "^5.4.0"
 jinja2 = "^2.11.2"
 pyyaml = "^5.3.1"
 lxml = "^4.5.0"
@@ -14,22 +13,23 @@ cityhash = "^0.2.3"
 python-dateutil = "^2.8.1"
 elasticsearch = "~6"
 cachetools = "^4.1.0"
-httpx = "^0.12.1"
 redis = "^3.4.1"
 boltons = "^20.1.0"
 pydantic = "^1.5"
 typer = "^0.1.1"
 semver = "^2.9.1"
-python-dotenv = "^0.13.0"
 loguru = "^0.5.1"
 pytest = "^6.0.1"
 fastapi = {version = "^0.61.0", extras = ["api"]}
 gunicorn = {version = "^20.0.4", extras = ["api"]}
-uvicorn = {version = "^0.11.8", extras = ["api"]}
 python-multipart = {version = "^0.0.5", extras = ["api"]}
 starlette_prometheus = {version = "^0.7.0", extras = ["api"]}
-aiofiles = {version = "^0.5.0", extras = ["api"]}
 ulid-py = "^1.1.0"
+aiofiles = "^0.6.0"
+uvicorn = "^0.12.3"
+httpx = "^0.16.1"
+python-arango = "^6.1.0"
+python-dotenv = "^0.15.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6"
