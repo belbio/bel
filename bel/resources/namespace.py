@@ -7,13 +7,11 @@ from collections import defaultdict
 from typing import IO, Optional
 
 # Third Party
-# Third Party Imports
 import cachetools
 from arango import ArangoError
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.mail
 import bel.core.settings as settings
 import bel.db.elasticsearch as elasticsearch
@@ -98,7 +96,7 @@ def load_terms(
 
     result = {"state": "Succeeded", "messages": []}
 
-    statistics = {
+    metadata["statistics"] = {
         "entities_count": 0,
         "synonyms_count": 0,
         "entity_types": defaultdict(int),
@@ -118,14 +116,13 @@ def load_terms(
 
     namespace = metadata["namespace"]
     version = metadata["version"]
-
-    ################################################################################
-    # Elasticsearch index processing
-    ################################################################################
     es_version = version.replace("T", "").replace("-", "").replace(":", "")
     index_prefix = f"{settings.TERMS_INDEX}_{namespace.lower()}"
     index_name = f"{index_prefix}_{es_version}"
 
+    ################################################################################
+    # Elasticsearch index processing
+    ################################################################################
     # Create index with mapping
     if force or prior_version != version:
         elasticsearch.create_terms_index(index_name)
@@ -137,11 +134,9 @@ def load_terms(
 
         return result
 
-    terms_iterator = terms_iterator_for_elasticsearch(f, index_name, statistics)
-    elasticsearch.bulk_load_docs(terms_iterator)
-
     # Using side effect to get statistics from terms_iterator_for_elasticsearch on purpose
-    metadata["statistics"] = copy.deepcopy(statistics)
+    terms_iterator = terms_iterator_for_elasticsearch(f, index_name, metadata)
+    elasticsearch.bulk_load_docs(terms_iterator)
 
     # Remove old namespace index
     index_names = elasticsearch.get_all_index_names()
@@ -228,6 +223,7 @@ def terms_iterator_for_arangodb(f: IO, version: str):
 
         term["_key"] = term_db_key
         term["version"] = version
+
         # Add term record to terms collection
         yield (terms_coll_name, term)
 
@@ -321,7 +317,7 @@ def terms_iterator_for_arangodb(f: IO, version: str):
                 yield equiv_edge
 
 
-def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
+def terms_iterator_for_elasticsearch(f: IO, index_name: str, metadata: dict):
     """Add index_name to term documents for bulk load"""
 
     species_list = settings.BEL_FILTER_SPECIES
@@ -336,15 +332,15 @@ def terms_iterator_for_elasticsearch(f: IO, index_name: str, statistics: dict):
         term = term["term"]
 
         # Collect statistics
-        statistics["entities_count"] += 1
-        statistics["synonyms_count"] += len(term.get("synonyms", []))
+        metadata["statistics"]["entities_count"] += 1
+        metadata["statistics"]["synonyms_count"] += len(term.get("synonyms", []))
         for entity_type in term.get("entity_types", []):
-            statistics["entity_types"][entity_type] += 1
+            metadata["statistics"]["entity_types"][entity_type] += 1
         for annotation_type in term.get("annotation_types", []):
-            statistics["annotation_types"][annotation_type] += 1
+            metadata["statistics"]["annotation_types"][annotation_type] += 1
         for equivalence in term.get("equivalence_keys", []):
             ns, id_ = equivalence.split(":", 1)
-            statistics["equivalenced_namespaces"][ns] += 1
+            metadata["statistics"]["equivalenced_namespaces"][ns] += 1
 
         # Skip if species not listed in config species_list
         species_key = term.get("species_key", None)

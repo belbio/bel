@@ -13,11 +13,8 @@ from timeit import default_timer
 from typing import Any, List, Mapping, Optional, Tuple
 
 # Third Party
-# Local Imports
 import dateutil
 import httpx
-
-# Third Party Imports
 import ulid
 from cityhash import CityHash64
 from loguru import logger

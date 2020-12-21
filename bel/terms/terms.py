@@ -9,7 +9,6 @@ import elasticsearch
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 from bel.core.utils import asyncify, namespace_quoting, split_key_label
 from bel.db.arangodb import arango_id_to_key, resources_db, terms_coll_name
@@ -48,7 +47,7 @@ def get_terms(term_key: Key) -> List[Term]:
             )
         ]
 
-    term_key = term_key.replace("'", "\\'")
+    term_key = term_key.replace("'", "")  # Keys can't have single quotes in them-r
     query = f"""
         FOR term in {terms_coll_name}
             FILTER term.key == '{term_key}'  OR '{term_key}' in term.alt_keys OR '{term_key}' in term.obsolete_keys
@@ -63,7 +62,11 @@ def get_terms(term_key: Key) -> List[Term]:
         if namespace == "EG":
             return []
 
-        (namespace, label) = term_key.split(":", 1)
+        try:
+            (namespace, label) = term_key.split(":", 1)
+        except Exception:
+            return []  # no results - not a valid value
+
         query = f"""
         for doc in {terms_coll_name}
             filter doc.namespace == "{namespace}"

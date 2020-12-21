@@ -1,4 +1,3 @@
-# Third Party Imports
 # Standard Library
 import enum
 from typing import Any, List, Mapping, Optional, Union

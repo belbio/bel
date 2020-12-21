@@ -3,12 +3,9 @@ from typing import List, Mapping
 
 # Third Party
 import cachetools
-
-# Third Party Imports
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.db.arangodb
 import bel.terms.terms
 from bel.db.arangodb import ortholog_edges_name, ortholog_nodes_name, resources_db

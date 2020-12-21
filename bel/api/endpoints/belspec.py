@@ -1,15 +1,15 @@
 """belspec endpoints"""
 
-# Third Party Imports
+
 # Third Party
 import fastapi
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import PlainTextResponse
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.belspec.crud
+from bel.api.core.exceptions import HTTPException
 from bel.schemas.belspec import BelSpec, BelSpecVersions, EnhancedBelSpec
 
 router = APIRouter()
@@ -40,7 +40,9 @@ def get_belspec_version(
 
     belspec = bel.belspec.crud.get_enhanced_belspec(version)
     if not belspec:
-        raise HTTPException(status_code=404, detail=f"No BEL specification for version {version}")
+        raise HTTPException(
+            status_code=404, detail=f"No BEL specification for version {version}", user_flag=True
+        )
 
     return belspec
 
@@ -61,7 +63,9 @@ def get_enhanced_belspec(
 
     if not enhanced_belspec:
         raise HTTPException(
-            status_code=404, detail=f"No enhanced BEL specification for version {version}"
+            status_code=404,
+            detail=f"No enhanced BEL specification for version {version}",
+            user_flag=True,
         )
 
     return enhanced_belspec

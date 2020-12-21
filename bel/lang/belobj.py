@@ -6,11 +6,9 @@ import sys
 from typing import Any, List, Mapping, Optional, Union
 
 # Third Party
-# Third Party Imports
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.belspec.crud
 import bel.core.settings as settings
 import bel.terms.terms

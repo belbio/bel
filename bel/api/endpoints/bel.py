@@ -4,11 +4,8 @@
 from typing import List, Optional
 
 # Third Party
-# Third Party Imports
 import fastapi
 from fastapi import APIRouter, Depends, Query
-
-# Local Imports
 from loguru import logger
 
 # Local

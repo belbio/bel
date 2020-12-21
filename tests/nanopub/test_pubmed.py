@@ -3,7 +3,6 @@ import json
 import time
 
 # Local
-# Local Imports
 import bel.nanopub.pubmed
 
 

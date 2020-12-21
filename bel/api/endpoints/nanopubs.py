@@ -3,14 +3,13 @@
 from typing import List
 
 # Third Party
-# Third Party Imports
 import fastapi
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.nanopub.validate
+from bel.api.core.exceptions import HTTPException
 from bel.schemas.nanopubs import NanopubR
 
 router = APIRouter()
@@ -33,7 +32,7 @@ def nanopub_validation(nanopub: NanopubR, validation_level: str = "complete"):
     # data = json.loads(data)
 
     if not nanopub:
-        raise HTTPException(400, detail=f"No nanopub provided")
+        raise HTTPException(400, detail=f"No nanopub provided", user_flag=True)
 
     nanopub = bel.nanopub.validate.validate(nanopub, validation_level=validation_level)
 

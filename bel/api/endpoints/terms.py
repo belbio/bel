@@ -4,14 +4,13 @@
 from typing import List
 
 # Third Party
-# Third Party Imports
 import fastapi
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.terms.terms
+from bel.api.core.exceptions import HTTPException
 from bel.schemas.terms import Term, TermCompletionResponse
 
 router = APIRouter()
@@ -67,7 +66,7 @@ def get_terms(term_id: str):
     terms = bel.terms.terms.get_terms(term_id)
 
     if not terms:
-        raise HTTPException(status_code=404, detail=f"Term {term_id} not found")
+        raise HTTPException(status_code=404, detail=f"Term {term_id} not found", user_flag=True)
 
     return terms
 
@@ -79,7 +78,7 @@ def get_term_equivalents(term_id: str):
     equivalents = bel.terms.terms.get_equivalents(term_id)
 
     if not equivalents:
-        raise HTTPException(status_code=404, detail=f"Term {term_id} not found")
+        raise HTTPException(status_code=404, detail=f"Term {term_id} not found", user_flag=True)
 
     return equivalents
 

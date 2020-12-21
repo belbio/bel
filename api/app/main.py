@@ -7,9 +7,9 @@ import sys
 import time
 
 # Third Party
-# Third Party Imports
 from fastapi import FastAPI
 from fastapi import __version__ as fastapi_version
+from fastapi.responses import JSONResponse
 from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
@@ -19,9 +19,9 @@ from starlette.staticfiles import StaticFiles
 from starlette_prometheus import PrometheusMiddleware, metrics
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 from bel.__version__ import __version__ as version
+from bel.api.core.middleware import StatsMiddleware
 from bel.api.endpoints.bel import router as bel_router
 from bel.api.endpoints.belspec import router as belspec_router
 from bel.api.endpoints.info import router as info_router
@@ -29,7 +29,6 @@ from bel.api.endpoints.nanopubs import router as nanopubs_router
 from bel.api.endpoints.orthology import router as orthology_router
 from bel.api.endpoints.pubmed import router as pubmed_router
 from bel.api.endpoints.terms import router as terms_router
-from core.middleware import StatsMiddleware
 
 logger.remove()
 
@@ -57,6 +56,22 @@ app = FastAPI(
     openapi_url="/openapi.json",
     version=version,
 )
+
+# Added user_flag to HTTPException
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    headers = getattr(exc, "headers", None)
+    if headers:
+        return JSONResponse(
+            {"detail": exc.detail, "user_flag": exc.user_flag},
+            status_code=exc.status_code,
+            headers=headers,
+        )
+    else:
+        return JSONResponse(
+            {"detail": exc.detail, "user_flag": exc.user_flag}, status_code=exc.status_code
+        )
+
 
 logger.info("Starting BEL API")
 logger.info(f"Fast API Version: {fastapi_version}")

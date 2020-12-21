@@ -6,13 +6,11 @@ Informational endpoints
 import re
 
 # Third Party
-# Third Party Imports
 import fastapi
 from fastapi import APIRouter, Depends
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.terms.terms
 from bel.__version__ import __version__ as bel_lib_version

@@ -18,13 +18,10 @@ from typing import Any, Mapping, MutableMapping
 # Third Party
 import cachetools
 import httpx
-
-# Third Party Imports
 from loguru import logger
 from lxml import etree
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.terms.terms
 from bel.core.utils import http_client, url_path_param_quoting

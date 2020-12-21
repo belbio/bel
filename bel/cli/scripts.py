@@ -7,14 +7,11 @@ from typing import List
 
 # Third Party
 import typer
-
-# Third Party Imports
 import yaml
 from loguru import logger
 from typer import Argument, Option
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.core.utils as utils
 import bel.db.arangodb

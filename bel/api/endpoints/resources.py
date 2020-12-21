@@ -4,16 +4,14 @@
 from typing import List, Optional
 
 # Third Party
-# Third Party Imports
 import fastapi
-from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Body, Depends, File, Query, UploadFile
 from loguru import logger
 
 # Local
 import bel.resources.manage
-
-# Local Imports
 import bel.terms.terms
+from bel.api.core.exceptions import HTTPException
 from bel.schemas.terms import Term, TermCompletionResponse
 
 router = APIRouter()

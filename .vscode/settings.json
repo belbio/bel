@@ -16,7 +16,7 @@
     "statusBarItem.hoverBackground": "#5ce637",
     "statusBar.foreground": "#15202b"
   },
-  "python.pythonPath": ".venv/bin/python",
+  "python.pythonPath": ".venv/bin/python3",
   "python.analysis.openFilesOnly": false,
   "python.analysis.memory.keepLibraryLocalVariables": true,
   "python.autoComplete.addBrackets": true,

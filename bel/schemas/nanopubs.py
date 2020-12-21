@@ -3,7 +3,6 @@ import enum
 from typing import Any, List, Mapping, Optional, Union
 
 # Third Party
-# Third Party Imports
 import pydantic
 from pydantic import AnyUrl, BaseModel, Field, HttpUrl, validator
 
@@ -71,7 +70,7 @@ class Metadata(BaseModel):
     gd_status: Optional[str]
     gd_createTS: Optional[str]
     gd_updateTS: Optional[str]
-    gd_validation: Optional[ValidationErrors] = {}
+    gd_validation: Optional[ValidationErrors]
     gd_hash: Optional[str] = Field(
         "",
         title="Nanopub hash",

@@ -2,14 +2,12 @@
 import os
 
 # Third Party
-# Third Party Imports
 import elasticsearch.helpers
 import yaml
 from elasticsearch import Elasticsearch
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 
 cur_dir_name = os.path.dirname(os.path.realpath(__file__))

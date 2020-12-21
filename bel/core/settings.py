@@ -43,7 +43,7 @@ rootdir = pathlib.Path(appdir).parent  # parent to ./lib/bel directory
 
 # Mailgun settings
 MAIL_API = os.getenv("MAIL_API", default=None)
-MAIL_API_KEY = os.getenv("MAIL_API_KEY")
+MAIL_API_TOKEN = os.getenv("MAIL_API_TOKEN")
 MAIL_FROM = os.getenv("MAIL_FROM")
 
 # Auth Settings
@@ -130,6 +130,7 @@ if not BEL_DECANONICALIZE:
 
 # Boost these namespaces in term search results and completions
 BEL_BOOST_NAMESPACES = json.loads(os.getenv("BEL_BOOST_NAMESPACES", default="[]"))
+
 if not BEL_BOOST_NAMESPACES:
     BEL_BOOST_NAMESPACES = ["HGNC", "MGI", "RGD", "ZFIN", "CHEBI", "GO", "TAX"]
 

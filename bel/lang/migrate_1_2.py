@@ -9,11 +9,9 @@
 import json
 
 # Third Party
-# Third Party Imports
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.belspec.crud
 import bel.core.settings as settings
 from bel.belspec.crud import get_enhanced_belspec

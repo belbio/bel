@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import List, Mapping, Optional
 
 # Third Party
-# Third Party Imports
 import arango
 import arango.client
 import arango.database
@@ -13,7 +12,6 @@ import boltons.iterutils
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 from bel.core.utils import _create_hash
 
@@ -52,7 +50,9 @@ def get_user_credentials(username, password):
 def get_client(url=None, port=None, username=None, password=None):
     """Get arango client db handle"""
 
-    url = boltons.iterutils.first([url, settings.ARANGO_URL, "http://localhost:8529"])
+    url = boltons.iterutils.first(
+        [url, settings.ARANGO_URL, "http://localhost:8529"]  # DevSkim: ignore DS137138
+    )  # DevSkim: ignore DS137138
     (username, password) = get_user_credentials(username, password)
 
     try:
@@ -267,12 +267,12 @@ def get_bel_handles(client, username=None, password=None):
     if bel_db.has_collection(bel_config_name):
         bel_config_coll = bel_db.collection(bel_config_name)
     else:
-        bel_config_coll = bel_db.create_collection(bel_config_name, index_bucket_count=64)
+        bel_config_coll = bel_db.create_collection(bel_config_name)
 
     if bel_db.has_collection(bel_validations_name):
         bel_validations_coll = bel_db.collection(bel_validations_name)
     else:
-        bel_validations_coll = bel_db.create_collection(bel_validations_name, index_bucket_count=64)
+        bel_validations_coll = bel_db.create_collection(bel_validations_name)
 
     return {
         "bel_db": bel_db,
@@ -350,9 +350,16 @@ def batch_load_docs(db, doc_iterator, on_duplicate: str = "replace"):
         if counter % batch_size == 0:
             # logger.debug(f"Bulk import arangodb: {counter}")
             for collection_name in docs:
-                collections[collection_name].import_bulk(
-                    docs[collection_name], on_duplicate=on_duplicate, halt_on_error=False
-                )
+                try:
+                    results = collections[collection_name].import_bulk(
+                        docs[collection_name], on_duplicate=on_duplicate, halt_on_error=False
+                    )
+
+                except Exception as e:
+                    logger.exception(
+                        f"Problem loading arangodb using import_bulk - error: {str(e)}"
+                    )
+
                 docs[collection_name] = []
 
         if counter % 1000000 == 0:
@@ -368,6 +375,8 @@ def batch_load_docs(db, doc_iterator, on_duplicate: str = "replace"):
             docs[collection_name] = []
         except arango.exceptions.DocumentInsertError as e:
             logger.error(f"Problem with arango bulk import: {str(e)}")
+
+    return counter
 
 
 def arango_id_to_key(_id):

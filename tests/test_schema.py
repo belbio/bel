@@ -1,4 +1,3 @@
-# Local Imports
 # Local
 from bel.schemas.bel import AssertionStr, BelEntity, NsVal
 

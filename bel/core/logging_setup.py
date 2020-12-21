@@ -1,4 +1,3 @@
-# Local Imports
 # Standard Library
 import sys
 
@@ -21,13 +20,13 @@ logger.add(
 # from loguru import logger
 # import sys
 
-# # Third Party Imports
+#
 # from loguru import logger
 # from loguru import logger._frames
 # from
 #  import jsonlogger
 
-# # Local Imports
+#
 # import bel.core.settings as settings
 
 # """Notes

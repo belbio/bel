@@ -11,13 +11,11 @@ import traceback
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party
-# Third Party Imports
 import yaml
 from loguru import logger
 from pydantic import BaseModel, Field
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb
 import bel.terms.orthologs
@@ -337,7 +335,7 @@ class Function(object):
             else:
                 print("\t" * (indent + 1) + arg.print_tree())
 
-    def subcomponents(self, subcomponents):
+    def subcomponents(self, subcomponents=None):
         """Generate subcomponents of the BEL subject or object
 
         Args:
@@ -348,13 +346,17 @@ class Function(object):
             List[str]: subcomponents of BEL subject or object
         """
 
+        if subcomponents is None:
+            subcomponents = []
+
         for arg in self.args:
             if arg.__class__.__name__ == "Function":
                 subcomponents.append(arg.to_string())
-                if arg.function_type == "primary":
-                    arg.subcomponents(subcomponents)
+                arg.subcomponents(subcomponents)
             else:
                 subcomponents.append(arg.to_string())
+                if hasattr(arg, "entity") and arg.entity.nsval.label:
+                    subcomponents.append(f"{arg.entity.nsval.namespace}:{arg.entity.nsval.label}")
 
         return subcomponents
 
@@ -363,13 +365,16 @@ class Function(object):
 # Argument objects #
 #####################
 class Arg(object):
-    def __init__(self, parent=None, span: Span = None):
+    def __init__(self, version: str = "latest", parent=None, span: Union[Span, NsArgSpan] = None):
 
         self.optional = False
         self.type = "Arg"
+        self.version = version
 
         self.parent = parent
         self.siblings = []
+
+        self.belspec = get_enhanced_belspec(self.version)
 
         # https://github.com/belbio/bel/issues/13
 
@@ -410,10 +415,11 @@ class NSArg(Arg):
     """Parsed NSArg value"""
 
     def __init__(self, entity: BelEntity, parent=None, span: NsArgSpan = None):
-        Arg.__init__(self, parent, span)
+        Arg.__init__(self, parent)
 
         self.entity = entity
-
+        self.span: NsArgSpan = span
+        self.parent = parent
         self.type = "NSArg"
 
     def canonicalize(
@@ -493,6 +499,8 @@ class StrArg(Arg):
         Arg.__init__(self, parent, span)
         self.value = value
         self.type = "StrArg"
+        self.span: Span = span
+        self.parent = parent
 
     def update(self, value: str):
         """Update to new BEL Entity"""
@@ -905,6 +913,31 @@ class BELAst(object):
             for arg in self.args:
                 if arg and arg.type in ["Function"]:
                     self.errors.extend(arg.validate(errors=[]))
+
+    def subcomponents(self, subcomponents=None):
+        """Generate subcomponents of the BEL subject or object
+
+        Args:
+            AST
+            subcomponents:  Pass an empty list to start a new subcomponents request
+
+        Returns:
+            List[str]: subcomponents of BEL subject or object
+        """
+
+        if subcomponents is None:
+            subcomponents = []
+
+        for arg in self.args:
+            if arg.__class__.__name__ == "Function":
+                subcomponents.append(arg.to_string())
+                arg.subcomponents(subcomponents)
+            else:
+                subcomponents.append(arg.to_string())
+                if hasattr(arg, "entity") and arg.entity.nsval.label:
+                    subcomponents.append(f"{arg.entity.nsval.namespace}:{arg.entity.nsval.label}")
+
+        return subcomponents
 
     def to_string(self, fmt: str = "medium") -> str:
         """Convert AST object to string

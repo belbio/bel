@@ -6,12 +6,10 @@ import re
 from typing import Any, List, Mapping, Optional, Tuple, Union
 
 # Third Party
-# Third Party Imports
 from loguru import logger
 from pydantic import BaseModel, Field, root_validator
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb
 import bel.terms.orthologs

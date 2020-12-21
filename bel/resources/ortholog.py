@@ -6,12 +6,10 @@ from collections import defaultdict
 from typing import IO, Mapping, Optional
 
 # Third Party
-# Third Party Imports
 from arango import ArangoError
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.core.utils
 import bel.db.arangodb as arangodb

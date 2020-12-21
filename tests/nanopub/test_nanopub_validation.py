@@ -5,7 +5,6 @@ import json
 import pytest
 
 # Local
-# Local Imports
 import bel.nanopub.validate
 from bel.schemas.nanopubs import NanopubR
 

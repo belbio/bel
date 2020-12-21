@@ -1,4 +1,3 @@
-# Local Imports
 # Standard Library
 import json
 import pprint
@@ -16,7 +15,7 @@ from bel.schemas.bel import AssertionStr, ValidationError
 
 
 @pytest.mark.skip(msg="Cannot handle escaped quote")
-def test_ast_parse():
+def test_ast_parse_escaped_quote():
 
     # Bad quote
     # assertion = AssertionStr(entire='complex(SCOMP:"Test named\" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(nucleus)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)')
@@ -825,3 +824,32 @@ def test_ast_canonicalization_2():
     print("Canonicalized", ast.to_string())
 
     assert ast.to_string() == expected
+
+
+def test_ast_subcomponents_simple():
+
+    test_input = "path(DO:0080600!COVID-19)"
+    assertion = AssertionStr(entire=test_input)
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    subcomponents = ast.subcomponents()
+
+    print("Subcomponents", subcomponents)
+
+    assert subcomponents == ["path(DO:0080600!COVID-19)", "DO:0080600!COVID-19", "DO:COVID-19"]
+
+
+def test_ast_subcomponents_complex():
+
+    test_input = """rxn(reactants(complex(p(HGNC:5241!HSPA8), p(HGNC:6501!LAMP2), p(reactome:R-HSA-9622845.1!"HSP90AA1, HSP90AB1"), loc(GO:0005829!cytosol))), products(complex(p(HGNC:6501!LAMP2), p(reactome:R-HSA-9622845.1!"HSP90AA1, HSP90AB1"), loc(GO:0005765!"lysosomal membrane")), p(HGNC:5241!HSPA8, loc(GO:0005829!cytosol))))"""
+
+    assertion = AssertionStr(entire=test_input)
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    subcomponents = ast.subcomponents()
+
+    pprint.pprint(subcomponents)
+
+    assert subcomponents == ["path(DO:0080600!COVID-19)", "DO:0080600!COVID-19", "DO:COVID-19"]

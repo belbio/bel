@@ -4,11 +4,9 @@ import re
 from typing import List, Tuple
 
 # Third Party
-# Third Party Imports
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.core.utils
 import bel.lang.belobj

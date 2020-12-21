@@ -5,13 +5,10 @@ import json
 from typing import List
 
 # Third Party
-# Third Party Imports
 from loguru import logger
 
 # Local
 import bel.core.mail
-
-# Local Imports
 import bel.core.settings as settings
 import bel.core.utils
 import bel.db.arangodb as arangodb

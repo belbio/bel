@@ -4,12 +4,9 @@ from typing import Mapping
 # Third Party
 import cachetools
 import semver
-
-# Third Party Imports
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.db.arangodb as arangodb
 from bel.belspec.enhance import create_ebnf_parser, create_enhanced_specification

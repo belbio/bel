@@ -4,12 +4,9 @@ from typing import Any, Iterable, List, Mapping, Optional, Tuple
 
 # Third Party
 from cityhash import CityHash64
-
-# Third Party Imports
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.core.settings as settings
 import bel.lang.belobj
 from bel.core.utils import http_client

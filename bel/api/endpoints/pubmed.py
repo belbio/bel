@@ -1,14 +1,14 @@
 """pubmed endpoints"""
 
-# Third Party Imports
+
 # Third Party
 import fastapi
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from loguru import logger
 
 # Local
-# Local Imports
 import bel.nanopub.pubmed
+from bel.api.core.exceptions import HTTPException
 
 router = APIRouter()
 
@@ -25,6 +25,8 @@ def get_pubmed_info(
     pubmed = bel.nanopub.pubmed.get_pubmed_for_beleditor(pmid, pubmed_only=pubmed_only)
 
     if pubmed is None:
-        raise HTTPException(status_code=404, detail=f"No Pubmed response for {pmid}")
+        raise HTTPException(
+            status_code=404, detail=f"No Pubmed response for {pmid}", user_flag=True
+        )
 
     return pubmed
