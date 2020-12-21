@@ -1,23 +1,23 @@
 # Standard Library
-import logging
 import os
 
-# Third Party Imports
+# Third Party
 import elasticsearch.helpers
 import yaml
 from elasticsearch import Elasticsearch
+from loguru import logger
 
-# Local Imports
-from bel.Config import config
-
-log = logging.getLogger(__name__)
+# Local
+import bel.core.settings as settings
 
 cur_dir_name = os.path.dirname(os.path.realpath(__file__))
 mappings_terms_fn = f"{cur_dir_name}/es_mappings_terms.yml"
-terms_alias = "terms"
+
+es = Elasticsearch([settings.ELASTICSEARCH_URL], send_get_body_as="POST")
+logger.info(f"Elasticsearch URL: {settings.ELASTICSEARCH_URL}")
 
 
-def get_all_index_names(es):
+def get_all_index_names():
     """Get all index names"""
 
     indices = es.indices.get_alias()
@@ -25,13 +25,13 @@ def get_all_index_names(es):
     return indices
 
 
-def add_index_alias(es, index_name, alias_name):
+def add_index_alias(index_name, alias_name):
     """Add index alias to index_name"""
 
-    es.indices.put_alias(index=index_name, name=terms_alias)
+    es.indices.put_alias(index=index_name, name=alias_name)
 
 
-def index_exists(es, index_name: str):
+def index_exists(index_name: str):
     """Does index exist?
 
     Args:
@@ -40,19 +40,22 @@ def index_exists(es, index_name: str):
     return es.indices.exists(index=index_name)
 
 
-def delete_index(es, index_name: str):
+def delete_index(index_name: str):
     """Delete the terms index"""
 
     if not index_name:
-        log.warn("No index name given to delete")
+        logger.warn("No index name given to delete")
         return None
 
-    result = es.indices.delete(index=index_name)
+    result = es.indices.delete(index=index_name, ignore_unavailable=True)
+
     return result
 
 
-def create_terms_index(es, index_name: str):
+def create_terms_index(index_name: str):
     """Create terms index"""
+
+    es.indices.delete(index_name, ignore_unavailable=True)
 
     with open(mappings_terms_fn, "r") as f:
         mappings_terms = yaml.load(f, Loader=yaml.SafeLoader)
@@ -61,31 +64,19 @@ def create_terms_index(es, index_name: str):
         es.indices.create(index=index_name, body=mappings_terms)
 
     except Exception as e:
-        log.error(f"Could not create elasticsearch terms index: {e}")
+        logger.error(f"Could not create elasticsearch terms index: {e}")
 
 
-def delete_terms_indexes(es, index_name: str = "terms_*"):
+def delete_terms_indexes(index_name: str = f"{settings.TERMS_INDEX}_*"):
     """Delete all terms indexes"""
 
     try:
         es.indices.delete(index=index_name)
     except Exception as e:
-        log.error(f"Could not delete all terms indices: {e}")
+        logger.error(f"Could not delete all terms indices: {e}")
 
 
-def get_client():
-    """Get elasticsearch client
-
-    Returns:
-        es: Elasticsearch client handle
-    """
-
-    es = Elasticsearch([config["bel_api"]["servers"]["elasticsearch"]], send_get_body_as="POST")
-
-    return es
-
-
-def bulk_load_docs(es, docs):
+def bulk_load_docs(docs):
     """Bulk load docs
 
     Args:
@@ -97,10 +88,10 @@ def bulk_load_docs(es, docs):
 
     try:
         results = elasticsearch.helpers.bulk(es, docs, chunk_size=chunk_size)
-        log.debug(f"Elasticsearch documents loaded: {results[0]}")
+        logger.debug(f"Elasticsearch documents loaded: {results[0]}")
 
-        # elasticsearch.helpers.parallel_bulk(es, terms, chunk_size=chunk_size, thread_count=4)
+        # elasticsearch.helpers.parallel_bulk(terms, chunk_size=chunk_size, thread_count=4)
         if len(results[1]) > 0:
-            log.error("Bulk load errors {}".format(results))
+            logger.error("Bulk load errors {}".format(results))
     except elasticsearch.ElasticsearchException as e:
-        log.error("Indexing error: {}\n".format(e))
+        logger.error("Indexing error: {}\n".format(e))

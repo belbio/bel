@@ -1,72 +1,63 @@
 # Standard Library
-from typing import List
+from typing import List, Mapping
 
-# Third Party Imports
+# Third Party
 import cachetools
-import structlog
+from loguru import logger
 
-# Local Imports
+# Local
 import bel.db.arangodb
 import bel.terms.terms
+from bel.db.arangodb import ortholog_edges_name, ortholog_nodes_name, resources_db
 
-log = structlog.getLogger()
-
-default_canonical_namespace = "EG"  # for genes, proteins
-
-arangodb_client = bel.db.arangodb.get_client()
+Key = str
 
 
-def get_orthologs(canonical_gene_id: str, species: list = []) -> List[dict]:
-    """Get orthologs for given gene_id and species
-
-    Canonicalize prior to ortholog query and decanonicalize
-    the resulting ortholog
+def get_orthologs(term_key: Key, species_keys: List[Key] = []) -> Mapping[Key, Key]:
+    """Get orthologs for given gene and species
 
     Args:
-        canonical_gene_id: canonical gene_id for which to retrieve ortholog
-        species: target species for ortholog - tax id format TAX:<number>
+        term_key: gene, rna or protein term key for which to retrieve orthologs
+        species_keys: target species keys for ortholog - e.g. TAX:<number>
 
     Returns:
-        List[dict]: {'tax_id': <tax_id>, 'canonical': canonical_id, 'decanonical': decanonical_id}
+        Mapping[Key, Key]: {"TAX:9606": "EG:207"}
     """
 
-    gene_id_key = bel.db.arangodb.arango_id_to_key(canonical_gene_id)
+    # Normalize first
+    canonical_key = bel.terms.terms.get_normalized_terms(term_key)["canonical"]
+
+    canonical_dbkey = bel.db.arangodb.arango_id_to_key(canonical_key)
+
     orthologs = {}
 
-    if species:
-        query_filter = f"FILTER vertex.tax_id IN {species}"
+    query_filter = ""
+    if species_keys:
+        query_filter = f"FILTER vertex.species_key IN {species_keys}"
 
     query = f"""
         LET start = (
-            FOR vertex in ortholog_nodes
-                FILTER vertex._key == "{gene_id_key}"
-                RETURN {{ "name": vertex.name, "tax_id": vertex.tax_id }}
+            FOR vertex in {ortholog_nodes_name}
+                FILTER vertex._key == "{canonical_dbkey}"
+                RETURN {{ "key": vertex.key, "species_key": vertex.species_key }}
         )
 
         LET orthologs = (
             FOR vertex IN 1..3
-                ANY "ortholog_nodes/{gene_id_key}" ortholog_edges
+                ANY "ortholog_nodes/{canonical_dbkey}" {ortholog_edges_name}
                 OPTIONS {{ bfs: true, uniqueVertices : 'global' }}
                 {query_filter}
-                RETURN DISTINCT {{ "name": vertex.name, "tax_id": vertex.tax_id }}
+                RETURN DISTINCT {{ "key": vertex.key, "species_key": vertex.species_key }}
         )
 
-        RETURN {{ 'orthologs': FLATTEN(UNION(start, orthologs)) }}
+        RETURN {{ "orthologs": FLATTEN(UNION(start, orthologs)) }}
     """
 
-    if not arangodb_client:
-        print("Cannot get orthologs without ArangoDB access")
-        quit()
-    belns_db = bel.db.arangodb.get_belns_handle(arangodb_client)
+    # logger.debug("Orthologs query", query=query)
 
-    cursor = belns_db.aql.execute(query, batch_size=20)
+    results = list(resources_db.aql.execute(query, ttl=60, batch_size=20))[0]["orthologs"]
 
-    results = cursor.pop()
-    for ortholog in results["orthologs"]:
-        norms = bel.terms.terms.get_normalized_terms(ortholog["name"])
-        orthologs[ortholog["tax_id"]] = {
-            "canonical": norms["canonical"],
-            "decanonical": norms["decanonical"],
-        }
+    for ortholog in results:
+        orthologs[ortholog["species_key"]] = ortholog["key"]
 
     return orthologs

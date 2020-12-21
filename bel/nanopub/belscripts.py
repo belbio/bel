@@ -22,11 +22,9 @@ import json
 import re
 import sys
 
-# Third Party Imports
-import structlog
+# Third Party
 import yaml
-
-log = structlog.getLogger(__name__)
+from loguru import logger
 
 # citation fields are document type, a document name, a document reference ID, and an optional publication date, authors list and comment field
 
@@ -98,7 +96,7 @@ def split_bel_stmt(stmt: str, line_num) -> tuple:
     if m:
         return (m.group(1), m.group(2), m.group(3))
     else:
-        log.info(
+        logger.info(
             f"Could not parse bel statement into components at line number: {line_num} assertion: {stmt}"
         )
         return (stmt, None, None)
@@ -208,7 +206,7 @@ def process_unset(line, annotations):
             annotations.pop(val, None)
 
     else:
-        log.warn(f"Problem with UNSET line: {line}")
+        logger.warn(f"Problem with UNSET line: {line}")
 
     return annotations
 

@@ -2,247 +2,380 @@
 import copy
 import gzip
 import json
-from typing import IO
+import time
+from collections import defaultdict
+from typing import IO, Optional
 
-# Third Party Imports
-import timy
+# Third Party
+import cachetools
 from arango import ArangoError
-from structlog import get_logger
+from loguru import logger
 
-# Local Imports
-import bel.db.arangodb as arangodb
+# Local
+import bel.core.mail
+import bel.core.settings as settings
 import bel.db.elasticsearch as elasticsearch
-import bel.utils
-from bel.Config import config
+from bel.db.arangodb import (
+    arango_id_to_key,
+    batch_load_docs,
+    equiv_edges_name,
+    equiv_nodes_name,
+    resources_db,
+    resources_metadata_coll,
+    terms_coll,
+    terms_coll_name,
+)
+from bel.db.elasticsearch import es
+from bel.schemas.terms import Namespace
 
-# import structlog
-# import logging
-# log = logging.getLogger(__name__)
+# key = ns:id
+# main_key = preferred key, e.g. ns:<primary_id> not the alt_key or obsolete key or even an equivalence key which could be an alt_key
+# alt_key = for HGNC the preferred key is HGNC:391 for the alt_key HGNC:AKT1 - where AKT1 is a secondary ID
+# db_key = key converted to arangodb format
 
 
-log = get_logger()
+namespace_metadata_cache = cachetools.TTLCache(maxsize=1, ttl=600)
+bel_resource_metadata_cache = cachetools.TTLCache(maxsize=1, ttl=600)
 
-terms_alias = "terms"
+
+def remove_old_db_entries(namespace: str, version: str = "", force: bool = False):
+    """Remove old database entries
+
+    Args:
+        namespace: preferred namespace prefix, e.g. HGNC or DO
+        version: version of last namespace loaded - used to remove older entries from arangodb
+        force: remove ALL namespace database entries
+    """
+
+    if force or version == "":
+        filter_version = ""
+    else:
+        filter_version = f"""FILTER doc.version != "{version}" """
+
+    # Clean up old entries
+    remove_old_terms = f"""
+        FOR doc in {terms_coll_name}
+            FILTER doc.namespace == "{namespace}"
+            {filter_version}
+            REMOVE doc IN {terms_coll_name}
+    """
+
+    remove_old_equivalence_edges = f"""
+        FOR doc in {equiv_edges_name}
+            FILTER doc.source == "{namespace}"
+            {filter_version}
+            REMOVE doc IN {equiv_edges_name}
+    """
+
+    remove_old_equivalence_nodes = f"""
+        FOR doc in {equiv_nodes_name}
+            FILTER doc.source == "{namespace}"
+            {filter_version}
+            REMOVE doc IN {equiv_nodes_name}
+    """
+
+    resources_db.aql.execute(remove_old_terms, ttl=7200)
+    resources_db.aql.execute(remove_old_equivalence_edges, ttl=7200)
+    resources_db.aql.execute(remove_old_equivalence_nodes, ttl=7200)
 
 
-def load_terms(fo: IO, metadata: dict, forceupdate: bool):
+def load_terms(
+    f: IO, metadata: dict, force: bool = False, resource_download_url: Optional[str] = None
+):
     """Load terms into Elasticsearch and ArangoDB
 
-    Forceupdate will create a new index in Elasticsearch regardless of whether
+    Force will create a new index in Elasticsearch regardless of whether
     an index with the resource version already exists.
 
     Args:
-        fo: file obj - terminology file
+        fp: file path - terminology file
         metadata: dict containing the metadata for terminology
-        forceupdate: force full update - e.g. don't leave Elasticsearch indexes
-            alone if their version ID matches
+        force:  force full update - e.g. remove and re-add elasticsearch index
+                and delete arangodb namespace records before loading
     """
 
-    version = metadata["metadata"]["version"]
+    result = {"state": "Succeeded", "messages": []}
 
-    # LOAD TERMS INTO Elasticsearch
-    with timy.Timer("Load Terms") as timer:
-        es = bel.db.elasticsearch.get_client()
+    metadata["statistics"] = {
+        "entities_count": 0,
+        "synonyms_count": 0,
+        "entity_types": defaultdict(int),
+        "annotation_types": defaultdict(int),
+        "equivalenced_namespaces": defaultdict(int),
+    }
 
-        es_version = version.replace("T", "").replace("-", "").replace(":", "")
-        index_prefix = f"terms_{metadata['metadata']['namespace'].lower()}"
-        index_name = f"{index_prefix}_{es_version}"
+    metadata_key = f"Namespace_{metadata['namespace']}"
+    prior_metadata = resources_metadata_coll.get(metadata_key)
 
-        # Create index with mapping
-        if not elasticsearch.index_exists(es, index_name):
-            elasticsearch.create_terms_index(es, index_name)
-        elif forceupdate:  # force an update to the index
-            index_name += "_alt"
-            elasticsearch.create_terms_index(es, index_name)
-        else:
-            return  # Skip loading if not forced and not a new namespace
+    try:
+        prior_version = prior_metadata.get("version", "")
+        prior_entity_count = prior_metadata["statistics"].get("entities_count", 0)
+    except Exception:
+        prior_entity_count = 0
+        prior_version = ""
 
-        terms_iterator = terms_iterator_for_elasticsearch(fo, index_name)
-        elasticsearch.bulk_load_docs(es, terms_iterator)
+    namespace = metadata["namespace"]
+    version = metadata["version"]
+    es_version = version.replace("T", "").replace("-", "").replace(":", "")
+    index_prefix = f"{settings.TERMS_INDEX}_{namespace.lower()}"
+    index_name = f"{index_prefix}_{es_version}"
 
-        # Remove old namespace index
-        index_names = elasticsearch.get_all_index_names(es)
-        for name in index_names:
-            if name != index_name and index_prefix in name:
-                elasticsearch.delete_index(es, name)
-
-        # Add terms_alias to this index
-        elasticsearch.add_index_alias(es, index_name, terms_alias)
-
-        log.info(
-            "Load namespace terms",
-            elapsed=timer.elapsed,
-            namespace=metadata["metadata"]["namespace"],
+    ################################################################################
+    # Elasticsearch index processing
+    ################################################################################
+    # Create index with mapping
+    if force or prior_version != version:
+        elasticsearch.create_terms_index(index_name)
+    else:
+        result["state"] = "Succeeded"
+        result["messages"].append(
+            f'NOTE: This namespace {namespace} at version {version} is already loaded and the "force" option was not used'
         )
 
-    # LOAD EQUIVALENCES INTO ArangoDB
-    with timy.Timer("Load Term Equivalences") as timer:
-        arango_client = arangodb.get_client()
-        if not arango_client:
-            print("Cannot load terms without ArangoDB access")
-            quit()
-        belns_db = arangodb.get_belns_handle(arango_client)
-        arangodb.batch_load_docs(
-            belns_db, terms_iterator_for_arangodb(fo, version), on_duplicate="update"
+        return result
+
+    # Using side effect to get statistics from terms_iterator_for_elasticsearch on purpose
+    terms_iterator = terms_iterator_for_elasticsearch(f, index_name, metadata)
+    elasticsearch.bulk_load_docs(terms_iterator)
+
+    # Remove old namespace index
+    index_names = elasticsearch.get_all_index_names()
+    for name in index_names:
+        if name != index_name and index_prefix in name:
+            elasticsearch.delete_index(name)
+
+    if not force and prior_entity_count > metadata["statistics"]["entities_count"]:
+        logger.error(
+            f'Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
         )
 
-        log.info(
-            "Loaded namespace equivalences",
-            elapsed=timer.elapsed,
-            namespace=metadata["metadata"]["namespace"],
+        result["state"] = "Failed"
+        result["messages"].append(
+            f'ERROR: Problem loading namespace: {namespace}, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
+        )
+        return result
+
+    elif force and prior_entity_count > metadata["statistics"]["entities_count"]:
+        result["state"] = "Warning"
+        result["messages"].append(
+            f'WARNING: New namespace: {namespace} is smaller, previous entity count: {prior_entity_count}, current load entity count: {metadata["statistics"]["entities_count"]}'
         )
 
-        # Clean up old entries
-        remove_old_equivalence_edges = f"""
-            FOR edge in equivalence_edges
-                FILTER edge.source == "{metadata["metadata"]["namespace"]}"
-                FILTER edge.version != "{version}"
-                REMOVE edge IN equivalence_edges
-        """
-        remove_old_equivalence_nodes = f"""
-            FOR node in equivalence_nodes
-                FILTER node.source == "{metadata["metadata"]["namespace"]}"
-                FILTER node.version != "{version}"
-                REMOVE node IN equivalence_nodes
-        """
-        arangodb.aql_query(belns_db, remove_old_equivalence_edges)
-        arangodb.aql_query(belns_db, remove_old_equivalence_nodes)
+    # Add terms alias to this index
+    elasticsearch.add_index_alias(index_name, settings.TERMS_INDEX)
+
+    ################################################################################
+    # Arangodb collection loading
+    ################################################################################
+    if force:
+        remove_old_db_entries(namespace, version=version, force=True)
+
+    # LOAD Terms and equivalences INTO ArangoDB
+    # Uses update on duplicate to allow primary on equivalence_nodes to not be overwritten
+    batch_load_docs(resources_db, terms_iterator_for_arangodb(f, version), on_duplicate="update")
 
     # Add metadata to resource metadata collection
-    metadata["_key"] = f"Namespace_{metadata['metadata']['namespace']}"
-    try:
-        belns_db.collection(arangodb.belns_metadata_name).insert(metadata)
-    except ArangoError as ae:
-        belns_db.collection(arangodb.belns_metadata_name).replace(metadata)
+    metadata["_key"] = metadata_key
+
+    if resource_download_url is not None:
+        metadata["resource_download_url"] = resource_download_url
+
+    resources_metadata_coll.insert(metadata, overwrite=True)
+    clear_resource_metadata_cache()
+
+    if not force:
+        remove_old_db_entries(namespace, version=version)
+
+    logger.info(
+        f'Loaded Namespace: {namespace} with {metadata["statistics"]["entities_count"]} terms into elasticsearch: {settings.TERMS_INDEX}.{index_name} and arangodb collection: {terms_coll_name}',
+        namespace=metadata["namespace"],
+    )
+
+    result["messages"].append(
+        f'Loaded Namespace: {namespace} with {metadata["statistics"]["entities_count"]} terms into elasticsearch: {settings.TERMS_INDEX}.{index_name} and arangodb collection: {terms_coll_name}'
+    )
+    return result
 
 
-def terms_iterator_for_arangodb(fo, version):
+def terms_iterator_for_arangodb(f: IO, version: str):
+    """Generator for loading namespace terms into arangodb"""
 
-    species_list = config["bel_resources"].get("species_list", [])
+    species_list = settings.BEL_FILTER_SPECIES
 
-    fo.seek(0)
-    with gzip.open(fo, "rt") as f:
-        for line in f:
-            term = json.loads(line)
-            # skip if not term record (e.g. is a metadata record)
-            if "term" not in term:
-                continue
-            term = term["term"]
+    f.seek(0)
 
-            species_id = term.get("species_id", None)
-            # Skip if species not listed in species_list
-            if species_list and species_id and species_id not in species_list:
-                continue
+    for line in f:
+        term = json.loads(line)
+        # skip if not term record (e.g. is a metadata record)
+        if "term" not in term:
+            continue
+        term = term["term"]
+        term_key = term["key"]
+        namespace = term["namespace"]
 
-            source = term["namespace"]
-            term_id = term["id"]
-            term_key = arangodb.arango_id_to_key(term_id)
+        # Skip if species not listed in config species_list
+        species_key = term.get("species_key", None)
+        if species_list and species_key and species_key not in species_list:
+            continue
 
-            (ns, val) = term_id.split(":", maxsplit=1)
+        # Can't use original key formatted for Arangodb as some keys are longer than allowed (_key < 255 chars)
+        term_db_key = arango_id_to_key(term_key)
 
-            # Add primary ID node
-            yield (
-                arangodb.equiv_nodes_name,
-                {
-                    "_key": term_key,
-                    "name": term_id,
-                    "primary": True,
-                    "namespace": ns,
-                    "source": source,
+        term["_key"] = term_db_key
+        term["version"] = version
+
+        # Add term record to terms collection
+        yield (terms_coll_name, term)
+
+        # Add primary ID node
+        yield (
+            equiv_nodes_name,
+            {
+                "_key": term_db_key,
+                "key": term["key"],  # BEL Key - ns:id
+                "primary": True,
+                "namespace": namespace,
+                "source": namespace,
+                "version": version,
+            },
+        )
+
+        # Create Alt ID nodes/equivalences (to support other database equivalences using non-preferred Namespace IDs)
+        if "alt_keys" in term:
+            for alt_key in term["alt_keys"]:
+                # logger.info(f'Added {alt_id} equivalence')
+                alt_db_key = arango_id_to_key(alt_key)
+
+                yield (
+                    equiv_nodes_name,
+                    {
+                        "_key": alt_db_key,
+                        "key": alt_key,
+                        "namespace": alt_key.split(":", 1)[0],
+                        "source": namespace,
+                        "version": version,
+                    },
+                )
+
+                # Ensure only one edge per pair
+                if term_db_key < alt_db_key:
+                    from_ = term_db_key
+                    to_ = alt_db_key
+                else:
+                    from_ = alt_db_key
+                    to_ = term_db_key
+
+                # Add edges for alt_keys
+                arango_edge = {
+                    "_from": f"{equiv_nodes_name}/{from_}",
+                    "_to": f"{equiv_nodes_name}/{to_}",
+                    "_key": arango_id_to_key(f"{from_}>>{to_}"),
+                    "type": "equivalent_to",
+                    "source": namespace,
                     "version": version,
-                },
-            )
+                }
+                yield (equiv_edges_name, arango_edge)
 
-            # Create Alt ID nodes/equivalences (to support other database equivalences using non-preferred Namespace IDs)
-            if "alt_ids" in term:
-                for alt_id in term["alt_ids"]:
-                    # log.info(f'Added {alt_id} equivalence')
-                    alt_id_key = arangodb.arango_id_to_key(alt_id)
-                    yield (
-                        arangodb.equiv_nodes_name,
-                        {
-                            "_key": alt_id_key,
-                            "name": alt_id,
-                            "namespace": ns,
-                            "source": source,
-                            "version": version,
-                        },
-                    )
+        # Cross-Namespace equivalences
+        if "equivalence_keys" in term:
+            for eqv_key in term["equivalence_keys"]:
+                eqv_db_key = arango_id_to_key(eqv_key)
 
-                    arango_edge = {
-                        "_from": f"{arangodb.equiv_nodes_name}/{term_key}",
-                        "_to": f"{arangodb.equiv_nodes_name}/{alt_id_key}",
-                        "_key": bel.utils._create_hash(f"{term_id}>>{alt_id}"),
-                        "type": "equivalent_to",
-                        "source": source,
+                equiv_node = (
+                    equiv_nodes_name,
+                    {
+                        "_key": eqv_db_key,
+                        "key": eqv_key,
+                        "namespace": eqv_key.split(":", 1)[0],
+                        "source": namespace,
                         "version": version,
-                    }
-                    yield (arangodb.equiv_edges_name, arango_edge)
+                    },
+                )
 
-            # Cross-DB equivalences
-            if "equivalences" in term:
-                for eqv in term["equivalences"]:
-                    (ns, val) = eqv.split(":", maxsplit=1)
-                    eqv_key = arangodb.arango_id_to_key(eqv)
+                yield equiv_node
 
-                    yield (
-                        arangodb.equiv_nodes_name,
-                        {
-                            "_key": eqv_key,
-                            "name": eqv,
-                            "namespace": ns,
-                            "source": source,
-                            "version": version,
-                        },
-                    )
+                # Ensure only one edge per pair
+                if term_db_key < eqv_db_key:
+                    from_ = term_db_key
+                    to_ = eqv_db_key
+                else:
+                    from_ = eqv_db_key
+                    to_ = term_db_key
 
-                    arango_edge = {
-                        "_from": f"{arangodb.equiv_nodes_name}/{term_key}",
-                        "_to": f"{arangodb.equiv_nodes_name}/{eqv_key}",
-                        "_key": bel.utils._create_hash(f"{term_id}>>{eqv}"),
+                equiv_edge = (
+                    equiv_edges_name,
+                    {
+                        "_from": f"{equiv_nodes_name}/{from_}",
+                        "_to": f"{equiv_nodes_name}/{to_}",
+                        "_key": arango_id_to_key(f"{from_}>>{to_}"),
                         "type": "equivalent_to",
-                        "source": source,
+                        "source": namespace,
                         "version": version,
-                    }
-                    yield (arangodb.equiv_edges_name, arango_edge)
+                    },
+                )
+
+                yield equiv_edge
 
 
-def terms_iterator_for_elasticsearch(fo: IO, index_name: str):
+def terms_iterator_for_elasticsearch(f: IO, index_name: str, metadata: dict):
     """Add index_name to term documents for bulk load"""
 
-    species_list = config["bel_resources"].get("species_list", [])
+    species_list = settings.BEL_FILTER_SPECIES
 
-    fo.seek(0)  # Seek back to beginning of file
-    with gzip.open(fo, "rt") as f:
-        for line in f:
-            term = json.loads(line)
-            # skip if not term record (e.g. is a metadata record)
-            if "term" not in term:
-                continue
-            term = term["term"]
+    f.seek(0)  # Seek back to beginning of file
 
-            # Filter species if enabled in config
-            species_id = term.get("species_id", None)
-            if species_list and species_id and species_id not in species_list:
-                continue
+    for line in f:
+        term = json.loads(line)
+        # skip if not term record (e.g. is a metadata record)
+        if "term" not in term:
+            continue
+        term = term["term"]
 
-            all_term_ids = set()
-            for term_id in [term["id"]] + term.get("alt_ids", []):
-                all_term_ids.add(term_id)
-                all_term_ids.add(lowercase_term_id(term_id))
+        # Collect statistics
+        metadata["statistics"]["entities_count"] += 1
+        metadata["statistics"]["synonyms_count"] += len(term.get("synonyms", []))
+        for entity_type in term.get("entity_types", []):
+            metadata["statistics"]["entity_types"][entity_type] += 1
+        for annotation_type in term.get("annotation_types", []):
+            metadata["statistics"]["annotation_types"][annotation_type] += 1
+        for equivalence in term.get("equivalence_keys", []):
+            ns, id_ = equivalence.split(":", 1)
+            metadata["statistics"]["equivalenced_namespaces"][ns] += 1
 
-            term["alt_ids"] = copy.copy(list(all_term_ids))
+        # Skip if species not listed in config species_list
+        species_key = term.get("species_key", None)
+        if species_list and species_key and species_key not in species_list:
+            continue
 
-            yield {
-                "_op_type": "index",
-                "_index": index_name,
-                "_type": "term",
-                "_id": term["id"],
-                "_source": copy.deepcopy(term),
-            }
+        all_term_keys = set()
+        for term_key in [term["key"]] + term.get("alt_keys", []):
+            all_term_keys.add(term_key)
+            all_term_keys.add(lowercase_term_id(term_key))
+
+        term["alt_keys"] = list(all_term_keys)
+
+        term.pop("child_keys", "")
+        term.pop("parent_keys", "")
+        term.pop("equivalence_keys", "")
+
+        # Must not have species_key attribute to allow naked NSArg queries with filtered species
+        #    but allow non-species terms to be matched as well
+        if term.get("species_key", "") == "":
+            term.pop("species_key", "")
+            term.pop("species_label", "")
+
+        record = {
+            "_op_type": "index",
+            "_index": index_name,
+            "_type": "term",
+            "_id": term["key"],
+            "_source": copy.deepcopy(term),
+        }
+
+        yield record
 
 
-def lowercase_term_id(term_id: str) -> str:
+def lowercase_term_id(term_key: str) -> str:
     """Lowercase the term value (not the namespace prefix)
 
     Args:
@@ -251,7 +384,65 @@ def lowercase_term_id(term_id: str) -> str:
     Returns:
         str: lowercased, e.g. MESH:atherosclerosis
     """
-    (ns, val) = term_id.split(":", maxsplit=1)
-    term_id = f"{ns}:{val.lower()}"
 
-    return term_id
+    (ns, val) = term_key.split(":", 1)
+    term_key = f"{ns}:{val.lower()}"
+
+    return term_key
+
+
+def clear_resource_metadata_cache():
+    """Clear the namespace metadata cache
+
+    Called when we update the namespace metadata
+    """
+
+    namespace_metadata_cache.clear()
+    bel_resource_metadata_cache.clear()
+
+
+# TODO - refactor get_namespace_metadata and get_bel_resource_metadata into one function
+
+
+@cachetools.cached(namespace_metadata_cache)
+def get_namespace_metadata():
+    """Get namespace metadata"""
+
+    namespaces = {}
+    for namespace in resources_metadata_coll:
+        if namespace.get("resource_type", None) != "namespace":
+            continue
+
+        if namespace["source_url"] == "":
+            namespace["source_url"] = None
+
+        namespace = Namespace(**namespace)
+        namespaces[namespace.namespace] = namespace
+
+    return namespaces
+
+
+@cachetools.cached(bel_resource_metadata_cache)
+def get_bel_resource_metadata():
+    """Get BEL resource metadata"""
+
+    resources = {}
+    for resource in resources_metadata_coll:
+
+        if resource["source_url"] == "":
+            resource["source_url"] = None
+
+        resources[resource["_key"]] = resource
+
+    return resources
+
+
+def delete_namespace(namespace):
+    """Remove namespace resources
+
+    Remove Arangodb terms and equivalences and remove Elasticsearch terms index
+    """
+
+    remove_old_db_entries(namespace, force=True)
+
+    es.indices.delete(index=f"{settings.TERMS_INDEX}_{namespace.lower()}_*", ignore=[400, 404])

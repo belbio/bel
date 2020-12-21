@@ -1,21 +1,25 @@
-# Local Imports
-import bel.db.arangodb
-import bel.lang.ast
-import bel.lang.bel_utils
+# Third Party
+import pytest
+
+# Local
 import bel.lang.belobj
-from bel.Config import config
+from bel.lang.belobj import AssertionStr
 
-bo = bel.lang.belobj.BEL(
-    config["bel"]["lang"]["default_bel_version"], config["bel_api"]["servers"]["api_url"]
-)
+bo = bel.lang.belobj.BEL()
 
 
-def test_bel_semantic_validation():
+@pytest.mark.parametrize("assertion, expected", [("p(HGNC:PBX2)", "p(EG:5089!PBX2)")])
+def test_canonicalization(assertion, expected):
+    """Test canonicalization"""
 
-    obsolete_NSArg = "p(HGNC:FAM46C)"
+    assertion = AssertionStr(entire=assertion)
+    assert expected == bo.parse(assertion=assertion).canonicalize().to_string()
 
-    bo.parse(obsolete_NSArg).semantic_validation()
 
-    print("Validation messages", bo.validation_messages)
+def test_smart_quotes_cleaning():
+    """Remove smart quotes"""
 
-    assert bo.validation_messages[0][1] == "Obsolete term: HGNC:FAM46C  Current term: HGNC:TENT5C"
+    assertion = AssertionStr(subject="bp(MESH:”Something here”)")
+    expected = 'bp(MESH:"Something here")'
+
+    assert bo.parse(assertion=assertion).to_string() == expected

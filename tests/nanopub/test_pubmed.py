@@ -2,7 +2,7 @@
 import json
 import time
 
-# Local Imports
+# Local
 import bel.nanopub.pubmed
 
 
@@ -85,3 +85,28 @@ def test_get_pubmed_structured_abstract():
 
     assert doc["pmid"] == pmid
     assert "SUBJECT AND METHODS" in doc["abstract"]
+
+
+def test_get_pubtator():
+
+    pmid = "10551823"
+
+    annotations = bel.nanopub.pubmed.get_pubtator(pmid)
+
+    print("Doc:\n", json.dumps(annotations, indent=4))
+
+    assert annotations[0]["key"] == "MESH:D002118"
+
+
+def test_get_pubmed_for_beleditor():
+    """Get a normal Pubmed record"""
+
+    pmid = "10551823"
+
+    doc = bel.nanopub.pubmed.get_pubmed_for_beleditor(pmid)
+
+    print("Doc:\n", json.dumps(doc, indent=4))
+
+    assert doc["pmid"] == pmid
+    assert len(doc["annotations"]) > 0
+    assert len(doc["pubtator"]) > 0

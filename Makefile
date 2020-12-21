@@ -1,102 +1,70 @@
-# Run make help to find out what the commands are
+# https://www.thapaliya.com/en/writings/well-documented-makefiles/
 
-.PHONY: deploy_major deploy_minor deploy_patch update_ebnf update_parsers
-.PHONY: tests list help clean_pyc clean_build clean_generated dev_install
-.PHONY: livedocs
+.DEFAULT_GOAL:=help
+SHELL:=/bin/bash
+CWD := $(abspath $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST))))))
 
-# VDIR = directory of versions
-VDIR = bel/lang/versions
-
-YAMLS=$(wildcard $(VDIR)/*.yaml)
-EBNFS = $(patsubst $(VDIR)/%.yaml, $(VDIR)/%.ebnf, $(YAMLS))
-PARSERS = $(patsubst $(VDIR)/bel%.yaml, $(VDIR)/parser%.py, $(YAMLS))
-
-define deploy_commands
-    @echo "Update CHANGELOG"
-
-    git push
-	git push --tags
-endef
+cwd:
+	@echo $(CWD)
 
 
-deploy_major:
-	@echo Deploying major update
-	bumpversion major
-	@${deploy_commands}
-
-deploy_minor:
-	@echo Deploying minor update
-	bumpversion minor
-	@${deploy_commands}
-
-deploy_patch:
-	@echo Deploying patch update
-	bumpversion --allow-dirty patch
-	${deploy_commands}
-
-publish:
-	setup.py upload
-
-belspec_json:
-	belspec_yaml2json
-
-clean_generated:
-	rm bel/lang/versions/*.json
-	rm bel/lang/versions/parser*
-	rm bel/lang/versions/*.ebnf
+.PHONY: help init
 
 
-# Travis CI environment
-ci_tests:
-	BELTEST='Travis' py.test -rs --cov=./bel -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
+help:  ## Display this help
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+# ##@ Dependencies
+
+# init:  ## Initialize
+# 	${INFO} "Creating volumes..."
+
+##@ Testing
 
 # Local virtualenv test runner with BEL.bio test environment
 # add --pdb to get dropped into a debugging env
-tests: clean_pyc
-	BELTEST='Local' py.test -x -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
+# what is -x used for?
 
 
-# Run all tests - failing or not
-testall: clean_pyc
-	BELTEST='Local' py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc -c tests/pytest.ini --color=yes --durations=10 --flakes --pep8 tests
-
-
-clean_pyc:
+##@ Cleaning and Building
+clean_pyc:  ## Remove python bytecode
 	find . -name '*.pyc' -exec rm -r -- {} +
 	find . -name '*.pyo' -exec rm -r -- {} +
 	find . -name '__pycache__' -exec rm -r -- {} +
 
 
-clean_build:
-	rm --force --recursive build/
-	rm --force --recursive dist/
-	rm --force --recursive *.egg-info
+# Run all tests - failing or not
+tests: clean_pyc  ## Run BEL tests
+	BELTEST='Local' poetry run py.test -rs --cov=./bel --cov-report html --cov-config .coveragerc --color=yes --durations=10 tests
 
 
-dev_install:
-	python3.6 -m venv .venv --prompt bel
-	.venv/bin/pip install --upgrade pip
-	.venv/bin/pip install --upgrade setuptools
+# Push updated bel library to S3 bucket
+push_lib:  ## Push bel libraries to S3 bucket
+	@poetry build
+	aws s3 cp ${CWD}/dist/bel-2.0.0.tar.gz s3://resources.bel.bio/packages
 
-	.venv/bin/pip install -e .
-	.venv/bin/pip install -r requirements.txt
-	.venv/bin/pip install -r requirements-docs.txt
 
-livedocs:
-	cd docs; sphinx-autobuild -q -p 0 --open-browser --delay 5 source build/html
+# docker_pushdev:  ##
 
-# TODO
-upload: tests
-	twine upload
+# 	@echo Deploying docker DEV image to dockerhub $(VERSION)
 
-list:
-	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+#     docker build -t belbio/belapi:dev -t belbio/belapi:$(VERSION) -f ./docker/Dockerfile.prod .
+#     docker push belbio/belapi:dev
+#     docker push belbio/belapi:$(VERSION)
 
-help:
-	@echo "List of commands"
-	@echo "   deploy-{major|minor|patch} -- bump version and tag"
-	@echo "   help -- This listing "
-	@echo "   list -- Automated listing of all targets"
-	@echo "   update_ebnf -- Update all EBNF files; requires YAML files inside /versions"
-	@echo "   update_parsers -- Update all parser files; requires YAML files inside /versions"
+#     ssh thor "cd docker && docker-compose pull belapi"
+#     ssh thor "cd docker && docker-compose stop belapi"
+#     ssh thor "cd docker && docker-compose rm -f belapi"
+#     ssh thor "cd docker && docker-compose up -d belapi"
+
+#     @say -v Karen "Finished the BEL A P I docker deployment"
+
+
+# docker_pushprod:
+# 	@echo Deploying docker PROD image to dockerhub $(VERSION)
+
+#     docker build -t belbio/belapi:latest -t belbio/belapi:$(VERSION) -f ./docker/Dockerfile.prod .
+#     docker push belbio/belapi:latest
+#     docker push belbio/belapi:$(VERSION)
+
+#     @say -v Karen "Finished publishing the production BEL A P I docker image"

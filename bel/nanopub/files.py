@@ -10,16 +10,14 @@
 import copy
 import gzip
 import json
-import logging
 import re
 import sys
 from typing import Any, Iterable, List, Mapping, Tuple
 
-# Third Party Imports
+# Third Party
 import click
 import yaml
-
-log = logging.getLogger(__name__)
+from loguru import logger
 
 
 def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
@@ -45,7 +43,7 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
     elif re.search("ya?ml", fn):
         yaml_flag = True
     else:
-        log.error("Do not recognize nanopub file format - neither json nor jsonl format.")
+        logger.error("Do not recognize nanopub file format - neither json nor jsonl format.")
         return {}
 
     try:
@@ -55,7 +53,7 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
             try:
                 f = click.open_file(fn, mode="rt")
             except Exception as e:
-                log.info(f"Can not open file {fn}  Error: {e}")
+                logger.info(f"Can not open file {fn}  Error: {e}")
                 quit()
 
         if jsonl_flag:
@@ -71,7 +69,7 @@ def read_nanopubs(fn: str) -> Iterable[Mapping[str, Any]]:
                 yield nanopub
 
     except Exception as e:
-        log.exception(f"Could not open file: {fn}")
+        logger.exception(f"Could not open file: {fn}")
 
 
 def create_nanopubs_fh(output_fn: str):
@@ -111,93 +109,6 @@ def create_nanopubs_fh(output_fn: str):
         out_fh = sys.stdout
 
     return (out_fh, yaml_flag, jsonl_flag, json_flag)
-
-
-def read_edges(fn):
-
-    if not fn:
-        return []
-    jsonl_flag, json_flag, yaml_flag = False, False, False
-    if "jsonl" in fn:
-        jsonl_flag = True
-    elif "json" in fn:
-        json_flag = True
-    elif re.search("ya?ml", fn):
-        yaml_flag = True
-    else:
-        log.error("Do not recognize edge file format - neither json nor jsonl format.")
-        return []
-
-    try:
-        if re.search("gz$", fn):
-            f = gzip.open(fn, "rt")
-        else:
-            f = open(fn, "rt")
-
-        if jsonl_flag:
-            for line in f:
-                edges = json.loads(line)
-                for edge in edges:
-                    yield edge
-        elif json_flag:
-            edges = json.load(f)
-            for edge in edges:
-                yield edge
-        elif yaml_flag:
-            edges = yaml.load_all(f, Loader=yaml.SafeLoader)
-            for edge in edges:
-                yield edge
-
-    except Exception as e:
-        log.exception(f"Could not open file: {fn}")
-
-
-def write_edges(
-    edges: Mapping[str, Any],
-    filename: str,
-    jsonlines: bool = False,
-    gzipflag: bool = False,
-    yaml: bool = False,
-):
-    """Write edges to file
-
-    Args:
-        edges (Mapping[str, Any]): in edges JSON Schema format
-        filename (str): filename to write
-        jsonlines (bool): output in JSONLines format?
-        gzipflag (bool): create gzipped file?
-        yaml (bool): create yaml file?
-    """
-    pass
-
-
-def edges_to_jgf(fn, edges):
-
-    jgf_nodes = []
-    jgf_edges = []
-    for edge in edges:
-        if "edge" in edge:
-            jgf_nodes.append({"id": edge["edge"]["subject"]["name"]})
-            jgf_nodes.append({"id": edge["edge"]["object"]["name"]})
-            jgf_edges.append(
-                {
-                    "source": edge["edge"]["subject"]["name"],
-                    "target": edge["edge"]["object"]["name"],
-                    "relation": edge["edge"]["relation"]["name"],
-                }
-            )
-
-    with open(fn, "wt") as f:
-        graph = {
-            "graph": {
-                "label": "BEL Pipeline Edges",
-                "type": "BEL Edges",
-                "nodes": copy.deepcopy(jgf_nodes),
-                "edges": copy.deepcopy(jgf_edges),
-            }
-        }
-
-        f.write("{}\n".format(json.dumps(graph, indent=4)))
 
 
 def main():

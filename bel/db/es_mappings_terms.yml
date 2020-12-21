@@ -2,9 +2,9 @@ settings:
   analysis:
     filter:
       autocomplete_filter:
-          type: edge_ngram
-          min_gram: 1
-          max_gram: 20
+        type: edge_ngram
+        min_gram: 1
+        max_gram: 20
     analyzer:
       autocomplete:
         type: custom
@@ -18,13 +18,13 @@ settings:
         filter:
           - lowercase
 
-    # Added simple pattern split to allow SP:H4_HUMAN in alt_ids to be matched
+    # Added simple pattern split to allow SP:H4_HUMAN in alt_keys to be matched
     # This will also allow IL-6 to be completed against.  The standard tokenizer/analyzer
     # broke it into IL and 6
     tokenizer:
       autocomplete_tokenizer:
         type: simple_pattern_split
-        pattern: " |:"
+        pattern: ' |:'
     normalizer:
       lowercase:
         type: custom
@@ -40,21 +40,12 @@ mappings:
         store: true
         analyzer: autocomplete
         search_analyzer: autocomplete_search
-      src_id:
+      key:
         type: keyword
         copy_to: autocomplete
       namespace:
         type: keyword
-      namespace_value:
-        type: keyword
-        normalizer: lowercase
       id:
-        type: keyword
-        copy_to: autocomplete
-      alt_ids:
-        type: keyword
-        copy_to: autocomplete
-      alt_src_ids:
         type: keyword
         copy_to: autocomplete
       label:
@@ -65,30 +56,31 @@ mappings:
         copy_to: autocomplete
       description:
         type: text
+      synonyms:
+        type: text
+        copy_to: autocomplete
+
+      alt_keys:
+        type: keyword
+        copy_to: autocomplete
+      obsolete_keys:
+        type: keyword
+        copy_to: autocomplete
+
       entity_types:
         type: keyword
       annotation_types:
         type: keyword
-      synonyms:
-        type: text
-        copy_to: autocomplete
-      species_id:
+
+      species_key:
         type: keyword
       species_label:
         type: keyword
-      obsolete_ids:
-        type: keyword
-        copy_to: autocomplete
+
       taxonomy_rank:
         type: keyword
       taxonomy_tree:
         type: keyword
-      equivalences:
-        type: text
-        index: false
-      children:
-        type: text
-        index: false
       taxonomy_names:
         type: object
         enabled: false

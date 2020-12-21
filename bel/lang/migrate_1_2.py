@@ -8,21 +8,19 @@
 # Standard Library
 import json
 
-# Third Party Imports
-import structlog
+# Third Party
+from loguru import logger
 
-# Local Imports
-import bel
-import bel.lang.ast
-import bel.lang.partialparse
-from bel import BEL
-from bel.Config import config
+# Local
+import bel.belspec.crud
+import bel.core.settings as settings
+from bel.belspec.crud import get_enhanced_belspec
 from bel.lang.ast import BELAst, Function, NSArg, StrArg
+from bel.lang.belobj import BEL
 
-log = structlog.getLogger(__name__)
-
-bo = BEL("2.0.0", config["bel_api"]["servers"]["api_url"])
-spec = bo.spec
+version = bel.belspec.crud.get_latest_version()
+bo = BEL("", version=version)
+belspec = get_enhanced_belspec(bo.version)
 
 
 def migrate(belstr: str) -> str:
@@ -35,7 +33,7 @@ def migrate(belstr: str) -> str:
         bel: BEL 2
     """
 
-    bo.ast = bel.lang.partialparse.get_ast_obj(belstr, "2.0.0")
+    bo.parse(belstr)
 
     return migrate_ast(bo.ast).to_string()
 
@@ -43,7 +41,7 @@ def migrate(belstr: str) -> str:
 def migrate_into_triple(belstr: str) -> str:
     """Migrate BEL1 assertion into BEL 2.0.0 SRO triple"""
 
-    bo.ast = bel.lang.partialparse.get_ast_obj(belstr, "2.0.0")
+    bo.parse(belstr)
 
     return migrate_ast(bo.ast).to_triple()
 
@@ -51,15 +49,15 @@ def migrate_into_triple(belstr: str) -> str:
 def migrate_ast(ast: BELAst) -> BELAst:
 
     # Process Subject
-    bo.ast.bel_subject = convert(bo.ast.bel_subject)
+    bo.ast.subject = convert(bo.ast.subject)
 
-    if bo.ast.bel_object:
-        if bo.ast.bel_object.type == "BELAst":
-            bo.ast.bel_object.bel_subject = convert(bo.ast.bel_object.bel_subject)
-            if bo.ast.bel_object.bel_object:
-                bo.ast.bel_object.bel_object = convert(bo.ast.bel_object.bel_object)
+    if bo.ast.object:
+        if bo.ast.object.type == "BELAst":
+            bo.ast.object.subject = convert(bo.ast.object.subject)
+            if bo.ast.object.object:
+                bo.ast.object.object = convert(bo.ast.object.object)
         else:
-            bo.ast.bel_object = convert(bo.ast.bel_object)
+            bo.ast.object = convert(bo.ast.object)
 
     return bo.ast
 
@@ -69,7 +67,10 @@ def convert(ast):
 
     if ast and ast.type == "Function":
         # Activity function conversion
-        if ast.name != "molecularActivity" and ast.name in spec["namespaces"]["Activity"]["list"]:
+        if (
+            ast.name != "molecularActivity"
+            and ast.name in belspec["namespaces"]["Activity"]["list"]
+        ):
             print("name", ast.name, "type", ast.type)
             ast = convert_activity(ast)
             return ast  # Otherwise - this will trigger on the BEL2 molecularActivity
@@ -109,12 +110,10 @@ def convert_tloc(ast):
 
     from_loc_arg = ast.args[1]
     to_loc_arg = ast.args[2]
-    from_loc = Function("fromLoc", spec, parent_function=ast)
-    from_loc.add_argument(
-        NSArg(from_loc_arg.namespace, from_loc_arg.value, parent_function=from_loc)
-    )
-    to_loc = Function("toLoc", spec, parent_function=ast)
-    to_loc.add_argument(NSArg(to_loc_arg.namespace, to_loc_arg.value, parent_function=to_loc))
+    from_loc = Function("fromLoc", version=version, parent=ast)
+    from_loc.add_argument(NSArg(from_loc_arg.namespace, from_loc_arg.value, parent=from_loc))
+    to_loc = Function("toLoc", version=version, parent=ast)
+    to_loc.add_argument(NSArg(to_loc_arg.namespace, to_loc_arg.value, parent=to_loc))
 
     ast.args[1] = from_loc
     ast.args[2] = to_loc
@@ -126,14 +125,14 @@ def convert_activity(ast):
     """Convert BEL1 activities to BEL2 act()"""
 
     if len(ast.args) > 1:
-        log.error(f"Activity should not have more than 1 argument {ast.to_string()}")
+        logger.error(f"Activity should not have more than 1 argument {ast.to_string()}")
 
     p_arg = ast.args[0]  # protein argument
     print("p_arg", p_arg)
-    ma_arg = Function("ma", bo.spec)
+    ma_arg = Function("ma", version=version)
     ma_arg.add_argument(StrArg(ast.name, ma_arg))
     p_arg.change_parent_fn(ma_arg)
-    ast = Function("activity", bo.spec)
+    ast = Function("activity", version=version)
     p_arg.change_parent_fn(ast)
     ast.add_argument(p_arg)
     ast.add_argument(ma_arg)
@@ -144,8 +143,8 @@ def convert_activity(ast):
 def convert_pmod(pmod):
     """Update BEL1 pmod() protein modification term"""
 
-    if pmod.args[0].value in spec["bel1_migration"]["protein_modifications"]:
-        pmod.args[0].value = spec["bel1_migration"]["protein_modifications"][pmod.args[0].value]
+    if pmod.args[0].value in belspec["bel1_migration"]["protein_modifications"]:
+        pmod.args[0].value = belspec["bel1_migration"]["protein_modifications"][pmod.args[0].value]
 
     return pmod
 
@@ -178,7 +177,7 @@ def convert_fus(ast):
     else:
         fus2_range = f'"{prefix}{fus_args[2].value}_?"'
 
-    fus = Function("fus", spec, parent_function=ast)
+    fus = Function("fus", version=version, parent=ast)
     fus.args = [
         NSArg(fus1_ns, fus1_val, fus),
         StrArg(fus1_range, fus),
@@ -213,9 +212,9 @@ def convert_sub(sub):
     prefix_list = {"p": "p.", "r": "r.", "g": "c."}
     prefix = prefix_list[parent_fn_name]
 
-    new_var_arg = f'"{prefix}{spec["namespaces"]["AminoAcid"]["to_short"][ref_aa.value]}{pos.value}{spec["namespaces"]["AminoAcid"]["to_short"][new_aa.value]}"'
+    new_var_arg = f'"{prefix}{belspec["namespaces"]["AminoAcid"]["to_short"][ref_aa.value]}{pos.value}{belspec["namespaces"]["AminoAcid"]["to_short"][new_aa.value]}"'
 
-    new_var = bel.lang.ast.Function("var", bo.spec)
+    new_var = Function("var", version=version)
 
     new_var.add_argument(StrArg(new_var_arg, new_var))
 
@@ -231,7 +230,7 @@ def convert_trunc(trunc):
 
     new_var_arg = f'"truncated at {trunc.args[0].value}"'
 
-    new_var = bel.lang.ast.Function("var", bo.spec)
+    new_var = Function("var", version=version)
 
     new_var.add_argument(StrArg(new_var_arg, new_var))
 
@@ -240,6 +239,7 @@ def convert_trunc(trunc):
 
 def main():
 
+    # Local
     import bel.lang.migrate_1_2
 
     bel1 = "kin(p(HGNC:BRAF))"

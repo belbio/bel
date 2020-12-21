@@ -1,286 +1,323 @@
 # Standard Library
 import re
+from dataclasses import dataclass
+from typing import List, Mapping, Optional
 
-# Third Party Imports
+# Third Party
 import arango
-from structlog import get_logger
+import arango.client
+import arango.database
+import arango.exceptions
+import boltons.iterutils
+from loguru import logger
 
-# Local Imports
-import bel.utils as utils
-from bel.Config import config
+# Local
+import bel.core.settings as settings
+from bel.core.utils import _create_hash
 
-log = get_logger()
-
-edgestore_db_name = "edgestore"
-belns_db_name = "belns"
-belapi_db_name = "belapi"
-
-edgestore_nodes_name = "nodes"  # edgestore node collection name
-edgestore_edges_name = "edges"  # edgestore edge collection name
-edgestore_pipeline_name = "pipeline"  # edgestore pipeline state collection name
+resources_db_name = settings.RESOURCES_DB  # BEL Resources (Namespaces, etc)
+bel_db_name = settings.BEL_DB  # Misc BEL
 
 
+# BEL Resources
 equiv_nodes_name = "equivalence_nodes"  # equivalence node collection name
 equiv_edges_name = "equivalence_edges"  # equivalence edge collection name
 ortholog_nodes_name = "ortholog_nodes"  # ortholog node collection name
 ortholog_edges_name = "ortholog_edges"  # ortholog edge collection name
-belns_metadata_name = "resources_metadata"  # BEL Resources metadata
+resources_metadata_name = "resources_metadata"  # BEL Resources metadata
+terms_coll_name = "terms"  # BEL Namespaces/Terms collection name
 
-belapi_settings_name = "settings"  # BEL API settings and configuration
-belapi_statemgmt_name = "state_mgmt"  # BEL API state mgmt
-
+# BEL database collections
+bel_config_name = "bel_config"  # BEL settings and configuration
+bel_namespaces_name = "bel_namespaces"  # BEL namespaces
 bel_validations_name = "validations"  # BEL Assertion/Annotation validations
 
 
-# TODO - update get db and get collections using same pattern as in userstore/common/db.py
-#        I made the mistake below of edgestore_db = sys_db.create_database()
-#        instead of
-#           sys_db.create_database('edgestore')
-#           edgestore_db = client.db('edgestore')
-#           if edgestore_db.has_collection('xxx'):
-#               xxx_coll = edgestore_db.collection('xxx')
-#           else:
-#               xxx_coll = edgestore_db.create_collection('xxx')
-
-
-def get_user_creds(username, password):
+def get_user_credentials(username, password):
     """Get username/password
 
     Use provided username and password OR in config OR blank in that order
     """
-    username = utils.first_true(
-        [username, config["bel_api"]["servers"]["arangodb_username"]], default=""
-    )
-    password = utils.first_true(
-        [password, config["secrets"]["bel_api"]["servers"].get("arangodb_password")], default=""
+    username = boltons.iterutils.first([username, settings.ARANGO_USER], default="")
+    password = boltons.iterutils.first(
+        [password, settings.ARANGO_PASSWORD],
+        default="",
     )
 
     return username, password
 
 
-def get_client(host=None, port=None, username=None, password=None, enable_logging=True):
-    """Get arango client and edgestore db handle"""
+def get_client(url=None, port=None, username=None, password=None):
+    """Get arango client db handle"""
 
-    host = utils.first_true([host, config["bel_api"]["servers"]["arangodb_host"], "localhost"])
-    port = utils.first_true([port, config["bel_api"]["servers"]["arangodb_port"], 8529])
-    username = utils.first_true([username, config["bel_api"]["servers"]["arangodb_username"], ""])
-    password = utils.first_true(
-        [
-            password,
-            config.get("secrets", config["secrets"]["bel_api"]["servers"].get("arangodb_password")),
-            "",
-        ]
-    )
+    url = boltons.iterutils.first(
+        [url, settings.ARANGO_URL, "http://localhost:8529"]  # DevSkim: ignore DS137138
+    )  # DevSkim: ignore DS137138
+    (username, password) = get_user_credentials(username, password)
 
-    arango_url = f"http://{host}:{port}"
     try:
-        client = arango.ArangoClient(hosts=arango_url)
+        client = arango.ArangoClient(hosts=url)
         client.db(verify=True)
         return client
 
-    except Exception as e:
-        log.error(f"Cannot access arangodb at {arango_url}")
+    except Exception:
+        logger.error(f"Cannot access arangodb at {url}")
         return None
 
 
-def aql_query(db, query):
-    """Run AQL query"""
+# Index mgmt #################################################################################
+@dataclass
+class IndexDefinition:
+    """Class for defining collection indexes"""
 
-    result = db.aql.execute(query)
-    return result
+    fields: List[str]  # ordered list of fields to be indexed
+    id: Optional[str] = None  # ID is provided by arangodb
+    type: str = "persistent"  # primary or edge indexes are ignored
+    unique: bool = False
+    sparse: Optional[bool] = None
+    deduplicate: Optional[bool] = None
+    name: str = None
+    in_background: bool = True
 
 
-def get_edgestore_handle(
-    client: arango.client.ArangoClient,
-    username=None,
-    password=None,
-    edgestore_db_name: str = edgestore_db_name,
-    edgestore_edges_name: str = edgestore_edges_name,
-    edgestore_nodes_name: str = edgestore_nodes_name,
-    edgestore_pipeline_name: str = edgestore_pipeline_name,
-) -> arango.database.StandardDatabase:
-    """Get Edgestore arangodb database handle
+def add_index(collection, index: IndexDefinition):
+    """Add index"""
 
-    Args:
-        client (arango.client.ArangoClient): Description
-        username (None, optional): Description
-        password (None, optional): Description
-        edgestore_db_name (str, optional): Description
-        edgestore_edges_name (str, optional): Description
-        edgestore_nodes_name (str, optional): Description
+    # add_persistent_index(fields, unique=None, sparse=None, deduplicate=None, name=None, in_background=None)
+    if index.type == "persistent":
+        collection.add_persistent_index(
+            index.fields,
+            unique=index.unique,
+            sparse=index.sparse,
+            name=index.name,
+            in_background=index.in_background,
+        )
+    else:
+        logger.error(f"Cannot add index type: {index.type}")
 
-    Returns:
-        arango.database.StandardDatabase: Description
+
+def remove_old_indexes(
+    collection,
+    current_indexes: Mapping[str, IndexDefinition],
+    desired_indexes: Mapping[str, IndexDefinition],
+):
+    """Remove out of date indexes"""
+
+    for key in current_indexes:
+        if key not in desired_indexes:
+            print(f"Removing index {key} id: {current_indexes[key].id} from {collection}")
+            collection.delete_index(current_indexes[key].id)
+
+
+def update_index_state(collection, desired_indexes: List[IndexDefinition]):
+    """Update index state
+
+    desired_indexes keys = f"{index_type}_{'_'.join(sorted(fields))}", e.g. persistent_firstname_lastname
+
+    Remove indices that are not specified and add indices that are missing
     """
 
-    (username, password) = get_user_creds(username, password)
+    new = {}
+    for index in desired_indexes:
+        index_key = f"{index.type}_{'_'.join(sorted(index.fields))}"
+        new[index_key] = index
 
-    # client is created when module is first imported
-    sys_db = client.db("_system", username=username, password=password)
+    desired_indexes = new
 
-    # Create a new database for Edgestore
-    if sys_db.has_database(edgestore_db_name):
-        if username and password:
-            edgestore_db = client.db(edgestore_db_name, username=username, password=password)
-        else:
-            edgestore_db = client.db(edgestore_db_name)
-    else:
-        if username and password:
-            sys_db.create_database(
-                name=edgestore_db_name,
-                users=[{"username": username, "password": password, "active": True}],
-            )
-        else:
-            sys_db.create_database(name=edgestore_db_name)
-        edgestore_db = client.db(edgestore_db_name)
+    current_indexes_list = collection.indexes()
+    current_indexes: dict = {}
+    for idx in current_indexes_list:
+        if idx["type"] in ["primary", "edge"]:
+            continue  # skip primary indices
 
-    # Add edges collection
-    if edgestore_db.has_collection(edgestore_edges_name):
-        edges_coll = edgestore_db.collection(edgestore_edges_name)
-    else:
-        edges_coll = edgestore_db.create_collection(
-            edgestore_edges_name, edge=True, index_bucket_count=64
-        )
-        edges_coll.add_hash_index(fields=["relation"], unique=False)
-        edges_coll.add_hash_index(fields=["edge_types"], unique=False)
-        edges_coll.add_hash_index(fields=["nanopub_id"], unique=False)
-        edges_coll.add_hash_index(fields=["metadata.project"], unique=False)
-        edges_coll.add_hash_index(fields=["annotations[*].id"], unique=False)
+        idx.pop("selectivity", None)
+        index = IndexDefinition(**idx)
+        index_key = f"{index.type}_{'_'.join(sorted(index.fields))}"
+        current_indexes[index_key] = index
 
-    # Add nodes collection
-    if edgestore_db.has_collection(edgestore_nodes_name):
-        nodes_coll = edgestore_db.collection(edgestore_nodes_name)
-    else:
-        nodes_coll = edgestore_db.create_collection(edgestore_nodes_name, index_bucket_count=64)
-        nodes_coll.add_hash_index(fields=["name"], unique=False)
-        nodes_coll.add_hash_index(fields=["components"], unique=False)
+    remove_old_indexes(collection, current_indexes, desired_indexes)
 
-    # Add pipeline_info collection
-    if edgestore_db.has_collection(edgestore_pipeline_name):
-        pipeline_coll = edgestore_db.collection(edgestore_pipeline_name)
-    else:
-        pipeline_coll = edgestore_db.create_collection(
-            edgestore_pipeline_name, index_bucket_count=64
-        )
-        pipeline_coll.add_persistent_index(fields=["processed_ts"], sparse=False)
-
-    return edgestore_db
+    # Add missing desired indexes
+    for key in desired_indexes:
+        if key not in current_indexes:
+            add_index(collection, desired_indexes[key])
 
 
-def get_belns_handle(client, username=None, password=None):
-    """Get BEL namespace arango db handle"""
+# Index mgmt ##################################################################################
 
-    (username, password) = get_user_creds(username, password)
+
+def get_resources_handles(client, username=None, password=None):
+    """Get BEL Resources arangodb handle"""
+
+    (username, password) = get_user_credentials(username, password)
 
     sys_db = client.db("_system", username=username, password=password)
 
-    # Create a new database named "belns"
-    if sys_db.has_database(belns_db_name):
+    # Create a new database named "bel_resources"
+    if sys_db.has_database(resources_db_name):
         if username and password:
-            belns_db = client.db(belns_db_name, username=username, password=password)
+            resources_db = client.db(resources_db_name, username=username, password=password)
         else:
-            belns_db = client.db(belns_db_name)
+            resources_db = client.db(resources_db_name)
     else:
         if username and password:
-            belns_db = sys_db.create_database(
-                name=belns_db_name,
+            resources_db = sys_db.create_database(
+                name=resources_db_name,
                 users=[{"username": username, "password": password, "active": True}],
             )
         else:
-            belns_db = sys_db.create_database(name=belns_db_name)
+            resources_db = sys_db.create_database(name=resources_db_name)
 
-    if belns_db.has_collection(belns_metadata_name):
-        belns_metadata = belns_db.collection(belns_metadata_name)
+    if resources_db.has_collection(resources_metadata_name):
+        resources_metadata_coll = resources_db.collection(resources_metadata_name)
     else:
-        belns_metadata = belns_db.create_collection(belns_metadata_name)
+        resources_metadata_coll = resources_db.create_collection(resources_metadata_name)
 
-    if belns_db.has_collection(equiv_nodes_name):
-        belns_db.collection(equiv_nodes_name)
+    if resources_db.has_collection(equiv_nodes_name):
+        equiv_nodes_coll = resources_db.collection(equiv_nodes_name)
     else:
-        equiv_nodes = belns_db.create_collection(equiv_nodes_name)
-        equiv_nodes.add_hash_index(fields=["name"], unique=True)
+        equiv_nodes_coll = resources_db.create_collection(equiv_nodes_name)
 
-    if belns_db.has_collection(equiv_edges_name):
-        equiv_edges = belns_db.collection(equiv_edges_name)
+    if resources_db.has_collection(equiv_edges_name):
+        equiv_edges_coll = resources_db.collection(equiv_edges_name)
     else:
-        equiv_edges = belns_db.create_collection(equiv_edges_name, edge=True)
+        equiv_edges_coll = resources_db.create_collection(equiv_edges_name, edge=True)
 
-    if belns_db.has_collection(ortholog_nodes_name):
-        belns_db.collection(ortholog_nodes_name)
+    if resources_db.has_collection(ortholog_nodes_name):
+        ortholog_nodes_coll = resources_db.collection(ortholog_nodes_name)
     else:
-        ortholog_nodes = belns_db.create_collection(ortholog_nodes_name)
-        ortholog_nodes.add_hash_index(fields=["name"], unique=True)
+        ortholog_nodes_coll = resources_db.create_collection(ortholog_nodes_name)
 
-    if belns_db.has_collection(ortholog_edges_name):
-        ortholog_edges = belns_db.collection(ortholog_edges_name)
+    if resources_db.has_collection(ortholog_edges_name):
+        ortholog_edges_coll = resources_db.collection(ortholog_edges_name)
     else:
-        ortholog_edges = belns_db.create_collection(ortholog_edges_name, edge=True)
+        ortholog_edges_coll = resources_db.create_collection(ortholog_edges_name, edge=True)
 
-    return belns_db
+    if resources_db.has_collection(terms_coll_name):
+        terms_coll = resources_db.collection(terms_coll_name)
+    else:
+        terms_coll = resources_db.create_collection(terms_coll_name)
+
+    # Update indexes
+    update_index_state(
+        terms_coll,
+        [
+            IndexDefinition(type="persistent", fields=["key"], unique=True),
+            IndexDefinition(type="persistent", fields=["namespace"], unique=False),
+            IndexDefinition(type="persistent", fields=["alt_keys[*]"], unique=False, sparse=True),
+            IndexDefinition(
+                type="persistent", fields=["equivalence_keys[*]"], unique=False, sparse=True
+            ),
+            IndexDefinition(
+                type="persistent", fields=["obsolete_keys[*]"], unique=False, sparse=True
+            ),
+            IndexDefinition(type="persistent", fields=["synonyms[*]"], unique=False, sparse=True),
+        ],
+    )
+    update_index_state(
+        equiv_nodes_coll,
+        [
+            IndexDefinition(type="persistent", fields=["key"], unique=True),
+            IndexDefinition(type="persistent", fields=["source"], unique=False),
+        ],
+    )
+    update_index_state(
+        equiv_edges_coll, [IndexDefinition(type="persistent", fields=["source"], unique=False)]
+    )
+
+    update_index_state(
+        ortholog_nodes_coll, [IndexDefinition(type="persistent", fields=["key"], unique=True)]
+    )
+
+    return {
+        "resources_db": resources_db,
+        "resources_metadata_coll": resources_metadata_coll,
+        "equiv_nodes_coll": equiv_nodes_coll,
+        "equiv_edges_coll": equiv_edges_coll,
+        "ortholog_nodes_coll": ortholog_nodes_coll,
+        "ortholog_edges_coll": ortholog_edges_coll,
+        "terms_coll": terms_coll,
+    }
 
 
-def get_belapi_handle(client, username=None, password=None):
+def get_bel_handles(client, username=None, password=None):
     """Get BEL API arango db handle"""
 
-    (username, password) = get_user_creds(username, password)
+    (username, password) = get_user_credentials(username, password)
 
     sys_db = client.db("_system", username=username, password=password)
 
-    # Create a new database named "belapi"
-    if sys_db.has_database(belapi_db_name):
+    # Create a new database named "bel"
+    if sys_db.has_database(bel_db_name):
         if username and password:
-            belapi_db = client.db(belapi_db_name, username=username, password=password)
+            bel_db = client.db(bel_db_name, username=username, password=password)
         else:
-            belapi_db = client.db(belapi_db_name)
+            bel_db = client.db(bel_db_name)
     else:
         if username and password:
             sys_db.create_database(
-                name=belapi_db_name,
+                name=bel_db_name,
                 users=[{"username": username, "password": password, "active": True}],
             )
         else:
-            sys_db.create_database(name=belapi_db_name)
+            sys_db.create_database(name=bel_db_name)
 
-        belapi_db = client.db(belapi_db_name)
+        bel_db = client.db(bel_db_name)
 
-    if belapi_db.has_collection(belapi_settings_name):
-        belapi_settings_coll = belapi_db.collection(belapi_settings_name)
+    if bel_db.has_collection(bel_config_name):
+        bel_config_coll = bel_db.collection(bel_config_name)
     else:
-        belapi_settings_coll = belapi_db.create_collection(
-            belapi_settings_name, index_bucket_count=64
-        )
+        bel_config_coll = bel_db.create_collection(bel_config_name)
 
-    if belapi_db.has_collection(belapi_statemgmt_name):
-        belapi_statemgmt_coll = belapi_db.collection(belapi_statemgmt_name)
+    if bel_db.has_collection(bel_validations_name):
+        bel_validations_coll = bel_db.collection(bel_validations_name)
     else:
-        belapi_statemgmt_coll = belapi_db.create_collection(
-            belapi_statemgmt_name, index_bucket_count=64
-        )
+        bel_validations_coll = bel_db.create_collection(bel_validations_name)
 
-    if belapi_db.has_collection(bel_validations_name):
-        bel_validations = belapi_db.collection(bel_validations_name)
-    else:
-        bel_validations = belapi_db.create_collection(bel_validations_name, index_bucket_count=64)
+    return {
+        "bel_db": bel_db,
+        "bel_config_coll": bel_config_coll,
+        "bel_validations_coll": bel_validations_coll,
+    }
 
-    return belapi_db
+
+# #############################################################################
+# Initialize arango_client !!!!!!!!!!!!!!!!!!!
+#     and provide db and collection handles
+# #############################################################################
+client = get_client()
+
+# Resources db
+resources_handles = get_resources_handles(client)
+resources_db = resources_handles["resources_db"]
+resources_metadata_coll = resources_handles["resources_metadata_coll"]
+equiv_nodes_coll = resources_handles["equiv_nodes_coll"]
+equiv_edges_coll = resources_handles["equiv_edges_coll"]
+ortholog_nodes_coll = resources_handles["ortholog_nodes_coll"]
+ortholog_edges_coll = resources_handles["ortholog_edges_coll"]
+terms_coll = resources_handles["terms_coll"]
+
+# BEL db
+bel_handles = get_bel_handles(client)
+bel_db = bel_handles["bel_db"]
+bel_config_coll = bel_handles["bel_config_coll"]
+bel_validations_coll = bel_handles["bel_validations_coll"]
 
 
 def delete_database(client, db_name, username=None, password=None):
-    """Delete Arangodb database
+    """Delete Arangodb database"""
 
-    """
-
-    (username, password) = get_user_creds(username, password)
+    (username, password) = get_user_credentials(username, password)
 
     sys_db = client.db("_system", username=username, password=password)
 
     try:
         return sys_db.delete_database(db_name)
     except Exception:
-        log.warn("No arango database {db_name} to delete, does not exist")
+        logger.warning(f"No arango database {db_name} to delete, does not exist")
 
 
-def batch_load_docs(db, doc_iterator, on_duplicate="replace"):
+def batch_load_docs(db, doc_iterator, on_duplicate: str = "replace"):
     """Batch load documents
 
     Args:
@@ -291,14 +328,14 @@ def batch_load_docs(db, doc_iterator, on_duplicate="replace"):
         https://python-driver-for-arangodb.readthedocs.io/en/master/specs.html?highlight=import_bulk#arango.collection.StandardCollection.import_bulk
     """
 
-    batch_size = 100
+    batch_size = 500
 
     counter = 0
     collections = {}
     docs = {}
 
     if on_duplicate not in ["error", "update", "replace", "ignore"]:
-        log.error(f"Bad parameter for on_duplicate: {on_duplicate}")
+        logger.error(f"Bad parameter for on_duplicate: {on_duplicate}")
         return
 
     for (collection_name, doc) in doc_iterator:
@@ -311,21 +348,41 @@ def batch_load_docs(db, doc_iterator, on_duplicate="replace"):
         docs[collection_name].append(doc)
 
         if counter % batch_size == 0:
-            log.info(f"Bulk import arangodb: {counter}")
-            for cname in docs:
-                collections[cname].import_bulk(
-                    docs[cname], on_duplicate=on_duplicate, halt_on_error=False
-                )
-                docs[cname] = []
+            # logger.debug(f"Bulk import arangodb: {counter}")
+            for collection_name in docs:
+                try:
+                    results = collections[collection_name].import_bulk(
+                        docs[collection_name], on_duplicate=on_duplicate, halt_on_error=False
+                    )
 
-    log.info(f"Bulk import arangodb: {counter}")
-    for cname in docs:
-        collections[cname].import_bulk(docs[cname], on_duplicate=on_duplicate, halt_on_error=False)
-        docs[cname] = []
+                except Exception as e:
+                    logger.exception(
+                        f"Problem loading arangodb using import_bulk - error: {str(e)}"
+                    )
+
+                docs[collection_name] = []
+
+        if counter % 1000000 == 0:
+            logger.info(f"Loaded {counter:,} docs into arangodb")
+
+    # Finish loading docs left over after last full batch
+    for collection_name in docs:
+        try:
+            collections[collection_name].import_bulk(
+                docs[collection_name], details=True, on_duplicate=on_duplicate, halt_on_error=False
+            )
+
+            docs[collection_name] = []
+        except arango.exceptions.DocumentInsertError as e:
+            logger.error(f"Problem with arango bulk import: {str(e)}")
+
+    return counter
 
 
 def arango_id_to_key(_id):
-    """Remove illegal chars from potential arangodb _key (id)
+    """Remove illegal chars from potential arangodb _key (id) or return hashed key if > 60 chars
+
+    Arango _key cannot be longer than 254 chars but we convert to hash if over 60 chars
 
     Args:
         _id (str): id to be used as arangodb _key
@@ -334,10 +391,26 @@ def arango_id_to_key(_id):
         (str): _key value with illegal chars removed
     """
 
-    key = re.sub(r"[^a-zA-Z0-9\_\-\:\.\@\(\)\+\,\=\;\$\!\*\%]+", r"_", _id)
-    if len(key) > 254:
-        log.error(f"Arango _key cannot be longer than 254 chars: Len={len(key)}  Key: {key}")
-    elif len(key) < 1:
-        log.error(f"Arango _key cannot be an empty string: Len={len(key)}  Key: {key}")
+    if len(_id) > 60:
+        key = _create_hash(_id)
+    elif len(_id) < 1:
+        logger.error(f"Arango _key cannot be an empty string: Len={len(_id)}  Key: {_id}")
+    else:
+        key = re.sub(r"[^a-zA-Z0-9\_\-\:\.\@\(\)\+\,\=\;\$\!\*\%]+", r"_", _id)
 
     return key
+
+
+def aql_query(db, query, batch_size=20, ttl=300):
+    """Run AQL query
+
+    Default batch_size = 20
+    Default time to live for the query is 300
+
+    Returns:
+        result_cursor
+    """
+
+    result = db.aql.execute(query, batch_size=batch_size, ttl=ttl)
+
+    return result

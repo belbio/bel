@@ -1,22 +1,54 @@
 # Standard Library
+import copy
 import gzip
 import json
-from typing import IO
+from collections import defaultdict
+from typing import IO, Mapping, Optional
 
-# Third Party Imports
-import timy
+# Third Party
 from arango import ArangoError
-from structlog import get_logger
+from loguru import logger
 
-# Local Imports
+# Local
+import bel.core.settings as settings
+import bel.core.utils
 import bel.db.arangodb as arangodb
-import bel.utils
-from bel.Config import config
+from bel.db.arangodb import (
+    ortholog_edges_name,
+    ortholog_nodes_name,
+    resources_db,
+    resources_metadata_coll,
+)
 
-log = get_logger()
+
+def remove_old_db_entries(source, version: str = "", force: bool = False):
+    """Remove older ortholog data entries"""
+
+    if force or version == "":
+        filter_version = ""
+    else:
+        filter_version = f'FILTER doc.version != "{version}"'
+
+    # Clean up old entries
+    remove_old_ortholog_edges = f"""
+        FOR doc in {ortholog_edges_name}
+            FILTER doc.source == "{source}"
+            {filter_version}
+            REMOVE doc IN {ortholog_edges_name}
+    """
+    remove_old_ortholog_nodes = f"""
+        FOR doc in {ortholog_nodes_name}
+            FILTER doc.source == "{source}"
+            {filter_version}
+            REMOVE doc IN {ortholog_nodes_name}
+    """
+    arangodb.aql_query(resources_db, remove_old_ortholog_edges)
+    arangodb.aql_query(resources_db, remove_old_ortholog_nodes)
 
 
-def load_orthologs(fo: IO, metadata: dict):
+def load_orthologs(
+    fo: IO, metadata: dict, force: bool = False, resource_download_url: Optional[str] = None
+):
     """Load orthologs into ArangoDB
 
     Args:
@@ -24,106 +56,159 @@ def load_orthologs(fo: IO, metadata: dict):
         metadata: dict containing the metadata for orthologs
     """
 
-    version = metadata["metadata"]["version"]
+    result = {"state": "Succeeded", "messages": []}
 
-    # LOAD ORTHOLOGS INTO ArangoDB
-    with timy.Timer("Load Orthologs") as timer:
+    statistics = {"entities_count": 0, "orthologous_pairs": defaultdict(lambda: defaultdict(int))}
 
-        arango_client = arangodb.get_client()
-        if not arango_client:
-            print("Cannot load orthologs without ArangoDB access")
-            quit()
-        belns_db = arangodb.get_belns_handle(arango_client)
-        arangodb.batch_load_docs(belns_db, orthologs_iterator(fo, version), on_duplicate="update")
+    version = metadata["version"]
+    source = metadata["name"]
 
-        log.info("Load orthologs", elapsed=timer.elapsed, source=metadata["metadata"]["source"])
+    metadata_key = metadata["name"]
+    prior_metadata = resources_metadata_coll.get(metadata_key)
 
-        # Clean up old entries
-        remove_old_ortholog_edges = f"""
-            FOR edge in ortholog_edges
-                FILTER edge.source == "{metadata["metadata"]["source"]}"
-                FILTER edge.version != "{version}"
-                REMOVE edge IN ortholog_edges
-        """
-        remove_old_ortholog_nodes = f"""
-            FOR node in ortholog_nodes
-                FILTER node.source == "{metadata["metadata"]["source"]}"
-                FILTER node.version != "{version}"
-                REMOVE node IN ortholog_nodes
-        """
-        arangodb.aql_query(belns_db, remove_old_ortholog_edges)
-        arangodb.aql_query(belns_db, remove_old_ortholog_nodes)
+    try:
+        prior_version = prior_metadata.get("version", "")
+        prior_entity_count = prior_metadata["statistics"].get("entities_count", 0)
+
+    except Exception:
+        prior_entity_count = 0
+        prior_version = ""
+
+    if force or prior_version != version:
+        arangodb.batch_load_docs(
+            resources_db, orthologs_iterator(fo, version, statistics), on_duplicate="update"
+        )
+    else:
+        msg = f"NOTE: This orthology dataset {source} at version {version} is already loaded and the 'force' option was not used"
+        result["messages"].append(msg)
+        return result
+
+    logger.info(
+        f"Loaded orthologs, source: {source}  count: {statistics['entities_count']}", source=source
+    )
+
+    if prior_entity_count > statistics["entities_count"]:
+        logger.error(
+            f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
+        )
+
+        result["state"] = "Failed"
+        msg = f"Error: This orthology dataset {source} at version {version} has fewer orthologs than previously loaded orthology dataset. Skipped removing old ortholog entries"
+        result["messages"].append(msg)
+        return result
+
+    remove_old_db_entries(source, version=version)
 
     # Add metadata to resource metadata collection
-    metadata["_key"] = f"Orthologs_{metadata['metadata']['source']}"
-    try:
-        belns_db.collection(arangodb.belns_metadata_name).insert(metadata)
-    except ArangoError as ae:
-        belns_db.collection(arangodb.belns_metadata_name).replace(metadata)
+    metadata["_key"] = arangodb.arango_id_to_key(source)
+
+    # Using side effect to get statistics from orthologs_iterator on purpose
+    metadata["statistics"] = copy.deepcopy(statistics)
+
+    if resource_download_url is not None:
+        metadata["resource_download_url"] = resource_download_url
+
+    resources_metadata_coll.insert(metadata, overwrite=True)
+
+    result["messages"].append(f'Loaded {statistics["entities_count"]} ortholog sets into arangodb')
+    return result
 
 
-def orthologs_iterator(fo, version):
-    """Ortholog node and edge iterator"""
+def orthologs_iterator(fo, version, statistics: Mapping):
+    """Ortholog node and edge iterator
 
-    species_list = config["bel_resources"].get("species_list", [])
+    NOTE: the statistics dict works as a side effect since it is passed as a reference!!!
+    """
+
+    species_list = settings.BEL_FILTER_SPECIES
 
     fo.seek(0)
-    with gzip.open(fo, "rt") as f:
-        for line in f:
-            edge = json.loads(line)
-            if "metadata" in edge:
-                source = edge["metadata"]["source"]
+
+    for line in fo:
+        edge = json.loads(line)
+        if "metadata" in edge:
+            source = edge["metadata"]["name"]
+            continue
+
+        if "ortholog" in edge:
+            edge = edge["ortholog"]
+
+            subject_key = edge["subject_key"]
+            subject_species_key = edge["subject_species_key"]
+            object_key = edge["object_key"]
+            object_species_key = edge["object_species_key"]
+
+            # Skip if any values are missing
+            if any(
+                [
+                    not val
+                    for val in [subject_key, subject_species_key, object_key, object_species_key]
+                ]
+            ):
                 continue
 
-            if "ortholog" in edge:
-                edge = edge["ortholog"]
-                subj_tax_id = edge["subject"]["tax_id"]
-                obj_tax_id = edge["object"]["tax_id"]
+            # Skip if species_key not listed in species_list
+            if species_list and (
+                subject_species_key not in species_list or object_species_key not in species_list
+            ):
+                continue
 
-                # Skip if species not listed in species_list
-                if species_list and subj_tax_id and subj_tax_id not in species_list:
-                    continue
-                if species_list and obj_tax_id and obj_tax_id not in species_list:
-                    continue
-
-                # Converted to ArangoDB legal chars for _key
-                subj_key = arangodb.arango_id_to_key(edge["subject"]["id"])
-                subj_id = edge["subject"]["id"]
-
-                # Converted to ArangoDB legal chars for _key
-                obj_key = arangodb.arango_id_to_key(edge["object"]["id"])
-                obj_id = edge["object"]["id"]
-
-                # Subject node
-                yield (
-                    arangodb.ortholog_nodes_name,
-                    {
-                        "_key": subj_key,
-                        "name": subj_id,
-                        "tax_id": edge["subject"]["tax_id"],
-                        "source": source,
-                        "version": version,
-                    },
-                )
-                # Object node
-                yield (
-                    arangodb.ortholog_nodes_name,
-                    {
-                        "_key": obj_key,
-                        "name": obj_id,
-                        "tax_id": edge["object"]["tax_id"],
-                        "source": source,
-                        "version": version,
-                    },
+            # Simple lexical sorting (e.g. not numerical) to ensure 1 entry per pair
+            if subject_key > object_key:
+                subject_key, subject_species_key, object_key, object_species_key = (
+                    object_key,
+                    object_species_key,
+                    subject_key,
+                    subject_species_key,
                 )
 
-                arango_edge = {
-                    "_from": f"{arangodb.ortholog_nodes_name}/{subj_key}",
-                    "_to": f"{arangodb.ortholog_nodes_name}/{obj_key}",
-                    "_key": bel.utils._create_hash(f"{subj_id}>>{obj_id}"),
-                    "type": "ortholog_to",
+            # Convert to ArangoDB legal chars for arangodb _key
+            subject_db_key = arangodb.arango_id_to_key(subject_key)
+            object_db_key = arangodb.arango_id_to_key(object_key)
+
+            # Subject node
+            yield (
+                ortholog_nodes_name,
+                {
+                    "_key": subject_db_key,
+                    "key": subject_key,
+                    "species_key": subject_species_key,
                     "source": source,
                     "version": version,
-                }
+                },
+            )
+            # Object node
+            yield (
+                ortholog_nodes_name,
+                {
+                    "_key": object_db_key,
+                    "key": object_key,
+                    "species_key": object_species_key,
+                    "source": source,
+                    "version": version,
+                },
+            )
 
-                yield (arangodb.ortholog_edges_name, arango_edge)
+            arango_edge = {
+                "_from": f"{ortholog_nodes_name}/{subject_db_key}",
+                "_to": f"{ortholog_nodes_name}/{object_db_key}",
+                "_key": bel.core.utils._create_hash(f"{subject_key}>>{object_key}"),
+                "type": "ortholog_to",
+                "source": source,
+                "version": version,
+            }
+
+            statistics["entities_count"] += 1
+            statistics["orthologous_pairs"][subject_species_key][object_species_key] += 1
+            statistics["orthologous_pairs"][object_species_key][subject_species_key] += 1
+
+            yield (arangodb.ortholog_edges_name, arango_edge)
+
+
+def delete_ortholog_resource(source):
+    """Remove ortholog resource
+
+    Remove Arangodb terms and equivalences and remove Elasticsearch terms index
+    """
+
+    remove_old_db_entries(source, force=True)
