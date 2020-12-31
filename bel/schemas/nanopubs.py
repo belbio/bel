@@ -4,7 +4,7 @@ from typing import Any, List, Mapping, Optional, Union
 
 # Third Party
 import pydantic
-from pydantic import AnyUrl, BaseModel, Field, HttpUrl, root_validator, validator
+from pydantic import AnyUrl, BaseModel, Field, HttpUrl, validator
 
 # Local
 from bel.schemas.bel import ValidationErrors
@@ -27,13 +27,6 @@ class Annotation(BaseModel):
     class Config:
         extra = "allow"
 
-    @validator("type")
-    def clean_type(cls, v):
-        """Clean types which are merged together - taking first instance"""
-        if ";" in v:
-            v = v.split(";")[0]
-        return v
-
 
 class Assertion(BaseModel):
     subject: str
@@ -43,11 +36,6 @@ class Assertion(BaseModel):
 
     class Config:
         extra = "allow"
-
-    @validator("subject", "object")
-    def clean_assertion(cls, v):
-        v = v.replace("“", '"').replace("”", '"').strip()
-        return v
 
 
 class CitationDatabase(BaseModel):
@@ -68,33 +56,6 @@ class Citation(BaseModel):
     source_name: Optional[str]
     date_published: Optional[str]
 
-    class Config:
-        extra = "allow"
-
-    @root_validator
-    def create_id(cls, values):
-        """Generate citation id from database, uri or reference string"""
-        citation_id, database, uri, reference = (
-            values.get("id", None),
-            values.get("database", None),
-            values.get("uri", None),
-            values.get("reference", None),
-        )
-        if not citation_id:
-            citation_id = ""
-            if database:
-                citation_id = f"{database.name}:{database.id}"
-            elif uri:
-                citation_id = uri
-            elif reference:
-                citation_id = reference
-
-            values["id"] = citation_id
-
-        return values
-
-
-class Metadata(BaseModel):
     class Config:
         extra = "allow"
 
