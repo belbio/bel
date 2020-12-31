@@ -14,7 +14,7 @@ from bel.belspec.crud import get_latest_version
 from bel.db.arangodb import bel_db, bel_validations_coll, bel_validations_name
 from bel.db.elasticsearch import es
 from bel.schemas.bel import AssertionStr, ValidationError, ValidationErrors
-from bel.schemas.nanopubs import NanopubR
+from bel.schemas.nanopubs import Nanopub
 
 
 def convert_msg_to_html(msg: str):
@@ -333,7 +333,7 @@ def validate_annotations(annotations: List[dict], validation_level: str):
     return annotations
 
 
-def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
+def validate_sections(nanopub: Nanopub, validation_level: str = "complete") -> Nanopub:
     """Validate Nanopub sections"""
 
     if not isinstance(nanopub, dict):
@@ -419,13 +419,13 @@ def validate_sections(nanopub: NanopubR, validation_level: str = "complete") -> 
             nanopub["nanopub"]["annotations"], validation_level=validation_level
         )
 
-    nanopub = NanopubR(**nanopub)
+    nanopub = Nanopub(**nanopub)
 
     return nanopub
 
 
 @logger.catch
-def validate(nanopub: NanopubR, validation_level: str = "complete") -> NanopubR:
+def validate(nanopub: Nanopub, validation_level: str = "complete") -> Nanopub:
     """Validate Nanopub - wrapper for try/except"""
 
     try:

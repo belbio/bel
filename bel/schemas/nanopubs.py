@@ -60,33 +60,6 @@ class Citation(BaseModel):
         extra = "allow"
 
 
-class Metadata(BaseModel):
-
-    collections: Optional[Union[str, List[str]]] = Field(
-        [],
-        title="Nanopub Collections",
-        description="Collections of nanopubs to use for managing sets of nanopubs.",
-    )
-    gd_status: Optional[str]
-    gd_createTS: Optional[str]
-    gd_updateTS: Optional[str]
-    gd_validation: Optional[ValidationErrors]
-    gd_hash: Optional[str] = Field(
-        "",
-        title="Nanopub hash",
-        description="non-crypto hash (xxHash64) to uniquely identify nanopub based on content",
-    )
-
-    # @validator("gd_validation")
-    # def fix_gd_validation(cls, v):
-    #     if not (isinstance(v, dict)):
-    #         v = {}
-    #     return v
-
-    class Config:
-        extra = "allow"
-
-
 class NanopubBody(BaseModel):
     """Nanopub content"""
 
@@ -99,7 +72,7 @@ class NanopubBody(BaseModel):
     ] = "https://raw.githubusercontent.com/belbio/Fields/master/Fields/nanopub_bel-1.1.0.yaml"
     annotations: Optional[List[Annotation]] = []
     evidence: Optional[str] = ""
-    metadata: Optional[Metadata] = {}
+    metadata: Optional[dict]
 
     class Config:
         extra = "forbid"
@@ -114,7 +87,7 @@ class Nanopub(BaseModel):
         extra = "forbid"
 
 
-class NanopubR(BaseModel):
+class Nanopub(BaseModel):
     """Nanopub Request/Response model"""
 
     source_url: Optional[str] = Field(None, description="Source URL of Nanopub")

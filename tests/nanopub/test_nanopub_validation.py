@@ -6,7 +6,7 @@ import pytest
 
 # Local
 import bel.nanopub.validate
-from bel.schemas.nanopubs import NanopubR
+from bel.schemas.nanopubs import Nanopub
 
 # cSpell:disable
 
@@ -60,7 +60,7 @@ def test_validate_nanopub():
         ],
     }
 
-    nanopub_validated = bel.nanopub.validate.validate(NanopubR(**nanopub), validation_level="force")
+    nanopub_validated = bel.nanopub.validate.validate(Nanopub(**nanopub), validation_level="force")
 
     nanopub_validated_dict = nanopub_validated.dict()
 
@@ -166,7 +166,7 @@ def test_validate_nanopub():
 #             }"""
 #     )
 
-#     nanopub_validated = bel.nanopub.validate.validate(NanopubR(**nanopub), validation_level="force")
+#     nanopub_validated = bel.nanopub.validate.validate(Nanopub(**nanopub), validation_level="force")
 
 #     nanopub_validated_dict = nanopub_validated.dict()
 

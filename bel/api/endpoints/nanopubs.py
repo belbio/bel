@@ -10,13 +10,13 @@ from loguru import logger
 # Local
 import bel.nanopub.validate
 from bel.api.core.exceptions import HTTPException
-from bel.schemas.nanopubs import NanopubR
+from bel.schemas.nanopubs import Nanopub
 
 router = APIRouter()
 
 
-@router.post("/nanopubs/validation", response_class=NanopubR)
-def nanopub_validation(nanopub: NanopubR, validation_level: str = "complete"):
+@router.post("/nanopubs/validation", response_class=Nanopub)
+def nanopub_validation(nanopub: Nanopub, validation_level: str = "complete"):
     """Validate Nanopub
 
     Validation caches the BEL Assertion and Annnotation validations to speed up overall validation
