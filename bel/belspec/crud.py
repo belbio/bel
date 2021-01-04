@@ -266,9 +266,11 @@ def update_belhelp(belhelp: dict):
 
     version = belhelp["version"]
 
-    doc = {"_key": f"belspec_{version}", "doc_type": "belhelp", "belhelp": belhelp}
+    doc = {"_key": f"belhelp_{version}", "doc_type": "belhelp", "belhelp": belhelp}
 
     bel_config_coll.insert(doc, overwrite=True)
+
+    return {"msg": "Loaded belspec help"}
 
 
 def delete_belhelp(version: str):

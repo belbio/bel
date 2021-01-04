@@ -8,7 +8,7 @@ from bel.lang.belobj import AssertionStr
 bo = bel.lang.belobj.BEL()
 
 
-@pytest.mark.parametrize("assertion, expected", [("p(HGNC:PBX2)", "p(EG:5089!PBX2)")])
+@pytest.mark.parametrize("assertion, expected", [("p(HGNC:PBX2)", "p(EG:5089)")])
 def test_canonicalization(assertion, expected):
     """Test canonicalization"""
 

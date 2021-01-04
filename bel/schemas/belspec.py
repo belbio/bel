@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field
 
 # BEL Specification Schema ###########################################################
 class FunctionTypes(str, enum.Enum):
-    primary = "primary"
-    modifier = "modifier"
+    Primary = "Primary"
+    Modifier = "Modifier"
 
 
 class ArgumentTypes(str, enum.Enum):
