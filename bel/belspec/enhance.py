@@ -38,6 +38,14 @@ def add_function_signature_help(specification: dict) -> dict:
     Simplify the function signatures for presentation to BEL Editor users
     """
     for f in specification["functions"]["signatures"]:
+
+        # Copy primary_function into function signature
+        if specification["functions"]["signatures"][f]["func_type"] == "Modifier":
+            specification["functions"]["signatures"][f]["primary_function"] = specification[
+                "functions"
+            ]["info"][f]["primary_function"]
+
+        # Enhance signature for function
         for argset_idx, argset in enumerate(
             specification["functions"]["signatures"][f]["signatures"]
         ):

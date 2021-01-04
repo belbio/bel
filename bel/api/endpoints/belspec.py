@@ -109,9 +109,9 @@ def get_belhelp(version: str = "latest"):
 
 @router.post("/belspec/help")
 def post_belhelp(belhelp: dict):
-    """Create or Update BEL Help"""
+    """Create or Update BEL Help """
 
-    bel.belspec.crud.update_belhelp(belhelp)
+    return bel.belspec.crud.update_belhelp(belhelp)
 
 
 @router.delete("/belspec/help/{version}")
@@ -121,7 +121,7 @@ def delete_belhelp(version: str):
     if version == "latest":
         version = bel.belspec.crud.get_latest_version()
 
-    bel.belspec.crud.delete_belhelp(version)
+    return bel.belspec.crud.delete_belhelp(version)
 
 
 @router.get("/belspec/versions", response_model=BelSpecVersions)
@@ -149,4 +149,4 @@ def delete_belspec(version: str):
     if version == "latest":
         version = bel.belspec.crud.get_latest_version()
 
-    bel.belspec.crud.delete_belspec(version)
+    return bel.belspec.crud.delete_belspec(version)

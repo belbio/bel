@@ -36,6 +36,18 @@ from bel.schemas.bel import (
 from bel.schemas.constants import strarg_validation_lists
 
 
+def compare_fn_args(args1, args2, ignore_locations: bool = False) -> bool:
+    """If args set1 is the same as arg set2 - returns True
+
+    This is used to see if two functions have the same set of arguments
+    """
+
+    args1 = ", ".join([arg.to_string(ignore_location=True) for arg in args1])
+    args2 = ", ".join([arg.to_string(ignore_location=True) for arg in args2])
+
+    return args1 == args2
+
+
 #########################
 # Unknown string        #
 #########################
@@ -58,7 +70,7 @@ class String(object):
 
     __repr__ = __str__
 
-    def to_string(self, fmt: str = "medium") -> str:
+    def to_string(self, fmt: str = "medium", ignore_location: bool = False) -> str:
 
         return str(self)
 
@@ -79,7 +91,7 @@ class Relation(object):
 
         self.type = "Relation"
 
-    def to_string(self, fmt: str = "medium"):
+    def to_string(self, fmt: str = "medium", ignore_location: bool = False):
         if fmt == "short":
             return self.name_short
         else:
@@ -227,6 +239,17 @@ class Function(object):
 
         return true_response
 
+    def optimize(self):
+        """Optimize Assertion
+
+        Currently this only optimizes reactions if they match the following pattern
+        """
+
+        if self.name == "reaction":
+            self = optimize_rxn(self)
+
+        return self
+
     def get_species_keys(self, species_keys: List[str] = None):
         """Collect species associated with NSArgs
 
@@ -274,7 +297,7 @@ class Function(object):
         try:
             errors.extend(validate_function(self))
         except Exception as e:
-            logger.error(f"Could not validate function {self.to_string()} -- error: {str(e)}")
+            logger.exception(f"Could not validate function {self.to_string()} -- error: {str(e)}")
             errors.append(
                 ValidationError(
                     type="Assertion",
@@ -291,13 +314,7 @@ class Function(object):
 
         return errors
 
-    def to_string(
-        self,
-        fmt: str = "medium",
-        canonicalize: bool = False,
-        decanonicalize: bool = False,
-        orthologize: str = None,
-    ) -> str:
+    def to_string(self, fmt: str = "medium", ignore_location: bool = False) -> str:
         """Convert AST object to string
 
         Args:
@@ -310,7 +327,12 @@ class Function(object):
             str: string version of BEL AST
         """
 
-        arg_string = ", ".join([a.to_string(fmt=fmt) for a in self.args])
+        if ignore_location and self.name == "location":
+            return ""
+
+        arg_string = ", ".join(
+            [a.to_string(fmt=fmt, ignore_location=ignore_location) for a in self.args]
+        )
 
         if fmt in ["short", "medium"]:
             function_name = self.name_short
@@ -480,7 +502,7 @@ class NSArg(Arg):
         self.entity = entity
         self.span = None
 
-    def to_string(self, fmt: str = "medium") -> str:
+    def to_string(self, fmt: str = "medium", ignore_location: bool = False) -> str:
 
         return str(self.entity)
 
@@ -508,7 +530,7 @@ class StrArg(Arg):
         self.value = value
         self.span = None
 
-    def to_string(self, fmt: str = "medium") -> str:
+    def to_string(self, fmt: str = "medium", ignore_location: bool = False) -> str:
         """Convert AST object to string
 
         Args:
@@ -737,8 +759,14 @@ class BELAst(object):
             else:
                 logger.error(f"Unknown span type {span}")
 
+        return self.args_to_components()
+
+    def args_to_components(self):
+        """Convert AST args to subject, relation, object components"""
+
         # Subject only assertion
-        if len(self.args) == 1 and self.args[0].type == "Function":
+        #        if len(self.args) == 1 and self.args[0].type == "Function":
+        if len(self.args) == 1:
             self.subject = self.args[0]
         # Normal SRO BEL assertion
         elif (
@@ -914,6 +942,23 @@ class BELAst(object):
                 if arg and arg.type in ["Function"]:
                     self.errors.extend(arg.validate(errors=[]))
 
+    def optimize(self):
+        """Optimize Assertion
+
+        Currently this only optimizes reactions if they match the following pattern
+        reactants(A, B) -> products(complex(A, B))  SHOULD BE complex(A, B)
+        """
+
+        if hasattr(self, "args"):
+            for idx, arg in enumerate(self.args):
+                if arg and arg.type == "Function":
+                    tmp = arg.optimize()
+                    self.args[idx] = tmp
+
+        self.args_to_components()
+
+        return self
+
     def subcomponents(self, subcomponents=None):
         """Generate subcomponents of the BEL subject or object
 
@@ -939,7 +984,7 @@ class BELAst(object):
 
         return subcomponents
 
-    def to_string(self, fmt: str = "medium") -> str:
+    def to_string(self, fmt: str = "medium", ignore_location: bool = False) -> str:
         """Convert AST object to string
 
         Args:
@@ -947,7 +992,7 @@ class BELAst(object):
                 short = short function and short relation format
                 medium = short function and long relation format
                 long = long function and long relation format
-            canonicalize
+            ignore_location: don't add location to output string
 
         Returns:
             str: string version of BEL AST
@@ -958,19 +1003,19 @@ class BELAst(object):
         if self.subject and self.relation and self.object:
             if isinstance(self.object, BELAst):
                 return "{} {} ({})".format(
-                    self.subject.to_string(fmt=fmt),
+                    self.subject.to_string(fmt=fmt, ignore_location=ignore_location),
                     self.relation.to_string(fmt=fmt),
-                    self.object.to_string(fmt=fmt),
+                    self.object.to_string(fmt=fmt, ignore_location=ignore_location),
                 )
             else:
                 return "{} {} {}".format(
-                    self.subject.to_string(fmt=fmt),
+                    self.subject.to_string(fmt=fmt, ignore_location=ignore_location),
                     self.relation.to_string(fmt=fmt),
-                    self.object.to_string(fmt=fmt),
+                    self.object.to_string(fmt=fmt, ignore_location=ignore_location),
                 )
 
         elif self.subject:
-            return "{}".format(self.subject.to_string(fmt=fmt))
+            return "{}".format(self.subject.to_string(fmt=fmt, ignore_location=ignore_location))
 
         else:
             return ""
@@ -1405,6 +1450,13 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
                 )
             )
 
+    # Check for bad reactions
+    # 1. reactants = products -> error
+    # 2. reactants = products(complex(reactants)) = warning to replace with just the complex
+
+    if fn.name == "reaction":
+        errors.extend(validate_rxn_semantics(fn))
+
     # Modifier function with wrong parent function
     if (
         fn.function_signature["func_type"] == "Modifier"
@@ -1422,6 +1474,72 @@ def validate_function(fn: Function, errors: List[ValidationError] = None) -> Lis
         )
 
     return errors
+
+
+def validate_rxn_semantics(rxn: Function) -> List[ValidationError]:
+    """Validate Reactions
+
+    Check for bad reactions
+    1. reactants = products -> error
+    2. reactants = products(complex(reactants)) = warning to replace with just the complex
+
+    """
+
+    errors = []
+
+    reactants = rxn.args[0]
+    products = rxn.args[1]
+
+    if reactants.name != "reactants" or products.name != "products":
+        return errors
+
+    # ERROR reactants(A, B) -> products(complex(A, B))  SHOULD BE complex(A, B)
+    if products.args[0].name == "complexAbundance" and compare_fn_args(
+        reactants.args, products.args[0].args
+    ):
+        errors.append(
+            ValidationError(
+                type="Assertion",
+                severity="Error",
+                msg=f"Reaction should be replaced with just the product complex: {products.args[0].to_string()}",
+                visual_pairs=[(rxn.span.start, rxn.span.end)],
+                index=rxn.span.start,
+            )
+        )
+
+    # ERROR reactants(A, B) SHOULD NOT EQUAL products(A, B)
+    elif compare_fn_args(reactants.args, products.args):
+        errors.append(
+            ValidationError(
+                type="Assertion",
+                severity="Error",
+                msg=f"Reaction should not have equivalent reactants and products",
+                visual_pairs=[(rxn.span.start, rxn.span.end)],
+                index=rxn.span.start,
+            )
+        )
+
+    return errors
+
+
+def optimize_rxn(rxn: Function) -> Function:
+    """Transform reaction into more optimal BEL"""
+
+    parent = rxn.parent
+    reactants = rxn.args[0]
+    products = rxn.args[1]
+    if reactants.name != "reactants" or products.name != "products":
+        return rxn
+
+    # Convert reactants(A, B) -> products(complex(A, B))  SHOULD BE complex(A, B)
+
+    if products.args[0].name == "complexAbundance" and compare_fn_args(
+        reactants.args, products.args[0].args, ignore_locations=True
+    ):
+        rxn = products.args[0]
+        rxn.parent = parent
+
+    return rxn
 
 
 def sort_function_args(fn: Function):

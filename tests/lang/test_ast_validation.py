@@ -406,7 +406,7 @@ def test_validate_nested():
 
 
 def test_validate_rxn1():
-    """Validate rxn()"""
+    """Validate path()"""
 
     assertion = AssertionStr(
         subject="rxn(reactants(complex(reactome:R-HSA-1112584.1, p(SP:O14543, loc(GO:0005829)))), products(complex(reactome:R-HSA-1112584.1, p(SP:O14543), loc(GO:0005829))))"
@@ -426,7 +426,7 @@ def test_validate_rxn1():
 
 
 def test_validate_rxn2():
-    """Validate rxn()"""
+    """Validate path()"""
 
     assertion = AssertionStr(
         subject='rxn(reactants(a(CHEBI:"guanidinoacetic acid"), a(CHEBI:"(S)-S-adenosyl-L-methionine")), products(a(CHEMBL:s-adenosylhomocysteine), a(CHEBI:creatine)))'
@@ -444,7 +444,7 @@ def test_validate_rxn2():
 
 
 def test_validate_rxn3():
-    """Validate rxn()"""
+    """Validate path()"""
 
     assertion = AssertionStr(
         entire='act(p(HGNC:GPT2), ma(cat)) directlyIncreases rxn(reactants(a(CHEBI:alanine), a(SCHEM:"alpha-Ketoglutaric acid")), products(a(SCHEM:"Propanoic acid, 2-oxo-, ion(1-)"), a(CHEBI:"L-glutamic acid")))'
@@ -462,27 +462,9 @@ def test_validate_rxn3():
 
 
 def test_validate_rxn4():
-    """Validate simple g() in rxn()"""
+    """Validate path()"""
 
     assertion = AssertionStr(subject="rxn(reactants(g(HGNC:AKT1)), products(g(HGNC:AKT2)))")
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    ast.validate()
-
-    print("Errors")
-    for error in ast.errors:
-        print("Error", error.json())
-
-    assert ast.errors == []
-
-
-def test_validate_rxn5():
-    """Validate realistic g() in rxn()"""
-
-    assertion = AssertionStr(
-        subject='rxn(reactants(a(CHEBI:36144!"ferriheme b", loc(GO:0005654!nucleoplasm)), g(ensembl:ENSG00000133794!ARNTL), p(SP:O15379!HDAC3, loc(GO:0005654!nucleoplasm)), p(SP:O75376!NCOR1, loc(GO:0005654!nucleoplasm)), p(SP:P20393!NR1D1, loc(GO:0005654!nucleoplasm))), products(complex(a(CHEBI:36144!"ferriheme b"), g(ensembl:ENSG00000133794!ARNTL), p(SP:O15379!HDAC3), p(SP:O75376!NCOR1), p(SP:P20393!NR1D1))))'
-    )
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
@@ -671,28 +653,3 @@ def test_validate_rxn_semantics():
     print("Validation Errors", ast.errors)
 
     assert ast.errors[0].msg == "Reaction should not have equivalent reactants and products"
-
-
-def test_validate_escaped_quotes():
-    """Test adding backslashes and make the parser robust to them
-
-    If someone copied an assertion with quotes in it like frag("217_374") below - those will be
-    escaped in the JSON strings. The nanopub curation form will forward the \ to the backend
-    which will not parse the Assertion correctly and generate an exception error.
-
-    TODO - need to figure out how to handle this correctly - either silently remove them or flag them
-    as errors.
-    """
-    assertion = AssertionStr(
-        subject='act(complex(p(SP:Q14790!CASP8, frag("217_374")), p(SP:Q14790!CASP8, frag("385_479"))))',
-        relation="increases",
-        object='p(SP:P55957!BID, frag("62_195"), loc(GO:0005829!cytosol))',
-    )
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    ast.validate()
-
-    print("Validation Errors", ast.errors)
-
-    assert False
