@@ -167,3 +167,4 @@ app/common
 **/belbio_conf.yaml
 **/.env
 **/*secret*
+/docs
