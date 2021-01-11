@@ -11,156 +11,6 @@ from bel.schemas.bel import AssertionStr, ValidationError
 
 # cSpell:disable
 
-# TODO test reading in a string from a file doesn't remove the escape backslash
-
-
-@pytest.mark.skip(msg="Cannot handle escaped quote")
-def test_ast_parse_escaped_quote():
-
-    # Bad quote
-    # assertion = AssertionStr(entire='complex(SCOMP:"Test named\" complex", p(HGNC:"207"!"AKT1 Test), p(HGNC:207!"Test"), loc(nucleus)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)')
-
-    assertion = AssertionStr(
-        entire='complex(SCOMP:"Test named" complex", p(HGNC:"207"!"AKT1 Test"), p(HGNC:207!"Test"), loc(nucleus)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)'
-    )
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    ast.print_tree()
-
-    print("\n")
-
-    for arg in ast.args:
-        print("AST arg: ", arg)
-
-    assert "complexAbundance" == ast.args[0].name
-
-    assert "increases" == ast.args[1].name
-
-    assert "proteinAbundance(HGNC:EGF)" == str(ast.args[2])
-
-
-def test_ast_orthologization():
-    """Test AST orthologization"""
-
-    assertion = AssertionStr(entire="p(HGNC:AKT1)")
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    if ast.orthologizable("TAX:10090"):
-        ast.orthologize("TAX:10090")
-
-        print("Orthologized to mouse", ast.to_string())
-        assert ast.to_string() == "p(EG:11651!Akt1)"
-
-        ast.decanonicalize()
-
-        print("Orthologized and decanonicalized to mouse", ast.to_string())
-
-        assert ast.to_string() == "p(MGI:87986!Akt1)"
-
-    else:
-        assert False, "Not orthologizable"
-
-
-def test_ast_nested_orthologization():
-
-    assertion = AssertionStr(entire="p(HGNC:AKT1) increases (p(HGNC:AKT1) increases p(HGNC:EGF))")
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    orthologizable = ast.orthologizable("TAX:10090")
-    print("Orthologizable", orthologizable)
-
-    ast.orthologize("TAX:10090").decanonicalize()
-
-    expected = "p(MGI:87986!Akt1) increases (p(MGI:87986!Akt1) increases p(MGI:95290!Egf))"
-
-    result = ast.to_string()
-    print("Result", result)
-
-    assert result == expected
-
-
-def test_ast_orthologizable():
-    """Test AST orthologization"""
-
-    # No rat ortholog for human EG:9
-    assertion = AssertionStr(entire="p(HGNC:AKT1) increases p(EG:9)")
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    result = ast.orthologizable("TAX:10116")  # orthologizable to Rat
-
-    assert result == False
-
-    result = ast.orthologizable("TAX:10090")  # orthologizable to mouse
-
-    assert result == True
-
-
-def test_ast_parse_fus():
-
-    assertion = AssertionStr(entire="act(p(fus(HGNC:EWSR1, start, HGNC:FLI1, end)), ma(tscript))")
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    print("To String", ast.to_string())
-
-    assert (
-        ast.to_string() == "act(p(fus(HGNC:3508!EWSR1, start, HGNC:3749!FLI1, end)), ma(tscript))"
-    )
-
-
-def test_get_species():
-    """Collect all NSArg species for Assertion"""
-
-    assertion = AssertionStr(entire="p(HGNC:391!AKT1) increases p(MGI:87986!Akt1)")
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    species = ast.get_species_keys()
-
-    print("Species", species)
-
-    assert species == ["TAX:9606", "TAX:10090"]
-
-
-@pytest.mark.skip("Figure out a better way to handle checks")
-def test_get_orthologs():
-    """Get all orthologs for any NSArgs in Assertion"""
-
-    assertion = AssertionStr(entire="p(MGI:Akt2) increases p(HGNC:391!AKT1)")
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    orthologs = ast.get_orthologs()
-
-    print("Orthologs")
-    for ortholog in orthologs:
-        print(ortholog)
-
-    expected = [
-        {
-            "TAX:10090": {"canonical": "EG:11652", "decanonical": "MGI:104874"},
-            "TAX:9606": {"canonical": "EG:208", "decanonical": "HGNC:392"},
-            "TAX:10116": {"canonical": "EG:25233", "decanonical": "RGD:2082"},
-        },
-        {
-            "TAX:9606": {"canonical": "EG:207", "decanonical": "HGNC:391"},
-            "TAX:10116": {"canonical": "EG:24185", "decanonical": "RGD:2081"},
-            "TAX:10090": {"canonical": "EG:11651", "decanonical": "MGI:87986"},
-        },
-    ]
-
-    # orthologs - compares the string result of the NSVal object for the orthologs
-
-    assert orthologs == expected
-
-
-#####################################################################################
-# Validation tests                                                              #####
-#####################################################################################
-
 
 def test_validate_simple_function():
     """Validate simple function"""
@@ -406,6 +256,18 @@ def test_validation_tloc():
 
     assert ast.errors == []
 
+    assertion = AssertionStr(
+        subject='tloc(complex(p(HGNC:NFE2L2), p(HGNC:PLK1)), fromLoc(MESH:Cytoplasm), toLoc(MESH:"Cell Nucleus"))'
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
 
 def test_validate_fus1():
     """Validate fus()"""
@@ -544,7 +406,7 @@ def test_validate_nested():
 
 
 def test_validate_rxn1():
-    """Validate path()"""
+    """Validate rxn()"""
 
     assertion = AssertionStr(
         subject="rxn(reactants(complex(reactome:R-HSA-1112584.1, p(SP:O14543, loc(GO:0005829)))), products(complex(reactome:R-HSA-1112584.1, p(SP:O14543), loc(GO:0005829))))"
@@ -564,7 +426,7 @@ def test_validate_rxn1():
 
 
 def test_validate_rxn2():
-    """Validate path()"""
+    """Validate rxn()"""
 
     assertion = AssertionStr(
         subject='rxn(reactants(a(CHEBI:"guanidinoacetic acid"), a(CHEBI:"(S)-S-adenosyl-L-methionine")), products(a(CHEMBL:s-adenosylhomocysteine), a(CHEBI:creatine)))'
@@ -582,10 +444,44 @@ def test_validate_rxn2():
 
 
 def test_validate_rxn3():
-    """Validate path()"""
+    """Validate rxn()"""
 
     assertion = AssertionStr(
-        subject='act(p(HGNC:GPT2), ma(cat)) directlyIncreases rxn(reactants(a(CHEBI:alanine), a(SCHEM:"alpha-Ketoglutaric acid")), products(a(SCHEM:"Propanoic acid, 2-oxo-, ion(1-)"), a(CHEBI:"L-glutamic acid")))'
+        entire='act(p(HGNC:GPT2), ma(cat)) directlyIncreases rxn(reactants(a(CHEBI:alanine), a(SCHEM:"alpha-Ketoglutaric acid")), products(a(SCHEM:"Propanoic acid, 2-oxo-, ion(1-)"), a(CHEBI:"L-glutamic acid")))'
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors")
+    for error in ast.errors:
+        print("Error", error.json())
+
+    assert ast.errors == []
+
+
+def test_validate_rxn4():
+    """Validate simple g() in rxn()"""
+
+    assertion = AssertionStr(subject="rxn(reactants(g(HGNC:AKT1)), products(g(HGNC:AKT2)))")
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors")
+    for error in ast.errors:
+        print("Error", error.json())
+
+    assert ast.errors == []
+
+
+def test_validate_rxn5():
+    """Validate realistic g() in rxn()"""
+
+    assertion = AssertionStr(
+        subject='rxn(reactants(a(CHEBI:36144!"ferriheme b", loc(GO:0005654!nucleoplasm)), g(ensembl:ENSG00000133794!ARNTL), p(SP:O15379!HDAC3, loc(GO:0005654!nucleoplasm)), p(SP:O75376!NCOR1, loc(GO:0005654!nucleoplasm)), p(SP:P20393!NR1D1, loc(GO:0005654!nucleoplasm))), products(complex(a(CHEBI:36144!"ferriheme b"), g(ensembl:ENSG00000133794!ARNTL), p(SP:O15379!HDAC3), p(SP:O75376!NCOR1), p(SP:P20393!NR1D1))))'
     )
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
@@ -745,111 +641,58 @@ def test_validate_missing_parts():
     assert ast.errors[0].msg == "Missing Assertion Subject or Relation"
 
 
-#####################################################################################
-# Canonicalization tests                                                        #####
-#####################################################################################
+def test_validate_rxn_semantics():
+
+    # ERROR reactants(A, B) -> products(complex(A, B))  SHOULD BE complex(A, B)
+    assertion = AssertionStr(
+        subject="rxn(reactants(p(HGNC:AKT1), p(HGNC:AKT2)), products(complex(p(HGNC:AKT1), p(HGNC:AKT2))))"
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Validation Errors", ast.errors)
+
+    assert (
+        ast.errors[0].msg
+        == "Reaction should be replaced with just the product complex: complex(p(HGNC:391!AKT1), p(HGNC:392!AKT2))"
+    )
+
+    # ERROR reactants(A, B) SHOULD NOT EQUAL products(A, B)
+    assertion = AssertionStr(
+        subject="rxn(reactants(p(HGNC:AKT1), p(HGNC:AKT2)), products(p(HGNC:AKT1), p(HGNC:AKT2)))"
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Validation Errors", ast.errors)
+
+    assert ast.errors[0].msg == "Reaction should not have equivalent reactants and products"
 
 
-@pytest.mark.parametrize(
-    "test_input,expected",
-    [
-        ("p(HGNC:AKT1)", "p(EG:207)"),
-        ("complex(p(HGNC:IL12B), p(HGNC:IL12A))", "complex(p(EG:3592), p(EG:3593))"),
-        (
-            'complex(loc(GO:"extracellular space"), p(HGNC:IL12A), p(EG:207), p(HGNC:IL12B))',
-            "complex(p(EG:207), p(EG:3592), p(EG:3593), loc(GO:0005615))",
-        ),
-        (
-            'complex(p(HGNC:MTOR), a(CHEBI:"phosphatidic acid"), a(CHEBI:sirolimus))',
-            "complex(a(CHEBI:16337), a(CHEBI:9168), p(EG:2475))",
-        ),
-        (
-            'rxn(reactants(a(CHEBI:hypoxanthine), a(CHEBI:water), a(CHEBI:dioxygen)), products(a(CHEBI:xanthine), a(CHEBI:"hydrogen peroxide"))',
-            "rxn(reactants(a(CHEBI:15377), a(CHEBI:15379), a(CHEBI:17368)), products(a(CHEBI:15318), a(CHEBI:16240)))",
-        ),
-        (
-            "p(HGNC:MAPK1, pmod(Ph, Thr, 185), pmod(Ph, Tyr, 187), pmod(Ph))",
-            "p(EG:5594, pmod(Ph), pmod(Ph, Thr, 185), pmod(Ph, Tyr, 187))",
-        ),
-        (
-            "p(HGNC:KRAS, pmod(Palm, Cys), pmod(Ph, Tyr, 32))",
-            "p(EG:3845, pmod(Palm, Cys), pmod(Ph, Tyr, 32))",
-        ),
-        (
-            "p(HGNC:TP53, var(p.His168Arg), var(p.Arg249Ser))",
-            "p(EG:7157, var(p.Arg249Ser), var(p.His168Arg))",
-        ),
-        (
-            "p(HGNC:NFE2L2, pmod(Ac, Lys, 596), pmod(Ac, Lys, 599), loc(GO:nucleus))",
-            "p(EG:4780, loc(GO:0005634), pmod(Ac, Lys, 596), pmod(Ac, Lys, 599))",
-        ),
-        (
-            "path(DO:0080600!COVID-19)",
-            "path(DO:0080600)",
-        ),
-    ],
-)
-def test_ast_canonicalization(test_input, expected):
-    """Test AST canonicalization and sorting function arguments
+def test_validate_escaped_quotes():
+    """Test adding backslashes and make the parser robust to them
 
-    See issue: https://github.com/belbio/bel/issues/13
+    If someone copied an assertion with quotes in it like frag("217_374") below - those will be
+    escaped in the JSON strings. The nanopub curation form will forward the \ to the backend
+    which will not parse the Assertion correctly and generate an exception error.
+
+    TODO - need to figure out how to handle this correctly - either silently remove them or flag them
+    as errors.
     """
-
-    assertion = AssertionStr(entire=test_input)
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    ast.canonicalize()
-
-    print("Canonicalized", ast.to_string())
-
-    assert ast.to_string() == expected
-
-
-def test_ast_canonicalization_2():
-    """Test AST canonicalization and sorting function arguments
-
-    See issue: https://github.com/belbio/bel/issues/13
-    """
-
-    test_input = "path(DO:0080600!COVID-19)"
-    expected = "path(DO:0080600)"
-
-    assertion = AssertionStr(entire=test_input)
+    assertion = AssertionStr(
+        subject='act(complex(p(SP:Q14790!CASP8, frag("217_374")), p(SP:Q14790!CASP8, frag("385_479"))))',
+        relation="increases",
+        object='p(SP:P55957!BID, frag("62_195"), loc(GO:0005829!cytosol))',
+    )
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
-    ast.canonicalize()
+    ast.validate()
 
-    print("Canonicalized", ast.to_string())
+    print("Validation Errors", ast.errors)
 
-    assert ast.to_string() == expected
-
-
-def test_ast_subcomponents_simple():
-
-    test_input = "path(DO:0080600!COVID-19)"
-    assertion = AssertionStr(entire=test_input)
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    subcomponents = ast.subcomponents()
-
-    print("Subcomponents", subcomponents)
-
-    assert subcomponents == ["path(DO:0080600!COVID-19)", "DO:0080600!COVID-19", "DO:COVID-19"]
-
-
-def test_ast_subcomponents_complex():
-
-    test_input = """rxn(reactants(complex(p(HGNC:5241!HSPA8), p(HGNC:6501!LAMP2), p(reactome:R-HSA-9622845.1!"HSP90AA1, HSP90AB1"), loc(GO:0005829!cytosol))), products(complex(p(HGNC:6501!LAMP2), p(reactome:R-HSA-9622845.1!"HSP90AA1, HSP90AB1"), loc(GO:0005765!"lysosomal membrane")), p(HGNC:5241!HSPA8, loc(GO:0005829!cytosol))))"""
-
-    assertion = AssertionStr(entire=test_input)
-
-    ast = bel.lang.ast.BELAst(assertion=assertion)
-
-    subcomponents = ast.subcomponents()
-
-    pprint.pprint(subcomponents)
-
-    assert subcomponents == ["path(DO:0080600!COVID-19)", "DO:0080600!COVID-19", "DO:COVID-19"]
+    assert False
