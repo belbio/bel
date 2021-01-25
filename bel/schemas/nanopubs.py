@@ -77,7 +77,7 @@ class Citation(BaseModel):
         citation_id, database, uri, reference = (
             values.get("id", None),
             values.get("database", None),
-            values.get("uri"),
+            values.get("uri", None),
             values.get("reference", None),
         )
         if not citation_id:
@@ -89,7 +89,7 @@ class Citation(BaseModel):
             elif reference:
                 citation_id = reference
 
-            values.id = citation_id
+            values["id"] = citation_id
 
         return values
 
