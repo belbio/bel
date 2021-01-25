@@ -1,11 +1,15 @@
 # Standard Library
 import json
 
+# Third Party
+from fastapi.testclient import TestClient
 
-def test_validate(client):
+# client = TestClient(api)
+
+
+def test_save(client):
 
     nanopub = {
-        "_key": "01DZZ0WBHER1B3MXW2TFDA2QWE",
         "nanopub": {
             "annotations": [{"id": "TAX:9606", "label": "human", "type": "Species"}],
             "assertions": [
@@ -36,10 +40,9 @@ def test_validate(client):
             "schema_uri": "https://raw.githubusercontent.com/graphdati/schemas/master/nanopub_graphdati-1.0.0.json",
             "type": {"name": "BEL", "version": "2.1.0"},
         },
-        "owners": ["auth0|5b0ec2d2157859716f2b2449"],
     }
 
-    r = client.post("/nanopubs/validation", json=nanopub)
+    r = client.post("/nanopubs", json=nanopub)
     result = r.json()
 
     print("Result:\n", json.dumps(result, indent=4))
