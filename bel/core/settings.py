@@ -75,14 +75,14 @@ REDIS_PORT = os.getenv("REDIS_PORT", default=6379)
 REDIS_QUEUE = os.getenv("NANOPUBSTORE_TYPE", default="belservice")
 
 # Elasticsearch Info
-ELASTICSEARCH_URL = os.getenv("ELASTICSEARCH_URL", default="http://localhost:9200")
+ELASTICSEARCH_URL = os.getenv("BEL_ELASTICSEARCH_URL", default="http://localhost:9200")
 TERMS_INDEX = os.getenv("TERMS_INDEX", default="terms")  # Elasticsearch terms index
-TERMS_DOCUMENT_TYPE = os.getenv("TERMS_DOCUMENT_TYPE", default="term")
+TERMS_DOCUMENT_TYPE = os.getenv("TERMS_DOCUMENT_TYPE", default="_doc")
 
 # Arango Databases
-ARANGO_URL = os.getenv("ARANGO_URL", default="http://localhost:8529")
-ARANGO_USER = os.getenv("ARANGO_USER", default="root")
-ARANGO_PASSWORD = os.getenv("ARANGO_PASSWORD", default="Set a password, please")
+ARANGO_URL = os.getenv("BEL_ARANGO_URL", default="http://localhost:8529")
+ARANGO_USER = os.getenv("BEL_ARANGO_USER", default="root")
+ARANGO_PASSWORD = os.getenv("BEL_ARANGO_PASSWORD", default="Set a password, please")
 
 BEL_DB = os.getenv("BEL_DB", default="bel")
 RESOURCES_DB = os.getenv("RESOURCES_DB", default="bel")
