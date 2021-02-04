@@ -67,7 +67,7 @@ OPENAPI_DESC = f"""
 """
 
 # BEL API
-BEL_API = os.getenv("BEL_API", default="http://localhost:8888")
+BEL_API = os.getenv("BEL_API", default="http://localhost:8888")  # DevSkim: ignore DS137138
 
 # Redis Info
 REDIS_HOST = os.getenv("REDIS_HOST", default="localhost")
@@ -75,12 +75,16 @@ REDIS_PORT = os.getenv("REDIS_PORT", default=6379)
 REDIS_QUEUE = os.getenv("NANOPUBSTORE_TYPE", default="belservice")
 
 # Elasticsearch Info
-ELASTICSEARCH_URL = os.getenv("BEL_ELASTICSEARCH_URL", default="http://localhost:9200")
+ELASTICSEARCH_URL = os.getenv(
+    "BEL_ELASTICSEARCH_URL", default="http://localhost:9200"  # DevSkim: ignore DS137138
+)  # DevSkim: ignore DS137138
 TERMS_INDEX = os.getenv("TERMS_INDEX", default="terms")  # Elasticsearch terms index
 TERMS_DOCUMENT_TYPE = os.getenv("TERMS_DOCUMENT_TYPE", default="_doc")
 
 # Arango Databases
-ARANGO_URL = os.getenv("BEL_ARANGO_URL", default="http://localhost:8529")
+ARANGO_URL = os.getenv(
+    "BEL_ARANGO_URL", default="http://localhost:8529"  # DevSkim: ignore DS137138
+)  # DevSkim: ignore DS137138
 ARANGO_USER = os.getenv("BEL_ARANGO_USER", default="root")
 ARANGO_PASSWORD = os.getenv("BEL_ARANGO_PASSWORD", default="Set a password, please")
 
@@ -96,7 +100,7 @@ BEL_DEFAULT_VERSION = os.getenv("BEL_DEFAULT_VERSION", default="latest")
 BEL_SPECIFICATION_URLS = json.loads(os.getenv("BEL_SPECIFICATION_URLS", default="[]"))
 if not BEL_SPECIFICATION_URLS:
     BEL_SPECIFICATION_URLS = [
-        "http://resources.bel.bio.s3-us-east-2.amazonaws.com/specifications/bel_latest.yaml"
+        "http://resources.bel.bio.s3-us-east-2.amazonaws.com/specifications/bel_latest.yaml"  # DevSkim: ignore DS137138
     ]
 
 bel_canonicalize_default = {

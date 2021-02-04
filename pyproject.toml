@@ -5,7 +5,7 @@ description = ""
 authors = ["William Hayes <william.s.hayes@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.9"
 jinja2 = "^2.11.2"
 pyyaml = "^5.3.1"
 lxml = "^4.5.0"
@@ -30,6 +30,7 @@ uvicorn = "^0.13.3"
 httpx = "^0.16.1"
 python-arango = "^6.1.0"
 python-dotenv = "^0.15.0"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6"

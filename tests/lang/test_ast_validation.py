@@ -342,6 +342,22 @@ def test_validate_fus5():
     assert ast.errors == []
 
 
+def test_validate_fus6():
+    """Validate fus()"""
+
+    assertion = AssertionStr(
+        subject="""p(fus(SP:P11274!BCR, “1-585”, SP:P11362!FGFR1, “429-585”), pmod(PSIMOD:00048!O4'-phospho-L-tyrosine))"""
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    ast.validate()
+
+    print("Errors", ast.errors)
+
+    assert ast.errors == []
+
+
 def test_validate_sec():
     """Validate fus()"""
 

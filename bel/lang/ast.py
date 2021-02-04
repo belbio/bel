@@ -20,8 +20,11 @@ import bel.core.settings as settings
 import bel.db.arangodb
 import bel.terms.orthologs
 import bel.terms.terms
-from bel.belspec.crud import get_enhanced_belspec
+from bel.belspec.crud import check_version, get_enhanced_belspec
 from bel.core.utils import html_wrap_span, http_client, url_path_param_quoting
+from bel.lang.ast_optimization import optimize_function
+from bel.lang.ast_utils import sort_function_args
+from bel.lang.ast_validation import validate_function
 from bel.schemas.bel import (
     AssertionStr,
     BelEntity,
@@ -34,18 +37,6 @@ from bel.schemas.bel import (
     ValidationError,
 )
 from bel.schemas.constants import strarg_validation_lists
-
-
-def compare_fn_args(args1, args2, ignore_locations: bool = False) -> bool:
-    """If args set1 is the same as arg set2 - returns True
-
-    This is used to see if two functions have the same set of arguments
-    """
-
-    args1 = ", ".join([arg.to_string(ignore_location=True) for arg in args1])
-    args2 = ", ".join([arg.to_string(ignore_location=True) for arg in args2])
-
-    return args1 == args2
 
 
 #########################
@@ -246,7 +237,7 @@ class Function(object):
         """
 
         if self.name == "reaction":
-            self = optimize_rxn(self)
+            self = optimize_function(self)
 
         return self
 
@@ -409,7 +400,7 @@ class Arg(object):
         # Args are sorted via
         self.sort_tuple: Tuple = ()
 
-        self.span: Span = span
+        self.span: Optional[Span] = span
 
     def add_sibling(self, sibling):
 
@@ -508,7 +499,7 @@ class NSArg(Arg):
 
     def print_tree(self, fmt: str = "medium") -> str:
 
-        return f"NSArg: {str(self.entity)} canonical: {self.canonical} decanonical: {self.decanonical} orthologs: {self.orthologs} orig_species: {self.orthology_species}"
+        return f"NSArg: {str(self.entity)} entity: {self.entity}"
 
     def __str__(self):
         return str(self.entity)
@@ -559,7 +550,7 @@ class ParseInfo:
     Matching quotes need to be gathered first
     """
 
-    def __init__(self, assertion: AssertionStr = None, version: str = "latest"):
+    def __init__(self, assertion: Optional[AssertionStr] = None, version: str = "latest"):
 
         self.assertion = assertion
         self.version = version
@@ -576,7 +567,7 @@ class ParseInfo:
         if self.assertion:
             self.get_parse_info(assertion=self.assertion)
 
-    def get_parse_info(self, assertion: str = "", version: str = "latest"):
+    def get_parse_info(self, assertion: AssertionStr = None, version: str = "latest"):
         # Local
         from bel.lang.parse import parse_info
 
@@ -625,7 +616,7 @@ class BELAst(object):
         is_computed: bool = False,
         version: str = "latest",
     ):
-        self.version = bel.belspec.crud.check_version(version)
+        self.version = check_version(version)
         self.assertion = assertion
 
         self.subject, self.relation, self.object = subject, relation, object
@@ -1092,545 +1083,3 @@ class BELAst(object):
 #########################################################################################################
 # Helper functions ######################################################################################
 #########################################################################################################
-
-
-def match_signatures(args, signatures):
-    """Which signature to use"""
-
-    for signature in signatures:
-        if (
-            args[0].type == "Function"
-            and args[0].function_type == signature["arguments"][0]["type"]
-        ):
-            return signature
-        elif args[0].type == signature["arguments"][0]["type"]:
-            return signature
-
-
-def intersect(list1, list2) -> bool:
-    """Do list1 and list2 intersect"""
-
-    if len(set(list1).intersection(set(list2))) == 0:
-        return False
-
-    return True
-
-
-def check_str_arg(value: str, check_values: List[str]) -> Optional[str]:
-    """Check StrArg value"""
-
-    regex_flag = False
-    for check_value in check_values:
-        if re.match("/", check_value):
-            # TODO - figure out how to make this work
-            # regex_flag = True
-            # print("Check value", check_value)
-            # match = re.match(r""+check_value, value)
-            # if match:
-            #     break
-            regex_flag = True
-            break
-
-        elif (
-            check_value in strarg_validation_lists and value in strarg_validation_lists[check_value]
-        ):
-            break
-
-    else:
-        if regex_flag:
-            return f"String Argument {value} doesn't match required format: {repr(check_values)}"
-        else:
-            return f"String Argument {value} not found in {check_values} default BEL namespaces"
-
-    return None
-
-
-def validate_function(fn: Function, errors: List[ValidationError] = None) -> List[ValidationError]:
-    """Validate function"""
-
-    # logger.debug(f"Validating function name {fn.name}, len: {len(fn.args)}")
-
-    if errors is None:
-        errors = []
-
-    # Check for completely missing arguments
-    if len(fn.args) == 0:
-        errors.append(
-            ValidationError(
-                type="Assertion",
-                severity="Error",
-                msg=f"No arguments in function: {fn.name}",
-                visual_pairs=[(fn.span.start, fn.span.end)],
-                index=fn.span.start,
-            )
-        )
-        return errors
-
-    signatures = fn.function_signature["signatures"]
-
-    # Select signature from signatures
-    if len(signatures) > 1:
-        signature = match_signatures(fn.args, signatures)
-    else:
-        signature = signatures[0]
-
-    if not signature:
-        errors.append(
-            ValidationError(
-                type="Assertion",
-                severity="Error",
-                msg=f"Could not match function: {fn.name} arguments to BEL Specification",
-                visual_pairs=[(fn.span.start, fn.span.end)],
-                index=fn.span.start,
-            )
-        )
-        return errors
-
-    # 1 past the last positional element (including optional elements if they exist)
-    post_positional = 0
-
-    # First pass - check required positional arguments
-    fn_max_args = len(fn.args) - 1
-    for argument in signature["arguments"]:
-        if argument["position"] is not None and argument["optional"] == False:
-            position = argument["position"]
-
-            # Arg type mis-match
-            if position > fn_max_args:
-                errors.append(
-                    ValidationError(
-                        type="Assertion",
-                        severity="Error",
-                        msg=f"Missing required argument - type: {argument['type']}",
-                        visual_pairs=[(fn.span.start, fn.span.end)],
-                        index=fn.span.start,
-                    )
-                )
-
-            # elif (
-            #     fn.args[position]
-            #     and fn.args[position].type == "Function"
-            #     and fn.args[position].function_type not in argument["type"]
-            # ):
-            #     errors.append(
-            #         ValidationError(
-            #             type="Assertion",
-            #             severity="Error",
-            #             msg=f"Incorrect function type '{fn.args[position].type}' at position: {position} for function: {fn.name}, should be one of {argument['type']}",
-            #             visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
-            #             index=fn.args[position].span.start,
-            #         )
-            #     )
-
-            # Function name mis-match
-            elif (
-                fn.args[position]
-                and fn.args[position].type == "Function"
-                and not (fn.args[position].name in argument["values"])
-            ):
-                errors.append(
-                    ValidationError(
-                        type="Assertion",
-                        severity="Error",
-                        msg=f"Incorrect function for argument '{fn.args[position].name}' at position: {position} for function: {fn.name}",
-                        visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
-                        index=fn.args[position].span.start,
-                    )
-                )
-
-            # Wrong [non-function] argument type
-            elif (
-                fn.args[position]
-                and fn.args[position].type != "Function"
-                and fn.args[position].type not in argument["type"]
-            ):
-                errors.append(
-                    ValidationError(
-                        type="Assertion",
-                        severity="Error",
-                        msg=f"Incorrect argument type '{fn.args[position].type}' at position: {position} for function: {fn.name}, should be one of {argument['type']}",
-                        visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
-                        index=fn.args[position].span.start,
-                    )
-                )
-
-            post_positional = position + 1
-
-    # Checking optional positional arguments - really just adjusting post_positional value
-    for argument in signature["arguments"]:
-        if argument["position"] is not None and argument["optional"] == True:
-            position = argument["position"]
-
-            if position > fn_max_args:
-                break
-
-            if argument["type"] == ["StrArgNSArg"]:
-                argument["type"].extend(["NSArg", "StrArg"])
-
-            if (  # Function match
-                fn.args[position].type == "Function"
-                and fn.args[position].name in argument["values"]
-            ) or (  # NSArg/StrArg type match
-                fn.args[position].type in ["NSArg", "StrArg"]
-                and fn.args[position].type in argument["type"]
-            ):
-                post_positional = position + 1
-
-    # Second pass optional, single arguments (e.g. loc(), ma())
-    opt_args = signature["opt_args"]
-    check_opt_args = {}
-    problem_opt_args = set()
-    for fn_arg in fn.args[post_positional:]:
-        if fn_arg.type == "Function" and fn_arg.name in opt_args:
-            if fn_arg.name in check_opt_args:
-                problem_opt_args.add(fn_arg.name)
-            else:
-                check_opt_args[fn_arg.name] = 1
-
-    problem_opt_args = list(problem_opt_args)
-    if len(problem_opt_args) > 0:
-        errors.append(
-            ValidationError(
-                type="Assertion",
-                severity="Error",
-                msg=f"Can only have at most one {problem_opt_args} in function arguments",
-                visual_pairs=[(fn.span.start, fn.span.end)],
-                index=fn.span.start,
-            )
-        )
-
-    # Third pass - non-positional (primary/modifier) args that don't show up in opt_args or mult_args
-    opt_and_mult_args = opt_args + signature["mult_args"]
-    for fn_arg in fn.args[post_positional:]:
-        if fn_arg.type == "Function" and fn_arg.name not in opt_and_mult_args:
-            errors.append(
-                ValidationError(
-                    type="Assertion",
-                    severity="Error",
-                    msg=f"Function {fn_arg.name} is not allowed as an optional or multiple argument",
-                    visual_pairs=[(fn.span.start, fn.span.end)],
-                    index=fn.span.start,
-                )
-            )
-
-        # This handles complex(NSArg, p(X)) validation and virtual namespaces
-        elif (
-            fn_arg.type == "NSArg"
-            and fn_arg.entity.entity_types
-            and not intersect(fn_arg.entity.entity_types, opt_and_mult_args)
-        ):
-            errors.append(
-                ValidationError(
-                    type="Assertion",
-                    severity="Error",
-                    msg=f"BEL Entity: {fn_arg.entity.nsval} with entity_types {fn_arg.entity.entity_types} are not allowed for function {fn_arg.parent.name} as an optional or multiple argument",
-                    visual_pairs=[(fn.span.start, fn.span.end)],
-                    index=fn.span.start,
-                )
-            )
-
-        elif fn_arg.type == "NSArg" and (
-            fn_arg.entity.entity_types is None or fn_arg.entity.entity_types == []
-        ):
-            errors.append(
-                ValidationError(
-                    type="Assertion",
-                    severity="Warning",
-                    msg=f"Unknown BEL Entity {fn_arg.entity.nsval.key_label} - cannot determine if this matches function signature",
-                    visual_pairs=[(fn.span.start, fn.span.end)],
-                    index=fn.span.start,
-                )
-            )
-
-    # Fourth pass - positional NSArg entity_types checks
-    for argument in signature["arguments"]:
-        if argument["position"] is not None:
-            position = argument["position"]
-
-            if position > fn_max_args:
-                break
-
-            if (
-                fn.args[position].type == "NSArg"
-                and argument["type"] in ["NSArg", "StrArgNSArg"]
-                and not fn.args[position].entity.namespace_metadata
-            ):
-                errors.append(
-                    ValidationError(
-                        type="Assertion",
-                        severity="Warning",
-                        msg=f"Unknown BEL Entity '{fn.args[position].entity.nsval.key_label}' for the {fn.name} function at position {fn.args[position].span.namespace.start}",
-                        visual_pairs=[
-                            (
-                                fn.args[position].span.namespace.start,
-                                fn.args[position].span.namespace.end,
-                            )
-                        ],
-                        index=fn.args[position].span.namespace.start,
-                    )
-                )
-
-            elif (
-                fn.args[position].type == "NSArg"
-                and argument["type"] in ["NSArg", "StrArgNSArg"]
-                and not (
-                    intersect(
-                        fn.args[position].entity.get_entity_types(), argument["values"] + ["All"]
-                    )
-                )
-            ):
-
-                if fn.args[position].entity.term:
-                    error_msg = f"Wrong entity type for BEL Entity at argument position {position} for function {fn.name} - expected {argument['values']}, actual: entity_types: {fn.args[position].entity.entity_types}"
-                else:
-                    error_msg = f"Unknown BEL Entity at argument position {position} for function {fn.name} - cannot determine if correct entity type."
-
-                errors.append(
-                    ValidationError(
-                        type="Assertion",
-                        severity="Warning",
-                        msg=error_msg,
-                        visual_pairs=[(fn.args[position].span.start, fn.args[position].span.end)],
-                        index=fn.args[position].span.start,
-                    )
-                )
-
-    # Fifth pass - positional StrArg checks
-    for argument in signature["arguments"]:
-        if argument["position"] is not None:
-            position = argument["position"]
-
-            if position > fn_max_args:
-                break
-
-            if fn.args[position].type == "StrArg" and argument["type"] in ["StrArg", "StrArgNSArg"]:
-                str_error = check_str_arg(fn.args[position].value, argument["values"])
-
-                if str_error is not None:
-                    errors.append(
-                        ValidationError(
-                            type="Assertion",
-                            severity="Error",
-                            msg=str_error,
-                            visual_pairs=[
-                                (fn.args[position].span.start, fn.args[position].span.end)
-                            ],
-                            index=fn.args[position].span.start,
-                        )
-                    )
-    # Sixth pass - non-positional StrArgs are errors
-    for idx, arg in enumerate(fn.args):
-        if arg.type == "StrArg" and (
-            idx > len(signature["arguments"]) - 1 or signature["arguments"][idx]["position"] is None
-        ):
-            errors.append(
-                ValidationError(
-                    type="Assertion",
-                    severity="Error",
-                    msg="String argument not allowed as an optional or multiple argument. Probably missing a namespace.",
-                    visual_pairs=[(arg.span.start, arg.span.end)],
-                    index=arg.span.start,
-                )
-            )
-
-    # Check for obsolete namespaces
-    for arg in fn.args:
-        if (
-            arg.type == "NSArg"
-            and arg.entity.term
-            and arg.entity.original_nsval.key in arg.entity.term.obsolete_keys
-        ):
-            errors.append(
-                ValidationError(
-                    type="Assertion",
-                    severity="Warning",
-                    msg=f"BEL Entity name is obsolete - please update to {arg.entity.term.key}!{arg.entity.term.label}",
-                    visual_pairs=[(arg.span.start, arg.span.end)],
-                    index=fn.args[position].span.start,
-                )
-            )
-
-    # Check for bad reactions
-    # 1. reactants = products -> error
-    # 2. reactants = products(complex(reactants)) = warning to replace with just the complex
-
-    if fn.name == "reaction":
-        errors.extend(validate_rxn_semantics(fn))
-
-    # Modifier function with wrong parent function
-    if (
-        fn.function_signature["func_type"] == "Modifier"
-        and fn.parent
-        and fn.parent.name not in fn.function_signature["primary_function"]
-    ):
-        errors.append(
-            ValidationError(
-                type="Assertion",
-                severity="Error",
-                msg=f"Missing parent for modifier function or wrong parent function for {fn.name}",
-                visual_pairs=[(fn.span.start, fn.span.end)],
-                index=fn.span.start,
-            )
-        )
-
-    return errors
-
-
-def validate_rxn_semantics(rxn: Function) -> List[ValidationError]:
-    """Validate Reactions
-
-    Check for bad reactions
-    1. reactants = products -> error
-    2. reactants = products(complex(reactants)) = warning to replace with just the complex
-
-    """
-
-    errors = []
-
-    reactants = rxn.args[0]
-    products = rxn.args[1]
-
-    if reactants.name != "reactants" or products.name != "products":
-        return errors
-
-    # ERROR reactants(A, B) -> products(complex(A, B))  SHOULD BE complex(A, B)
-    if products.args[0].name == "complexAbundance" and compare_fn_args(
-        reactants.args, products.args[0].args
-    ):
-        errors.append(
-            ValidationError(
-                type="Assertion",
-                severity="Error",
-                msg=f"Reaction should be replaced with just the product complex: {products.args[0].to_string()}",
-                visual_pairs=[(rxn.span.start, rxn.span.end)],
-                index=rxn.span.start,
-            )
-        )
-
-    # ERROR reactants(A, B) SHOULD NOT EQUAL products(A, B)
-    elif compare_fn_args(reactants.args, products.args):
-        errors.append(
-            ValidationError(
-                type="Assertion",
-                severity="Error",
-                msg=f"Reaction should not have equivalent reactants and products",
-                visual_pairs=[(rxn.span.start, rxn.span.end)],
-                index=rxn.span.start,
-            )
-        )
-
-    return errors
-
-
-def optimize_rxn(rxn: Function) -> Function:
-    """Transform reaction into more optimal BEL"""
-
-    parent = rxn.parent
-    reactants = rxn.args[0]
-    products = rxn.args[1]
-    if reactants.name != "reactants" or products.name != "products":
-        return rxn
-
-    # Convert reactants(A, B) -> products(complex(A, B))  SHOULD BE complex(A, B)
-
-    if products.args[0].name == "complexAbundance" and compare_fn_args(
-        reactants.args, products.args[0].args, ignore_locations=True
-    ):
-        rxn = products.args[0]
-        rxn.parent = parent
-
-    return rxn
-
-
-def sort_function_args(fn: Function):
-    """Add sort tuple values to function arguments for canonicalization and sort function arguments"""
-
-    signatures = fn.function_signature["signatures"]
-
-    # Select signature from signatures
-    if len(signatures) > 1:
-        signature = match_signatures(fn.args, signatures)
-    else:
-        signature = signatures[0]
-
-    fn_max_args = len(fn.args) - 1
-
-    post_positional = 0
-    for arg in signature["arguments"]:
-        if arg["position"]:
-            position = arg["position"]
-            if position > fn_max_args:
-                return None
-
-            if arg["optional"] == False:
-                fn.args[position].sort_tuple = (position,)
-                post_positional = position + 1
-
-            elif arg["optional"] == True:
-
-                if arg["type"] == ["StrArgNSArg"]:
-                    arg["type"].extend(["NSArg", "StrArg"])
-
-                if (  # Function match
-                    fn.args[position].type == "Function" and fn.args[position].name in arg["values"]
-                ) or (  # NSArg/StrArg type match
-                    fn.args[position].type in ["NSArg", "StrArg"]
-                    and fn.args[position].type in arg["type"]
-                ):
-                    fn.args[position].sort_tuple = (position,)
-                    post_positional = position + 1
-
-    # non-positional elements
-    primary_func_index = (
-        post_positional + 1
-    )  # Sort primary functions after non-function post-positional
-    modifier_func_index = post_positional + 2  # Sort modifier functions after
-    for fn_arg in fn.args[post_positional:]:
-        if fn_arg.type == "StrArg":
-            fn_arg.sort_tuple = (post_positional, "StrArg", fn_arg.value)
-
-        elif fn_arg.type == "NSArg":
-            fn_arg.sort_tuple = (post_positional, "NSArg", str(fn_arg.entity))
-
-        # Sort by modifier function name, then position of modification and
-        #     then by type of modification if available
-        elif fn_arg.name == "proteinModification":
-            pmod_args_len = len(fn_arg.args)
-
-            if fn.args[0].type == "NSArg":
-                modification_type_value = str(fn.args[0].entity)
-            else:
-                modification_type_value = fn_arg.args[0].value
-
-            if pmod_args_len == 3:
-                fn_arg.sort_tuple = (
-                    modifier_func_index,
-                    fn_arg.name,
-                    fn_arg.args[2].value,
-                    modification_type_value,
-                )
-            else:  # Add position of modification = -1
-                fn_arg.sort_tuple = (
-                    modifier_func_index,
-                    fn_arg.name,
-                    "-1",
-                    modification_type_value,
-                )
-
-        elif fn_arg.name == "fragment":
-            fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, fn_arg.args[0])
-
-        elif fn_arg.name == "variant":
-            # TODO use https://github.com/biocommons/hgvs to sort by variant position
-            fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, str(fn_arg))
-
-        elif fn_arg.function_type == "Modifier":
-            fn_arg.sort_tuple = (modifier_func_index, fn_arg.name, str(fn_arg))
-
-        elif fn_arg.type == "Function":
-            fn_arg.sort_tuple = (primary_func_index, fn_arg.name, str(fn_arg))
-
-        else:
-            logger.error(f"Adding sort tuples - no sort_tuple added for {fn_arg}")
-
-    fn.args = sorted(fn.args, key=lambda x: x.sort_tuple)
