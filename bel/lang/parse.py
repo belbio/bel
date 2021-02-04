@@ -69,7 +69,7 @@ def parse_info(assertion_str: str, version: str = "latest"):
     }
 
 
-def intersect(pos: int, spans: List[Optional[Span]]) -> bool:
+def span_intersect(pos: int, spans: List[Optional[Span]]) -> bool:
     """Check to see if pos intersects the provided spans - e.g. quotes"""
 
     if spans:
@@ -195,7 +195,7 @@ def find_commas(
     commas: List[int] = []
 
     for idx, char in enumerate(assertion_str):
-        if intersect(idx, matched_quotes):
+        if span_intersect(idx, matched_quotes):
             continue
         elif char == ",":
             commas.append(idx)
@@ -219,9 +219,9 @@ def find_matching_parens(
     matched_parens: List[Pair] = []
 
     for idx, char in enumerate(assertion_str):
-        if char == "(" and not intersect(idx, matched_quotes):
+        if char == "(" and not span_intersect(idx, matched_quotes):
             stack.append(idx)
-        elif char == ")" and not intersect(idx, matched_quotes):
+        elif char == ")" and not span_intersect(idx, matched_quotes):
             if len(stack) > 0:
                 matched_parens.append(Pair(start=stack.pop(), end=idx))
             else:
@@ -281,7 +281,7 @@ def find_relations(
     relations = [
         Span(start=r[0], end=r[1], span_str=assertion_str[r[0] : r[1]], type="relation")
         for r in pre_spans
-        if not intersect(r[0], matched_quotes)
+        if not span_intersect(r[0], matched_quotes)
     ]
 
     if len(relations) > 2:
@@ -328,7 +328,7 @@ def find_functions(
         name_spans.append(m.span(1))
 
     # Filter quoted strings - can't have a relation in a quoted string
-    name_spans = [r for r in name_spans if not intersect(r[0], matched_quotes)]
+    name_spans = [r for r in name_spans if not span_intersect(r[0], matched_quotes)]
 
     functions = []
     for span in name_spans:

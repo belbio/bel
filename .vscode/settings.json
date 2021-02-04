@@ -16,7 +16,7 @@
     "statusBarItem.hoverBackground": "#f7df1e",
     "statusBar.foreground": "#15202b"
   },
-  "python.pythonPath": ".venv/bin/python3",
+  "python.pythonPath": ".venv/bin/python",
   "python.analysis.openFilesOnly": false,
   "python.analysis.memory.keepLibraryLocalVariables": true,
   "python.autoComplete.addBrackets": true,
@@ -30,8 +30,13 @@
   "cSpell.ignoreWords": [
     "arango",
     "equivalenced",
+    "mult",
+    "orthologizing",
+    "paren",
+    "pmod",
     "schem",
     "scomp",
+    "tloc",
     "zfin"
   ],
   "python.formatting.provider": "black",
