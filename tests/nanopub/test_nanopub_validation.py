@@ -86,109 +86,62 @@ def test_validate_nanopub():
     )
 
 
-# def test_validate_nanopub2():
+def test_validate_nanopub_2():
 
-#     nanopub = json.loads(
-#         """{
-#             "rev": "_bLpe16a--_",
-#             "owners": [
-#                 {
-#                 "user_id": "303928642",
-#                 "first_name": "Wendy",
-#                 "last_name": "Zimmerman",
-#                 "full_name": " Wendy Zimmerman"
-#                 }
-#             ],
-#             "is_deleted": false,
-#             "is_archived": null,
-#             "is_public": false,
-#             "source_url": "https://nanopubstore.thor.biodati.com/nanopub/01EAAA7EJZC8B7EF5T78FN53JR",
-#             "nanopub": {
-#                 "type": {
-#                 "name": "BEL",
-#                 "version": "2.1.0"
-#                 },
-#                 "citation": {
-#                 "id": null,
-#                 "authors": [
-#                     "Knoop, L L",
-#                     "Baker, S J"
-#                 ],
-#                 "database": {
-#                     "name": "PubMed",
-#                     "id": "10827180"
-#                 },
-#                 "reference": "J Biol Chem 2000 Aug 11 275(32) 24865-71",
-#                 "uri": null,
-#                 "title": "The splicing factor U1C represses EWS/FLI-mediated transactivation.",
-#                 "source_name": "The Journal of biological chemistry",
-#                 "date_published": "2000-08-11",
-#                 "abstract": ""
-#                 },
-#                 "assertions": [
-#                 {
-#                     "subject": "p(HGNC:SNRPC)",
-#                     "relation": "decreases",
-#                     "object": "act(p(fus(HGNC:EWSR1, start, HGNC:FLI1, end)), ma(tscript))",
-#                     "validation": null
-#                 }
-#                 ],
-#                 "id": "01EAAA7EJZC8B7EF5T78FN53JR",
-#                 "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.1.0.yaml",
-#                 "annotations": [
-#                 {
-#                     "type": "Species",
-#                     "label": "human",
-#                     "id": "TAX:9606",
-#                     "validation": null
-#                 }
-#                 ],
-#                 "evidence": "Importantly, co-expression of U1C represses EWS/FLI-mediated transactivation, demonstrating that this interaction can have functional ramifications.",
-#                 "metadata": {
-#                 "collections": [
-#                     "corrected",
-#                     "Selventa-Full"
-#                 ],
-#                 "gd_status": "finalized",
-#                 "gd_createTS": "2020-06-08T15:54:17.566Z",
-#                 "gd_updateTS": "2020-06-09T14:21:38.573Z",
-#                 "gd_validation": {
-#                     "status": "Good",
-#                     "errors": null,
-#                     "validation_target": null
-#                 },
-#                 "gd_hash": "73b5b7b36f9bf6a6",
-#                 "statement_group": "67265439",
-#                 "gd_abstract": "EWS is an RNA-binding protein involved in human tumor-specific chromosomal translocations. In approximately 85% of Ewing's sarcomas, such translocations give rise to the chimeric gene EWS/FLI. In the resulting fusion protein, the RNA binding domains from the C terminus of EWS are replaced by the DNA-binding domain of the ETS protein FLI-1. EWS/FLI can function as a transcription factor with the same DNA binding specificity as FLI-1. EWS and EWS/FLI can associate with the RNA polymerase II holoenzyme as well as with SF1, an essential splicing factor. Here we report that U1C, one of three human U1 small nuclear ribonucleoprotein-specific proteins, interacts in vitro and in vivo with both EWS and EWS/FLI. U1C interacts with other splicing factors and is important in the early stages of spliceosome formation. Importantly, co-expression of U1C represses EWS/FLI-mediated transactivation, demonstrating that this interaction can have functional ramifications. Our findings demonstrate that U1C, a well characterized splicing protein, can also function in transcriptional regulation. Furthermore, they suggest that EWS and EWS/FLI may function both in transcriptional and post-transcriptional processes.",
-#                 "gd_creator": "303928642"
-#                 }
-#             }
-#             }"""
-#     )
+    # {
+    #     "subject": 'rxn(reactants(p(reactome:R-HSA-1839029.2!"cytosolic FGFR1 fusion mutants", var("p.Insertion of residues 429 to 822 at 250 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 164 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 627 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 491 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 1692 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 914 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 340 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 133 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 585 from, UniProt:P11362, FGFR1"), loc(GO:0005829!cytosol))), products(complex(reactome:R-HSA-1839026.2!"cytosolic FGFR1 fusion mutant dimers", loc(GO:0005829!cytosol))))'
+    # }
 
-#     nanopub_validated = bel.nanopub.validate.validate(NanopubR(**nanopub), validation_level="force")
+    nanopub = {
+        "nanopub": {
+            "type": {"name": "BEL", "version": "latest"},
+            "citation": {
+                "authors": ["Ezzat, S", "Rothfels, K"],
+                "database": {"name": "PubMed", "id": ""},
+                "uri": "https://reactome.org/content/detail/R-HSA-1839031.3",
+                "title": "Dimerization of cytosolic FGFR1 fusion proteins",
+                "source_name": "Reactome",
+                "date_published": "2018-01-26",
+                "abstract": "",
+                "source_type": "database",
+            },
+            "assertions": [
+                {
+                    "subject": 'rxn(reactants(p(reactome:R-HSA-1839029.2!"cytosolic FGFR1 fusion mutants", var("p.Insertion of residues 429 to 822 at 250 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 164 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 627 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 491 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 1692 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 914 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 340 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 133 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 585 from, UniProt:P11362, FGFR1"), loc(GO:0005829!cytosol))), products(complex(reactome:R-HSA-1839026.2!"cytosolic FGFR1 fusion mutant dimers", loc(GO:0005829!cytosol))))'
+                }
+            ],
+            "id": "Reactome_R-HSA-1839031",
+            "schema_uri": "https://raw.githubusercontent.com/belbio/schemas/master/schemas/nanopub_bel-1.1.0.yaml",
+            "annotations": [
+                {"type": "Species", "label": "Homo sapiens", "id": "TAX:9606"},
+                {"type": "Disease", "label": "cancer", "id": "DO:162"},
+            ],
+            "evidence": "8p11 myeloproliferative syndrome (EMS) is a myeloproliferative disorder that rapidly progresses to acute myeloid leukemia if not treated (reviewed in Jackson, 2010, Knights and Cook, 2010).  A characteristic feature of EMS is the presence of fusion proteins that contain the kinase domain of FGFR1 and the oligomerization domain of an unrelated protein.  This is believed to promote the ligand independent dimerization and activation of the kinase domain. To date, there are 11 identified partners that form fusion proteins with FGFR1 in EMS: ZMYM2 (Xiao, 1998; Popovici, 1998; Reiter, 1998; Ollendorff, 1999; Xiao, 2000), FGFR1OP1 (Popovici, 1999), CNTRL (Guasch, 2000), BCR (Demiroglu, 2001), FGFR1OP2 (Grand, 2004), TRIM24 (Belloni, 2005), CUX1 (Wasag, 2011), MYO18A (Walz, 2005), CPSF6 (Hidalgo-Curtis, 2008), HERV-K (Guasch, 2003) and LRRFIP1 (Soler, 2009).",
+            "metadata": {
+                "collections": ["Reactome"],
+                "gd_status": "review",
+                "gd_createTS": "2012-02-10T01:07:10.000Z",
+                "gd_updateTS": "2021-02-18T23:16:37.705Z",
+                "gd_validation": {"status": "Good"},
+                "gd_hash": "7be6fc57cf971488",
+                "license_url": "https://creativecommons.org/publicdomain/zero/1.0",
+                "creator_orcid": "0000-0002-0705-7048",
+                "version": "Reactome_R-HSA-1839031.3",
+                "source_url": "https://reactome.org/content/detail/R-HSA-1839031.3",
+                "gd_internal_comments": "",
+                "source": "Reactome",
+                "license": "CC0",
+            },
+        }
+    }
 
-#     nanopub_validated_dict = nanopub_validated.dict()
+    nanopub_validated = bel.nanopub.validate.validate(NanopubR(**nanopub), validation_level="force")
 
-#     print("Validated Nanopub2:\n", nanopub_validated.json(indent=4))
+    nanopub_validated_dict = nanopub_validated.dict()
 
-#     assert False
+    print("Validated Nanopub2:\n", nanopub_validated.json(indent=4))
 
-#     # assert nanopub_validated_dict["nanopub"]["assertions"][0]["validation"]["status"] == "Error"
-#     # assert (
-#     #     nanopub_validated_dict["nanopub"]["assertions"][0]["validation"]["errors"][0]["msg"]
-#     #     == "Too many close parentheses at index 25"
-#     # )
-#     # assert (
-#     #     nanopub_validated_dict["nanopub"]["assertions"][0]["validation"]["errors"][0]["visual"]
-#     #     == 'act(p(SP:AKT1_HUMAN), ma)<span class="accentuate">)</span> increases act(p(SPX:AKT1_HUMAN)'
-#     # )
-
-#     # assert (
-#     #     nanopub_validated_dict["nanopub"]["annotations"][1]["validation"]["errors"][0]["msg"]
-#     #     == "Annotation term HGNC:A2MP is obsolete - please replace with HGNC:8"
-#     # )
-#     # assert (
-#     #     nanopub_validated_dict["nanopub"]["annotations"][1]["validation"]["errors"][1]["msg"]
-#     #     == "Annotation type: Disease for HGNC:A2MP does not match annotation types in database: []"
-#     # )
+    assert (
+        nanopub_validated.nanopub.assertions[0].subject
+        == """rxn(reactants(p(reactome:R-HSA-1839029.2!\"cytosolic FGFR1 fusion mutants\", var(\"p.Insertion of residues 429 to 822 at 250 from, UniProt:P11362, FGFR1\"), var(\"p.Insertion of residues 429 to 822 at 164 from, UniProt:P11362, FGFR1\"), var(\"p.Insertion of residues 429 to 822 at 627 from, UniProt:P11362, FGFR1\"), var(\"p.Insertion of residues 429 to 822 at 491 from, UniProt:P11362, FGFR1\"), var(\"p.Insertion of residues 429 to 822 at 1692 from, UniProt:P11362, FGFR1\"), var(\"p.Insertion of residues 429 to 822 at 914 from, UniProt:P11362, FGFR1\"), var(\"p.Insertion of residues 429 to 822 at 340 from, UniProt:P11362, FGFR1\"), var(\"p.Insertion of residues 429 to 822 at 133 from, UniProt:P11362, FGFR1\"), var(\"p.Insertion of residues 429 to 822 at 585 from, UniProt:P11362, FGFR1\"), loc(GO:0005829!cytosol))), products(complex(reactome:R-HSA-1839026.2!\"cytosolic FGFR1 fusion mutant dimers\", loc(GO:0005829!cytosol))))"""
+    )

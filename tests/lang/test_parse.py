@@ -176,7 +176,9 @@ def test_find_nsargs():
 
     assertion_str = 'complex(SCOMP:"Test named complex", p(HGNC:"207"!"AKT1 Test"), p(HGNC:207!"Test"), loc(X)) increases p(HGNC:EGF) increases p(hgnc : "here I am" ! X)'
 
-    ns_arg_spans = bel.lang.parse.find_nsargs(assertion_str)
+    errors = []
+    (matched_quotes, errors) = bel.lang.parse.find_matching_quotes(assertion_str, errors)
+    ns_arg_spans = bel.lang.parse.find_nsargs(assertion_str, matched_quotes)
 
     print("NS Args")
     for nsarg in ns_arg_spans:
@@ -215,11 +217,11 @@ def test_find_strings():
     (functions, errors) = bel.lang.parse.find_functions(
         assertion_str, matched_quotes, matched_parens, errors, version
     )
-    nsargs = bel.lang.parse.find_nsargs(assertion_str)
+    nsargs = bel.lang.parse.find_nsargs(assertion_str, matched_quotes)
 
     components = relations + functions + nsargs
 
-    string_spans = bel.lang.parse.find_strings(assertion_str, components)
+    string_spans = bel.lang.parse.find_strings(assertion_str, components, matched_quotes)
 
     print("String spans", string_spans)
 

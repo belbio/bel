@@ -118,11 +118,11 @@ def test_get_species():
 
     ast = bel.lang.ast.BELAst(assertion=assertion)
 
-    species = ast.get_species_keys()
+    species = sorted(ast.get_species_keys())
 
     print("Species", species)
 
-    assert species == ["TAX:9606", "TAX:10090"]
+    assert species == ["TAX:10090", "TAX:9606"]
 
 
 @pytest.mark.skip("Figure out a better way to handle checks")
@@ -155,3 +155,22 @@ def test_get_orthologs():
     # orthologs - compares the string result of the NSVal object for the orthologs
 
     assert orthologs == expected
+
+
+def test_var_string_with_comma():
+
+    # assertion = AssertionStr(
+    #     subject="""rxn(reactants(p(reactome:R-HSA-1839029.2!"cytosolic FGFR1 fusion mutants", var("p.Insertion of residues 429 to 822 at 250 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 164 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 627 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 491 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 1692 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 914 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 340 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 133 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 585 from, UniProt:P11362, FGFR1"), loc(GO:0005829!cytosol))), products(complex(reactome:R-HSA-1839026.2!"cytosolic FGFR1 fusion mutant dimers", loc(GO:0005829!cytosol))))"""
+    # )
+
+    assertion = AssertionStr(
+        subject="""rxn(reactants(p(reactome:R-HSA-1839029.2!"cytosolic FGFR1 fusion mutants", var("p.Insertion of residues 429 to 822 at 250 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 164 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 627 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 491 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 1692 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 914 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 340 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 133 from, UniProt:P11362, FGFR1"), var("p.Insertion of residues 429 to 822 at 585 from, UniProt:P11362, FGFR1"), loc(GO:0005829!cytosol))), products(complex(reactome:R-HSA-1839026.2!"cytosolic FGFR1 fusion mutant dimers", loc(GO:0005829!cytosol))))"""
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    print("Validation messages - subject and object")
+    for error in ast.errors:
+        print("    ", error.json(), "\n")
+
+    assert ast.errors == []

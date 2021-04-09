@@ -6,45 +6,45 @@ authors = ["William Hayes <william.s.hayes@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-jinja2 = "^2.11.2"
-pyyaml = "^5.3.1"
-lxml = "^4.5.0"
-cityhash = "^0.2.3"
-python-dateutil = "^2.8.1"
-elasticsearch = "~6"
-cachetools = "^4.1.0"
-redis = "^3.4.1"
+aiofiles = "^0.6.0"
 boltons = "^20.1.0"
-pydantic = "^1.5"
-typer = "^0.1.1"
-semver = "^2.9.1"
-loguru = "^0.5.1"
-pytest = "^6.0.1"
+cachetools = "^4.1.0"
+cityhash = "^0.2.3"
+elasticsearch = "~6"
 fastapi = "^0.63.0"
 gunicorn = {version = "^20.0.4", extras = ["api"]}
-python-multipart = {version = "^0.0.5", extras = ["api"]}
-starlette_prometheus = {version = "^0.7.0", extras = ["api"]}
-ulid-py = "^1.1.0"
-aiofiles = "^0.6.0"
-uvicorn = "^0.13.3"
 httpx = "^0.16.1"
+jinja2 = "^2.11.2"
+loguru = "^0.5.1"
+lxml = "^4.5.0"
+pydantic = "^1.5"
+pytest = "^6.0.1"
 python-arango = "^6.1.0"
+python-dateutil = "^2.8.1"
 python-dotenv = "^0.15.0"
-requests = "^2.25.1"
+python-multipart = {version = "^0.0.5", extras = ["api"]}
+pyyaml = "^5.3.1"
+redis = "^3.4.1"
+semver = "^2.9.1"
+starlette_prometheus = {version = "^0.7.0", extras = ["api"]}
+typer = "^0.1.1"
+ulid-py = "^1.1.0"
+uvicorn = "^0.13.3"
+dateparser = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
+black = {version = "^20.8b1", allow-prereleases = true}
+colorama = "^0.4.3"
+pydocstyle = "^5.0.2"
+pygments = "^2.6.1"
+pylint = "^2.5.3"
 pytest = "^6"
-pytest-pep8 = "^1.0.6"
-pytest-sugar = "^0.9.3"
 pytest-cache = "^1.0"
 pytest-cov = "^2.10.0"
 pytest-env = "^0.6.2"
 pytest-mypy = "^0.6.2"
-pylint = "^2.5.3"
-pydocstyle = "^5.0.2"
-colorama = "^0.4.3"
-pygments = "^2.6.1"
-black = {version = "^20.8b1", allow-prereleases = true}
+pytest-pep8 = "^1.0.6"
+pytest-sugar = "^0.9.3"
 
 [tool.poetry.extras]
 api = ["fastapi^0.61.0", "gunicorn^20.0.4", "uvicorn^0.11.8", "python-multipart^0.0.5", "starlette_prometheus^0.7.0", "aiofiles^0.5.0"]

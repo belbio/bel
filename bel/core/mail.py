@@ -2,7 +2,7 @@
 from typing import List
 
 # Third Party
-import requests
+import httpx
 from loguru import logger
 
 # Local
@@ -22,7 +22,7 @@ def send_simple_email(to: List[str], subject: str, body: str, body_html: str = "
     if body_html:
         data["html"] = body_html
 
-    r = requests.post(
+    r = httpx.post(
         f"{settings.MAIL_API}/messages",
         auth=("api", settings.MAIL_API_TOKEN),
         data=data,

@@ -14,7 +14,7 @@ import bel.core.settings as settings
 import bel.db.arangodb
 import bel.terms.orthologs
 import bel.terms.terms
-from bel.core.utils import namespace_quoting, split_key_label
+from bel.core.utils import quote_string, split_key_label
 from bel.resources.namespace import get_namespace_metadata
 from bel.schemas.constants import AnnotationTypesEnum, EntityTypesEnum
 from bel.schemas.terms import Term
@@ -135,6 +135,10 @@ class ValidationErrors(BaseModel):
     validation_target: Optional[str]
 
 
+class AssertionRequest(BaseModel):
+    assertion: str
+
+
 class AssertionStr(BaseModel):
     """Assertion string object - to handle either SRO format or simple string of full assertion"""
 
@@ -148,21 +152,21 @@ class AssertionStr(BaseModel):
 
     @root_validator(pre=True)
     def set_entire(cls, values):
-        entire, subject, relation, object_ = (
+        entire, s, r, o = (
             values.get("entire"),
             values.get("subject"),
             values.get("relation"),
             values.get("object"),
         )
-        if subject is None:
-            subject = ""
-        if relation is None:
-            relation = ""
-        if object_ is None:
-            object_ = ""
+        if s is None:
+            values["subject"], s = "", ""
+        if r is None or r.strip() in ["null", "None"]:
+            values["relation"], r = "", ""
+        if o is None or o.strip() in ["null", "None"]:
+            values["object"], o = "", ""
 
         if not entire:
-            entire = f"{subject} {relation} {object_}"
+            entire = f"{s} {r} {o}"
             values["entire"] = entire.strip()
 
         return values
@@ -185,14 +189,14 @@ class NsVal(object):
             (namespace, id) = key.split(":", 1)
 
         self.namespace: str = namespace
-        self.id: str = namespace_quoting(id)
+        self.id: str = quote_string(id)
 
         if not self.key:
             self.key = f"{self.namespace}:{self.id}"
 
         self.label = ""
         if label:
-            self.label: str = namespace_quoting(label)
+            self.label: str = quote_string(label)
 
         # Add key_label to NsVal
         self.update_key_label()
@@ -206,7 +210,7 @@ class NsVal(object):
     def update_label(self):
         term = bel.terms.terms.get_term(self.key)
         if term and term.label:
-            self.label = namespace_quoting(term.label)
+            self.label = quote_string(term.label)
 
         return self
 

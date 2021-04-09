@@ -11,6 +11,8 @@ from bel.schemas.bel import AssertionStr, ValidationError
 
 # cSpell:disable
 
+# TODO path(DO:COVID-19) decreases a("glycyl-L-leucine)  - causes exception
+
 
 def test_validate_simple_function():
     """Validate simple function"""
@@ -438,7 +440,7 @@ def test_validate_rxn1():
     for error in ast.errors:
         print("Error", error.json())
 
-    assert ast.errors == []
+    assert ast.errors[0].msg == "Reaction should not have equivalent reactants and products"
 
 
 def test_validate_rxn2():
@@ -637,6 +639,24 @@ def test_validate_missing_parts():
         print("    ", error.json(), "\n")
 
     assert ast.errors[0].msg == "Missing Assertion Subject or Relation"
+
+
+def test_validate_extra_parts():
+
+    assertion = AssertionStr(
+        subject="""tloc(complex(a(CHEBI:29101!"sodium(1+)"), a(CHEBI:57427!"L-leucine zwitterion")), fromLoc(GO:0005576!"extracellular region"), toLoc(GO:0005829!cytosol))  tloc(a(CHEBI:32682!"L-argininium(1+)"), fromLoc(GO:0005829!cytosol), toLoc(GO:0005576!"extracellular region"))""",
+        relation="directlyIncreases",
+        object="""tloc(complex(a(CHEBI:29101!"sodium(1+)"), a(CHEBI:57427!"L-leucine zwitterion")), fromLoc(GO:0005576!"extracellular region"), toLoc(GO:0005829!cytosol))""",
+    )
+
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+
+    if ast.errors:
+        print("Validation messages - subject and object")
+        for error in ast.errors:
+            print("    ", error.json(), "\n")
+
+    assert ast.errors[0].msg.startswith("Could not parse Assertion - bad relation")
 
 
 def test_validate_rxn_semantics():

@@ -3,7 +3,9 @@ import enum
 from typing import Any, List, Mapping, Optional, Union
 
 # Third Party
+import dateparser
 import pydantic
+from loguru import logger
 from pydantic import AnyUrl, BaseModel, Field, HttpUrl, validator
 
 # Local
@@ -55,6 +57,24 @@ class Citation(BaseModel):
     title: Optional[str]
     source_name: Optional[str]
     date_published: Optional[str]
+
+    @validator("date_published", check_fields=False)
+    def format_date(cls, val):  # pylint: disable=no-self-argument
+        """Reset group id to None. Groups cannot be nested inside a group."""
+
+        if not val:
+            return val
+
+        original = val
+        try:
+            val = dateparser.parse(val, settings={"PREFER_DAY_OF_MONTH": "first"})
+            val = val.strftime("%Y-%m-%d")
+        except Exception as e:
+            logger.error(
+                f"Could not parse original date value: {original} for nanopub citation date_published"
+            )
+            val = "1900-01-01"
+        return val
 
     class Config:
         extra = "allow"
@@ -111,7 +131,7 @@ class Nanopub(BaseModel):
     nanopub: NanopubBody
 
     class Config:
-        extra = "forbid"
+        extra = "allow"
 
 
 class NanopubR(BaseModel):

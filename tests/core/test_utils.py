@@ -34,3 +34,23 @@ def test_split_key_label(test_input, expected):
     print("Result", result)
 
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "test_string,expected",
+    [
+        (" ", ""),
+        ('"s"', "s"),
+        (' "s " ', "s"),
+        ("s!", '"s!"'),
+        ("s)", '"s)"'),
+        ('"s!"', '"s!"'),
+    ],
+)
+def test_quote_strings(test_string, expected):
+
+    s = bel.core.utils.quote_string(test_string)
+
+    print("Result", s, "Expected", expected)
+
+    assert s == expected

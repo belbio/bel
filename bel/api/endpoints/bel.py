@@ -5,14 +5,14 @@ from typing import List, Optional
 
 # Third Party
 import fastapi
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from loguru import logger
 
 # Local
 import bel.belspec.crud
 import bel.lang.ast
 import bel.nanopub.validate
-from bel.schemas.bel import AssertionStr
+from bel.schemas.bel import AssertionRequest, AssertionStr
 
 router = APIRouter()
 
@@ -68,3 +68,34 @@ def validate_assertion(bel_assertion: str):
     logger.info(f"Validated: {validated}")
 
     return validated
+
+
+@router.post("/optimize")
+def optimize_assertion(
+    assertion: AssertionStr,
+    triple: bool = Query(
+        False,
+        description="Return Assertion as a Triple in a dictionary, default is to return Assertion as a single string",
+    ),
+):
+    """Optimize BEL Assertion
+
+    Transform BEL Assertion into more canonical BEL format
+
+    Current transformations implemented:
+
+    1. reactants(A, B) -> products(complex(A, B))  CONVERTED TO complex(A, B)
+    1. reactants(A, loc(X)) -> products(A, loc(Y)) CONVERTED TO tloc(A, fromLoc(X), toLoc(Y))
+    1. tloc(A, fromLoc(X), toLoc(extracellular region)) CONVERTED TO sec(A)
+    1. tloc(A, fromLoc(X), toLoc(plasma membrane)) CONVERTED TO surf(A)
+
+    """
+
+    # BEL AST optimizations
+    ast = bel.lang.ast.BELAst(assertion=assertion)
+    ast.optimize()
+
+    if triple:
+        return ast.to_triple()
+
+    return ast.to_string()

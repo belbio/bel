@@ -182,7 +182,7 @@ def add_functions(specification: Mapping[str, Any]) -> Mapping[str, Any]:
         specification["functions"]["list_long"].append(func_name)
         specification["functions"]["list_short"].append(abbreviated_name)
 
-        if specification["functions"]["info"][func_name]["type"] == "primary":
+        if specification["functions"]["info"][func_name]["type"] == "Primary":
             specification["functions"]["primary"].append(func_name)
             specification["functions"]["primary"].append(abbreviated_name)
             specification["functions"]["primary_list_long"].append(func_name)
@@ -248,7 +248,7 @@ def enhance_function_signatures(specification: Mapping[str, Any]) -> Mapping[str
     for func in specification["functions"]["signatures"]:
 
         # Add primary parent functions to modifier functions
-        if specification["functions"]["signatures"][func]["func_type"] == "modifier":
+        if specification["functions"]["signatures"][func]["func_type"] == "Modifier":
             specification["functions"]["signatures"][func]["primary_function"] = specification[
                 "functions"
             ]["info"][func]["primary_function"]
@@ -342,14 +342,14 @@ def create_ebnf_parser(specification):
     functions_list = [
         (function, specification["functions"]["info"][function]["abbreviation"])
         for function in specification["functions"]["info"]
-        if specification["functions"]["info"][function]["type"] == "primary"
+        if specification["functions"]["info"][function]["type"] == "Primary"
     ]
     functions_list = sorted(list(itertools.chain(*functions_list)), key=len, reverse=True)
 
     modifiers_list = [
         (function, specification["functions"]["info"][function]["abbreviation"])
         for function in specification["functions"]["info"]
-        if specification["functions"]["info"][function]["type"] == "modifier"
+        if specification["functions"]["info"][function]["type"] == "Modifier"
     ]
     modifiers_list = sorted(list(itertools.chain(*modifiers_list)), key=len, reverse=True)
 

@@ -9,14 +9,28 @@ if TYPE_CHECKING:
     from bel.lang.ast import Function
 
 
+def args_to_string(args, fmt: str = "medium", ignore_location: bool = False) -> str:
+    """Convert function arguments to string"""
+
+    args_strings = []
+    for a in args:
+        arg_str = a.to_string(fmt=fmt, ignore_location=ignore_location)
+        if arg_str:
+            args_strings.append(arg_str)
+
+    args_string = ", ".join(args_strings)
+
+    return args_string
+
+
 def compare_fn_args(args1, args2, ignore_locations: bool = False) -> bool:
     """If args set1 is the same as arg set2 - returns True
 
     This is used to see if two functions have the same set of arguments
     """
 
-    args1 = ", ".join([arg.to_string(ignore_location=True) for arg in args1])
-    args2 = ", ".join([arg.to_string(ignore_location=True) for arg in args2])
+    args1 = args_to_string(args1, ignore_location=True)
+    args2 = args_to_string(args2, ignore_location=True)
 
     return args1 == args2
 
@@ -34,7 +48,10 @@ def match_signatures(args, signatures: dict) -> dict:
     """Which signature to use"""
 
     for signature in signatures:
-        if args[0].function_type == signature["arguments"][0]["type"]:
+        if (
+            hasattr(args[0], "function_type")
+            and args[0].function_type == signature["arguments"][0]["type"]
+        ) or (args[0].type == signature["arguments"][0]["type"]):
             return signature
 
     return {}

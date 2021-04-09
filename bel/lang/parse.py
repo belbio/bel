@@ -39,12 +39,12 @@ def parse_info(assertion_str: str, version: str = "latest"):
     (functions, errors) = find_functions(
         assertion_str, matched_quotes, matched_parens, errors, version
     )
-    nsargs = find_nsargs(assertion_str)
+    nsargs = find_nsargs(assertion_str, matched_quotes)
 
     components = relations + functions + nsargs
 
     # Find str arguments and floating strings after masking all other components
-    strings = find_strings(assertion_str, components)
+    strings = find_strings(assertion_str, components, matched_quotes)
     components += strings
 
     # Add parens for function boundaries (AFTER processing string arguments)
@@ -81,7 +81,7 @@ def span_intersect(pos: int, spans: List[Optional[Span]]) -> bool:
     return False
 
 
-def ordered_pairs(left: List[int], right: List[int]) -> List[Union[int, None]]:
+def ordered_pairs(left: List[int], right: List[int]) -> List[Pair]:
     """Return ordered pairs such that every left, right pair has left < right"""
 
     alt = {"left": "right", "right": "left"}
@@ -107,9 +107,14 @@ def ordered_pairs(left: List[int], right: List[int]) -> List[Union[int, None]]:
         else:
             new_pairs.append(pair)
 
-    matched_quotes = [
-        Pair(start=new_pairs[i][1], end=new_pairs[i + 1][1]) for i in range(0, len(new_pairs), 2)
-    ]
+    try:
+        matched_quotes = [
+            Pair(start=new_pairs[i][1], end=new_pairs[i + 1][1])
+            for i in range(0, len(new_pairs), 2)
+        ]
+    except IndexError:
+        logger.error(f"Error creating matched quotes: left={left}  right={right}")
+        matched_quotes = []
 
     return matched_quotes
 
@@ -255,7 +260,8 @@ def get_relations_regex(version: str = "latest"):
     relations_list = bel.belspec.specifications.get_all_relations(version)
     relations_list += additional_computed_relations
     relations_list = list(set(relations_list))
-    relations_list.sort(key=len)
+    relations_list.sort(key=len, reverse=True)
+    relations_list = [relation.replace("|", "\|") for relation in relations_list if relation]
     relations_regex = "|".join(relations_list)
 
     return relations_regex
@@ -378,7 +384,7 @@ def find_functions(
     return (sorted(functions, key=lambda e: e.start), errors)
 
 
-def find_nsargs(assertion_str: str) -> List[Optional[NsArgSpan]]:
+def find_nsargs(assertion_str: str, matched_quotes) -> List[Optional[NsArgSpan]]:
     """Namespace argument parsing
 
     Namespace IDs and Labels are NOT allowed to have internal double quotes.
@@ -423,14 +429,17 @@ def find_nsargs(assertion_str: str) -> List[Optional[NsArgSpan]]:
 
         nsarg_spans.append(copy.deepcopy(ns_arg_span))
 
+    nsarg_spans = [span for span in nsarg_spans if not span_intersect(span.start, matched_quotes)]
+
     return nsarg_spans
 
 
-def find_strings(assertion_str, components):
+def find_strings(assertion_str, components, matched_quotes):
     """Find str_args and unknown strings"""
 
     str_spans: List[Span] = []
 
+    # Mask out functions, relations and nsargs ################################
     potential_replacement_chars = ["#", "$", "=", "@", "&"]
 
     for char in potential_replacement_chars:
@@ -446,9 +455,22 @@ def find_strings(assertion_str, components):
             end = comp.name.end
         assertion_str = mask(assertion_str, start, end, replacement_char)
 
+    # Matched quotes strargs - minus nsargs ##########################################
+    for mq in matched_quotes:
+        if replacement_char in assertion_str[mq.start : mq.end]:
+            continue
+        start = mq.start + 1
+        end = mq.end
+        type_ = "string_arg"
+        span_str = assertion_str[start:end]
+        str_spans.append(Span(start=start, end=end, span_str=assertion_str[start:end], type=type_))
+        assertion_str = mask(assertion_str, start - 1, end + 1, replacement_char)
+
+    # Non-quoted strings and strargs ###################################################
     boundary_chars = [replacement_char, ",", ")", "("]
     space_boundary_chars = [" ", replacement_char, ",", ")", "("]
     start = None
+
     for idx, c in enumerate(assertion_str):
         if start is None and c not in space_boundary_chars:
             start, end = idx, idx

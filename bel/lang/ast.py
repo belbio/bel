@@ -21,9 +21,14 @@ import bel.db.arangodb
 import bel.terms.orthologs
 import bel.terms.terms
 from bel.belspec.crud import check_version, get_enhanced_belspec
-from bel.core.utils import html_wrap_span, http_client, url_path_param_quoting
+from bel.core.utils import (
+    html_wrap_span,
+    http_client,
+    quote_string,
+    url_path_param_quoting,
+)
 from bel.lang.ast_optimization import optimize_function
-from bel.lang.ast_utils import sort_function_args
+from bel.lang.ast_utils import args_to_string, sort_function_args
 from bel.lang.ast_validation import validate_function
 from bel.schemas.bel import (
     AssertionStr,
@@ -236,8 +241,12 @@ class Function(object):
         Currently this only optimizes reactions if they match the following pattern
         """
 
-        if self.name == "reaction":
-            self = optimize_function(self)
+        self = optimize_function(self)
+
+        if self.type == "Function":
+            for idx, arg in enumerate(self.args):
+                if isinstance(arg, Function):
+                    self.args[idx] = arg.optimize()
 
         return self
 
@@ -271,6 +280,59 @@ class Function(object):
                     orthologs = arg.get_orthologs(orthologs, orthologize_targets_keys)
 
         return orthologs
+
+    def has_location(self) -> bool:
+        """Does function have a location argument?"""
+
+        for arg in self.args:
+            if hasattr(arg, "name") and arg.name == "location":
+                return True
+
+        return False
+
+    def get_location(self) -> Optional["Function"]:
+        """Get location from function"""
+
+        for arg in self.args:
+            if hasattr(arg, "name") and arg.name == "location":
+                return arg
+
+        return None
+
+    def add_location(self, loc_arg: Union[str, "Function"]) -> "Function":
+        """Add location to function"""
+
+        if self.name not in [
+            "complexAbundance",
+            "toLoc",
+            "fromLoc",
+            "abundance",
+            "geneAbundance",
+            "microRNAAbundance",
+            "populationAbundance",
+            "proteinAbundance",
+            "rnaAbundance",
+        ]:
+            logger.warning(f"Cannot add location to {self.name}")
+            return self
+
+        if isinstance(loc_arg, str):
+            loc_arg_str = loc_arg
+            loc_arg = Function("location")
+            loc_arg.args.append(loc_arg_str)
+        elif not isinstance(loc_arg, Function):
+            logger.warning(f"Location arg is not a string or Function {loc_arg}")
+            return self
+
+        for arg in self.args:
+            if hasattr(arg, "name") and arg.name == "location":
+                logger.info(
+                    f"Function already has a location argument - only one is allowed: {self.to_string()}"
+                )
+                return self
+
+        self.args.append(loc_arg)
+        return self
 
     def validate(self, errors: List[ValidationError] = None):
         """Validate BEL Function"""
@@ -321,16 +383,14 @@ class Function(object):
         if ignore_location and self.name == "location":
             return ""
 
-        arg_string = ", ".join(
-            [a.to_string(fmt=fmt, ignore_location=ignore_location) for a in self.args]
-        )
+        args_string = args_to_string(self.args, fmt=fmt, ignore_location=ignore_location)
 
         if fmt in ["short", "medium"]:
             function_name = self.name_short
         else:
             function_name = self.name
 
-        return "{}({})".format(function_name, arg_string)
+        return "{}({})".format(function_name, args_string)
 
     def __str__(self):
         arg_string = ", ".join([a.to_string() for a in self.args])
@@ -533,13 +593,13 @@ class StrArg(Arg):
         Returns:
             str: string version of BEL AST
         """
-        return "{}".format(self.value)
+        return f"{quote_string(self.value)}"
 
     def print_tree(self, fmt: str = "medium") -> str:
-        return "StrArg: {}".format(self.value)
+        return f"StrArg: {self.value}"
 
     def __str__(self):
-        return "StrArg: {}".format(self.value)
+        return f"StrArg: {self.value}"
 
     __repr__ = __str__
 
@@ -943,8 +1003,7 @@ class BELAst(object):
         if hasattr(self, "args"):
             for idx, arg in enumerate(self.args):
                 if arg and arg.type == "Function":
-                    tmp = arg.optimize()
-                    self.args[idx] = tmp
+                    self.args[idx] = arg.optimize()
 
         self.args_to_components()
 
@@ -1078,8 +1137,3 @@ class BELAst(object):
                 print(arg)
 
         return self
-
-
-#########################################################################################################
-# Helper functions ######################################################################################
-#########################################################################################################

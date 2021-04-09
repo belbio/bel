@@ -10,7 +10,7 @@ from loguru import logger
 
 # Local
 import bel.core.settings as settings
-from bel.core.utils import asyncify, namespace_quoting, split_key_label
+from bel.core.utils import asyncify, quote_string, split_key_label
 from bel.db.arangodb import arango_id_to_key, resources_db, terms_coll_name
 from bel.db.elasticsearch import es
 from bel.resources.namespace import get_namespace_metadata
@@ -121,7 +121,7 @@ def get_term_key_label(term_key: Key) -> str:
     # logger.debug(f"Getting key_label for key: {term_key}  term: {term}")
     key_label = term_key
     if term and term.label:
-        key_label = f"{term_key}!{namespace_quoting(term.label)}"
+        key_label = f"{term_key}!{quote_string(term.label)}"
 
     return key_label
 
@@ -381,10 +381,10 @@ def get_term_completions(
                     {"match": {"key": {"query": completion_text, "boost": 6, "_name": "key"}}},
                     {
                         "match": {
-                            "namespace_value": {
+                            "namespace": {
                                 "query": completion_text,
                                 "boost": 8,
-                                "_name": "namespace_value",
+                                "_name": "namespace",
                             }
                         }
                     },

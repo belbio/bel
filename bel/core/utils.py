@@ -45,6 +45,8 @@ nsarg_pattern = re.compile(
 # Quotes pattern
 escaped_quotes_pattern = re.compile(r'\\(")')
 quotes_pattern = re.compile(r'(")')
+needs_quotes = re.compile(r"[),\!\s]")
+strip_outer_quotes = re.compile(r'^\s*"?(.*)"?\s*$')
 
 
 def get_http_client():
@@ -56,26 +58,18 @@ def get_http_client():
 http_client = get_http_client()
 
 
-def namespace_quoting(string: str) -> str:
-    """Normalize NSArg ID and Label
+def clean_quotes(string: str) -> str:
+    """Clean quotes from string"""
 
-    If needs quotes (only if it contains whitespace, comma or ')' ), make sure
-    it is quoted, else remove quotes
+    return string.strip().strip('"').strip()
 
-    Also escape any internal double quotes
-    """
 
-    # Remove quotes if exist
-    match = re.match(r'\s*"(.*)"\s*$', string)
-    if match:
-        string = match.group(1)
+def quote_string(string: str) -> str:
+    """Quote string only if it contains whitespace, comma, ! or ')'"""
 
-    string = string.strip()  # remove external whitespace
+    string = clean_quotes(string)
 
-    string = string.replace('"', '"')  # quote internal double quotes
-
-    # quote only if it contains whitespace, comma, ! or ')'
-    if re.search(r"[),\!\s]", string):
+    if needs_quotes.search(string):
         return f'"{string}"'
 
     return string

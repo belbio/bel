@@ -79,7 +79,7 @@ ELASTICSEARCH_URL = os.getenv(
     "BEL_ELASTICSEARCH_URL", default="http://localhost:9200"  # DevSkim: ignore DS137138
 )  # DevSkim: ignore DS137138
 TERMS_INDEX = os.getenv("TERMS_INDEX", default="terms")  # Elasticsearch terms index
-TERMS_DOCUMENT_TYPE = os.getenv("TERMS_DOCUMENT_TYPE", default="_doc")
+TERMS_DOCUMENT_TYPE = os.getenv("TERMS_DOCUMENT_TYPE", default="term")
 
 # Arango Databases
 ARANGO_URL = os.getenv(

@@ -1,3 +1,6 @@
+# Standard Library
+import json
+
 # Third Party
 import pytest
 
@@ -21,18 +24,20 @@ def test_equivalents():
 
     expected = {
         "equivalents": [
-            {"term_key": "HGNC:AKT1", "namespace": "HGNC", "primary": None},
+            {"term_key": "EG:207", "namespace": "EG", "primary": True},
+            {"term_key": "orphanet:281472", "namespace": "orphanet", "primary": None},
             {"term_key": "SP:P31749", "namespace": "SP", "primary": True},
+            {"term_key": "HGNC:AKT1", "namespace": "HGNC", "primary": None},
+            {"term_key": "ensembl:ENSG00000142208", "namespace": "ensembl", "primary": None},
             {"term_key": "uniprot:P31749", "namespace": "uniprot", "primary": None},
             {"term_key": "refseq:NM_005163", "namespace": "refseq", "primary": None},
-            {"term_key": "ensembl:ENSG00000142208", "namespace": "ensembl", "primary": None},
-            {"term_key": "orphanet:281472", "namespace": "orphanet", "primary": None},
-            {"term_key": "EG:207", "namespace": "EG", "primary": True},
             {"term_key": "SP:AKT1_HUMAN", "namespace": "SP", "primary": None},
         ]
     }
+    expected["equivalents"] = sorted(expected["equivalents"], key=lambda x: x["term_key"])
 
     results = bel.terms.terms.get_equivalents(term_key)
+    results["equivalents"] = sorted(results["equivalents"], key=lambda x: x["term_key"])
 
     print("Results", results)
 
@@ -107,11 +112,10 @@ def test_obsolete_equivalencing():
             {"term_key": "SP:PBX2_HUMAN", "namespace": "SP", "primary": None},
         ]
     }
+    expected["equivalents"] = sorted(expected["equivalents"], key=lambda x: x["term_key"])
 
     results = bel.terms.terms.get_equivalents(term_key)
-
-    # Standard Library
-    import json
+    results["equivalents"] = sorted(results["equivalents"], key=lambda x: x["term_key"])
 
     print("Results:\n", json.dumps(results, indent=4))
 
@@ -191,7 +195,7 @@ def test_collapsed_terms():
     assert results == expected
 
 
-def test_term_completion():
+def test_term_completion_species():
 
     results = bel.terms.terms.get_term_completions(
         "mouse",
@@ -201,6 +205,24 @@ def test_term_completion():
     first_result_key = results[0]["key"]
 
     expected = "TAX:10090"
+
+    print("Results", results)
+
+    assert first_result_key == expected
+
+
+def test_term_completion_protein():
+
+    results = bel.terms.terms.get_term_completions(
+        "AKT",
+        entity_types=["Protein"],
+        species_keys=["TAX:9606"],
+        namespaces=["HGNC"],
+    )
+
+    first_result_key = results[0]["key"]
+
+    expected = "HGNC:391"
 
     print("Results", results)
 

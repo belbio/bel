@@ -128,6 +128,11 @@ def get_pubtator(pmid):
 def process_pub_date(year, mon, day, medline_date):
     """Create pub_date from what Pubmed provides in Journal PubDate entry"""
 
+    # TODO - check to see if following would work better
+    # import dateparser
+    # pub_date = dateparser.parse(medline_date, settings={"PREFER_DAY_OF_MONTH": "first"})
+    # pub_date = pub_date.strftime("%Y-%m-%d")
+
     if medline_date:
         year = "0000"
         match = re.search(r"\d{4,4}", medline_date)
